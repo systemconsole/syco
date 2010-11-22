@@ -1,0 +1,335 @@
+h1. Setup cobbler
+
+# Documentation
+# https://fedorahosted.org/cobbler/
+
+h2. Prerequisite
+
+* Setup centos
+* Setup kvm host
+* Setup kvm guest
+
+h1. Install fo-tp-install kvm guest
+
+h2. Install centos.
+
+h2 Setup EPEL repository.
+
+# Need the EPEL repos for cobbler and koan
+# http://ridingthecloud.com/installing-epel-repository-centos-rhel/
+sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+
+h2. Install cobbler
+
+# See http://linux.die.net/man/1/cobbler
+# See https://fedorahosted.org/cobbler/wiki/DownloadInstructions
+# See https://fedorahosted.org/cobbler/wiki/UsingCobblerImport
+# See http://www.ithiriel.com/content/2010/02/22/installing-linux-vms-under-kvm-cobbler-and-koan
+
+# To get cobbler and kvm work correct.
+yum install qspice-libs yum-utils cobbler koan httpd
+chkconfig httpd on
+
+# This allows the Apache httpd server to connect to the network
+/usr/sbin/setsebool -P httpd_can_network_connect true
+/usr/sbin/semanage fcontext -a -t public_content_t "/tftpboot/.*"
+/usr/sbin/semanage fcontext -a -t public_content_t "/var/www/cobbler/images/.*"
+# Eventually if /var/www/cobbler/images wasn't set by above.
+#chcon -R -t public_content_t "/var/www/cobbler/images/.*"
+# Dont exist?? /usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"
+
+vi /etc/xinetd.d/tftp
+# change 'disable' to 'no'.
+
+vi /etc/xinetd.d/rsync
+# change 'disable' to 'no'.
+/etc/init.d/xinetd restart
+
+# Setup firewall
+
+# Create input chain
+/sbin/iptables -N Fareoffice-Input
+/sbin/iptables -I INPUT 1 -j Fareoffice-Input
+
+# TFTP - TCP/UDP
+/sbin/iptables -A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 69 -j ACCEPT
+/sbin/iptables -A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 69 -j ACCEPT
+
+# NTP
+/sbin/iptables -A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 123 -j ACCEPT
+
+# HTTP/HTTPS
+/sbin/iptables -A Fareoffice-Input  -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+/sbin/iptables -A Fareoffice-Input  -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+
+# Syslog for cobbler
+/sbin/iptables -A Fareoffice-Input  -m state --state NEW -m udp -p udp --dport 25150 -j ACCEPT
+
+# Koan XMLRPC ports
+/sbin/iptables -A Fareoffice-Input  -m state --state NEW -m tcp -p tcp --dport 25151 -j ACCEPT
+/sbin/iptables -A Fareoffice-Input  -m state --state NEW -m tcp -p tcp --dport 25152 -j ACCEPT
+
+/sbin/iptables  --list
+service iptables save
+
+# Enable pxe boot
+# On the dhcp server (fo-tp-fw)
+vi /etc/dhcpd.conf
+# Add this
+subnet 10.100.0.0 netmask 255.255.255.0 {
+  option subnet-mask 255.255.0.0;
+  option broadcast-address 10.100.255.255;
+  option routers 10.100.0.1;
+  option domain-name-servers 10.100.0.4,84.246.88.10,84.246.88.20;
+  option domain-name "fareonline.net";
+  range 10.100.0.10 10.100.0.100;
+  # PXE Server
+  next-server 10.100.100.200;
+  filename "pxelinux.0";  
+}
+
+/etc/init.d/dhcpd restart
+
+# Generate new password to be used in settings below.
+openssl passwd -1 -salt 'salt' 'pass'
+
+vi /etc/cobbler/settings
+# server: 10.100.100.200
+# next_server: 10.100.100.200 
+# default_virt_bridge: br1
+# default_password_crypted: "xxx"
+# default_virt_type: qemu
+# anamon_enabled: 1
+# yum_post_install_mirror: 1 # Will use repo on install server when yum updateing on guests. 
+
+/etc/init.d/httpd start
+/etc/init.d/cobblerd restart
+
+# Config crontab to update repo automagically
+echo "01 * * * * root cobbler reposync --tries=3 --no-fail" >> /etc/crontab
+
+cobbler get-loaders
+
+# Setup distro/repo for centos
+cobbler check
+
+cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/os/x86_64/ --name=centos5.5 --arch=x86_64
+cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/updates/x86_64/
+cobbler reposync
+cobbler distro remove --name centos5.5-xen-x86_64
+cobbler profile remove --name centos5.5-x86_64 
+cobbler sync
+cobbler report
+
+# Setup installation profiles and systems
+cobbler profile remove --name=centos5.5-x86_64 
+cobbler profile add --name=centos5.5-vm_guest \
+    --distro=centos5.5-x86_64 --virt-type=qemu \
+    --virt-ram=1024 --virt-cpus=1 \
+    --repos="centos5-updates-x86_64" \
+    --kickstart=/var/lib/cobbler/kickstarts/fo-tp-guest.ks \
+    --virt-file-size=20,5 \
+    --virt-bridge=br1    
+
+cobbler profile add --name=centos5.5-vm_host \
+    --distro=centos5.5-x86_64 \
+    --repos="centos5-updates-x86_64" \
+    --kickstart=/var/lib/cobbler/kickstarts/fo-tp-host.ks
+
+h2. Setup all systems
+# https://redmine.fareoffice.com/projects/sysops/wiki/TelefonplanNetworkSchema
+
+# Check thease cobbler settings
+# --dns-name
+
+cobbler system add --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-system1.img,/opt/fareoffice/var/virtstorage/fo-tp-system1-swap.img" \
+    --name fo-tp-system1 --hostname=fo-tp-system1 --ip=10.100.100.4 
+    
+cobbler system add --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-mail1.img,/opt/fareoffice/var/virtstorage/fo-tp-mail1-swap.img" \
+    --name fo-tp-mail1 --hostname=fo-tp-mail1 --ip=10.100.100.6
+
+cobbler system add --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-php.img,/opt/fareoffice/var/virtstorage/fo-tp-php-swap.img" \
+    --name fo-tp-php --hostname=fo-tp-php --ip=10.100.100.100
+
+cobbler system add --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-svn.img,/opt/fareoffice/var/virtstorage/fo-tp-svn-swap.img" \
+    --name fo-tp-svn --hostname=fo-tp-svn --ip=10.100.100.11
+
+cobbler system edit --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-svn2.img,/opt/fareoffice/var/virtstorage/fo-tp-svn2-swap.img,/opt/fareoffice/var/virtstorage/fo-tp-svn2-data.img" \
+    --virt-file-size=20,5,100 \
+    --name fo-tp-svn2 --hostname=fo-tp-svn2 --ip=10.100.0.13
+
+cobbler system add --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --virt-path="/opt/fareoffice/var/virtstorage/fp-tp-gf.img,/opt/fareoffice/var/virtstorage/fp-tp-gf-swap.img" \
+    --name fp-tp-gf --hostname=fp-tp-gf --ip=10.100.100.154
+
+# PXE boot for fo-tp-vh02 - fo-tp-vh04
+cobbler system add --profile=centos5.5-vm_host \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --name fo-tp-vh02 --hostname=fo-tp-vh02 --ip=10.100.100.212 \
+    --mac=D4:85:64:39:D0:E2
+
+cobbler system edit --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --name fo-tp-vh03 --hostname=fo-tp-vh03 --ip=10.100.100.213 \
+    --mac=aa:aa:bb:bb:cc:01
+
+cobbler system edit --profile=centos5.5-vm_guest \
+    --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
+    --name fo-tp-vh04 --hostname=fo-tp-vh04 --ip=10.100.100.214 \
+    --mac=aa:aa:bb:bb:cc:01
+
+h3. Show and tetst all settings.
+
+# Validate kickstart file
+# Not needed when the kickstarts files works
+# yum install pykickstart
+# cobbler validateks
+# cobbler list
+# cobbler profile getks --name=centos5.5-vm_guest     
+# cobbler system getks --name=fp-tp-gf
+# cobbler report
+
+h1. Install fo-tp-guest
+
+# On fo-tp-vh01
+
+# Need the EPEL repos for cobbler and koan
+# http://ridingthecloud.com/installing-epel-repository-centos-rhel/
+sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+yum install koan
+
+Setup lvm..
+koan --server=10.100.100.200 --display --system=fp-tp-gf
+koan --server=10.100.100.201 --system=fp-tp-gf --virt
+koan --server=10.100.100.201 --system=fo-tp-svn2 --virt
+
+h1. fo-tp-vh01 - maintenance
+
+virsh list
+
+h1. More to read
+
+More info about cobbler, kvm, 
+
+http://number9.hellooperator.net/articles/2009/03/16/pxe-virtual-network-with-virtualbox-and-cobbler
+
+# Writing cobbler triggers
+# http://www.ithiriel.com/content/2010/03/29/writing-install-triggers-cobbler
+# https://fedorahosted.org/cobbler/wiki/CobblerTriggers
+
+# Setup kickstart files
+https://fedorahosted.org/cobbler/wiki/KickstartTemplating/
+http://fedoraproject.org/wiki/Anaconda/Kickstart
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# Reading material, to make it better.
+#
+
+# Used by tftp
+chkconfig xinetd on
+
+Questions to my self.
+* Is the guest systems using the repo on the cobbler server?
+* Should we use dhcp and dns on the cobbler server. So we don't need
+  to config each dns name manually on the dns server.
+
+# Install func
+# Tool for remote managment of many servers.
+https://fedorahosted.org/func/
+
+# Install later kernel
+# http://wiki.centos.org/AdditionalResources/Repositories/CentOSPlus?action=show&redirect=Repositories/CentOSPlus
+wget ftp://ftp.sunet.se/pub/Linux/distributions/centos/5.5/centosplus/x86_64/RPMS/kernel-2.6.18-194.26.1.el5.centos.plus.x86_64.rpm 
+rpm -i kernel-2.6.18-194.26.1.el5.centos.plus.x86_64.rpm 
+reboot
+
+
+# User lvm instead of image files. And lvm snapshot to backup.
+http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server-p3
+http://www.howtoforge.com/linux_lvm_snapshots
+
+
+# Setup clock on guest   
+#Determining if your CPU has the constant Time Stamp Counter
+egrep '(constant_tsc)' --color=always /proc/cpuinfo 
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/chap-Virtualization-KVM_guest_timing_management.html
+
+# Configure firewall
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/ch17s04.html
+
+# Turn of smartd
+/sbin/service smartd stop
+/sbin/chkconfig --del smartd
+
+# Optimization??
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html/Virtualization/ch31s08.html
+
+# Can we usmake a snapchot of a qemu-img qcow2 image, and test new updates yum update etc. to test if things works
+# and then if it doesn't rollback to the old snapshot.
+
+# The vncserver included in qemu has a irritating drawback. There's a gap
+# between the real mouse pointer and the vnc mouse pointer. 
+# You can use the "-usbdevice tablet" option to avoid this unpleasant effect.
+qemu-system-x86_64 -hda windows.img -m 384 -vnc :1 -usbdevice tablet
+> >  ??? (usbdevice tablet)
+> >     <usb>
+> >         <tablet/>
+> >     </usb>
+> > 
+
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/chap-Virtualization-Remote_management_of_virtualized_guests.html
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/chap-Virtualization-Virtualization_tools.html
+http://forge.puppetlabs.com/ghoneycutt/kvm
+
+# Cloning guest.
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/sect-Virtualization-Tips_and_tricks-Duplicating_an_existing_guest_and_its_configuration_file.html
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5.5/html/Virtualization_Guide/sect-Virtualization-Tips_and_tricks-Cloning_guest_configuration_files.html
+
+http://virt-manager.et.redhat.com/index.html
+
+# Console
+http://nixcraft.com/kernel-based-virtual-machine/15075-kvm-virsh-redirect-centos-redhat-console-serial-port.html
+
+Ytterliggare läsning
+http://www.gluster.com/community/documentation/index.php/Storage_Server_Installation_and_Configuration
+http://wiki.centos.org/HowTos#head-fb1ff7e71fb5f2f511cda8c68cb6ba5f6e8decae
+http://www.gluster.com/community/documentation/index.php/Storage_Server_Installation_and_Configuration
+
+http://searchservervirtualization.techtarget.com/generic/0,295582,sid94_gci1371226_mem1,00.html?mboxConv=searchCIO_RegActivate_Submit&#vanvugt
+http://searchsystemschannel.techtarget.com/generic/0,295582,sid99_gci1379770_mem1,00.html?ShortReg=1&mboxConv=searchSystemsChannel_RegActivate_Submit&
+http://searchservervirtualization.techtarget.com/generic/0,295582,sid94_gci1371226_mem1,00.html?mboxConv=searchCIO_RegActivate_Submit&
+http://virt-manager.et.redhat.com/index.html
+
+http://ajmf.wordpress.com/2009/06/08/management-interfaces-for-the-kernel-virtual-machine-kvm/
+http://www.convirture.com/products_opensource.php
+
+
+Chef or puppet?
+http://wiki.opscode.com/display/chef/Home
+http://reductivelabs.com/products/puppet/
