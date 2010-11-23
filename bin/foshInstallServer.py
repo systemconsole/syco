@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-import ConfigParser, subprocess
+import ConfigParser, subprocess, os
 from socket import gethostname
+from foshSsh import Ssh
 
 class InstallServer:
   hostname = gethostname()
