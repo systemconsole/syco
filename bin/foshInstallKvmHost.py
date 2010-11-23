@@ -2,8 +2,11 @@
 
 import os, subprocess, re, ConfigParser
 
+from foshVersion import Version
+
 class InstallKvmHost:
   verbose = True
+  version = 1
 
   def grep(self, fileName, pattern):
     # Check if cpu can handle virtualization
@@ -34,6 +37,10 @@ class InstallKvmHost:
     FILE.close()
   
   def run(self):
+    version = Version()
+    if version.isExecuted("InstallKvmHost", self.version):
+      return
+
     if (not self.grep("/proc/cpuinfo", "vmx|svm")):
       print "ERROR: CPU don't support virtualization."
       return
@@ -61,10 +68,10 @@ class InstallKvmHost:
       print "ERROR: virsh not installed."
       return
 
-    result = self.shellExec("/sbin/lsmod | grep kvm")
-    if "kvm_intel" not in result:
-      print "ERROR: kvm_intel not installed."
-      return
+    #result = self.shellExec("/sbin/lsmod | grep kvm")
+    #if "kvm_intel" not in result:
+    #  print "ERROR: kvm_intel not installed."
+    #  return
 
     # todo: Might fix mouse problems in the host when viewing through VNC.    
     # export SDL_VIDEO_X11_DGAMOUSE=0
@@ -134,6 +141,7 @@ ONBOOT=yes""")
       
     # To see the change
     # tail /etc/selinux/targeted/contexts/files/file_contexts.local
+    version.markExecuted("InstallKvmHost", self.version):
       
 if __name__ == "__main__":
   obj = InstallKvmHost()
