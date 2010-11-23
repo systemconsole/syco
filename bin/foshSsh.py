@@ -3,15 +3,19 @@
 import ConfigParser, subprocess, os
 
 class Ssh:
-  user="arlukin"
-  server="192.168.0.5"
-  sshKeyDir="/Users/dali/Desktop/fosh/var/ssh"
-  sshPrivateKeyFile=sshKeyDir + "/id_rsa"
-  sshPublicKeyFile=sshKeyDir + "/id_rsa.pub"
+  user=""
+  server=""
+  sshKeyDir=os.environ['HOME'] + "/.ssh"
+  sshPrivateKeyFile=sshKeyDir + "/id_fosh_rsa"
+  sshPublicKeyFile=sshKeyDir + "/id_fosh_rsa.pub"
   verbose=False
+  
+  def __init__(self, user, server):
+    self.user = user
+    self.server = server
 
-  def ssh(self, command):
-    if self.verbose:
+  def ssh(self, command, verbose = False):
+    if self.verbose or verbose:
       print "SSH Execute: " + command
       
     p = subprocess.Popen("ssh -T -v -i " + self.sshPrivateKeyFile + " " + 
@@ -23,10 +27,11 @@ class Ssh:
     )
     stdout, stderr = p.communicate()
     
-    if self.verbose:    
+    if self.verbose:
       print "------------- stderr"
       print stderr
-    
+
+    if self.verbose or verbose:        
       print "---------- stdout"
       print stdout
       print "----------"  
@@ -55,19 +60,23 @@ class Ssh:
     if not os.access(self.sshKeyDir, os.W_OK):
       os.makedirs(self.sshKeyDir)
 
+    if not os.access(self.sshPrivateKeyFile, os.R_OK):  
+      subprocess.Popen('ssh-keygen -t rsa -f ' + self.sshPrivateKeyFile + ' -N ""', shell=True).communicate()
+
     if self.isCertInstalled():
       return
-    
-    if not os.access(self.sshPrivateKeyFile, os.R_OK):  
-      subprocess.Popen('ssh-keygen -t rsa -f ' + sshPrivateKeyFile + ' -N ""', shell=True).communicate()
-    
-    self.ssh('mkdir -p .ssh;chmod 700 .ssh;touch .ssh/authorized_keys;chmod 640 .ssh/authorized_keys')
-    
-    f = open(self.sshPublicKeyFile)
+            
+    f = open(os.path.normpath(self.sshPublicKeyFile))
     idRsaPub = f.readline().strip()
     
-    self.ssh('echo "' + idRsaPub + '" >> .ssh/authorized_keys')
+    self.ssh(
+      "mkdir -p .ssh;" +
+      "chmod 700 .ssh;" +
+      "touch .ssh/authorized_keys;" +
+      "chmod 640 .ssh/authorized_keys;" +
+      "echo '" + idRsaPub + "' >> .ssh/authorized_keys"
+    )
 
 if __name__ == "__main__":
-  obj = Ssh()
+  obj = Ssh("arlukin", "192.168.0.5")
   obj.installCert()
