@@ -5,20 +5,35 @@ import ConfigParser, subprocess, os
 class Ssh:
   user=""
   server=""
+  port="34"
   sshKeyDir=os.environ['HOME'] + "/.ssh"
   sshPrivateKeyFile=sshKeyDir + "/id_fosh_rsa"
   sshPublicKeyFile=sshKeyDir + "/id_fosh_rsa.pub"
-  verbose=False
+  verbose=0
   
   def __init__(self, user, server):
     self.user = user
     self.server = server
+    
+  def shellExec(self, command):
+    result = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()[0]
+    if self.verbose:
+      print result
+    return result      
+    
+  def rsync(self, fromPath, toPath):
+    self.shellExec(
+      "rsync -az -e 'ssh -p" + self.port + " -i " + self.sshPrivateKeyFile + "' " + 
+      fromPath + " " + self.user + "@" + self.server + ":" + toPath
+    )  
 
-  def ssh(self, command, verbose = False):
-    if self.verbose or verbose:
+  def ssh(self, command, verbose = verbose):
+    if verbose >= 2:
+      print "----------"    
       print "SSH Execute: " + command
       
     p = subprocess.Popen("ssh -T -v -i " + self.sshPrivateKeyFile + " " + 
+      " -p" + self.port + " " +
       self.user + "@" + self.server + ' "' + 
       command + '"', 
       shell=True, 
@@ -27,19 +42,17 @@ class Ssh:
     )
     stdout, stderr = p.communicate()
     
-    if self.verbose:
-      print "------------- stderr"
-      print stderr
-
-    if self.verbose or verbose:        
-      print "---------- stdout"
+    if verbose >= 2:
       print stdout
       print "----------"  
+
+    if verbose >= 3:
+      print "------------- stderr"    
+      print stderr
+      print "-------------"
+
     
-  def isCertInstalled(self):
-    if self.verbose:    
-      print "isCertInstalled: "
-      
+  def isCertInstalled(self):      
     env = {'SSH_ASKPASS':'/path/to/myprog', 'DISPLAY':':9999'}
     p = subprocess.Popen("ssh -T -v -i " + self.sshPrivateKeyFile + " " + 
       self.user + "@" + self.server + ' "uname"', 
@@ -52,8 +65,12 @@ class Ssh:
     )
     stdout, stderr = p.communicate()
     if  p.returncode > 0:
+      if self.verbose >= 2:    
+        print "Cert not installed. "     
       return False
     else:
+      if self.verbose >= 2:    
+        print "Cert already installed. "    
       return True
           
   def installCert(self):

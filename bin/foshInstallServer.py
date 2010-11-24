@@ -1,41 +1,14 @@
 #! /usr/bin/env python
 
 import ConfigParser, subprocess, os
-from socket import gethostname
 from foshSsh import Ssh
 
 class InstallServer:
-  hostname = gethostname()
-  verbose = True
   
   #configFileName="/opt/fareoffice/etc/install.cfg"
   configFileName="/Users/dali/Desktop/fosh/etc/install.cfg"
-  
-  def shellExec(self, command):
-    result = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()[0]
-    if self.verbose:
-      print result
-    return result  
-  
-  def getCommands2(self):
-    config = ConfigParser.RawConfigParser()
-    config.read(self.configFileName)
+  verbose=1
     
-    options = []
-    
-    if config.has_section(self.hostname):
-      for option, value in config.items(self.hostname):
-        options.append([option.lower(), value])
-
-    return sorted(options)
-  
-  def run2(self):
-    for option, command in self.getCommands2():
-      if "command" in option:
-        self.shellExec(command)
-
-
-
   def getCommands(self, config, hostName):
     options = []
     
@@ -45,21 +18,29 @@ class InstallServer:
 
     return sorted(options)
 
+  def installFoshOnClient(self, ssh):
+    if self.verbose:
+      print "Install fosh client"
+    ssh.rsync("/Users/dali/Desktop/fosh/",  "/opt/fosh/")
+      
   def run(self):
     config = ConfigParser.RawConfigParser()
     config.read(self.configFileName)  
     for hostName in config.sections():
       if not config.has_option(hostName, "server"):
-        print "Error: Cant find ip for " + hostName
+        if self.verbose:
+          print "Error: Cant find ip for " + hostName
       else:
         server = config.get(hostName, "server")
-        print "Update " + hostName + " with ip " + server
+        if self.verbose:
+          print "Update " + hostName + " with ip " + server
         obj = Ssh("arlukin", server)
         obj.installCert()
-     
+        self.installFoshOnClient(obj)
+        
         for option, command in self.getCommands(config, hostName):
           if "command" in option:
-            obj.ssh(command, verbose = True)
+            obj.ssh(command, verbose=self.verbose+1)
        
 if __name__ == "__main__":
   obj = InstallServer()
