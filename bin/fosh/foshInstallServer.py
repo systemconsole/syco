@@ -34,13 +34,19 @@ class InstallServer:
         server = config.get(hostName, "server")
         if self.verbose:
           print "Update " + hostName + " with ip " + server
-        obj = Ssh("arlukin", server)
-        obj.installCert()
-        self.installFoshOnClient(obj)
-        
-        for option, command in self.getCommands(config, hostName):
-          if "command" in option:
-            obj.ssh(command, verbose=self.verbose+1)
+        obj = Ssh("root", server)
+        if not obj.isAlive():
+          print "Error: Client not alive"          
+        else:
+          obj.installCert()
+          if not obj.isCertInstalled():
+            print "Error: Failed to install ssh cert."
+          else:
+            self.installFoshOnClient(obj)
+            
+            for option, command in self.getCommands(config, hostName):
+              if "command" in option:
+                obj.ssh(command, verbose=self.verbose+1)
        
 if __name__ == "__main__":
   obj = InstallServer()

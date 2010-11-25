@@ -141,7 +141,7 @@ ONBOOT=yes""")
       
     # To see the change
     # tail /etc/selinux/targeted/contexts/files/file_contexts.local
-    version.markExecuted("InstallKvmHost", self.version):
+    version.markExecuted("InstallKvmHost", self.version)
       
 if __name__ == "__main__":
   obj = InstallKvmHost()

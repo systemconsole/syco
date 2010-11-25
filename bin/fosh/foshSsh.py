@@ -1,15 +1,17 @@
 #! /usr/bin/env python
 
 import ConfigParser, subprocess, os
+from socket import *  
 
 class Ssh:
   user=""
   server=""
-  port="34"
+  port="22"
   sshKeyDir=os.environ['HOME'] + "/.ssh"
   sshPrivateKeyFile=sshKeyDir + "/id_fosh_rsa"
   sshPublicKeyFile=sshKeyDir + "/id_fosh_rsa.pub"
   verbose=0
+  certIsInstalled=False
   
   def __init__(self, user, server):
     self.user = user
@@ -50,9 +52,21 @@ class Ssh:
       print "------------- stderr"    
       print stderr
       print "-------------"
-
+      
+  def isAlive(self):
+    s = socket(AF_INET, SOCK_STREAM)      
+    result = s.connect_ex((self.server, int(self.port)))   
+    s.close()
     
+    if (result == 0):  
+      return True
+    else:
+      return False    
+                
   def isCertInstalled(self):      
+    if self.certIsInstalled:
+      return True
+      
     env = {'SSH_ASKPASS':'/path/to/myprog', 'DISPLAY':':9999'}
     p = subprocess.Popen("ssh -T -v -i " + self.sshPrivateKeyFile + " " + 
       self.user + "@" + self.server + ' "uname"', 
@@ -66,11 +80,13 @@ class Ssh:
     stdout, stderr = p.communicate()
     if  p.returncode > 0:
       if self.verbose >= 2:    
-        print "Cert not installed. "     
+        print "Cert not installed. "
+        self.certIsInstalled = False
       return False
     else:
       if self.verbose >= 2:    
         print "Cert already installed. "    
+        self.certIsInstalled = True
       return True
           
   def installCert(self):
