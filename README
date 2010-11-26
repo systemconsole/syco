@@ -1,2 +1,10 @@
 Fareoffice Shell
 A bunch of sysadmin functions used at Fareoffice.
+
+Forking notes
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub
+
+Insert the output into github.
+
+git clone git@github.com:arlukin/fosh.git
