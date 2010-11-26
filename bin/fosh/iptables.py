@@ -6,7 +6,7 @@ def iptables(args):
   if (subprocess.call("/sbin/iptables " + args, shell=True)):
     print(BOLD + "Warning: " + RESET + "Iptables invalid returncode: " + retcode)
 
-def fw_clear():
+def clear():
   print("Clear all iptables rules")
   # reset the default policies in the filter table.
   iptables("-P INPUT ACCEPT")
