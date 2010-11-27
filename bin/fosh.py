@@ -4,6 +4,7 @@ import os, sys
 from optparse import OptionParser
 
 sys.path.append(sys.path[0] + "/fosh")
+sys.path.append(sys.path[0] + "/fosh/utils")
 
 import installKvmHost, iptables, vir, app
 
@@ -17,6 +18,7 @@ def main():
   usage += "commands\n"
   usage += "   install-fosh     Install the fosh script on the current server.\n"
   usage += "   install-kvmhost  Install kvm host on the current server.\n"
+  usage += "   remote-install   Connect to all servers, and run all commands defined in install.cfg.\n"  
   usage += "   vir-rm [server]  Remove virtual server\n"
   usage += "   iptables-clear   Clear all rules from iptables"
   
@@ -49,10 +51,14 @@ def execute_command(args):
     obj.run()
     
   elif (command == 'vir-rm'):
-    vir_rm(command2)
+    vir.vir_rm(command2)
     
-  elif (command == 'fw-clear'):
+  elif (command == 'iptables-clear'):
     iptables.clear()
+    
+  elif (command == 'remote-install'):
+    obj = RemoteInstall()
+    obj.run()    
     
   else:
     app.parser.error('Unknown command %s' % command)
@@ -68,5 +74,5 @@ def install_fosh():
   else:
     app.print_info("Already installed")
             
-if __name__ == "__main__":
+if __name__ == "__main__":    
     main()
