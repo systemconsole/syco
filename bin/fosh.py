@@ -6,7 +6,7 @@ from optparse import OptionParser
 sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
 
-import installKvmHost, iptables, vir, app
+import installKvmHost, iptables, vir, app, remoteInstall
 
 def main():
   '''
@@ -57,7 +57,7 @@ def execute_command(args):
     iptables.clear()
     
   elif (command == 'remote-install'):
-    obj = RemoteInstall()
+    obj = remoteInstall.RemoteInstall()
     obj.run()    
     
   else:
