@@ -1,13 +1,12 @@
 #! /usr/bin/env python
 
-import subprocess
+import app, general
 
 def iptables(args):
-  if (subprocess.call("/sbin/iptables " + args, shell=True)):
-    print(BOLD + "Warning: " + RESET + "Iptables invalid returncode: " + retcode)
+  general.shell_exec("/sbin/iptables " + args)
 
 def clear():
-  print("Clear all iptables rules")
+  app.print_verbose("Clear all iptables rules")
   # reset the default policies in the filter table.
   iptables("-P INPUT ACCEPT")
   iptables("-P FORWARD ACCEPT")
@@ -39,6 +38,3 @@ def clear():
   iptables("-Z -t filter")
   iptables("-Z -t nat")
   iptables("-Z -t mangle")
-                    
-if __name__ == "__main__":
-  pass
