@@ -18,12 +18,12 @@ class Ssh:
     self.server = server
     
   def rsync(self, fromPath, toPath):
-    general.shellExec(
+    general.shell_exec(
       "rsync -az -e 'ssh -p" + self.port + " -i " + self.ssh_private_key_file + "' " + 
       fromPath + " " + self.user + "@" + self.server + ":" + toPath
     )  
 
-  def ssh(self, command, verbose = app.verbose):
+  def ssh(self, command):
     app.print_verbose("SSH Execute: " + command)
       
     p = subprocess.Popen("ssh -T -v -i " + self.ssh_private_key_file + " " + 
@@ -35,13 +35,15 @@ class Ssh:
       stderr=subprocess.PIPE
     )
     stdout, stderr = p.communicate()
+
+    if (p.returncode):
+      app.print_error("Invalid returncode %d" % p.returncode)
     
     if (stdout):
-      app.print_error("Result:")
-      app.print_error(stdout)
+      app.print_verbose("Result:")
+      app.print_verbose(stdout)
 
-    if app.verbose >= 2:
-      app.print_error("Error:")
+    if app.options.verbose >= 1:
       app.print_error(stderr)
           
   def is_alive(self):
@@ -70,12 +72,12 @@ class Ssh:
     )
     stdout, stderr = p.communicate()
     if  p.returncode > 0:
-      if app.verbose >= 1:    
+      if app.options.verbose >= 1:    
         app.print_error("Cert not installed. ")
         self.cert_is_installed = False
       return False
     else:
-      if self.verbose >= 1:    
+      if app.options.verbose >= 1:    
         app.print_verbose("Cert already installed. ")
         self.cert_is_installed = True
       return True
