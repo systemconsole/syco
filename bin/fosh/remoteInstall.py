@@ -16,8 +16,8 @@ class RemoteInstall:
     return sorted(options)
 
   def install_fosh_on_client(self, ssh):
-    app.print_verbose("Install fosh client")
-    ssh.rsync(os.path.abspath(sys.path[0] + "/../") ,  "/opt/fosh/")
+    ssh.rsync(os.path.abspath(sys.path[0] + "/../") + "/" ,  "/opt/fosh", "--exclude version.cfg")
+    ssh.ssh("/opt/fosh/bin/fosh.py install-fosh")
       
   def run(self):
     config = ConfigParser.RawConfigParser()
@@ -27,7 +27,9 @@ class RemoteInstall:
         app.print_error("Cant find ip for " + host_name)
       else:
         server = config.get(host_name, "server")
-        app.print_verbose("Update " + host_name + " (" + server + ")")
+        app.print_verbose("========================================================================================")
+        app.print_verbose("=== Update " + host_name + " (" + server + ")")
+        app.print_verbose("========================================================================================")
         obj = ssh.Ssh(server)
         if not obj.is_alive():
           app.print_error("Client not alive")

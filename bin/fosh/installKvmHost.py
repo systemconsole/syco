@@ -9,7 +9,7 @@ class InstallKvmHost:
   Install the server to act as a kvm host.
   '''
   # The version of InstallKvmHost
-  script_version = 2
+  script_version = 3
 
   def get_config_value(self, file_name, config_name):
     '''
@@ -44,7 +44,7 @@ class InstallKvmHost:
     app.print_verbose("Install kvm host version: %d" % self.script_version)
     ver_obj = version.Version()
     if ver_obj.is_executed("InstallKvmHost", self.script_version):
-      app.print_verbose("Already installed latest version")
+      app.print_verbose("   Already installed latest version")
       return
 
     if (not general.grep("/proc/cpuinfo", "vmx|svm")):

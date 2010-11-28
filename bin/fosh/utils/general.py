@@ -32,15 +32,32 @@ def shell_exec(command):
   Execute a shell command and handles output verbosity.
   '''
   app.print_verbose("Command: " + command)
-  proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   
-  result=proc.communicate()[0]
-  if (proc.returncode):
-    app.print_error("Invalid returncode " + int(proc.returncode))
+  return handle_subprocess(p)
   
-  if (result):
-    app.print_verbose(result)
-  return result
+def handle_subprocess(p):  
+  stdout=""
+  stderr=""
+  while (p.poll() == None):
+    for txt in p.stdout:
+      if (p.stdout and app.options.verbose >=2):
+        # Only write caption once.
+        if (stdout==""):
+          app.print_verbose("---- Result ----")          
+        print txt,  
+      stdout+=txt
+      
+    for txt in p.stderr:
+      stderr+=txt  
+      
+  if (stderr):
+    app.print_error(stderr.strip())
+
+  if (p.returncode):
+    app.print_error("Invalid returncode %d" % p.returncode)
+            
+  return stdout
 
 if __name__ == "__main__":
   pass
