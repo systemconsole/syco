@@ -6,7 +6,8 @@ from optparse import OptionParser
 sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
 
-import installKvmHost, iptables, vir, app, remoteInstall
+import app
+import remoteInstall, installKvmHost, vir, iptables, git
 
 def main():
   '''
@@ -16,14 +17,15 @@ def main():
   '''
   usage = "usage: %prog [options] command\n"
   usage += "commands\n"
-  usage += "   install-fosh     Install the fosh script on the current server.\n"
-  usage += "   install-kvmhost  Install kvm host on the current server.\n"
-  usage += "   remote-install   Connect to all servers, and run all commands defined in install.cfg.\n"  
-  usage += "   vir-rm [server]  Remove virtual server\n"
-  usage += "   iptables-clear   Clear all rules from iptables"
+  usage += "   install-fosh         Install the fosh script on the current server.\n"
+  usage += "   remote-install       Connect to all servers, and run all commands defined in install.cfg.\n"  
+  usage += "   install-kvmhost      Install kvm host on the current server.\n"
+  usage += "   vir-rm [server]      Remove virtual server\n"
+  usage += "   iptables-clear       Clear all rules from iptables\n"
+  usage += "   git-commit [comment] Commit changes to fosh to github"  
   
   app.parser = OptionParser(usage, version="%prog " + app.version)
-  app.parser.add_option("-v", "--verbose", action="store_const", const=1, dest="verbose", default=1)
+  app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1)
   app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose")
 
   (app.options, args) = app.parser.parse_args()
@@ -45,6 +47,10 @@ def execute_command(args):
   
   if (command == 'install-fosh'):
     install_fosh()
+
+  elif (command == 'remote-install'):
+    obj = remoteInstall.RemoteInstall()
+    obj.run()    
     
   elif (command == 'install-kvmhost'):
     obj = installKvmHost.InstallKvmHost()
@@ -56,10 +62,9 @@ def execute_command(args):
   elif (command == 'iptables-clear'):
     iptables.clear()
     
-  elif (command == 'remote-install'):
-    obj = remoteInstall.RemoteInstall()
-    obj.run()    
-    
+  elif (command == 'git-commit'):
+    git.git_commit(command2)
+        
   else:
     app.parser.error('Unknown command %s' % command)
                
@@ -72,7 +77,7 @@ def install_fosh():
     app.print_verbose("Create symlink /sbin/fosh")
     os.symlink(sys.path[0] + '/fosh.py', '/sbin/fosh')
   else:
-    app.print_info("Already installed")
+    app.print_verbose("   Already installed")
             
 if __name__ == "__main__":    
     main()

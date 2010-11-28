@@ -17,16 +17,22 @@ class Ssh:
   def __init__(self, server):
     self.server = server
     
-  def rsync(self, fromPath, toPath):
+  def rsync(self, from_path, to_path, extra=""):
     general.shell_exec(
-      "rsync -az -e 'ssh -p" + self.port + " -i " + self.ssh_private_key_file + "' " + 
-      fromPath + " " + self.user + "@" + self.server + ":" + toPath
+      "rsync --delete -az -e 'ssh -p" + self.port + " -i " + self.ssh_private_key_file + "' " + 
+      extra + " " +
+      from_path + " " + self.user + "@" + self.server + ":" + to_path
     )  
 
   def ssh(self, command):
-    app.print_verbose("SSH Execute: " + command)
+    app.print_verbose("SSH Command: " + command)
+    
+    if (app.options.verbose >=3):
+      verbose_flag="-v"
+    else:
+      verbose_flag=""
       
-    p = subprocess.Popen("ssh -T -v -i " + self.ssh_private_key_file + " " + 
+    p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
       " -p" + self.port + " " +
       self.user + "@" + self.server + ' "' + 
       command + '"', 
@@ -34,17 +40,8 @@ class Ssh:
       stdout=subprocess.PIPE, 
       stderr=subprocess.PIPE
     )
-    stdout, stderr = p.communicate()
-
-    if (p.returncode):
-      app.print_error("Invalid returncode %d" % p.returncode)
     
-    if (stdout):
-      app.print_verbose("Result:")
-      app.print_verbose(stdout)
-
-    if app.options.verbose >= 1:
-      app.print_error(stderr)
+    return general.handle_subprocess(p)
           
   def is_alive(self):
     s = socket(AF_INET, SOCK_STREAM)      
@@ -77,7 +74,7 @@ class Ssh:
         self.cert_is_installed = False
       return False
     else:
-      if app.options.verbose >= 1:    
+      if app.options.verbose >= 2:    
         app.print_verbose("Cert already installed. ")
         self.cert_is_installed = True
       return True

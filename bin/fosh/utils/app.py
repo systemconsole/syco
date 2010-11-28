@@ -17,7 +17,7 @@ version="0.1"
 parser=''
 
 def print_error(message):
-  print_verbose(general.BOLD + "Error: " + general.RESET  + message) 
+  print_verbose(general.BOLD + "Error: " + general.RESET  + message)
     
 def print_info(message):
   print_verbose("Info: " + message) 
