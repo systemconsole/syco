@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob
+import re, subprocess, glob, os
 import app
 
 # Constants
@@ -58,6 +58,31 @@ def handle_subprocess(p):
     app.print_error("Invalid returncode %d" % p.returncode)
             
   return stdout
-
+  
+def set_config_property(file_name, search_exp, replace_exp):
+  '''Change or add a config property to a specific value'''
+  if os.path.exists(file_name):
+    exist=False        
+    try:
+      os.rename(file_name, file_name + ".bak")
+      r = open(file_name + ".bak", 'r')
+      w = open(file_name, 'w')
+      for line in r:
+        if re.search(search_exp, line):
+          line = re.sub(search_exp, replace_exp, line)
+          exist=True
+        w.write(line)
+      
+      if exist == False:
+        w.write(replace_exp + "\n")
+    finally:
+      r.close() 
+      w.close() 
+      os.remove(file_name + ".bak")
+  else:
+    w = open(file_name, 'w')
+    w.write(replace_exp)
+    w.close()
+  
 if __name__ == "__main__":
   pass
