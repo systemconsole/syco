@@ -45,17 +45,21 @@ def handle_subprocess(p):
         # Only write caption once.
         if (stdout==""):
           app.print_verbose("---- Result ----")          
-        print txt,  
+        print txt,
       stdout+=txt
       
     for txt in p.stderr:
       stderr+=txt  
-      
+          
   if (stderr):
     app.print_error(stderr.strip())
 
   if (p.returncode):
     app.print_error("Invalid returncode %d" % p.returncode)
+
+  # An extra line break for the looks.
+  if (stdout and app.options.verbose >=2):
+    print("\n"),
             
   return stdout
   
