@@ -7,7 +7,7 @@ sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
 
 import app
-import remoteInstall, installKvmHost, vir, iptables, git
+import remoteInstall, installKvmHost, hardening, vir, iptables, git
 
 def main():
   '''
@@ -20,6 +20,7 @@ def main():
   usage += "   install-fosh         Install the fosh script on the current server.\n"
   usage += "   remote-install       Connect to all servers, and run all commands defined in install.cfg.\n"  
   usage += "   install-kvmhost      Install kvm host on the current server.\n"
+  usage += "   hardening            Hardening the host, removing not used software etc.\n"
   usage += "   vir-rm [server]      Remove virtual server\n"
   usage += "   iptables-clear       Clear all rules from iptables\n"
   usage += "   git-commit [comment] Commit changes to fosh to github"  
@@ -55,6 +56,9 @@ def execute_command(args):
   elif (command == 'install-kvmhost'):
     obj = installKvmHost.InstallKvmHost()
     obj.run()
+    
+  elif (command == 'hardening'):
+    hardening.run()
     
   elif (command == 'vir-rm'):
     vir.vir_rm(command2)
