@@ -13,21 +13,32 @@
 
 import sys, os, fileinput, re, shlex, subprocess
 
-import app, general
+import app, general, version
+
+# The version of hardening
+script_version = 1
 
 # The main function
 #   
 def run():    
-    #user_add()
-    enable_selinux()
-    disable_services()
-    disable_virtual_terminals()
-    remove_rpms()
-    customize_shell()
-    hardening()
-    clear_login_screen()
-    yum_update()   
-    disable_ip6_support()
+  global script_version
+  app.print_verbose("Harden host version: %d" % script_version)
+  ver_obj = version.Version()
+  if ver_obj.is_executed("HardeningHost", script_version):
+    app.print_verbose("   Already installed latest version")
+    return
+  
+  #user_add()
+  enable_selinux()
+  disable_services()
+  disable_virtual_terminals()
+  remove_rpms()
+  customize_shell()
+  hardening()
+  clear_login_screen()
+  yum_update()   
+  disable_ip6_support()
+  ver_obj.mark_executed("HardeningHost", script_version)
 
 #def user_add():
 #  app.print_verbose('User add')

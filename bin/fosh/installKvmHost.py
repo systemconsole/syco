@@ -2,7 +2,7 @@
 
 import os, subprocess, re, ConfigParser
 
-import app, version, general
+import app, general, version
 
 class InstallKvmHost:
   '''
