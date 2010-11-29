@@ -7,6 +7,14 @@ import app, general, version
 class InstallKvmHost:
   '''
   Install the server to act as a kvm host.
+  
+  KVM Installation doc
+  http://www.linuxjournal.com/article/9764
+  http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
+  http://wiki.centos.org/HowTos/KVM
+  http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
+  http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/  
   '''
   # The version of InstallKvmHost
   script_version = 3
