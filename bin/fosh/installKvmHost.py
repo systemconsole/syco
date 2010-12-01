@@ -73,7 +73,7 @@ class InstallKvmHost:
     general.shell_exec("setenforce 1")
 
     # Is virsh started?
-    result = general.shell_exec("virsh nodeinfo")
+    result = general.shell_exec("virsh nodeinfo", os.F_OK)
     if "CPU model:           x86_64" not in result:
       app.print_error("virsh not installed.")
       self.abort_kvm_host_installation()      

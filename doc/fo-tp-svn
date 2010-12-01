@@ -1,0 +1,31 @@
+h1. Create fo-tp-svn
+
+# Create the data lvm volumegroup
+vgcreate vg_data /dev/hdd
+lvcreate -n VolData -L 50G vg_data
+mke2fs -j /dev/vg_data/VolData
+mount /dev/vg_data/VolData /opt
+echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
+
+#RPM packages
+yum install subversion httpd mod_dav_svn
+
+# apache Setup
+vi /etc/httpd/conf/httpd.conf
+# ServerName fo-tp-svn.fareonline.net:80
+service httpd start
+chkconfig httpd on
+
+# Setup svn
+cp fosh/var/fo-tp-svn/subversion.conf /etc/httpd/conf.d/subversion.conf
+
+# Enable selinux
+# http://ejohansson.se/archives/2007/11/04/selinux-subversion-and-mod_svn/
+setsebool -P httpd_builtin_scripting=1
+setsebool -P httpd_enable_cgi=1
+
+chown -R apache:apache /opt/subversion
+semanage fcontext -a -t httpd_sys_content_t '/opt/subversion(/.*)?'
+semanage fcontext -a -t httpd_sys_script_rw_t '/opt/subversion/[^/]+/(dav|db)(/.*)?'
+semanage fcontext -a -t httpd_sys_script_exec_t '/opt/subversion/[^/]+/hooks(/.*)?'
+restorecon -Rv /opt/subversion
