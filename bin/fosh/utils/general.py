@@ -27,16 +27,16 @@ def grep(file_name, pattern):
       return True
   return False
   
-def shell_exec(command):
+def shell_exec(command, error=True):
   '''
   Execute a shell command and handles output verbosity.
   '''
   app.print_verbose("Command: " + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   
-  return handle_subprocess(p)
+  return handle_subprocess(p, error)
   
-def handle_subprocess(p):  
+def handle_subprocess(p, error=True):  
   stdout=""
   stderr=""
   while (p.poll() == None):
@@ -51,10 +51,10 @@ def handle_subprocess(p):
     for txt in p.stderr:
       stderr+=txt  
           
-  if (stderr):
+  if (stderr and error):
     app.print_error(stderr.strip())
 
-  if (p.returncode):
+  if (p.returncode and error):
     app.print_error("Invalid returncode %d" % p.returncode)
 
   # An extra line break for the looks.
