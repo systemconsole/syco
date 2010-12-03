@@ -159,7 +159,8 @@ cobbler system add --profile=centos5.5-vm_guest \
 
 cobbler system add --profile=centos5.5-vm_guest \
     --static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 \
-    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-svn.img,/opt/fareoffice/var/virtstorage/fo-tp-svn-swap.img" \
+    --virt-path="/opt/fareoffice/var/virtstorage/fo-tp-svn.img,/opt/fareoffice/var/virtstorage/fo-tp-svn-swap.img,/opt/fareoffice/var/virtstorage/fo-tp-svn-data.img" \
+    --virt-file-size=20,5,100 \
     --name fo-tp-svn --hostname=fo-tp-svn --ip=10.100.100.11
 
 cobbler system edit --profile=centos5.5-vm_guest \
@@ -213,6 +214,7 @@ Setup lvm..
 koan --server=10.100.100.200 --display --system=fp-tp-gf
 koan --server=10.100.100.201 --system=fp-tp-gf --virt
 koan --server=10.100.100.201 --system=fo-tp-svn2 --virt
+koan --server=10.100.100.201 --system=fo-tp-svn --virt
 
 h1. fo-tp-vh01 - maintenance
 
