@@ -8,100 +8,30 @@ h2. Prerequisite
 
 h2. Install KVM host
 
-# KVM Installation doc
-# http://www.linuxjournal.com/article/9764
-# http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
-# http://wiki.centos.org/HowTos/KVM
-# http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
-# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
-# http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/
-
-# Check if cpu can handle virtualization
-egrep '(vmx|svm)' --color=always /proc/cpuinfo
-
-# Install the kvm packages
-yum install kvm.x86_64
-
-# Provides the virt-install command for creating virtual machines.
-yum install python-virtinst
-
-# Might be need for managment, depending on how we are going to do the managment.
-# yum install virt-manager libvirt libvirt-python
-
-# Start virsh
-service libvirtd start
-
-# Set selinux
-setenforce 1
-
-# Is virsh started?
-virsh nodeinfo
-virsh -c qemu:///system list
-/sbin/lsmod | grep kvm
-
-# Might fix mouse problems in the host when viewing through VNC.
-export SDL_VIDEO_X11_DGAMOUSE=0
-
-h3. Create logical volume
- 
-# Create logical volume for images with selinux enabled.
-# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/sect-Virtualization-Security_for_virtualization-SELinux_and_virtualization.html
-
-vgcreate vg_data /dev/hdd
-lvcreate -n VolGroup02 -L 50G vg0 
-mke2fs -j /dev/VolGroup00/NewVolumeName
-mkdir -p /opt/fareoffice/var/virtstorage
-mount /dev/volumegroup/NewVolumeName /opt/fareoffice/var/virtstorage
-semanage fcontext -a -t virt_image_t "/opt/fareoffice/var/virtstorage(/.*)?"
-restorecon -R -v /opt/fareoffice/var/virtstorage
-
-# To see the change
-tail /etc/selinux/targeted/contexts/files/file_contexts.local
-
-h3. Setup bridged network
-
-# First remove the virbr0, "NAT-interface".
-# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/chap-Virtualization-Network_Configuration.html
-virsh net-destroy default
-
-# https://fedorahosted.org/cobbler/wiki/VirtNetworkingSetupForUseWithKoan
-# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/sect-Virtualization-Network_Configuration-Bridged_networking_with_libvirt.html
-
-# Install network bridge
-yum install bridge-utils
-
-vi /etc/sysconfig/network-scripts/ifcfg-eth0
-# DEVICE=eth1
-# HWADDR=D4:85:64:39:E0:13
-# ONBOOT=yes
-# TYPE=Ethernet
-# IPV6INIT=no
-# USERCTL=no
-# BRIDGE=br1
-
-vi /etc/sysconfig/network-scripts/ifcfg-br1
-# DEVICE=br1
-# TYPE=Bridge
-# BOOTPROTO=static
-# GATEWAY=192.168.0.1
-# IPADDR=192.168.0.180
-# NETMASK=255.255.255.0
-# ONBOOT=yes
-
-service iptables start
-iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT
-service iptables save
+fosh install-kvmhost
 
 h1. Setup KVM guest
+
+# Create the data lvm volumegroup
+lvcreate -n fo-tp-install -L 100G VolGroup00
+
+mke2fs -j /dev/vg_data/VolData
+mkdir -p /opt/fareoffice/var/virtstorage
+mount /dev/vg_data/VolData /opt
+echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
 
 # Create guest image
 qemu-img create -f raw /opt/fareoffice/var/virtstorage/fo-tp-install.img 100G
 qemu-img create -f raw /opt/fareoffice/var/virtstorage/fo-tp-install-swap.img 4G
 
+# Create the data lvm logical volume
+lvcreate -n fo-tp-install -L 100G VolGroup00
+lvcreate -n fo-tp-install-swap -L 4G VolGroup00
+
 # Create the KVM image
-virt-install --connect qemu:///system -n fo-tp-install2 -r 2048 --vcpus=2 \
-        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install2.img \
-        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install2-swap.img \
+virt-install --connect qemu:///system -n fo-tp-install -r 2048 --vcpus=2 \
+        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install.img \
+        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install-swap.img \
         --cdrom /dev/cdrom \
         --vnc --noautoconsole --hvm --accelerate \
         --check-cpu \
@@ -154,13 +84,5 @@ virsh suspend fo-tp-install
 # Resume a guest:
 virsh resume fo-tp-install
 
-
-h1. Guests
-
-# Create the data lvm volumegroup
-vgcreate vg_data /dev/hdd
-lvcreate -n VolData -L 50G vg_data
-mke2fs -j /dev/vg_data/VolData
-mkdir -p /opt/fareoffice/var/virtstorage
-mount /dev/vg_data/VolData /opt
-echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
+# Move an lvm based virtual machine to another host
+http://www.alethe.com/brad/2008/04/move-an-lvm-based-virtual-machine-to-another-host/
