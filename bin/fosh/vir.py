@@ -1,19 +1,18 @@
 #! /usr/bin/env python
 
-import general
+import general, app, version
 
-def vir_rm(serverName):
-  print 'Remove virtual server %s.' % serverName
-  
-  print("Destory the kvm instance");
-  subprocess.call(shlex.split("virsh destroy " + serverName))
+def vir_rm(server_name):
+  app.print_verbose('Remove virtual server %s.' % server_name)
+    
+  app.print_verbose("Destory the kvm instance");
+  general.shell_exec("virsh destroy " + server_name)
                   
-  remove_file('/etc/libvirt/qemu/autostart/%s.xml' % serverName)        
-  remove_file('/etc/libvirt/qemu/%s.xml' % serverName)
-  remove_file('/opt/fareoffice/var/virtstorage/' + serverName +'*')
-  remove_file('/var/log/libvirt/qemu/%s.log*' % serverName)
-  subprocess.call(["updatedb"])
+  general.remove_file('/etc/libvirt/qemu/autostart/%s.xml' % server_name)        
+  general.remove_file('/etc/libvirt/qemu/%s.xml' % server_name)
+  general.remove_file('/opt/fareoffice/var/virtstorage/' + server_name +'*')
+  general.remove_file('/var/log/libvirt/qemu/%s.log*' % server_name)
+  general.shell_exec("updatedb")
   
-  print("Restart libvirtd");
-  subprocess.call(shlex.split("/etc/init.d/libvirtd restart"))
-  #print(BOLD + "INFO: " + RESET + "Remember to run /etc/init.d/libvirtd restart")
+  app.print_verbose("Restart libvirtd");
+  general.shell_exec("/etc/init.d/libvirtd restart")

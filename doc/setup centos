@@ -6,6 +6,17 @@ http://searchsystemschannel.techtarget.com/generic/0,295582,sid99_gci1379770_mem
 http://searchservervirtualization.techtarget.com/generic/0,295582,sid94_gci1371226_mem1,00.html?mboxConv=searchCIO_RegActivate_Submit&
 http://wiki.centos.org/HowTos/Xen/InstallingHVMDomU
 
+
+h1. Guests
+
+# Create the data lvm volumegroup
+vgcreate vg_data /dev/hdd
+lvcreate -n VolData -L 50G vg_data
+mke2fs -j /dev/vg_data/VolData
+mount /dev/vg_data/VolData /opt
+echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
+
+
 h2. Hardening Centos 5.5
 
 http://www.hollenback.net/index.php/iLoIpmiComparison

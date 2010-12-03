@@ -2,81 +2,91 @@
 
 import os, subprocess, re, ConfigParser
 
-import version
-
+import app, general, version
 
 class InstallKvmHost:
-  verbose = True
-  version = 1
+  '''
+  Install the server to act as a kvm host.
+  
+  KVM Installation doc
+  http://www.linuxjournal.com/article/9764
+  http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
+  http://wiki.centos.org/HowTos/KVM
+  http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
+  http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/  
+  '''
+  # The version of InstallKvmHost
+  script_version = 3
 
-  def grep(self, fileName, pattern):
-    # Check if cpu can handle virtualization
-    prog = re.compile(pattern)
-    for line in open(fileName):
-      if prog.search(line):
-        return True
-    return False
-    
-  def shellExec(self, command):
-    result = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()[0]
-    if self.verbose:
-      print result
-    return result
-
-  def getConfigValue(self, fileName, configName):
-    # Check if cpu can handle virtualization
-    prog = re.compile("[\s]*" + configName + "[:=\s]*(.*)")
-    for line in open(fileName):
+  def get_config_value(self, file_name, config_name):
+    '''
+    Get a value from an option in a config file.
+    '''
+    prog = re.compile("[\s]*" + config_name + "[:=\s]*(.*)")
+    for line in open(file_name):
       m = prog.search(line)
       if m:
         return m.group(1)
     return False    
     
-  def storeFile(self, fileName, value):
-    FILE = open(fileName, "w")   
+  def store_file(self, file_name, value):
+    '''
+    Store a text in a file.
+    '''
+    app.print_verbose("storing file " + file_name)
+    FILE = open(file_name, "w")   
     FILE.writelines(value)
     FILE.close()
+   
+  def abort_kvm_host_installation(self):
+    '''
+    Write error message for aborting the installation.
+    '''
+    app.print_error("abort kvm host installation")          
   
   def run(self):
-    version = version.Version()
-    if version.isExecuted("InstallKvmHost", self.version):
+    '''
+    The actual installation of the kvm host.
+    '''
+    app.print_verbose("Install kvm host version: %d" % self.script_version)
+    ver_obj = version.Version()
+    if ver_obj.is_executed("InstallKvmHost", self.script_version):
+      app.print_verbose("   Already installed latest version")
       return
 
-    if (not self.grep("/proc/cpuinfo", "vmx|svm")):
-      print "ERROR: CPU don't support virtualization."
+    if (not general.grep("/proc/cpuinfo", "vmx|svm")):
+      app.print_error("CPU don't support virtualization.")
+      self.abort_kvm_host_installation()
       return
 
     # Install the kvm packages
-    self.shellExec("yum -qy install kvm.x86_64")
+    general.shell_exec("yum -qy install kvm.x86_64")
         
     # Provides the virt-install command for creating virtual machines.
-    self.shellExec("yum -qy install python-virtinst")
+    general.shell_exec("yum -qy install python-virtinst")
         
     # Start virsh      
-    self.shellExec("service libvirtd start")
+    general.shell_exec("service libvirtd start")
           
     # Set selinux
-    self.shellExec("setenforce 1")
+    general.shell_exec("setenforce 1")
 
     # Is virsh started?
-    result = self.shellExec("virsh nodeinfo")
+    result = general.shell_exec("virsh nodeinfo", os.F_OK)
     if "CPU model:           x86_64" not in result:
-      print "ERROR: virsh not installed."
+      app.print_error("virsh not installed.")
+      self.abort_kvm_host_installation()      
       return
 
-    result = self.shellExec("virsh -c qemu:///system list")
+    result = general.shell_exec("virsh -c qemu:///system list")
     if "Id Name" not in result:
-      print "ERROR: virsh not installed."
+      app.print_error("virsh not installed.")
+      self.abort_kvm_host_installation()
       return
-
-    #result = self.shellExec("/sbin/lsmod | grep kvm")
-    #if "kvm_intel" not in result:
-    #  print "ERROR: kvm_intel not installed."
-    #  return
-
+            
     # todo: Might fix mouse problems in the host when viewing through VNC.    
     # export SDL_VIDEO_X11_DGAMOUSE=0
-
 
     #
     # Setup bridged network
@@ -84,17 +94,17 @@ class InstallKvmHost:
       
     # First remove the virbr0, "NAT-interface".
     # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/chap-Virtualization-Network_Configuration.html
-    self.shellExec("virsh net-destroy default")
+    general.shell_exec("virsh net-destroy default")
     
     # https://fedorahosted.org/cobbler/wiki/VirtNetworkingSetupForUseWithKoan
     # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/sect-Virtualization-Network_Configuration-Bridged_networking_with_libvirt.html
       
     # Install network bridge
-    self.shellExec("yum install bridge-utils")
+    general.shell_exec("yum install bridge-utils")
       
     # Setup /etc/sysconfig/network-scripts/ifcfg-eth1
-    hwaddr = self.getConfigValue("/etc/sysconfig/network-scripts/ifcfg-eth1", "HWADDR")
-    self.storeFile("/etc/sysconfig/network-scripts/ifcfg-eth1",
+    hwaddr = self.get_config_value("/etc/sysconfig/network-scripts/ifcfg-eth1", "HWADDR")
+    self.store_file("/etc/sysconfig/network-scripts/ifcfg-eth1",
 """DEVICE=eth1
 HWADDR=%s
 ONBOOT=yes
@@ -105,7 +115,7 @@ BRIDGE=br1
 BOOTPROTO=dhcp""" % hwaddr)
       
     # Setup /etc/sysconfig/network-scripts/ifcfg-br1
-    self.storeFile("/etc/sysconfig/network-scripts/ifcfg-br1",
+    self.store_file("/etc/sysconfig/network-scripts/ifcfg-br1",
 """DEVICE=br1
 TYPE=Bridge
 BOOTPROTO=dhcp
@@ -119,11 +129,11 @@ ONBOOT=yes""")
 #      IPADDR=10.100.100.211
 #      NETMASK=255.255.0.0
 #      ONBOOT=yes
-              
-    self.shellExec("service iptables start")
-    self.shellExec("iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT")
-    self.shellExec("service iptables save")
-    self.shellExec("service network restart")    
+
+    general.shell_exec("service iptables start")
+    general.shell_exec("iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT")
+    general.shell_exec("service iptables save")
+    general.shell_exec("service network restart")    
 
     #  
     # Create logical volume
@@ -142,8 +152,5 @@ ONBOOT=yes""")
       
     # To see the change
     # tail /etc/selinux/targeted/contexts/files/file_contexts.local
-    version.markExecuted("InstallKvmHost", self.version)
-      
-if __name__ == "__main__":
-  obj = InstallKvmHost()
-  obj.run()
+
+    ver_obj.mark_executed("InstallKvmHost", self.script_version)
