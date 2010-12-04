@@ -4,12 +4,10 @@ import ConfigParser, subprocess, os, sys
 import ssh, app
 
 class RemoteInstall:  
-  config_file_name=os.path.abspath(sys.path[0] + "/../etc/install.cfg") 
-      
   def get_commands(self, config, host_name):
     options = []
     
-    if config.has_section(host_name):
+    if (config.has_section(host_name)):
       for option, value in config.items(host_name):
         options.append([option.lower(), value])
 
@@ -21,9 +19,10 @@ class RemoteInstall:
       
   def run(self):
     config = ConfigParser.RawConfigParser()
-    config.read(self.config_file_name)  
-    for host_name in config.sections():
-      if not config.has_option(host_name, "server"):
+    config.read(app.config_file_name)  
+    for host_name in app.get_servers():
+        
+      if (not config.has_option(host_name, "server")):
         app.print_error("Cant find ip for " + host_name)
       else:
         server = config.get(host_name, "server")

@@ -7,7 +7,7 @@ sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
 
 import app
-import remoteInstall, installKvmHost, foTpInstall, hardening, vir, iptables, git
+import remoteInstall, installKvmHost, installCobbler, foTpInstall, hardening, vir, iptables, git
 
 def main():
   '''
@@ -20,6 +20,8 @@ def main():
   usage += "   install-fosh          Install the fosh script on the current server.\n"
   usage += "   remote-install        Connect to all servers, and run all commands defined in install.cfg.\n"  
   usage += "   install-kvmhost       Install kvm host on the current server.\n"
+  usage += "   install-cobbler       Install cobbler on the current server.\n"
+  usage += "   install-guests        Install guests on host defined in install.cfg.\n"
   usage += "   install-fo-tp-install Install kvm guest for fo-tp-install.\n"
   usage += "   hardening             Hardening the host, removing not used software etc.\n"
   usage += "   vir-rm [server]       Remove virtual server\n"
@@ -57,6 +59,12 @@ def execute_command(args):
   elif (command == 'install-kvmhost'):
     obj = installKvmHost.InstallKvmHost()
     obj.run()
+    
+  elif (command == 'install-cobbler'):
+    installCobbler.run()
+    
+  elif (command == 'install-guests'):
+    installCobbler.install_guests()
     
   elif (command == 'install-fo-tp-install'):
     foTpInstall.run()

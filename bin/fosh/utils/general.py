@@ -27,14 +27,17 @@ def grep(file_name, pattern):
       return True
   return False
   
-def shell_exec(command, error=True):
+def shell_exec(command, error=True, no_return=False):
   '''
   Execute a shell command and handles output verbosity.
   '''
   app.print_verbose("Command: " + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   
-  return handle_subprocess(p, error)
+  if (no_return):
+    return "", ""
+  else:
+    return handle_subprocess(p, error)
   
 def handle_subprocess(p, error=True):  
   stdout=""
@@ -61,7 +64,7 @@ def handle_subprocess(p, error=True):
   if (stdout and app.options.verbose >=2):
     print("\n"),
             
-  return stdout
+  return stdout, stderr
   
 def set_config_property(file_name, search_exp, replace_exp):
   '''Change or add a config property to a specific value'''
