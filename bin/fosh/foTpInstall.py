@@ -19,7 +19,8 @@ import app, general, version
 #   
 def run():    
     # Is fo-tp-install already installed?
-    result = general.shell_exec("virsh list --all")
+    result, err = general.shell_exec("virsh list --all")
+    print result
     if ("fo-tp-install" in result):
       app.print_error("fo-tp-install already installed")      
       return
@@ -38,7 +39,7 @@ def run():
     general.shell_exec("service nfs restart")
 
     # Create the data lvm volumegroup
-    result=general.shell_exec("lvdisplay -v /dev/VolGroup00/fo-tp-install", error=False)
+    result,err=general.shell_exec("lvdisplay -v /dev/VolGroup00/fo-tp-install", error=False)
     if ("/dev/VolGroup00/fo-tp-install" not in result):
       general.shell_exec("lvcreate -n fo-tp-install -L 100G VolGroup00")
 
@@ -55,7 +56,7 @@ def run():
     # Waiting for the installation process to complete, and halt the guest.
     while(True):
       time.sleep(10)
-      result = general.shell_exec("virsh list")
+      result,err = general.shell_exec("virsh list")
       if ("fo-tp-install" not in result):
         print "Now installed"
         break

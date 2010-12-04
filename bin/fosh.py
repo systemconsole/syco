@@ -18,7 +18,7 @@ def main():
   usage = "usage: %prog [options] command\n"
   usage += "commands\n"
   usage += "   install-fosh          Install the fosh script on the current server.\n"
-  usage += "   remote-install        Connect to all servers, and run all commands defined in install.cfg.\n"  
+  usage += "   remote-install [srv]  Connect to all servers, and run all commands defined in install.cfg.\n"  
   usage += "   install-kvmhost       Install kvm host on the current server.\n"
   usage += "   install-cobbler       Install cobbler on the current server.\n"
   usage += "   install-guests        Install guests on host defined in install.cfg.\n"
@@ -54,7 +54,7 @@ def execute_command(args):
 
   elif (command == 'remote-install'):
     obj = remoteInstall.RemoteInstall()
-    obj.run()    
+    obj.run(command2)
     
   elif (command == 'install-kvmhost'):
     obj = installKvmHost.InstallKvmHost()

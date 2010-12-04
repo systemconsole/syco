@@ -17,13 +17,13 @@ def run():
     app.print_verbose("   Already installed latest version")
     return
 
-#  installEpelRepo()
-#  setupFirewall()
-#  installCobbler()
-#  modifyCopplerSettings()
-#  importRepos()
+  installEpelRepo()
+  setupFirewall()
+  installCobbler()
+  modifyCopplerSettings()
+  importRepos()
   setupAllSystems()
-  #ver_obj.mark_executed("InstallCobbler", script_version)
+  ver_obj.mark_executed("InstallCobbler", script_version)
     
 def installEpelRepo():
   '''
@@ -33,8 +33,8 @@ def installEpelRepo():
   http://ridingthecloud.com/installing-epel-repository-centos-rhel/
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
   '''  
-  result = general.shell_exec("rpm -q epel-release-5-4.noarch")
-  if "epel-release-5-4" not in result:    
+  result, err = general.shell_exec("rpm -q epel-release-5-4.noarch")
+  if "package epel-release-5-4.noarch is not installed" in result:    
     general.shell_exec("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm")
     print("(Don't mind the Header V3 DSA warning)")
 
@@ -142,7 +142,6 @@ def importRepos():
       --virt-ram=1024 --virt-cpus=1 \
       --repos="centos5-updates-x86_64" \
       --kickstart=/var/lib/cobbler/kickstarts/fo-tp-guest.ks \
-      --virt-file-size=20,5 \
       --virt-bridge=br1""")     
   
   general.shell_exec("""cobbler profile add --name=centos5.5-vm_host \
@@ -150,16 +149,18 @@ def importRepos():
     --repos="centos5-updates-x86_64" \
     --kickstart=/var/lib/cobbler/kickstarts/fo-tp-host.ks""")
 
-def host_add(name, ip, mac):
+def host_add(name, ip, mac, ram=1024, cpu=1):
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " +
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
       "--name=" + name + " --hostname=" + name + " --ip=" + ip + " " +
+      "--virt-ram=" + ram + " --virt-cpus= " + cpu + " " +
       "--mac=" + mac)
 
-def guest_add(name, ip):  
+def guest_add(name, ip, ram=1024, cpu=1):  
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " 
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
       "--virt-path=\"/dev/VolGroup00/" + name + "\" " +
+      "--virt-ram=" + ram + " --virt-cpus= " + cpu + " " +      
       "--name=" + name + " --hostname=" + name + " --ip=" + ip) 
       
 def setupAllSystems():
