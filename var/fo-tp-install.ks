@@ -75,3 +75,4 @@ keyutils
 trousers
 fipscheck
 device-mapper-multipath
+python26
