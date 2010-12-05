@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, ConfigParser, os
+import sys, ConfigParser, os, re, socket
 
 import general
 #
@@ -29,6 +29,9 @@ def print_info(message):
     
 def print_verbose(message, verbose_level = 1):
   global options
+  host=socket.gethostname() + ": "
+  message=re.sub("[\n]", "\n" + host, message)
+  message=host + message
 
   if (options.verbose >= verbose_level):    
     print(message)

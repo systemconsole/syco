@@ -185,7 +185,9 @@ def install_guests():
   # Wait to install guest until fo-tp-install is alive.
   while(True):
     if (is_fo_tp_install_alive()):  
-      for host_name in app.get_servers():
+      print "this dont work"
+      return
+      for host_name in app.get_servers():      
         for guest in app.get_guests(host_name):
           install_guest(guest)
     else:

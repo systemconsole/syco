@@ -50,20 +50,20 @@ class RemoteInstall:
         
         p=Process(target=self._execute, args=[host_name])
         p.start()
-        p.join()                   
+        p.join()
+        
+        return True
       else:
         app.print_verbose(host_name + "(" + server + ") is not alive.", 2)
         
     except Exception, e:
       app.print_error(e.args)
-      app.print_verbose("Abort installation of " + host_name)
+      app.print_verbose("Abort installation of " + host_name)    
 
   def _execute(self, host_name):
     for option, command in app.get_commands(host_name):
-      print "Execute: " + command
-      #obj.ssh(command)     
-      pass
-          
+      app.print_verbose("Execute: " + command, 2)
+      obj.ssh(command)                    
         
   def _validate_host_config(self, host_name):
     '''Validate all host options in install.cfg. 
