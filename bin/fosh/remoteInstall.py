@@ -6,55 +6,64 @@ import ssh, app
 
 class RemoteInstall:
   '''Run commands defined in install.cfg on remote hosts through SSH.
+
+  If the remote host is not yet installed/started/available, 
+  the script will retry to connect every 5 second until it answers.
   
   '''
 
   def run(self, host_name=""):
     '''Start the installation
-    
-    '''
+        
+    '''       
     if (host_name):
-      self._execute_commands(host_name)
+      servers = host_name
     else:    
-      for host_name in app.get_servers():
-        p=Process(target=self._execute_commands, args=[host_name])
-        p.start()
-      p.join()
-      app.print_verbose("All hosts installed")
+      servers = app.get_servers()
+      
+    while(len(servers)):
+      app.print_verbose(str(len(servers)) + " servers left to install.")
+      for host_name in servers:
+        if (self._execute_commands(host_name)):          
+          servers.remove(host_name)
+      time.sleep(5)
 
   def _execute_commands(self, host_name):
     '''Execute the commands on the remote host.
-    
-    If the remote host is not yet installed/started/available, 
-    the script will retry to connect every 5 second until it answers.
+        
+    Create one process for each remote host.    
     
     '''
-    try:
+    try:   
       self._validate_host_config(host_name)
   
       server = app.config.get(host_name, "server")
+      app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
       obj = ssh.Ssh(server)
-      while(True):
-        if (obj.is_alive()):      
-          app.print_verbose("========================================================================================")
-          app.print_verbose("=== Update " + host_name + " (" + server + ")")
-          app.print_verbose("========================================================================================")
-    
-          obj.install_cert()
-          self._install_fosh_on_client(obj)
-          
-          for option, command in app.get_commands(host_name):
-            #obj.ssh(command)     
-            pass
-          break
-        else:
-          app.print_verbose(host_name + "(" + server + ") is not alive.", 2)
-          time.sleep(5)
+      if (obj.is_alive()):      
+        app.print_verbose("========================================================================================")
+        app.print_verbose("=== Update " + host_name + " (" + server + ")")
+        app.print_verbose("========================================================================================")
+  
+        obj.install_cert()
+        self._install_fosh_on_client(obj)
+        
+        p=Process(target=self._execute, args=[host_name])
+        p.start()
+        p.join()                   
+      else:
+        app.print_verbose(host_name + "(" + server + ") is not alive.", 2)
         
     except Exception, e:
-      print e.args
       app.print_error(e.args)
       app.print_verbose("Abort installation of " + host_name)
+
+  def _execute(self, host_name):
+    for option, command in app.get_commands(host_name):
+      print "Execute: " + command
+      #obj.ssh(command)     
+      pass
+          
         
   def _validate_host_config(self, host_name):
     '''Validate all host options in install.cfg. 
