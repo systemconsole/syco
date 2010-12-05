@@ -45,11 +45,10 @@ def handle_subprocess(p, error=True):
   stderr=""
   while (p.poll() == None):
     for txt in p.stdout:
-      if (p.stdout and app.options.verbose >=2):
-        # Only write caption once.
-        if (stdout==""):
-          app.print_verbose("---- Result ----")          
-        print txt,
+      # Only write caption once.
+      if (stdout==""):
+        app.print_verbose("---- Result ----", 2)
+      app.print_verbose(txt, 2),
       stdout+=txt
       
     for txt in p.stderr:
