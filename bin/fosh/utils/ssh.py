@@ -12,7 +12,7 @@ class Ssh:
   ssh_key_dir=os.environ['HOME'] + "/.ssh"
   ssh_private_key_file=ssh_key_dir + "/id_fosh_rsa"
   ssh_public_key_file=ssh_key_dir + "/id_fosh_rsa.pub"
-  cert_is_installed=False
+  key_is_installed=False
   
   def __init__(self, server):
     self.server = server
@@ -42,52 +42,25 @@ class Ssh:
     )
     
     return general.handle_subprocess(p)
-          
-  def is_alive(self):
-    s = socket(AF_INET, SOCK_STREAM)      
-    result = s.connect_ex((self.server, int(self.port)))   
-    s.close()
-    
-    if (result == 0):  
-      return True
-    else:
-      return False    
-                
-  def is_cert_installed(self):      
-    if self.cert_is_installed:
-      return True
-      
-    env = {'SSH_ASKPASS':'/path/to/myprog', 'DISPLAY':':9999'}
-    p = subprocess.Popen("ssh -T -v -i " + self.ssh_private_key_file + " " + 
-      self.user + "@" + self.server + ' "uname"', 
-      shell=True, 
-      stdin=subprocess.PIPE, 
-      stdout=subprocess.PIPE, 
-      stderr=subprocess.PIPE,
-      env=env,
-      preexec_fn=os.setsid
-    )
-    stdout, stderr = p.communicate()
-    if  p.returncode > 0:
-      if app.options.verbose >= 1:    
-        app.print_error("Cert not installed. ")
-        self.cert_is_installed = False
-      return False
-    else:
-      if app.options.verbose >= 2:    
-        app.print_verbose("Cert already installed. ")
-        self.cert_is_installed = True
-      return True
-          
+
   def install_cert(self):
-    if not os.access(self.ssh_key_dir, os.W_OK):
+    '''Install ssh keys on a remote server.
+    
+    Enables password less login.
+    
+    Raise Exception if any error.
+    
+    '''
+    if (self._is_sshkey_installed()):
+      return
+
+    self._validate_alive()
+    
+    if (not os.access(self.ssh_key_dir, os.W_OK)):
       os.makedirs(self.ssh_key_dir)
 
-    if not os.access(self.ssh_private_key_file, os.R_OK):  
+    if (not os.access(self.ssh_private_key_file, os.R_OK)):
       subprocess.Popen('ssh-keygen -t rsa -f ' + self.ssh_private_key_file + ' -N ""', shell=True).communicate()
-
-    if self.is_cert_installed():
-      return
             
     f = open(os.path.normpath(self.ssh_public_key_file))
     idRsaPub = f.readline().strip()
@@ -99,3 +72,47 @@ class Ssh:
       "chmod 640 .ssh/authorized_keys;" +
       "echo '" + idRsaPub + "' >> .ssh/authorized_keys"
     )
+    
+    if (not self._is_sshkey_installed()):
+      raise Exception("Failed to install cert on " + self.server)
+
+  def is_alive(self):
+    '''Check if the remote server is up and running.
+    
+    '''
+    s = socket(AF_INET, SOCK_STREAM)      
+    result = s.connect_ex((self.server, int(self.port)))   
+    s.close()
+    if (result == 0):  
+      return True
+    return False
+              
+  def _validate_alive(self):
+    if (not self.is_alive()):  
+      raise Exception(self.server + " can't be reached")
+                
+  def _is_sshkey_installed(self):      
+    '''Check if sshkey is installed on remote server.
+    
+    '''
+    if self.key_is_installed:
+      return True
+
+    if (app.options.verbose >=3):
+      verbose_flag="-v"
+    else:
+      verbose_flag=""
+      
+    p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
+      self.user + "@" + self.server + ' "uname"', 
+      shell=True
+    )
+    
+    p.communicate()
+    if (p.returncode > 0):
+      self.key_is_installed = False
+      return False
+    else:
+      self.key_is_installed = True
+      return True
+          

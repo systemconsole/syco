@@ -22,16 +22,16 @@ config = ConfigParser.RawConfigParser()
 config.read(config_file_name)
 
 def print_error(message):
-  print_verbose(general.BOLD + "Error: " + general.RESET  + message)
+  print_verbose(general.BOLD + "Error: " + general.RESET + message)
     
 def print_info(message):
   print_verbose("Info: " + message) 
     
-def print_verbose(message):
+def print_verbose(message, verbose_level = 1):
   global options
 
-  if (options.verbose > 0):    
-    print(message)    
+  if (options.verbose >= verbose_level):    
+    print(message)
 
 def get_option(section, option):
   if (config.has_section(section)):
@@ -56,7 +56,18 @@ def get_servers():
   servers=config.sections()
   servers.remove("general")
   return servers
+  
+def get_commands(host_name):
+  options = []
+  
+  if (config.has_section(host_name)):
+    for option, value in config.items(host_name):
+      option=option.lower()
+      if "command" in option:
+        options.append([option, value])
 
+  return sorted(options)
+  
 def get_guests(host_name):
   guests = []
   

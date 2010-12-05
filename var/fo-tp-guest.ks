@@ -89,6 +89,7 @@ keyutils
 trousers
 fipscheck
 device-mapper-multipath
+python26
 #-autofs
 
 %pre

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python26
 
 import os, sys
 from optparse import OptionParser
@@ -42,10 +42,11 @@ def main():
     execute_command(args)
 
 def execute_command(args):
-  '''
-  Handles the control flow of the different commands.
+  '''Handles the control flow of the different commands.
+  
   '''
   command = args[0].lower();
+  command2 = ""
   if len(args) >= 2:
     command2 = args[1].lower();
   

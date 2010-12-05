@@ -4,8 +4,8 @@ import re, subprocess, glob, os
 import app
 
 # Constants
-BOLD = "\033[1m"
-RESET = "\033[0;0m"
+BOLD="\033[1m"
+RESET="\033[0;0m"
 
 def remove_file(path):
   '''

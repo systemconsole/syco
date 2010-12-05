@@ -177,7 +177,6 @@ def setupAllSystems():
     else:
       app.print_verbose("Install guest " + host_name + " with ip " + ip)
       guest_add(host_name, ip)
-
                
 def install_guests(): 
   installEpelRepo()
@@ -185,5 +184,26 @@ def install_guests():
 
   for host_name in app.get_servers():
     for guest in app.get_guests(host_name):
-      app.print_verbose("Install " + guest + " on " + host_name)
-      general.shell_exec("koan --server=10.100.100.200 --display --system=" + guest)
+      # todo: start in new process/thread
+      install_guest(guest)
+      
+def install_guest(guest):      
+  if (not is_guest_installed(guest)):
+    app.print_verbose("Install " + guest + " on " + host_name)
+  
+    # Create the data lvm volumegroup
+    result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest, error=False)
+    if ("/dev/VolGroup00/" + guest not in result):
+      general.shell_exec("lvcreate -n " + guest + " -L 100G VolGroup00")
+    
+    general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest)
+    general.shell_exec("virsh autostart " + guest)
+
+def is_guest_installed(guest_name):
+  '''Is the guest already installed on the kvm host.'''  
+  result, err = general.shell_exec("virsh list --all")
+  if (guest_name in result):
+    app.print_verbose(guest_name + " already installed", 2)
+    return True
+  else:
+    return False  
