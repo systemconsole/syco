@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import re, subprocess, glob, os
+from socket import *  
 import app
 
 # Constants
@@ -90,6 +91,22 @@ def set_config_property(file_name, search_exp, replace_exp):
     w = open(file_name, 'w')
     w.write(replace_exp)
     w.close()
+
+def is_server_alive(server, port):
+  '''Check if the remote server is up and running.
   
+  '''
+  try:
+    #app.print_verbose("Is " + server + ":" + port + " alive?", 2)
+    s = socket(AF_INET, SOCK_STREAM)
+    s.settimeout(5)
+    result = s.connect_ex((server, int(port)))   
+  finally:
+    s.close()
+    
+  if (result == 0):  
+    return True
+  return False  
+
 if __name__ == "__main__":
   pass

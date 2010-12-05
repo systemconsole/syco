@@ -181,13 +181,18 @@ def setupAllSystems():
 def install_guests(): 
   installEpelRepo()
   general.shell_exec("yum -y install koan")
-
-  for host_name in app.get_servers():
-    for guest in app.get_guests(host_name):
-      # todo: start in new process/thread
-      install_guest(guest)
+  
+  # Wait to install guest until fo-tp-install is alive.
+  while(True):
+    if (is_fo_tp_install_alive()):  
+      for host_name in app.get_servers():
+        for guest in app.get_guests(host_name):
+          install_guest(guest)
+    else:
+      app.print_error("fo-tp-install is not alive, try again in 5 seconds.")
+      sleep(5)
       
-def install_guest(guest):      
+def install_guest(guest):
   if (not is_guest_installed(guest)):
     app.print_verbose("Install " + guest + " on " + host_name)
   
@@ -207,3 +212,6 @@ def is_guest_installed(guest_name):
     return True
   else:
     return False  
+    
+def is_fo_tp_install_alive():
+  general.is_server_alive("10.100.100.200", 222)

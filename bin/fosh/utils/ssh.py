@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import ConfigParser, subprocess, os
-from socket import *  
 
 import app, general
 
@@ -77,15 +76,7 @@ class Ssh:
       raise Exception("Failed to install cert on " + self.server)
 
   def is_alive(self):
-    '''Check if the remote server is up and running.
-    
-    '''
-    s = socket(AF_INET, SOCK_STREAM)      
-    result = s.connect_ex((self.server, int(self.port)))   
-    s.close()
-    if (result == 0):  
-      return True
-    return False
+    return general.is_server_alive(self.server, self.port)
               
   def _validate_alive(self):
     if (not self.is_alive()):  
