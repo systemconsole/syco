@@ -1,10 +1,38 @@
 Fareoffice Shell
 A bunch of sysadmin functions used at Fareoffice.
 
-Forking notes
+CLONING
 ssh-keygen -t rsa
 cat ~/.ssh/id_rsa.pub
-
-Insert the output into github.
-
+# Insert the output into www.github.com.
 git clone git@github.com:arlukin/fosh.git
+
+DOCUMENTATION
+-------------
+
+THE FLOW OF THE "fosh remote-install"
+
+* Download fosh from git
+* On fo-tp-vh01 "fosh remote-install fo-tp-vh01"
+** On fo-tp-vh01 "fosh hardening"
+** On fo-tp-vh01 "fosh install-kvmhost"
+** On fo-tp-vh01 "fosh install-fo-tp-install"
+** On fo-tp-vh01 "fosh install-guests"
+*** On fo-tp-vh01, install fp-tp-system1
+*** On fo-tp-vh01, install fp-tp-gf
+** On fo-tp-install "fosh git-clone"
+** On fo-tp-install "fosh hardening"
+** On fo-tp-install "fosh install-cobbler"
+** On fo-tp-install "fosh remote-install"
+*** Look for alive hosts defined in install.cfg
+*** Run "fosh remote-install xx" on the host alive.
+*** Continue until "remote-install" has been executed on all servers. 
+
+
+TODO
+----
+* Replace ssh.py with paramiko functionality, so password can be scripted.
+* Run "install-deamon" on fo-tp-install.
+* Add "fosh git-clone" command
+* Add all output from fosh to a log file.
+* Add "fosh remote-install" in kickstart for fo-tp-install
