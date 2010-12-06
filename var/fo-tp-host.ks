@@ -87,6 +87,7 @@ trousers
 fipscheck
 device-mapper-multipath
 python26
+python-paramiko
 #-autofs
 
 %pre
