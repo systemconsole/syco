@@ -104,12 +104,3 @@ class RemoteInstall:
     while(True):
       password=getpass.getpass("Password? ")
       return password
-      #confirm_password=getpass.getpass("Confirm password? ")
-      #if (password==confirm_password):
-      #  return password
-      #else:
-      #  app.print_error("Invalid password")
-      
-      
-      
-      
