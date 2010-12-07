@@ -2,6 +2,7 @@
 
 import subprocess, os, sys, time, paramiko, getpass
 from threading import Thread
+
 import ssh, app
 from exception import SettingsError
 
@@ -12,6 +13,8 @@ class RemoteInstall:
   the script will retry to connect every 5 second until it answers.
   
   '''
+  
+  password=""
 
   def run(self, host_name="", password=""):
     '''Start the installation
@@ -58,7 +61,9 @@ class RemoteInstall:
       app.print_verbose("========================================================================================")
       app.print_verbose("=== Update " + host_name + " (" + server + ")")
       app.print_verbose("========================================================================================")
-
+      
+      obj.install_cert()
+      
       self._install_fosh_on_client(obj)
       
       t=Thread(target=self._execute, args=[obj, host_name])
@@ -91,6 +96,8 @@ class RemoteInstall:
     app.print_verbose("Copy fosh to client")
     ssh.rsync(os.path.abspath(sys.path[0] + "/../") + "/" ,  "/opt/fosh", "--exclude version.cfg")
     ssh.rsync(os.environ['HOME'] + "/.ssh/id_rsa", os.environ['HOME'] + "/.ssh/id_rsa")
+    ssh.rsync(os.environ['HOME'] + "/.ssh/id_fosh_rsa*", os.environ['HOME'] + "/.ssh/")
+
     ssh.ssh("/opt/fosh/bin/fosh.py install-fosh")
     
   def _get_password(self):
