@@ -30,8 +30,8 @@ THE FLOW OF THE "fosh remote-install"
 
 
 TODO
-----
-* Replace ssh.py with paramiko functionality, so password can be scripted.
+---
+
 * Run "install-deamon" on fo-tp-install.
 * Add "fosh git-clone" command
 * Add all output from fosh to a log file.

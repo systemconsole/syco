@@ -19,8 +19,7 @@ import app, general, version
 #   
 def run():    
     # Is fo-tp-install already installed?
-    result, err = general.shell_exec("virsh list --all")
-    print result
+    result, error = general.shell_exec("virsh list --all")
     if ("fo-tp-install" in result):
       app.print_error("fo-tp-install already installed")      
       return
@@ -56,7 +55,7 @@ def run():
     # Waiting for the installation process to complete, and halt the guest.
     while(True):
       time.sleep(10)
-      result,err = general.shell_exec("virsh list")
+      result = general.shell_exec("virsh list")
       if ("fo-tp-install" not in result):
         print "Now installed"
         break

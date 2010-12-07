@@ -1,20 +1,31 @@
 #! /usr/bin/env python
 
-import ConfigParser, subprocess, os
+import ConfigParser, subprocess, os, paramiko
 
 import app, general
 
 class Ssh:
+  '''Exeutes commands over ssh on a remote host.
+  
+  Read more about paramiko
+  http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+  http://www.linuxplanet.com/linuxplanet/tutorials/6618/1/
+  http://www.lag.net/paramiko/docs/
+  
+  '''
+  server="127.0.0.1"
+  port="22"  
   user="root"
-  server=""
-  port="22"
+  password=""
+
   ssh_key_dir=os.environ['HOME'] + "/.ssh"
   ssh_private_key_file=ssh_key_dir + "/id_fosh_rsa"
   ssh_public_key_file=ssh_key_dir + "/id_fosh_rsa.pub"
   key_is_installed=False
   
-  def __init__(self, server):
-    self.server = server
+  def __init__(self, server, password):
+    self.server=server
+    self.password=password
     
   def rsync(self, from_path, to_path, extra=""):
     general.shell_exec(
@@ -24,23 +35,71 @@ class Ssh:
     )  
 
   def ssh(self, command):
+    '''
+    Execute the ssh command.
+    
+    Connect to the remote host, execute the command 
+    and closes the conneciton.    
+    '''
     app.print_verbose("SSH Command: " + command)
     
-    if (app.options.verbose >=3):
-      verbose_flag="-v"
-    else:
-      verbose_flag=""
-      
-    p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
-      " -p" + self.port + " " +
-      self.user + "@" + self.server + ' "' + 
-      command + '"', 
-      shell=True, 
-      stdout=subprocess.PIPE, 
-      stderr=subprocess.PIPE
-    )
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
-    return general.handle_subprocess(p)
+    # TODO
+    # set_log_channel(self, name)    
+    
+    # TODO
+    # Enable debug mode
+    # if (app.options.verbose >=3):
+    
+    ssh.connect(self.server, username=self.user, password=self.password)
+    
+    stdin_file, stdout_file, stderr_file = ssh.exec_command(command)
+    stdin_file.close()
+    
+    stdout=""
+    stderr=""
+    data = stdout_file.read().splitlines()
+    for line in data:
+      # Only write caption once.
+      if (stdout==""):
+        app.print_verbose("---- Result ----", 2)
+      app.print_verbose(line, 2),
+      stdout+=line
+    
+    data = stderr_file.read().splitlines()  
+    for line in data:
+      app.print_verbose(line, 2),
+      stderr+=line      
+          
+    if (stderr):
+      app.print_error(stderr.strip())
+    
+    # An extra line break for the looks.
+    if (stdout and app.options.verbose >=2):
+      print("\n"),
+              
+    return stdout, stderr
+         
+#  def ssh_old(self, command):
+#    app.print_verbose("SSH Command: " + command)
+#    
+#    if (app.options.verbose >=3):
+#      verbose_flag="-v"
+#    else:
+#      verbose_flag=""
+#      
+#    p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
+#      " -p" + self.port + " " +
+#      self.user + "@" + self.server + ' "' + 
+#      command + '"', 
+#      shell=True, 
+#      stdout=subprocess.PIPE, 
+#      stderr=subprocess.PIPE
+#    )
+#    
+#    return general.handle_subprocess(p)
 
   def install_cert(self):
     '''Install ssh keys on a remote server.
@@ -106,4 +165,3 @@ class Ssh:
     else:
       self.key_is_installed = True
       return True
-          

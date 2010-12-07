@@ -1,10 +1,11 @@
-#! /usr/bin/env python26
+#! /usr/bin/env python
 
-import os, sys
-from optparse import OptionParser
-
+import sys
 sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
+
+import os
+from optparse import OptionParser
 
 import app
 import remoteInstall, installKvmHost, installCobbler, foTpInstall, hardening, vir, iptables, git
