@@ -34,7 +34,7 @@ def shell_exec(command, error=True, no_return=False):
   '''
   app.print_verbose("Command: " + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  
+
   if (no_return):
     return "", ""
   else:

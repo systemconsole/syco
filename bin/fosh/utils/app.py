@@ -22,19 +22,27 @@ config = ConfigParser.RawConfigParser()
 config.read(config_file_name)
 
 def print_error(message):
-  print_verbose(general.BOLD + "Error: " + general.RESET + message)
+  print_verbose(message, caption=general.BOLD + "Error: " + general.RESET)
     
 def print_info(message):
-  print_verbose("Info: " + message) 
+  print_verbose(message, caption="Info: ") 
     
-def print_verbose(message, verbose_level = 1):
+def print_verbose(message, verbose_level = 1, caption=""):
   global options
-  host=socket.gethostname() + ": "
-  message=re.sub("[\n]", "\n" + host, message)
-  message=host + message
 
-  if (options.verbose >= verbose_level):    
-    print(message)
+  messages = []
+  if (not isinstance(message, tuple)):
+    messages.append(message)
+  else:
+    messages = message
+  
+  for msg in messages:    
+    host=socket.gethostname() + ": "
+    msg=re.sub("[\n]", "\n" + host + caption, msg)
+    msg=host + caption + msg
+  
+    if (options.verbose >= verbose_level):    
+      print(msg)
 
 def get_option(section, option):
   if (config.has_section(section)):
