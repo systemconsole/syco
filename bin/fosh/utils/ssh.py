@@ -76,10 +76,12 @@ class Ssh:
           
     if (stderr):
       app.print_error(stderr.strip())
-    
+        
     # An extra line break for the looks.
     if (stdout and app.options.verbose >=2):
+      app.print_verbose("----------------", 2)
       print("\n"),
+      
               
     return stdout, stderr
          
@@ -166,8 +168,6 @@ class Ssh:
     )
 
     stdout,stderr=p.communicate()
-    print stderr
-    print stdout
 
     if (p.returncode > 0):
       self.key_is_installed = False

@@ -14,5 +14,7 @@ def vir_rm(server_name):
   general.remove_file('/var/log/libvirt/qemu/%s.log*' % server_name)
   general.shell_exec("updatedb")
   
+  general.shell_exec("lvremove -f /dev/VolGroup00/" + server_name)  
+  
   app.print_verbose("Restart libvirtd");
   general.shell_exec("/etc/init.d/libvirtd restart")

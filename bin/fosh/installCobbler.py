@@ -178,13 +178,15 @@ def setupAllSystems():
 
   for host_name in app.get_servers():
     ip=app.get_ip(host_name)
+    ram=app.get_ip(host_name)
+    cpu=app.get_ip(host_name)
     if (len(app.get_guests(host_name))):
       mac=app.get_mac(host_name)
       app.print_verbose("Install host " + host_name + " with ip " + ip + " and mac " + mac)
-      host_add(host_name, ip, mac)
+      host_add(host_name, ip, mac, ram, cpu)
     else:
       app.print_verbose("Install guest " + host_name + " with ip " + ip)
-      guest_add(host_name, ip)
+      guest_add(host_name, ip, ram, cpu)
                
 def install_guests(): 
   installEpelRepo()
@@ -219,7 +221,7 @@ def install_guest(host_name, guest):
     general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest)
     general.shell_exec("virsh autostart " + guest)
     
-    return True
+  return True
 
 def is_guest_installed(guest_name):
   '''Is the guest already installed on the kvm host.'''  

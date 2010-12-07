@@ -62,6 +62,12 @@ def get_ip(host_name):
 def get_mac(host_name):
   return get_option(host_name, "mac")
 
+def get_ram(host_name):
+  return get_option(host_name, "ram")
+
+def get_cpu(host_name):
+  return get_option(host_name, "cpu")
+
 def get_servers():
   global config
   servers=config.sections()
