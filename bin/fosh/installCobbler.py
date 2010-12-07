@@ -36,7 +36,7 @@ def installEpelRepo():
   result, err = general.shell_exec("rpm -q epel-release-5-4.noarch")
   if "package epel-release-5-4.noarch is not installed" in result:    
     general.shell_exec("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm")
-    print("(Don't mind the Header V3 DSA warning)")
+    app.print_verbose("(Don't mind the Header V3 DSA warning)")
 
 def setupFirewall():
   #  

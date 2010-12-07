@@ -18,7 +18,7 @@ auth  --useshadow  --enablemd5
 #logging --host=10.100.100.200 --port=XX --level=debug
 
 # System bootloader configuration
-bootloader --location=mbr --driveorder=hda --md5pass="$1$vfg34t55$JsSc9Us8Aje0auu.4ZnHn1"
+bootloader --location=mbr --driveorder=hda --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
