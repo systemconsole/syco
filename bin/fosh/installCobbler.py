@@ -127,8 +127,16 @@ def modifyCopplerSettings():
   general.shell_exec("cobbler check")
 
 def importRepos():  
-  general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/os/x86_64/ --name=centos5.5 --arch=x86_64")
-  general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/updates/x86_64/")
+  if (os.access("/var/www/cobbler/ks_mirror/centos5.5-x86_64", os.F_OK)):
+    app.print_verbose("Centos5.5-x86_64 already imported")
+  else:
+    general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/os/x86_64/ --name=centos5.5 --arch=x86_64")
+
+  if (os.access("/var/www/cobbler/repo_mirror/centos5-updates-x86_64", os.F_OK)):
+    app.print_verbose("Centos5-updates-x86_64 repo already imported")
+  else:    
+    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/updates/x86_64/")
+
   general.shell_exec("cobbler reposync")
   general.shell_exec("cobbler distro remove --name centos5.5-xen-x86_64")
   general.shell_exec("cobbler profile remove --name centos5.5-x86_64") 
@@ -152,16 +160,16 @@ def importRepos():
 def host_add(name, ip, mac, ram=1024, cpu=1):
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " +
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
-      "--name=" + name + " --hostname=" + name + " --ip=" + ip + " " +
-      "--virt-ram=" + ram + " --virt-cpus= " + cpu + " " +
+      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
+      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +
       "--mac=" + mac)
 
 def guest_add(name, ip, ram=1024, cpu=1):  
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " 
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
       "--virt-path=\"/dev/VolGroup00/" + name + "\" " +
-      "--virt-ram=" + ram + " --virt-cpus= " + cpu + " " +      
-      "--name=" + name + " --hostname=" + name + " --ip=" + ip) 
+      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +      
+      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip)) 
       
 def setupAllSystems():
   
@@ -181,20 +189,25 @@ def setupAllSystems():
 def install_guests(): 
   installEpelRepo()
   general.shell_exec("yum -y install koan")
-  
+
+  guests = {}
+  for host_name in app.get_servers():      
+    for guest_name in app.get_guests(host_name):
+      guests[guest_name] = host_name
+ 
   # Wait to install guest until fo-tp-install is alive.
-  while(True):
+  while(len(guests)):
     if (is_fo_tp_install_alive()):  
-      print "this dont work"
-      return
-      for host_name in app.get_servers():      
-        for guest in app.get_guests(host_name):
-          install_guest(guest)
+      for guest_name, host_name in guests.items():
+        if (install_guest(host_name, guest_name)):
+          print guest_name
+          del guests[guest_name]
+              
     else:
       app.print_error("fo-tp-install is not alive, try again in 5 seconds.")
-      sleep(5)
+      time.sleep(5)
       
-def install_guest(guest):
+def install_guest(host_name, guest):
   if (not is_guest_installed(guest)):
     app.print_verbose("Install " + guest + " on " + host_name)
   
@@ -205,6 +218,8 @@ def install_guest(guest):
     
     general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest)
     general.shell_exec("virsh autostart " + guest)
+    
+    return True
 
 def is_guest_installed(guest_name):
   '''Is the guest already installed on the kvm host.'''  
@@ -216,4 +231,4 @@ def is_guest_installed(guest_name):
     return False  
     
 def is_fo_tp_install_alive():
-  general.is_server_alive("10.100.100.200", 222)
+  return general.is_server_alive("10.100.100.200", 22)

@@ -3,6 +3,7 @@
 import ConfigParser, subprocess, os, paramiko
 
 import app, general
+from exception import SettingsError
 
 class Ssh:
   '''Exeutes commands over ssh on a remote host.
@@ -29,7 +30,7 @@ class Ssh:
     
   def rsync(self, from_path, to_path, extra=""):
     general.shell_exec(
-      "rsync --delete -az -e 'ssh -p" + self.port + " -i " + self.ssh_private_key_file + "' " + 
+      "rsync --delete -az -e 'ssh -o StrictHostKeychecking=no -p" + self.port + " -i " + self.ssh_private_key_file + "' " + 
       extra + " " +
       from_path + " " + self.user + "@" + self.server + ":" + to_path
     )  
@@ -71,7 +72,7 @@ class Ssh:
     data = stderr_file.read().splitlines()  
     for line in data:
       app.print_verbose(line, 2),
-      stderr+=line      
+      stderr+=line
           
     if (stderr):
       app.print_error(stderr.strip())
@@ -109,6 +110,7 @@ class Ssh:
     Raise Exception if any error.
     
     '''
+    app.print_verbose("Install ssh key")
     if (self._is_sshkey_installed()):
       return
 
@@ -132,7 +134,7 @@ class Ssh:
     )
     
     if (not self._is_sshkey_installed()):
-      raise Exception("Failed to install cert on " + self.server)
+      raise SettingsError("Failed to install cert on " + self.server)
 
   def is_alive(self):
     return general.is_server_alive(self.server, self.port)
@@ -152,13 +154,21 @@ class Ssh:
       verbose_flag="-v"
     else:
       verbose_flag=""
-      
+
+    env = {'SSH_ASKPASS':'/path/to/myprog', 'DISPLAY':':9999'}
     p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
       self.user + "@" + self.server + ' "uname"', 
-      shell=True
+      shell=True, 
+      stdout=subprocess.PIPE, 
+      stderr=subprocess.PIPE,      
+      env=env,
+      preexec_fn=os.setsid
     )
-    
-    p.communicate()
+
+    stdout,stderr=p.communicate()
+    print stderr
+    print stdout
+
     if (p.returncode > 0):
       self.key_is_installed = False
       return False

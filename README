@@ -31,8 +31,8 @@ THE FLOW OF THE "fosh remote-install"
 
 TODO
 ---
-
-* Run "install-deamon" on fo-tp-install.
-* Add "fosh git-clone" command
+* fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
+* Run "remote-install-deamon" on fo-tp-install.
+* The remote-install deamon should check for changes in install.cfg.
 * Add all output from fosh to a log file.
 * Add "fosh remote-install" in kickstart for fo-tp-install
