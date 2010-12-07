@@ -193,9 +193,9 @@ def install_guests():
   general.shell_exec("yum -y install koan")
 
   guests = {}
-  for host_name in app.get_servers():      
-    for guest_name in app.get_guests(host_name):
-      guests[guest_name] = host_name
+  host_name=socket.gethostname()
+  for guest_name in app.get_guests(host_name):
+    guests[guest_name] = host_name
  
   # Wait to install guest until fo-tp-install is alive.
   while(len(guests)):
