@@ -44,8 +44,8 @@ class RemoteInstall:
         has_no_abort_errors=(host_name not in self.abort_error)
             
         if (is_not_installed and has_no_abort_errors):            
-          threading.Thread(target=self._execute_commands, args=[host_name])
-          start()          
+          t=threading.Thread(target=self._execute_commands, args=[host_name])
+          t=start()          
       
       time.sleep(30)
       
