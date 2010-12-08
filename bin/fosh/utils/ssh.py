@@ -158,7 +158,7 @@ class Ssh:
       verbose_flag=""
 
     env = {'SSH_ASKPASS':'/path/to/myprog', 'DISPLAY':':9999'}
-    p = subprocess.Popen("ssh -T " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
+    p = subprocess.Popen("ssh -T -o StrictHostKeychecking=no " + verbose_flag + " -i " + self.ssh_private_key_file + " " + 
       self.user + "@" + self.server + ' "uname"', 
       shell=True, 
       stdout=subprocess.PIPE, 

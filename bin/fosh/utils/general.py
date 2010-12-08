@@ -48,7 +48,7 @@ def handle_subprocess(p, error=True):
       # Only write caption once.
       if (stdout==""):
         app.print_verbose("---- Result ----", 2)
-      app.print_verbose(txt, 2),
+      app.print_verbose(txt.strip(), 2)
       stdout+=txt
       
     for txt in p.stderr:

@@ -36,7 +36,7 @@ class RemoteInstall:
     self._set_servers(host_name)
     self._validate_install_config()
     
-    while(len(self.servers)):
+    while(len(self.servers) != len(self.installed)):
       self._print_install_stat()
         
       for host_name in self.servers:
@@ -50,7 +50,7 @@ class RemoteInstall:
           app.print_error(e.args)
           self.abort_error[host_name]=e
           
-      time.sleep(30)
+      time.sleep(15)
 
   def _execute_commands(self, host_name):
     '''Execute the commands on the remote host.
@@ -58,13 +58,10 @@ class RemoteInstall:
     Create one process for each remote host.    
     
     '''    
-    is_not_installed=(host_name not in self.installed or
-                     ((host_name in self.installed) and ("No" in self.installed[host_name])))
-        
+    is_not_installed=(host_name not in self.installed)        
     has_no_abort_errors=(host_name not in self.abort_error)
         
-    if (is_not_installed and has_no_abort_errors):
-      self.installed[host_name]="No"
+    if (is_not_installed and has_no_abort_errors):      
       server = app.config.get(host_name, "server")
       app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
       
@@ -167,7 +164,7 @@ class RemoteInstall:
     if (host_name in self.installed):
       return self.installed[host_name]
     else:
-      return "?"
+      return "No"
       
   def _get_abort_errors(self, host_name):
     if (host_name in self.abort_error):
