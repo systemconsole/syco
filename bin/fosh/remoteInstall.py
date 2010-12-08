@@ -39,6 +39,7 @@ class RemoteInstall:
     ts=[]
     while(len(self.servers) != len(self.installed)):
       self._print_install_stat()
+      app.print_verbose(len(ts) + " threads are running.")
         
       for host_name in self.servers:
         t=Thread(target=self._execute_commands, args=[host_name])
