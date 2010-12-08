@@ -38,7 +38,8 @@ def print_verbose(message, verbose_level = 1, caption=""):
   
   for msg in messages:    
     host=socket.gethostname() + ": "
-    msg=re.sub("[\n]", "\n" + host + caption, msg)
+    if (msg):
+      msg=re.sub("[\n]", "\n" + host + caption, str(msg))
     msg=host + caption + msg
   
     if (options.verbose >= verbose_level):    
