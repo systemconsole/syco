@@ -194,51 +194,42 @@ def install_guests():
 
   # Wait to install guests until fo-tp-install is alive.
   while (not is_fo_tp_install_alive()):
-    app.print_error("fo-tp-install is not alive, try again in 5 seconds.")
-    time.sleep(5)
+    app.print_error("fo-tp-install is not alive, try again in 15 seconds.")
+    time.sleep(15)
 
   guests={}
   installed={}
   host_name=socket.gethostname()
   for guest_name in app.get_guests(host_name):
-    guests[guest_name]= host_name
+    if (is_guest_installed(guest_name, options="")):
+      app.print_verbose(guest_name + " already installed", 2)
+    else:
+      guests[guest_name]= host_name
+            
+  for guest_name, host_name in guests.items():
+    if (not is_guest_installed(guest_name)):
+      install_guest(host_name, guest_name)
         
-  while(len(guests)):
-    for guest_name, host_name in guests.items():
-      if (guest_name not in installed):
-        if (install_guest(host_name, guest_name)):          
-          installed[guest_name]=True
-
-      if (installed[guest_name]==True):
-        if (_start_guest(guest_name)):
-          del guests[guest_name]
-        
-    # Wait for the installation process to finish
+  # Wait for the installation process to finish,
+  # And start the quests.  
+  while(len(guests)):    
     time.sleep(5)
-      
-def install_guest(host_name, guest_name):
-  if (not is_guest_installed(guest_name)):
-    app.print_verbose("Install " + guest_name + " on " + host_name)
   
-    # Create the data lvm volumegroup
-    result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
-    if ("/dev/VolGroup00/" + guest_name not in result):
-      general.shell_exec("lvcreate -n " + guest_name + " -L 100G VolGroup00")
-    
-    general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest_name)
-    general.shell_exec("virsh autostart " + guest_name)
-  else:
-    app.print_verbose(guest_name + " already installed", 2)
-  return True
+    for guest_name, host_name in guests.items():
+      if (_start_guest(guest_name)):
+        del guests[guest_name]
+              
+def install_guest(host_name, guest_name):
+  app.print_verbose("Install " + guest_name + " on " + host_name)
 
-def is_guest_installed(guest_name, options="--all"):
-  '''Is the guest already installed on the kvm host.'''    
-  result, err = general.shell_exec("virsh list " + options)
-  if (guest_name in result):    
-    return True
-  else:
-    return False  
-    
+  # Create the data lvm volumegroup
+  result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
+  if ("/dev/VolGroup00/" + guest_name not in result):
+    general.shell_exec("lvcreate -n " + guest_name + " -L 100G VolGroup00")
+  
+  general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest_name)
+  general.shell_exec("virsh autostart " + guest_name)
+
 def _start_guest(guest_name):
   '''
   Wait for guest to be halted, before starting it.
@@ -249,6 +240,17 @@ def _start_guest(guest_name):
   else:
     general.shell_exec("virsh start " + guest_name)
     return True
-    
+  
+def is_guest_installed(guest_name, options="--all"):
+  '''
+  Is the guest already installed on the kvm host.
+  
+  '''
+  result, err = general.shell_exec("virsh list " + options)
+  if (guest_name in result):    
+    return True
+  else:
+    return False  
+        
 def is_fo_tp_install_alive():
   return general.is_server_alive("10.100.100.200", 22)
