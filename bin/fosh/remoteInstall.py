@@ -45,10 +45,10 @@ class RemoteInstall:
         t.start()
         ts.append(t)
       
-      for t in ts:
-        t.join()          
-      ts=[]
       time.sleep(15)
+      
+    for t in ts:
+      t.join()          
 
   def _execute_commands(self, host_name):
     '''Execute the commands on the remote host.
