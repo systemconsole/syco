@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import ConfigParser, subprocess, os, paramiko
+import ConfigParser, subprocess, os, paramiko, socket
 
 import app, general
 from exception import SettingsError
@@ -42,7 +42,7 @@ class Ssh:
     Connect to the remote host, execute the command 
     and closes the conneciton.    
     '''
-    app.print_verbose("SSH Command: " + command)
+    app.print_verbose("SSH Command on " + socket.gethostname() + ": " + command)
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -104,7 +104,7 @@ class Ssh:
 #    
 #    return general.handle_subprocess(p)
 
-  def install_cert(self):
+  def install_ssh_key(self):
     '''Install ssh keys on a remote server.
     
     Enables password less login.

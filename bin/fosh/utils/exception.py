@@ -5,4 +5,7 @@ class SettingsError(Exception):
     self.value = value
 
   def __str__(self):
-    return repr(self.value)
+    return repr(self.value) 
+    
+  def __repr__(self):
+    return repr(self.value)     

@@ -30,12 +30,12 @@ THE FLOW OF THE "fosh remote-install"
 
 TODO
 ---
-* EPEL should be installed by kickstart, so python-paramiko can be installed.
+* fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
 * The guests should use the repos on the fo-tp-install.
 * The guest should be locally firewalled to not be able to reach out to anything
   more then they need. Only repo updates on fo-tp-install.
-* fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
 * Run "remote-install-deamon" on fo-tp-install.
 * The remote-install deamon should check for changes in install.cfg.
 * Add all output from fosh to a log file.
 * Add "fosh remote-install" in kickstart for fo-tp-install
+* Configure install.cfg to use all computers.
