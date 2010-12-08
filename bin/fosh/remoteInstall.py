@@ -41,17 +41,9 @@ class RemoteInstall:
       self._print_install_stat()
         
       for host_name in self.servers:
-        try:
-          t=Thread(target=self._execute_commands, args=[host_name])
-          t.start()
-          ts.append(t)
-                  
-        except SettingsError, e:
-          app.print_error(e)
-          
-        except paramiko.AuthenticationException, e:
-          app.print_error(e.args)
-          self.abort_error[host_name]=e
+        t=Thread(target=self._execute_commands, args=[host_name])
+        t.start()
+        ts.append(t)
       
       for t in ts:
         t.join()          
@@ -63,23 +55,30 @@ class RemoteInstall:
         
     Create one process for each remote host.    
     
-    '''    
-    is_not_installed=(host_name not in self.installed)        
-    has_no_abort_errors=(host_name not in self.abort_error)
+    '''          
+    try:   
+      is_not_installed=(host_name not in self.installed)        
+      has_no_abort_errors=(host_name not in self.abort_error)
+          
+      if (is_not_installed and has_no_abort_errors):      
+        server = app.config.get(host_name, "server")
+        app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
         
-    if (is_not_installed and has_no_abort_errors):      
-      server = app.config.get(host_name, "server")
-      app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
+        obj = ssh.Ssh(server, self.password)
+        self._validate_alive(obj, host_name)
+        app.print_verbose("========================================================================================")
+        app.print_verbose("=== Update " + host_name + " (" + server + ")")
+        app.print_verbose("========================================================================================")
+        
+        obj.install_ssh_key()
+        self._install_fosh_on_remote_host(obj)
+        self._execute(obj, host_name)                  
+    except SettingsError, e:
+      app.print_error(e)
       
-      obj = ssh.Ssh(server, self.password)
-      self._validate_alive(obj, host_name)
-      app.print_verbose("========================================================================================")
-      app.print_verbose("=== Update " + host_name + " (" + server + ")")
-      app.print_verbose("========================================================================================")
-      
-      obj.install_ssh_key()
-      self._install_fosh_on_remote_host(obj)
-      self._execute(obj, host_name)
+    except paramiko.AuthenticationException, e:
+      app.print_error(e.args)
+      self.abort_error[host_name]=e
 
   def _execute(self, obj, host_name):
     self.installed[host_name]="Progress"
