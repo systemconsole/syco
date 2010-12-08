@@ -36,12 +36,15 @@ class RemoteInstall:
     self._set_servers(host_name)
     self._validate_install_config()
     
+    ts=[]
     while(len(self.servers) != len(self.installed)):
       self._print_install_stat()
         
       for host_name in self.servers:
         try:
-          self._execute_commands(host_name)
+          t=Thread(target=self._execute_commands, args=[host_name])
+          t.start()
+          ts.append(t)
                   
         except SettingsError, e:
           app.print_error(e)
@@ -49,7 +52,10 @@ class RemoteInstall:
         except paramiko.AuthenticationException, e:
           app.print_error(e.args)
           self.abort_error[host_name]=e
-          
+      
+      for t in ts:
+        t.join()          
+      ts=[]
       time.sleep(15)
 
   def _execute_commands(self, host_name):
@@ -73,10 +79,7 @@ class RemoteInstall:
       
       obj.install_ssh_key()
       self._install_fosh_on_remote_host(obj)
-      
-      t=Thread(target=self._execute, args=[obj, host_name])
-      t.start()
-      t.join()
+      self._execute(obj, host_name)
 
   def _execute(self, obj, host_name):
     self.installed[host_name]="Progress"
