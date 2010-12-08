@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import subprocess, os, sys, time, paramiko, getpass
+import subprocess, os, sys, time, paramiko, getpass, threading
 from threading import Thread
 
 import ssh, app
@@ -36,19 +36,21 @@ class RemoteInstall:
     self._set_servers(host_name)
     self._validate_install_config()
     
-    ts=[]
     while(len(self.servers) != len(self.installed)):
       self._print_install_stat()
-      app.print_verbose(len(ts) + " threads are running.")
+      app.print_verbose(str(len(threading.active_count())) + " threads are running.")
         
       for host_name in self.servers:
-        t=Thread(target=self._execute_commands, args=[host_name])
-        t.start()
-        ts.append(t)
+        is_not_installed=(host_name not in self.installed)        
+        has_no_abort_errors=(host_name not in self.abort_error)
+            
+        if (is_not_installed and has_no_abort_errors):            
+          Thread(target=self._execute_commands, args=[host_name])
+          start()          
       
-      time.sleep(15)
+      time.sleep(30)
       
-    for t in ts:
+    for t in threading.enumerate():
       t.join()          
 
   def _execute_commands(self, host_name):
@@ -58,22 +60,18 @@ class RemoteInstall:
     
     '''          
     try:   
-      is_not_installed=(host_name not in self.installed)        
-      has_no_abort_errors=(host_name not in self.abort_error)
-          
-      if (is_not_installed and has_no_abort_errors):      
-        server = app.config.get(host_name, "server")
-        app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
-        
-        obj = ssh.Ssh(server, self.password)
-        self._validate_alive(obj, host_name)
-        app.print_verbose("========================================================================================")
-        app.print_verbose("=== Update " + host_name + " (" + server + ")")
-        app.print_verbose("========================================================================================")
-        
-        obj.install_ssh_key()
-        self._install_fosh_on_remote_host(obj)
-        self._execute(obj, host_name)                  
+      server = app.config.get(host_name, "server")
+      app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
+      
+      obj = ssh.Ssh(server, self.password)
+      self._validate_alive(obj, host_name)
+      app.print_verbose("========================================================================================")
+      app.print_verbose("=== Update " + host_name + " (" + server + ")")
+      app.print_verbose("========================================================================================")
+      
+      obj.install_ssh_key()
+      self._install_fosh_on_remote_host(obj)
+      self._execute(obj, host_name)                  
     except SettingsError, e:
       app.print_error(e)
       
