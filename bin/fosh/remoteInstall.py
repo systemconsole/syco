@@ -37,7 +37,7 @@ class RemoteInstall:
     
     while(len(self.servers) != len(self.installed)):
       self._print_install_stat()
-      app.print_verbose(str(threading.active_count()) + " threads are running.")
+      app.print_verbose(str(threading.activeCount()) + " threads are running.")
         
       for host_name in self.servers:
         is_not_installed=(host_name not in self.installed)        
