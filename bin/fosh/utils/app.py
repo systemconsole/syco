@@ -21,8 +21,8 @@ config_file_name=fosh_path + "/etc/install.cfg"
 config = ConfigParser.RawConfigParser()
 config.read(config_file_name)
 
-def print_error(message):
-  print_verbose(message, caption=general.BOLD + "Error: " + general.RESET)
+def print_error(message, verbose_level=1):
+  print_verbose(message, verbose_level=verbose_level, caption=general.BOLD + "Error: " + general.RESET)
     
 def print_info(message):
   print_verbose(message, caption="Info: ") 

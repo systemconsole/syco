@@ -45,7 +45,7 @@ class RemoteInstall:
             
         if (is_not_installed and has_no_abort_errors):            
           t=threading.Thread(target=self._execute_commands, args=[host_name])
-          t=start()          
+          t.start()          
       
       time.sleep(30)
       
@@ -72,7 +72,7 @@ class RemoteInstall:
       self._install_fosh_on_remote_host(obj)
       self._execute(obj, host_name)                  
     except SettingsError, e:
-      app.print_error(e)
+      app.print_error(e, 2)
       
     except paramiko.AuthenticationException, e:
       app.print_error(e.args)

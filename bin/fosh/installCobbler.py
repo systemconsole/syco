@@ -106,9 +106,12 @@ def modifyCopplerSettings():
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*',         "default_virt_type: qemu")  
   general.set_config_property("/etc/cobbler/settings", '^anamon_enabled:.*',            "anamon_enabled: 1")  
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*',   "yum_post_install_mirror: 1")  
+  general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*',               "manage_dhcp: 1")  
 
   shutil.copyfile(app.fosh_path + "/var/fo-tp-host.ks", "/var/lib/cobbler/kickstarts/fo-tp-host.ks")
   shutil.copyfile(app.fosh_path + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
+  shutil.copyfile(app.fosh_path + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
+  shutil.copyfile(app.fosh_path + "/var/fo-tp-install/dhcp.template", "/etc/cobbler/dhcp.template")
 
   # Config crontab to update repo automagically
   general.set_config_property("/etc/crontab", "01 \* \* \* \* root cobbler reposync \-\-tries\=3 \-\-no\-fail", "01 * * * * root cobbler reposync --tries=3 --no-fail")
