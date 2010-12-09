@@ -26,21 +26,6 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
   # PXE Server
   next-server 10.100.100.201;
   filename "/pxelinux.0";
-
-  host fo-vh-02-eth0 {
-    hardware ethernet D4:85:64:39:D0:AA;
-    fixed-address 10.100.100.202;
-  }
-
-  host fo-vh-02-eth1 {
-    hardware ethernet D4:85:64:39:D0:AB;
-    fixed-address 10.100.100.221;
-  }
-  
-  host fo-vh-03 {
-    hardware ethernet D4:85:64:39:E0:22;
-    fixed-address 10.100.100.203;
-  }
 }
 
 #for dhcp_tag in $dhcp_tags.keys():

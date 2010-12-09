@@ -81,7 +81,7 @@ def installCobbler():
   # See http://www.ithiriel.com/content/2010/02/22/installing-linux-vms-under-kvm-cobbler-and-koan
   
   # To get cobbler and kvm work correct.
-  general.shell_exec("yum -y install qspice-libs yum-utils cobbler koan httpd")
+  general.shell_exec("yum -y install qspice-libs yum-utils cobbler koan httpd dhcp")
   general.shell_exec("chkconfig httpd on")
  
   # This allows the Apache httpd server to connect to the network
@@ -109,7 +109,6 @@ def modifyCopplerSettings():
   general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*',               "manage_dhcp: 1")  
 
   shutil.copyfile(app.fosh_path + "/var/fo-tp-host.ks", "/var/lib/cobbler/kickstarts/fo-tp-host.ks")
-  shutil.copyfile(app.fosh_path + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
   shutil.copyfile(app.fosh_path + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
   shutil.copyfile(app.fosh_path + "/var/fo-tp-install/dhcp.template", "/etc/cobbler/dhcp.template")
 
@@ -161,7 +160,7 @@ def importRepos():
     --kickstart=/var/lib/cobbler/kickstarts/fo-tp-host.ks""")
 
 def host_add(name, ip, mac, ram=1024, cpu=1):
-  general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " +
+  general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
       "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
       "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +
@@ -190,6 +189,9 @@ def setupAllSystems():
     else:
       app.print_verbose("Install guest " + host_name + " with ip " + ip)
       guest_add(host_name, ip, ram, cpu)
+
+  general.shell_exec("cobbler sync")
+  general.shell_exec("cobbler report")
                
 def install_guests(): 
   installEpelRepo()
