@@ -66,12 +66,15 @@ timezone --utc Europe/Stockholm
 install
 
 # Partioning
+#
+# See installCobbler.py when changing disk usage.
+#
 clearpart --all --drives=hda --initlabel
 part /boot --fstype ext3 --size=100 --ondisk=hda
 part pv.2 --size=0 --grow --ondisk=hda
 volgroup VolGroup00 pv.2
 logvol /home --fstype ext3 --name=home --vgname=VolGroup00 --size=1024
-logvol /var     --fstype ext3 --name=var    --vgname=VolGroup00 --size=32768
+logvol /var     --fstype ext3 --name=var    --vgname=VolGroup00 --size=$disk_var
 logvol /var/tmp --fstype ext3 --name=vartmp --vgname=VolGroup00 --size=1024
 logvol /var/log --fstype ext3 --name=varlog --vgname=VolGroup00 --size=4096
 logvol /tmp --fstype ext3 --name=tmp --vgname=VolGroup00 --size=1024

@@ -154,3 +154,11 @@ ONBOOT=yes""")
     # tail /etc/selinux/targeted/contexts/files/file_contexts.local
 
     ver_obj.mark_executed("InstallKvmHost", self.script_version)
+    
+    # Set selinux
+    general.shell_exec("reboot")
+    
+    # Wait for the reboot to be executed, so the script
+    # doesn't proceed to next command in install.cfg
+    sleep(1000)
+    

@@ -48,9 +48,11 @@ class RemoteInstall:
           t.start()          
       
       time.sleep(30)
-      
+    
+    # Wait for all threads to finish  
     for t in threading.enumerate():
-      t.join()          
+      if (threading.currentThread() != t):
+        t.join()          
 
   def _execute_commands(self, host_name):
     '''Execute the commands on the remote host.
@@ -94,6 +96,8 @@ class RemoteInstall:
       self.servers = [host_name]
     else:    
       self.servers = app.get_servers()
+    
+    sorted(self.servers)
         
   def _validate_install_config(self):
     '''
