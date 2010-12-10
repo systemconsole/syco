@@ -9,23 +9,24 @@ script_version = 3
 def run():
   '''
   Install cobbler on current host
-  '''
+  '''  
   global script_version
   app.print_verbose("Install cobbler version: %d" % script_version)
   ver_obj = version.Version()
-  if ver_obj.is_executed("InstallCobbler", script_version):
+  if ver_obj.is_executed("install_cobbler", script_version):
     app.print_verbose("   Already installed latest version")
     return
 
-  installEpelRepo()
-  setupFirewall()
-  installCobbler()
-  modifyCopplerSettings()
-  importRepos()
-  setupAllSystems()
-  ver_obj.mark_executed("InstallCobbler", script_version)
+  install_epel_repo()
+  setup_firewall()
+  install_cobbler()
+  modify_coppler_settings()
+  import_repos()
+  setup_all_systems()
+  cobbler_sync
+  ver_obj.mark_executed("install_cobbler", script_version)
     
-def installEpelRepo():
+def install_epel_repo():
   '''
   Setup EPEL repository.
     
@@ -38,7 +39,7 @@ def installEpelRepo():
     general.shell_exec("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm")
     app.print_verbose("(Don't mind the Header V3 DSA warning)")
 
-def setupFirewall():
+def setup_firewall():
   #  
   # Setup firewall
   #
@@ -71,7 +72,7 @@ def setupFirewall():
   general.shell_exec("service iptables save")
   #iptables.iptables(" --list")
   
-def installCobbler():
+def install_cobbler():
   #
   # Install cobbler
   #
@@ -97,7 +98,7 @@ def installCobbler():
   general.set_config_property("/etc/xinetd.d/rsync", '[\s]*disable[\s]*[=].*',     "        disable         = no")  
   general.shell_exec("/etc/init.d/xinetd restart") 
 
-def modifyCopplerSettings(): 
+def modify_coppler_settings(): 
   app.print_verbose("Update cobbler config files")  
   general.set_config_property("/etc/cobbler/settings", '^server:.*',                    "server: " + app.get_ip("fo-tp-install"))
   general.set_config_property("/etc/cobbler/settings", '^next_server:.*',               "next_server: " + app.get_ip("fo-tp-install"))
@@ -128,7 +129,7 @@ def modifyCopplerSettings():
   # Setup distro/repo for centos
   general.shell_exec("cobbler check")
 
-def importRepos():  
+def import_repos():  
   if (os.access("/var/www/cobbler/ks_mirror/centos5.5-x86_64", os.F_OK)):
     app.print_verbose("Centos5.5-x86_64 already imported")
   else:
@@ -138,12 +139,10 @@ def importRepos():
     app.print_verbose("Centos5-updates-x86_64 repo already imported")
   else:    
     general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/updates/x86_64/")
-
-  general.shell_exec("cobbler reposync")
+    general.shell_exec("cobbler reposync")
+    
   general.shell_exec("cobbler distro remove --name centos5.5-xen-x86_64")
   general.shell_exec("cobbler profile remove --name centos5.5-x86_64") 
-  general.shell_exec("cobbler sync")
-  general.shell_exec("cobbler report")
   
   # Setup installation profiles and systems
   general.shell_exec("cobbler profile remove --name=centos5.5-x86_64")
@@ -158,26 +157,13 @@ def importRepos():
     --distro=centos5.5-x86_64 \
     --repos="centos5-updates-x86_64" \
     --kickstart=/var/lib/cobbler/kickstarts/fo-tp-host.ks""")
-
-def host_add(name, ip, mac, ram=1024, cpu=1):
-  general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
-      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
-      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
-      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +
-      "--mac=" + mac)
-
-def guest_add(name, ip, ram=1024, cpu=1):  
-  general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " 
-      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
-      "--virt-path=\"/dev/VolGroup00/" + name + "\" " +
-      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +      
-      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip)) 
-      
-def setupAllSystems():
+  
+def setup_all_systems():
   
   # Check thease cobbler settings
   # --dns-name  
 
+  remove_all_systems()
   for host_name in app.get_servers():
     ip=app.get_ip(host_name)
     ram=app.get_ip(host_name)
@@ -190,11 +176,35 @@ def setupAllSystems():
       app.print_verbose("Install guest " + host_name + " with ip " + ip)
       guest_add(host_name, ip, ram, cpu)
 
+def cobbler_sync():
   general.shell_exec("cobbler sync")
   general.shell_exec("cobbler report")
+  
+def host_add(name, ip, mac, ram=1024, cpu=1):
+  general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
+      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
+      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +
+      "--mac=" + mac)
+
+def guest_add(name, ip, ram=1024, cpu=1):
+  disk_var=app.get_disk_var(name)
+  disk_var=int(disk_var)*1024
+  
+  general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " 
+      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+      "--virt-path=\"/dev/VolGroup00/" + name + "\" " +
+      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +      
+      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
+      "--ksmeta=\"disk_var=" + str(disk_var) + "\"") 
+
+def remove_all_systems():
+  stdout, stderr = general.shell_exec("cobbler system list")
+  for name in stdout.rsplit():
+    general.shell_exec("cobbler system remove --name " + name)
                
 def install_guests(): 
-  installEpelRepo()
+  install_epel_repo()
   general.shell_exec("yum -y install koan")
 
   # Wait to install guests until fo-tp-install is alive.
@@ -230,7 +240,11 @@ def install_guest(host_name, guest_name):
   # Create the data lvm volumegroup
   result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
   if ("/dev/VolGroup00/" + guest_name not in result):
-    general.shell_exec("lvcreate -n " + guest_name + " -L 100G VolGroup00")
+    disk_var_size=int(app.get_disk_var(guest_name))
+    disk_used_by_other_log_vol=15
+    extra_not_used_space=5
+    vol_group_size=disk_var_size+disk_used_by_other_log_vol+extra_not_used_space
+    general.shell_exec("lvcreate -n " + guest_name + " -L " + str(vol_group_size) + "G VolGroup00")
   
   general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest_name)
   general.shell_exec("virsh autostart " + guest_name)

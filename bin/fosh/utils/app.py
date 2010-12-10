@@ -69,6 +69,9 @@ def get_ram(host_name):
 def get_cpu(host_name):
   return get_option(host_name, "cpu")
 
+def get_disk_var(host_name):
+  return get_option(host_name, "disk_var")
+
 def get_servers():
   global config
   servers=config.sections()
