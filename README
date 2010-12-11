@@ -36,9 +36,6 @@ This version
 * Write installMysql.py script
 * Write installWeb.py script
 * Write installVpn.py script
-* Configure all bin/fosh/fosh modules to all use class or not use class. Same structure
-* Read "configuration" of which commands to use from the dir bin/fosh/fosh/
-  http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
   
 Future version  
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
@@ -56,6 +53,8 @@ CHANGELOG
 2010-12-10
 # Indicate disk space to use for a guest in install.cfg
 # Configure install.cfg to use all computers.
+# Read "configuration" of which commands to use from the dir bin/fosh/fosh/
+  http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
 
 2010-12-09
 # Install all servers with pxe.

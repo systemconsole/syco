@@ -33,24 +33,26 @@ def run(args):
   '''
   global script_version
   app.print_verbose("Harden host version: %d" % script_version)
+  
   ver_obj = version.Version()
-  if ver_obj.is_executed("HardeningHost", script_version):
+  if (ver_obj.is_executed("HardeningHost", script_version)):
     app.print_verbose("   Already installed latest version")
     return
   
-  #user_add()
-  enable_selinux()
-  disable_services()
-  disable_virtual_terminals()
-  remove_rpms()
-  customize_shell()
-  hardening()
-  clear_login_screen()
-  yum_update()   
-  disable_ip6_support()
+  #_user_add()
+  _enable_selinux()
+  _disable_services()
+  _disable_virtual_terminals()
+  _remove_rpms()
+  _customize_shell()
+  _hardening()
+  _clear_login_screen()
+  _yum_update()
+  _disable_ip6_support()
+  
   ver_obj.mark_executed("HardeningHost", script_version)
 
-#def user_add():
+#def _user_add():
 #  app.print_verbose('User add')
 #  
 #  name = ""
@@ -70,10 +72,11 @@ def run(args):
 #    app.print_error("/etc/sudoers is not ok")
 #    sys.exit()  
 
-def enable_selinux():
+def _enable_selinux():
   '''
   All machines should have selinux on by default.
   For more info: http://www.crypt.gen.nz/selinux/disable_selinux.html
+  
   '''    
   app.print_verbose("Enable SELinux")
   if (general.grep("/etc/selinux/config", "SELINUX=enforcing") or 
@@ -83,7 +86,7 @@ def enable_selinux():
   else:
     app.print_error("SELinux is disabled, more need to be done, read http://www.crypt.gen.nz/selinux/disable_selinux.html")
 
-def disable_services():
+def _disable_services():
   '''
   Turn of autostart of services that are not used, and dont need to be used
   on a default centos server.
@@ -101,36 +104,38 @@ def disable_services():
   http://www.sonoracomm.com/support/18-support/114-minimal-svcs
   http://www.imminentweb.com/technologies/centos-disable-unneeded-services-boot-time
   http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/  
+  
   '''
   app.print_verbose("Disable services")
-  disable_service("anacron")
-  disable_service("atd")
-  disable_service("hidd")
-  disable_service("cpuspeed")
-  disable_service("cups")
-  disable_service("gpm")
-  disable_service("yum-updatesd") 
-  disable_service("portmap")
-  disable_service("sendmail")
-  disable_service("mcstrans")
-  disable_service("pcscd")
-  disable_service("nfslock")
-  disable_service("netfs")
-  disable_service("ip6tables")
-  disable_service("bluetooth")
-  disable_service("avahi-daemon")
-  disable_service("autofs")
-  disable_service("readahead_early")
-  disable_service("rpcgssd")
-  disable_service("rpcidmapd")
-  disable_service("firstboot")
-  disable_service("rawdevices")
-  disable_service("mdmonitor")
+  _disable_service("anacron")
+  _disable_service("atd")
+  _disable_service("hidd")
+  _disable_service("cpuspeed")
+  _disable_service("cups")
+  _disable_service("gpm")
+  _disable_service("yum-updatesd") 
+  _disable_service("portmap")
+  _disable_service("sendmail")
+  _disable_service("mcstrans")
+  _disable_service("pcscd")
+  _disable_service("nfslock")
+  _disable_service("netfs")
+  _disable_service("ip6tables")
+  _disable_service("bluetooth")
+  _disable_service("avahi-daemon")
+  _disable_service("autofs")
+  _disable_service("readahead_early")
+  _disable_service("rpcgssd")
+  _disable_service("rpcidmapd")
+  _disable_service("firstboot")
+  _disable_service("rawdevices")
+  _disable_service("mdmonitor")
 
-def disable_virtual_terminals():
+def _disable_virtual_terminals():
   '''
   Minimize use of memory, and disable possiblity to forget a tty logged in 
   when leaving the machine.
+  
   '''
   app.print_verbose("Disable virtual terminals")
   general.set_config_property("/etc/inittab", "^[#]?2:2345:respawn:/sbin/mingetty tty2$","#2:2345:respawn:/sbin/mingetty tty2")
@@ -139,17 +144,20 @@ def disable_virtual_terminals():
   general.set_config_property("/etc/inittab", "^[#]?5:2345:respawn:/sbin/mingetty tty5$","#5:2345:respawn:/sbin/mingetty tty5")
   general.set_config_property("/etc/inittab", "^[#]?6:2345:respawn:/sbin/mingetty tty6$","#6:2345:respawn:/sbin/mingetty tty6")
     
-def remove_rpms():
-  '''Remove rpms that are not used on our default installations'''
+def _remove_rpms():
+  '''
+  Remove rpms that are not used on our default installations
+  
+  '''
   app.print_verbose("Remove rpms")
-  rpm_remove("unix2dos-2.2-26.2.3.el5")
-  rpm_remove("mkbootdisk-1.5.3-2.1.x86_64")
-  rpm_remove("dosfstools-2.11-7.el5")
-  rpm_remove("dos2unix-3.1-27.2.el5")
-  rpm_remove("finger-0.17-32.2.1.1")
-  rpm_remove("firstboot-tui-1.4.27.7-1.el5.centos")
+  _rpm_remove("unix2dos-2.2-26.2.3.el5")
+  _rpm_remove("mkbootdisk-1.5.3-2.1.x86_64")
+  _rpm_remove("dosfstools-2.11-7.el5")
+  _rpm_remove("dos2unix-3.1-27.2.el5")
+  _rpm_remove("finger-0.17-32.2.1.1")
+  _rpm_remove("firstboot-tui-1.4.27.7-1.el5.centos")
 
-def customize_shell():
+def _customize_shell():
   app.print_verbose("Customize shell")
   
   print "   Add Date And Time To History Output"
@@ -161,7 +169,7 @@ def customize_shell():
   general.set_config_property("/etc/skel/.bash_profile", "^export GREP_COLOR=.*$","export GREP_COLOR='1;32'")
   general.set_config_property("/etc/skel/.bash_profile", "^export GREP_OPTIONS=.*$","export GREP_OPTIONS=--color=auto")
 
-def hardening():
+def _hardening():
   app.print_verbose("Hardening")
   
   app.print_verbose("   Disable usb drives.")
@@ -180,16 +188,16 @@ def hardening():
   general.set_config_property("/etc/sysctl.conf", "^kernel.randomize_va_space=.*$","kernel.randomize_va_space=1")
   general.set_config_property("/etc/sysctl.conf", "^net.ipv4.icmp_echo_ignore_broadcasts=.*$","net.ipv4.icmp_echo_ignore_broadcasts=1")
 
-def clear_login_screen():
+def _clear_login_screen():
   '''Clear information shown on the console login screen.'''
   general.shell_exec("clear > /etc/issue")
   general.shell_exec("clear > /etc/issue.net")
 
-def yum_update():
+def _yum_update():
   app.print_verbose("Update with yum")
   general.shell_exec("yum update -y")
 
-def disable_ip6_support():
+def _disable_ip6_support():
   app.print_verbose("Disable IP6 support")
   general.set_config_property("/etc/modprobe.conf", "^alias ipv6 off$","alias ipv6 off")
   general.set_config_property("/etc/modprobe.conf", "^alias net-pf-10 off$","alias net-pf-10 off")
@@ -200,7 +208,7 @@ def disable_ip6_support():
 # Helper functions
 #
 
-def disable_service(name):
+def _disable_service(name):
   '''Disable autostartup of a service and stop the service'''
   process = subprocess.Popen('chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
   if (process.communicate()[0][:-1] == name):
@@ -215,7 +223,7 @@ def disable_service(name):
     subprocess.call(["/sbin/service", name, "stop"])
     app.print_verbose("   service " + name + " stop")
      
-def rpm_remove(name):
+def _rpm_remove(name):
   '''Remove rpm packages'''
   process=subprocess.Popen('rpm -q ' + name, shell=True, stdout=subprocess.PIPE)
   if process.communicate()[0][:-1] != "package " + name + " is not installed":

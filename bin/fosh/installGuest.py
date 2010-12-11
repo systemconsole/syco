@@ -22,11 +22,11 @@ def run(args):
   '''
   
   '''
-  install_epel_repo()
+  installCobbler.install_epel_repo()
   general.shell_exec("yum -y install koan")
 
   # Wait to install guests until fo-tp-install is alive.
-  while (not is_fo_tp_install_alive()):
+  while (not installCobbler.is_fo_tp_install_alive()):
     app.print_error("fo-tp-install is not alive, try again in 15 seconds.")
     time.sleep(15)
 
@@ -34,19 +34,19 @@ def run(args):
   installed={}
   host_name=socket.gethostname()
   for guest_name in app.get_guests(host_name):
-    if (is_guest_installed(guest_name, options="")):
+    if (_is_guest_installed(guest_name, options="")):
       app.print_verbose(guest_name + " already installed", 2)
     else:
       guests[guest_name]= host_name
             
   for guest_name, host_name in guests.items():
-    if (not is_guest_installed(guest_name)):
+    if (not _is_guest_installed(guest_name)):
       install_guest(host_name, guest_name)
         
   # Wait for the installation process to finish,
   # And start the quests.  
   while(len(guests)):    
-    time.sleep(5)
+    time.sleep(30)
   
     for guest_name, host_name in guests.items():
       if (_start_guest(guest_name)):
@@ -72,13 +72,13 @@ def _start_guest(guest_name):
   Wait for guest to be halted, before starting it.
   
   '''
-  if (is_guest_installed(guest_name, options="")):
+  if (_is_guest_installed(guest_name, options="")):
     return False
   else:
     general.shell_exec("virsh start " + guest_name)
     return True
   
-def is_guest_installed(guest_name, options="--all"):
+def _is_guest_installed(guest_name, options="--all"):
   '''
   Is the guest already installed on the kvm host.
   
