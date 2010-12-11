@@ -8,17 +8,10 @@ import app, general, version, iptablesClear
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
-  
-  Used by main scritpt.
-  '''
-  command="install-cobbler"
-  help="Install cobbler on the current server."
-  return command, help
+def build_commands(commands):
+  commands.add("install-cobbler", install_cobbler, help="Install cobbler on the current server.")
 
-def run(args):
+def install_cobbler(args):
   '''
   Install cobbler on current host
   

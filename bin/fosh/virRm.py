@@ -7,17 +7,10 @@ import general, app, version
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
+def build_commands(commands):
+  commands.add("vir-rm", vir_rm, "[server]", help="Remove virtual server")
   
-  Used by main scritpt.
-  '''
-  command="vir-rm"
-  help="[server] Remove virtual server"
-  return command, help
-  
-def run(args):
+def vir_rm(args):
   server_name=args[1]
   app.print_verbose('Remove virtual server %s.' % server_name)
     
@@ -34,3 +27,4 @@ def run(args):
   
   app.print_verbose("Restart libvirtd");
   general.shell_exec("/etc/init.d/libvirtd restart")
+

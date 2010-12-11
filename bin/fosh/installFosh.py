@@ -8,18 +8,10 @@ import app
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
+def build_commands(commands):
+  commands.add("install-fosh", install_fosh, help="Install the fosh script on the current server.")
   
-  Used by main scritpt.
-  
-  '''
-  command="install-fosh"
-  help="Install the fosh script on the current server."
-  return command, help  
-  
-def run(args):
+def install_fosh(args):
   '''
   Install/configure this script on the current computer.
   

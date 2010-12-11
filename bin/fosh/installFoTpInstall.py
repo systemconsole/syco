@@ -8,19 +8,12 @@ import app, general, version
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
-  
-  Used by main scritpt.
-  '''
-  command="install-fo-tp-install"
-  help="Install kvm guest for fo-tp-install."
-  return command, help
+def build_commands(commands):
+  commands.add("install-fo-tp-install", install_fo_tp_install, help="Install kvm guest for fo-tp-install")
   
 # The main function
 #   
-def run(args):
+def install_fo_tp_install(args):
   # Is fo-tp-install already installed?
   result, error = general.shell_exec("virsh list --all")
   if ("fo-tp-install" in result):

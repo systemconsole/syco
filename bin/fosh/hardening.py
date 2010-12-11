@@ -16,17 +16,10 @@ import app, general, version
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
+def build_commands(commands):
+  commands.add("hardening", hardening, help="Hardening the host, removing not used software etc.")
   
-  Used by main scritpt.
-  '''
-  command="hardening"             
-  help="Hardening the host, removing not used software etc."
-  return command, help
-  
-def run(args):
+def hardening(args):
   '''
   The main function  
   

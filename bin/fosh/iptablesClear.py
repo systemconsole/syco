@@ -7,17 +7,10 @@ import app, general
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
+def build_commands(commands):
+  commands.add("iptables-clear", iptables_clear, help="Clear all rules from iptables.")
   
-  Used by main scritpt.
-  '''
-  command="iptables-clear"
-  help="Clear all rules from iptables"
-  return command, help
-  
-def run(args):
+def iptables_clear(args):
   '''
   
   '''
