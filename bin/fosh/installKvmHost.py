@@ -1,9 +1,30 @@
 #! /usr/bin/env python
 
-import os, subprocess, re, ConfigParser
-
+import os, subprocess, re, ConfigParser, time
 import app, general, version
 
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 3
+
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="install-kvmhost"
+  help="Install kvm host on the current server."
+  return command, help
+
+def run(args):
+  '''
+  
+  '''
+  obj = InstallKvmHost()
+  obj.run()
+        
 class InstallKvmHost:
   '''
   Install the server to act as a kvm host.
@@ -160,5 +181,5 @@ ONBOOT=yes""")
     
     # Wait for the reboot to be executed, so the script
     # doesn't proceed to next command in install.cfg
-    sleep(1000)
+    time.sleep(1000)
     

@@ -7,20 +7,30 @@
 # http://www.nsa.gov/ia/_files/factshe...phlet-i731.pdf
 # http://wiki.centos.org/HowTos/OS_Protection
 #
-# Changelog
-# 101005 DL - Draft
-# 101128 DL - Included in fosh
 
 import sys, os, fileinput, re, shlex, subprocess
-
 import app, general, version
 
-# The version of hardening
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
 script_version = 1
 
-# The main function
-#   
-def run():    
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="hardening"             
+  help="Hardening the host, removing not used software etc."
+  return command, help
+  
+def run(args):
+  '''
+  The main function  
+  
+  '''
   global script_version
   app.print_verbose("Harden host version: %d" % script_version)
   ver_obj = version.Version()

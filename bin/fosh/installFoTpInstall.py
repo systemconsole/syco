@@ -1,23 +1,26 @@
 #! /usr/bin/env python
 
-# This script will harden an centos minium installation
-#
-# For more information see:
-# http://www.linuxforums.org/forum/red-hat-fedora-linux/166631-redhat-centos-hardening-customizing-removing-excess.html
-# http://www.nsa.gov/ia/_files/factshe...phlet-i731.pdf
-# http://wiki.centos.org/HowTos/OS_Protection
-#
-# Changelog
-# 101005 DL - Draft
-# 101128 DL - Included in fosh
-
 import sys, os, fileinput, re, shlex, subprocess, time
-
 import app, general, version
 
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
+
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="install-fo-tp-install"
+  help="Install kvm guest for fo-tp-install."
+  return command, help
+  
 # The main function
 #   
-def run():    
+def run(args):
     # Is fo-tp-install already installed?
     result, error = general.shell_exec("virsh list --all")
     if ("fo-tp-install" in result):
