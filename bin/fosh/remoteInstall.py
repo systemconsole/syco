@@ -9,17 +9,10 @@ from exception import SettingsError
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
-  
-  Used by main scritpt.
-  '''
-  command="remote-install" 
-  help="[server] Connect to all servers, and run all commands defined in install.cfg."
-  return command, help
+def build_commands(commands):
+  commands.add("remote-install", remote_install, "[server]", help="Connect to all servers, and run all commands defined in install.cfg.")
 
-def run(args):
+def remote_install(args):
   '''
   '''
   remote_host=args[1]

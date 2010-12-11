@@ -19,17 +19,10 @@ import app, general, version
 # once on the same host.
 script_version = 3
 
-def get_help():
-  '''
-  Return short help about this module.
-  
-  Used by main scritpt.
-  '''
-  command="install-kvmhost"
-  help="Install kvm host on the current server."
-  return command, help
+def build_commands(commands):
+  commands.add("install-kvmhost", install_kvmhost, help="Install kvm host on the current server.")
 
-def run(self):
+def install_kvmhost(self):
   '''
   The actual installation of the kvm host.
   

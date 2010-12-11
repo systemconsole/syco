@@ -7,17 +7,10 @@ import general, app
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
+def build_commands(commands):
+  commands.add("git-commit", git_commit, "[comment]", help="Commit changes to fosh to github")
   
-  Used by main scritpt.
-  '''
-  command="git-commit"
-  help="[comment] Commit changes to fosh to github"
-  return command, help
-  
-def run(args):
+def git_commit(args):
   '''
   Commit the fosh folder to the github repository.
   

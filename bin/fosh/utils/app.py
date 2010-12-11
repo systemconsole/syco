@@ -97,4 +97,4 @@ def get_guests(host_name):
       if ("guest" in option):
         guests.append(value)
 
-  return sorted(guests)  
+  return sorted(guests)      

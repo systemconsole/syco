@@ -8,17 +8,10 @@ import app, general, version, iptablesClear, installCobbler
 # once on the same host.
 script_version = 1
 
-def get_help():
-  '''
-  Return short help about this module.
-  
-  Used by main scritpt.
-  '''
-  command="install-guests"        
-  help="Install guests on host defined in install.cfg."
-  return command, help
+def build_commands(commands):
+  commands.add("install-guests", install_guests, help="Install guests on host defined in install.cfg.")
                
-def run(args):
+def install_guests(args):
   '''
   
   '''
