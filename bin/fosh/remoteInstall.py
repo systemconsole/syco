@@ -26,7 +26,6 @@ class RemoteInstall:
   the script will retry to connect every 5 second until it answers.
   
   '''
-  
   password=""
   servers={}
   
@@ -43,7 +42,8 @@ class RemoteInstall:
   abort_error={}
   
   def run(self, host_name="", password=""):
-    '''Start the installation
+    '''
+    Start the installation
         
     '''            
     self._set_servers(host_name)
@@ -69,7 +69,8 @@ class RemoteInstall:
         t.join()          
 
   def _execute_commands(self, host_name):
-    '''Execute the commands on the remote host.
+    '''
+    Execute the commands on the remote host.
         
     Create one process for each remote host.    
     
