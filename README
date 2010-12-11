@@ -31,8 +31,17 @@ THE FLOW OF THE "fosh remote-install"
 TODO
 ---
 
+This version
+* Write installGlassfish.py script
+* Write installMysql.py script
+* Write installWeb.py script
+* Write installVpn.py script
+* Configure all bin/fosh/fosh modules to all use class or not use class. Same structure
+* Read "configuration" of which commands to use from the dir bin/fosh/fosh/
+  http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
+  
+Future version  
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
-* Change all ips for fo-tp-install, to 10.100.100.200
 * The guests should use the repos on the fo-tp-install.
 * The guest should be locally "firewalled" to not be able to reach out to anything
   more then they need. Only repo updates on fo-tp-install.
@@ -40,13 +49,14 @@ TODO
 * The remote-install deamon should check for changes in install.cfg.
 * Add all output from fosh to a log file.
 * Add "fosh remote-install" in kickstart for fo-tp-install
-* Configure install.cfg to use all computers.
-* Check cpu sensors (temp)
+* Check cpu sensors (temp), IPMI??
 
 CHANGELOG
 ---------
+2010-12-10
+# Indicate disk space to use for a guest in install.cfg
+# Configure install.cfg to use all computers.
 
 2010-12-09
 # Install all servers with pxe.
 # Move dhcp to fo-tp-install
-# Indicate disk space to use for a guest in install.cfg

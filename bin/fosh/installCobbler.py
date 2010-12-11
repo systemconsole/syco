@@ -1,14 +1,27 @@
 #! /usr/bin/env python
 
 import socket, shutil, time, os
-import app, general, version, iptables
+import app, general, version, iptablesClear
 
-# The version of InstallKvmHost
-script_version = 3
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
 
-def run():
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="install-cobbler"
+  help="Install cobbler on the current server."
+  return command, help
+
+def run(args):
   '''
   Install cobbler on current host
+  
   '''  
   global script_version
   app.print_verbose("Install cobbler version: %d" % script_version)
@@ -272,4 +285,4 @@ def is_guest_installed(guest_name, options="--all"):
     return False  
         
 def is_fo_tp_install_alive():
-  return general.is_server_alive("10.100.100.200", 22)
+  return general.is_server_alive("10.100.100.200", 22)  

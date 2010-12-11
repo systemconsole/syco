@@ -2,10 +2,25 @@
 
 import app, general
 
-def iptables(args):
-  general.shell_exec("/sbin/iptables " + args)
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
 
-def clear():
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="iptables-clear"
+  help="Clear all rules from iptables"
+  return command, help
+  
+def run(args):
+  '''
+  
+  '''
   app.print_verbose("Clear all iptables rules")
   # reset the default policies in the filter table.
   iptables("-P INPUT ACCEPT")
@@ -38,3 +53,6 @@ def clear():
   iptables("-Z -t filter")
   iptables("-Z -t nat")
   iptables("-Z -t mangle")
+  
+def iptables(args):
+  general.shell_exec("/sbin/iptables " + args)

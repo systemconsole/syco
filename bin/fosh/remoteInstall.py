@@ -1,10 +1,31 @@
 #! /usr/bin/env python
 
 import subprocess, os, sys, time, paramiko, getpass, threading
-
 import ssh, app
 from exception import SettingsError
 
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
+
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="remote-install" 
+  help="[server] Connect to all servers, and run all commands defined in install.cfg."
+  return command, help
+
+def run(args):
+  '''
+  '''
+  remote_host=args[1]
+  obj = remoteInstall.RemoteInstall()
+  obj.run(remote_host)
+  
 class RemoteInstall:
   '''Run commands defined in install.cfg on remote hosts through SSH.
 

@@ -2,7 +2,23 @@
 
 import general, app, version
 
-def vir_rm(server_name):
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
+
+def get_help():
+  '''
+  Return short help about this module.
+  
+  Used by main scritpt.
+  '''
+  command="vir-rm"
+  help="[server] Remove virtual server"
+  return command, help
+  
+def run(args):
+  server_name=args[1]
   app.print_verbose('Remove virtual server %s.' % server_name)
     
   app.print_verbose("Destory the kvm instance");

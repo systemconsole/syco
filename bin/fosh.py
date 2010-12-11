@@ -1,34 +1,38 @@
 #! /usr/bin/env python
 
-import sys
+import sys, types
 sys.path.append(sys.path[0] + "/fosh")
 sys.path.append(sys.path[0] + "/fosh/utils")
 
-import os
+import os, inspect
 from optparse import OptionParser
 
 import app
-import remoteInstall, installKvmHost, installCobbler, foTpInstall, hardening, vir, iptables, git
+
+#  Import all py files in the fosh modules dir "fosh/bin/fosh"
+for module in os.listdir(app.fosh_path + "/bin/fosh/"):
+  if module == '__init__.py' or module[-3:] != '.py':
+    continue
+  py_command=module[:-3] + "=__import__(\"" + module[:-3] + "\", locals(), globals())"
+  exec(py_command)
+
+# Module variables
+commands={}
+help=""
 
 def main():
   '''
-  First function called when using the script. 
-  Used to control the command line options, and the flow of the 
-  fosh script.
-  '''
-  usage = "usage: %prog [options] command\n"
-  usage += "commands\n"
-  usage += "   install-fosh          Install the fosh script on the current server.\n"
-  usage += "   remote-install [srv]  Connect to all servers, and run all commands defined in install.cfg.\n"  
-  usage += "   install-kvmhost       Install kvm host on the current server.\n"
-  usage += "   install-cobbler       Install cobbler on the current server.\n"
-  usage += "   install-guests        Install guests on host defined in install.cfg.\n"
-  usage += "   install-fo-tp-install Install kvm guest for fo-tp-install.\n"
-  usage += "   hardening             Hardening the host, removing not used software etc.\n"
-  usage += "   vir-rm [server]       Remove virtual server\n"
-  usage += "   iptables-clear        Clear all rules from iptables\n"
-  usage += "   git-commit [comment]  Commit changes to fosh to github"  
+  Used to control the command line options, and the execution of the script.
   
+  First function called when using the script. 
+  
+  '''
+  global help
+  _init_modules()
+  
+  usage="usage: %prog [options] command\n"
+  usage+=help
+    
   app.parser = OptionParser(usage, version="%prog " + app.version)
   app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1)
   app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose")
@@ -40,62 +44,61 @@ def main():
   if len(args) < 1 and 2 > len(args):
     app.parser.error("Incorrect number of arguments")
   else:            
-    execute_command(args)
+    _execute_command(args)
 
-def execute_command(args):
-  '''Handles the control flow of the different commands.
+def _execute_command(args):
+  '''
+  Executes the run function in the module that are used.
   
   '''
-  command = args[0].lower();
-  command2 = ""
-  if len(args) >= 2:
-    command2 = args[1].lower();
-  
-  if (command == 'install-fosh'):
-    install_fosh()
-
-  elif (command == 'remote-install'):
-    obj = remoteInstall.RemoteInstall()
-    obj.run(command2)
-    
-  elif (command == 'install-kvmhost'):
-    obj = installKvmHost.InstallKvmHost()
-    obj.run()
-    
-  elif (command == 'install-cobbler'):
-    installCobbler.run()
-    
-  elif (command == 'install-guests'):
-    installCobbler.install_guests()
-    
-  elif (command == 'install-fo-tp-install'):
-    foTpInstall.run()
-    
-  elif (command == 'hardening'):
-    hardening.run()
-    
-  elif (command == 'vir-rm'):
-    vir.vir_rm(command2)
-    
-  elif (command == 'iptables-clear'):
-    iptables.clear()
-    
-  elif (command == 'git-commit'):
-    git.git_commit(command2)
-        
+  global commands
+  command = args[0].lower();      
+  if command in commands:  
+    commands[command](args) 
   else:
     app.parser.error('Unknown command %s' % command)
-               
-def install_fosh():
+                 
+def _get_modules():
   '''
-  Install/configure this script on the current computer.
+  Return a list of objects representing all available fosh modules
+  
   '''
-  app.print_verbose("Install fosh")
-  if (os.access('/sbin/fosh', os.F_OK) == False):
-    app.print_verbose("Create symlink /sbin/fosh")
-    os.symlink(sys.path[0] + '/fosh.py', '/sbin/fosh')
-  else:
-    app.print_verbose("   Already installed")
+  modules=[]
+  for module in os.listdir(app.fosh_path + "/bin/fosh/"):
+    try:
+      if module == '__init__.py' or module[-3:] != '.py':
+          continue
+      module=module[:-3]    
+      obj = getattr(sys.modules[__name__], module)
+      modules.append(obj)
+      
+    except NameError, e:
+      app.print_error("   " + module + " is not a namespace or class")
+    except AttributeError:
+        raise NameError("%s doesn't exist." % module)
+
+  return modules  
+  
+def _init_modules():
+  '''
+  Create the help and commands globals.
+  
+  '''
+  global commands, help
+  for obj in _get_modules():
+    try:            
+      help_tuple=obj.get_help()      
+      help+=help_tuple[0].ljust(25) + "- " + help_tuple[1].ljust(20) + "\n"
+      commands[help_tuple[0]]=obj.run
             
+    except AttributeError, e:
+      app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
+    except NameError, e:
+      app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
+
+  # Sorting from A-Z
+  l=sorted(help.split("\n"))  
+  help="\n".join(str(n) for n in l)
+         
 if __name__ == "__main__":    
-    main()
+  main()
