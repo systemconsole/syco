@@ -46,6 +46,7 @@ def install_epel_repo():
   Need the EPEL repos for cobbler and koan
   http://ridingthecloud.com/installing-epel-repository-centos-rhel/
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
+  
   '''  
   result, err = general.shell_exec("rpm -q epel-release-5-4.noarch")
   if "package epel-release-5-4.noarch is not installed" in result:    

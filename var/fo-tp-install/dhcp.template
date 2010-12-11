@@ -21,7 +21,7 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
   option routers 10.100.0.1;
   option domain-name-servers 10.100.0.4, 84.246.88.10, 84.246.88.20;
   option domain-name "fareonline.net";
-  range dynamic-bootp 10.100.0.10 10.100.0.100;
+  range  10.100.0.10 10.100.0.100;
   
   # PXE Server
   next-server 10.100.100.201;
