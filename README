@@ -38,6 +38,7 @@ This version
 * Write installVpn.py script
   
 Future version  
+* Realtime stdout output from ssh functions.
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
 * The guests should use the repos on the fo-tp-install.
 * The guest should be locally "firewalled" to not be able to reach out to anything

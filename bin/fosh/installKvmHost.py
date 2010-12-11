@@ -10,7 +10,6 @@
 #  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
 #  http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/  
 
-
 import os, subprocess, re, ConfigParser, time
 import app, general, version
 

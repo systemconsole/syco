@@ -44,10 +44,36 @@ class Commands:
     else:
       app.parser.error('Unknown command %s' % command)
 
-# Module variables
-cmd_list=Commands()
-commands={}
-help=""
+  def __init__(self):    
+    for obj in self._get_modules():
+      try:
+        obj.build_commands(self)
+                    
+      except AttributeError, e:
+        app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
+      except NameError, e:
+        app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))       
+      
+  def _get_modules(self):
+    '''
+    Return a list of objects representing all available fosh modules
+    
+    '''
+    modules=[]
+    for module in os.listdir(app.fosh_path + "/bin/fosh/"):
+      try:
+        if module == '__init__.py' or module[-3:] != '.py':
+            continue
+        module=module[:-3]    
+        obj = getattr(sys.modules[__name__], module)
+        modules.append(obj)
+        
+      except NameError, e:
+        app.print_error("   " + module + " is not a namespace or class")
+      except AttributeError:
+        raise NameError("%s doesn't exist." % module)
+  
+    return modules       
 
 def main():
   '''
@@ -56,8 +82,8 @@ def main():
   First function called when using the script. 
   
   '''
-  global help, cmd_list
-  _init_modules()
+  # Module variables
+  cmd_list=Commands()
   
   usage="usage: %prog [options] command\n"
   usage+=cmd_list.get_help()
@@ -75,42 +101,5 @@ def main():
   else:            
     cmd_list.execute(args) 
                  
-def _get_modules():
-  '''
-  Return a list of objects representing all available fosh modules
-  
-  '''
-  modules=[]
-  for module in os.listdir(app.fosh_path + "/bin/fosh/"):
-    try:
-      if module == '__init__.py' or module[-3:] != '.py':
-          continue
-      module=module[:-3]    
-      obj = getattr(sys.modules[__name__], module)
-      modules.append(obj)
-      
-    except NameError, e:
-      app.print_error("   " + module + " is not a namespace or class")
-    except AttributeError:
-      raise NameError("%s doesn't exist." % module)
-
-  return modules  
-  
-def _init_modules():
-  '''
-  Create the help and commands globals.
-  
-  '''
-  global commands, help, cmd_list
-  
-  for obj in _get_modules():
-    try:
-      obj.build_commands(cmd_list)
-                  
-    except AttributeError, e:
-      app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
-    except NameError, e:
-      app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))       
-
 if __name__ == "__main__":    
   main()
