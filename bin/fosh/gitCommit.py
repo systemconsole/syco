@@ -26,4 +26,4 @@ def run(args):
   general.shell_exec("find " + app.fosh_path + " -iname '*.pyc' -delete")
   general.shell_exec("cd " + app.fosh_path + ";git add *")
   general.shell_exec("cd " + app.fosh_path + ";git commit -a -m'%s'" % comment)
-  general.shell_exec("git push origin")
+  general.shell_exec("cd " + app.fosh_path + ";git push origin")
