@@ -98,6 +98,8 @@ def _disable_services():
   http://www.imminentweb.com/technologies/centos-disable-unneeded-services-boot-time
   http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/  
   
+  TODO:
+  Also add this to the kickstart files?
   '''
   app.print_verbose("Disable services")
   _disable_service("anacron")

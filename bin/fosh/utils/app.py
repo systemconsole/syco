@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 import sys, ConfigParser, os, re, socket
-
 import general
+
 #
 #  Contains global functions and settings for the fosh app
 #
@@ -27,7 +27,7 @@ def print_error(message, verbose_level=1):
 def print_info(message):
   print_verbose(message, caption="Info: ") 
     
-def print_verbose(message, verbose_level = 1, caption=""):
+def print_verbose(message, verbose_level = 1, caption="", new_line=True):
   global options
 
   messages = []
@@ -43,7 +43,10 @@ def print_verbose(message, verbose_level = 1, caption=""):
     msg=host + caption + msg
   
     if (options.verbose >= verbose_level):    
-      print(msg)
+      if (new_line):
+        print(msg)
+      else:
+        print msg,
 
 def get_option(section, option):
   if (config.has_section(section)):

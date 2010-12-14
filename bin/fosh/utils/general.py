@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob, os
+import re, subprocess, glob, os, shutil
 from socket import *  
 import app
 
@@ -43,17 +43,20 @@ def shell_exec(command, error=True, no_return=False):
 def handle_subprocess(p, error=True):  
   stdout=""
   stderr=""
-  while (p.poll() == None):
+  while (True):
     for txt in p.stdout:
       # Only write caption once.
       if (stdout==""):
         app.print_verbose("---- Result ----", 2)
-      app.print_verbose(txt.strip(), 2)
+      app.print_verbose(txt.strip(), 2, new_line=False)
       stdout+=txt
       
     for txt in p.stderr:
       stderr+=txt  
-          
+  
+    if (p.poll() != None):
+      break
+              
   if (stderr and error):
     app.print_error(stderr.strip())
 
@@ -71,7 +74,7 @@ def set_config_property(file_name, search_exp, replace_exp):
   if os.path.exists(file_name):
     exist=False        
     try:
-      os.rename(file_name, file_name + ".bak")
+      shutil.copyfile(file_name, file_name + ".bak")
       r = open(file_name + ".bak", 'r')
       w = open(file_name, 'w')
       for line in r:

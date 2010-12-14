@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import os
+import os, sys
 import app
 
 # The version of this module, used to prevent

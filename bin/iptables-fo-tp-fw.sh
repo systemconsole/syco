@@ -38,6 +38,7 @@ INET_IP="178.78.197.210"
 PHPHTTP_IP="178.78.197.210"
 MAIL_IP="178.78.197.211"
 DNS_IP="178.78.197.212"
+VPN_IP="178.78.197.210"
 INET_IFACE="eth3"
 
 # Local Area Network configuration.
@@ -46,9 +47,9 @@ LAN_IFACE="eth2"
 
 # DMZ Configuration.
 DMZ_IP="10.100.0.1"
-DMZ_VPN_IP="10.100.0.4"
 DMZ_MAIL_IP="10.100.0.6"
 DMZ_DNS_IP="10.100.0.10"
+DMZ_VPN_IP="10.100.100.6"
 DMZ_PHPHTTP_IP="10.100.0.4"
 DMZ_IFACE="eth0"
 
@@ -243,12 +244,15 @@ $IPTABLES -A FORWARD -p ICMP -i $INET_IFACE -o $DMZ_IFACE -d $DMZ_PHPHTTP_IP -j 
 $IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $MAIL_IP -m multiport --dports 25,110,143,80,443,995 -j DNAT --to-destination $DMZ_MAIL_IP
 $IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $MAIL_IP --dport 82 -j DNAT --to-destination $DMZ_MAIL_IP:80
 $IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $MAIL_IP --dport 445 -j DNAT --to-destination $DMZ_MAIL_IP:443
-$IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_MAIL_IP -m multiport --dports 25,110,143,80,443,995 -j allowed
+$IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $MAIL_IP --dport 35 -j DNAT --to-destination $DMZ_MAIL_IP:22
+$IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_MAIL_IP -m multiport --dports 25,110,143,80,443,995,22 -j allowed
 $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_MAIL_IP -j icmp_packets
 
 # DMZ VPN
-$IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $INET_IP -m multiport --dports 1198 -j DNAT --to-destination $DMZ_VPN_IP
-$IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1198 -j allowed
+$IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $VPN_IP -m multiport --dports 1194 -j DNAT --to-destination $DMZ_VPN_IP
+$IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $VPN_IP -m multiport --dports 1194 -j DNAT --to-destination $DMZ_VPN_IP
+$IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
+$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
 $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_VPN_IP -j icmp_packets
 
 ###########################################################################

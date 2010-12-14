@@ -32,11 +32,26 @@ TODO
 ---
 
 This version
+* Install "yum -y install pexpect"
 * Write installGlassfish.py script
 * Write installMysql.py script
 * Write installWeb.py script
 * Write installVpn.py script
-  
+* Harden kickstart files according to
+  http://kickstart-maker.googlecode.com/svn-history/r20/trunk/kickstart.template
+* Add epel repo to fo-tp-install
+  repo --name=lepel       --baseurl=http://10.0.0.1:81/yum-repos/epel/i386
+* Install fo-tp-mysql on fo-tp-vh03 until vh04 is up again.
+* Harden kickstart and hardenscript even more
+  http://kickstart-maker.googlecode.com/svn-history/r20/trunk/post/
+* Harden according to, or later version.
+  http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf  
+* Harden, remove/disable these services
+  hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm  
+* Add user used by fosh, so it don't need to use root. Then prevent root ssh login.
+  Kickstart command
+  user --name=fosh --uid=500 --groups=wheel,root --password=nothingspecial
+    
 Future version  
 * Realtime stdout output from ssh functions.
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.

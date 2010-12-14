@@ -11,8 +11,10 @@
 # System authorization information
 auth  --useshadow  --enablemd5
 
-# System bootloader configuration
-bootloader --location=mbr --driveorder=vda
+# Bootloader
+# disable usb as per NSA 2.2.2.2.3:
+bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=vda
+
 
 # Clear the Master Boot Record
 zerombr
@@ -59,14 +61,14 @@ clearpart --all --drives=vda --initlabel
 part /boot --fstype ext3 --size=100 --ondisk=vda
 part pv.2 --size=0 --grow --ondisk=vda
 volgroup VolGroup00 pv.2
-logvol /home    --fstype ext3 --name=home   --vgname=VolGroup00 --size=1024
-logvol /var     --fstype ext3 --name=var    --vgname=VolGroup00 --size=32768
-logvol /var/tmp --fstype ext3 --name=vartmp --vgname=VolGroup00 --size=1024
-logvol /var/log --fstype ext3 --name=varlog --vgname=VolGroup00 --size=4096
-logvol /tmp     --fstype ext3 --name=tmp    --vgname=VolGroup00 --size=1024
-logvol /        --fstype ext3 --name=root   --vgname=VolGroup00 --size=4096
-logvol /opt     --fstype ext3 --name=data   --vgname=VolGroup00 --size=4096
+
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=4096
+logvol /        --fstype ext3 --name=root   --vgname=VolGroup00 --size=4096
+logvol /var     --fstype ext3 --name=var    --vgname=VolGroup00 --size=32768
+logvol /var/tmp --fstype ext3 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
+logvol /var/log --fstype ext3 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
+logvol /tmp     --fstype ext3 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
+logvol /home    --fstype ext3 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 
 %packages
 @base
