@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import socket, shutil, time, os
-import app, general, version, iptablesClear
+import app, general, version, iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then

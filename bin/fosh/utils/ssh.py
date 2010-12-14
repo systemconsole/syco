@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import ConfigParser, subprocess, os, paramiko, socket
-
 import app, general
 from exception import SettingsError
 

@@ -1,0 +1,36 @@
+CENTOS/UBUNTU
+======
+yum install openvpn
+cd /etc/openvpn
+unzip xxx/openvpn_client_keys.zip
+openssl verify -CAfile ca.crt -purpose sslclient client.crt 
+
+# If you have SELinux installed
+restorecon -Rv /etc/openvpn
+
+/etc/init.d/openvpn restart
+
+# If you get problem use these commands.
+tail /var/log/messages
+tail /var/log/syslog
+netstat -rn
+ping 10.100.100.6
+tracepath 10.100.100.6
+
+MAC - OS X
+==========
+
+* Have a first look at the tunneblick webpage
+  http://code.google.com/p/tunnelblick/
+
+* Download the latest version,
+  http://code.google.com/p/tunnelblick/downloads/detail?name=Tunnelblick_3.1.dmg
+
+* Download your certs (openvpn_client_keys.zip) from your home folder on fo-tp-system.
+
+* Install tunnelblick and follow the instructions, use the "tunneblick configuration style",
+  not the openvpn style
+  
+WINDOWS
+=======
+  
