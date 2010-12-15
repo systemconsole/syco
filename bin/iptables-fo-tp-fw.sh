@@ -39,6 +39,7 @@ PHPHTTP_IP="178.78.197.210"
 MAIL_IP="178.78.197.211"
 DNS_IP="178.78.197.212"
 VPN_IP="178.78.197.210"
+PHONE_IP="178.78.197.210"
 INET_IFACE="eth3"
 
 # Local Area Network configuration.
@@ -50,6 +51,7 @@ DMZ_IP="10.100.0.1"
 DMZ_MAIL_IP="10.100.0.6"
 DMZ_DNS_IP="10.100.0.10"
 DMZ_VPN_IP="10.100.100.6"
+DMZ_PHONE_IP="10.100.100.3"
 DMZ_PHPHTTP_IP="10.100.0.4"
 DMZ_IFACE="eth0"
 
@@ -254,6 +256,13 @@ $IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $VPN_IP -m multiport --d
 $IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
 $IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
 $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_VPN_IP -j icmp_packets
+
+# DMZ PHONE
+$IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $PHONE_IP -m multiport --dports 5060 -j DNAT --to-destination $DMZ_PHONE_IP
+$IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j DNAT --to-destination $DMZ_PHONE_IP
+$IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060 -j allowed
+$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j allowed
+$IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_PHONE_IP -j icmp_packets
 
 ###########################################################################
 #

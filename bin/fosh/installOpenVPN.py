@@ -10,8 +10,10 @@
 # http://www.howtoforge.com/openvpn-server-on-centos-5.2
 # http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
 
-import os, subprocess, time, pexpect, stat
+import os, subprocess, time, stat
 import app, general, version, iptables
+    
+pexpect=general.install_and_import_pexpect()
 
 # The version of this module, used to prevent
 # the same script version to be executed more then

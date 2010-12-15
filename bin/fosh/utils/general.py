@@ -108,7 +108,20 @@ def is_server_alive(server, port):
     
   if (result == 0):  
     return True
-  return False  
+  return False    
 
+def install_and_import_pexpect():
+  '''
+  Import the pexpect module, will be installed if not already done.
+  
+  '''
+  try:
+    import pexpect
+    return pexpect
+  except:
+    shell_exec("yum -y install pexpect")
+    install_and_import_pexpect()  
+    
 if __name__ == "__main__":
   pass
+    
