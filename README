@@ -32,11 +32,13 @@ TODO
 ---
 
 This version
+* Has the client openvpn certs a unique common name?
+* Harden openvpn, jailroot, ta.key, Unprivileged mode
+  http://openvpn.net/index.php/open-source/documentation/howto.html#security
 * Install "yum -y install pexpect"
 * Write installGlassfish.py script
 * Write installMysql.py script
 * Write installWeb.py script
-* Write installVpn.py script
 * Harden kickstart files according to
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/kickstart.template
 * Add epel repo to fo-tp-install
@@ -66,6 +68,9 @@ Future version
 
 CHANGELOG
 ---------
+2010-12-11 -- 2010-12-14
+# Write installVpn.py script to install openvpn.
+
 2010-12-10
 # Indicate disk space to use for a guest in install.cfg
 # Configure install.cfg to use all computers.
