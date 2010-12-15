@@ -35,7 +35,6 @@ This version
 * Has the client openvpn certs a unique common name?
 * Harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
-* Install "yum -y install pexpect"
 * Write installGlassfish.py script
 * Write installMysql.py script
 * Write installWeb.py script
@@ -68,6 +67,9 @@ Future version
 
 CHANGELOG
 ---------
+2010-12-15
+# Install pexpect on all fosh servers.
+
 2010-12-11 -- 2010-12-14
 # Write installVpn.py script to install openvpn.
 
