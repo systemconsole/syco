@@ -32,9 +32,11 @@ TODO
 ---
 
 This version
-* Has the client openvpn certs a unique common name?
-* Harden openvpn, jailroot, ta.key, Unprivileged mode
+
+* installOpenvpn, has the client openvpn certs a unique common name?
+* installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
+* Write installLDAP.py script.  
 * Write installGlassfish.py script
 * Write installMysql.py script
 * Write installWeb.py script

@@ -16,7 +16,7 @@ def remote_install(args):
   '''
   '''
   remote_host=args[1]
-  obj = remoteInstall.RemoteInstall()
+  obj = RemoteInstall()
   obj.run(remote_host)
   
 class RemoteInstall:
