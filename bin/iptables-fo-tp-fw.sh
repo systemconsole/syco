@@ -51,7 +51,7 @@ DMZ_IP="10.100.0.1"
 DMZ_MAIL_IP="10.100.0.6"
 DMZ_DNS_IP="10.100.0.10"
 DMZ_VPN_IP="10.100.100.6"
-DMZ_PHONE_IP="10.100.100.3"
+DMZ_PHONE_IP="10.100.0.3"
 DMZ_PHPHTTP_IP="10.100.0.4"
 DMZ_IFACE="eth0"
 
@@ -144,8 +144,11 @@ allow_fw_to_access_external_dns
 
 # SSH open from anywhere
 #$IPTABLES -A INPUT -p TCP --sport 1024:65535 --dport 34 -j allowed
-$IPTABLES -A INPUT -p TCP  --dport 34 -j allowed
+$IPTABLES -A INPUT -p TCP --dport 34 -j allowed
 
+# Didn't get it to work
+# $IPTABLES -A INPUT -p TCP --dport 34 -m state --state NEW -m recent --name sshprobe --set -j allowed
+# $IPTABLES -A INPUT -p TCP --dport 34 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j DROP
 
 #
 # From the Internet to INET firewall IP
@@ -254,15 +257,22 @@ $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_MAIL_IP -j icmp_packets
 $IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $VPN_IP -m multiport --dports 1194 -j DNAT --to-destination $DMZ_VPN_IP
 $IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $VPN_IP -m multiport --dports 1194 -j DNAT --to-destination $DMZ_VPN_IP
 $IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
-$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j allowed
+$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_VPN_IP -m multiport --dports 1194 -j ACCEPT
 $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_VPN_IP -j icmp_packets
 
 # DMZ PHONE
 $IPTABLES -t nat -A PREROUTING -p TCP -i $INET_IFACE -d $PHONE_IP -m multiport --dports 5060 -j DNAT --to-destination $DMZ_PHONE_IP
 $IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j DNAT --to-destination $DMZ_PHONE_IP
 $IPTABLES -A FORWARD -p TCP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060 -j allowed
-$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j allowed
+$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j ACCEPT
 $IPTABLES -A FORWARD -p ICMP -o $DMZ_IFACE -d $DMZ_PHONE_IP -j icmp_packets
+
+# $IPTABLES -t nat -A PREROUTING -p UDP -o $INET_IFACE -d $PHONE_IP -m multiport --dports 5060:5082,10000:20000 -j DNAT --to-destination $DMZ_PHONE_IP
+# $IPTABLES -A FORWARD -p UDP  -i $DMZ_IFACE -m multiport --sports 5060:5082,10000:20000 -j ACCEPT
+
+#$IPTABLES -t nat -A PREROUTING -p UDP -i $INET_IFACE -d $PHONE_IP -m multiport --dports 5060 -j DNAT --to-destination $DMZ_PHONE_IP
+#$IPTABLES -A FORWARD -p UDP  -o $DMZ_IFACE -d $DMZ_PHONE_IP -m multiport --dports 5060 -j ACCEPT
+
 
 ###########################################################################
 #
@@ -417,6 +427,7 @@ function load_modules {
 /sbin/modprobe ipt_limit
 /sbin/modprobe ipt_state
 /sbin/modprobe ipt_multiport
+/sbin/modprobe ipt_recent
 
 #/sbin/modprobe ipt_owner
 #/sbin/modprobe ipt_REJECT
