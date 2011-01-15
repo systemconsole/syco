@@ -1,8 +1,15 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob, os, shutil
+import re, subprocess, glob, os, shutil, sys
 from socket import *  
 import app
+
+# Import the pexpect module, will be installed if not already done.
+try:
+  import pexpect
+except:
+  shell_exec("yum -y install pexpect")
+  import pexpect
 
 # Constants
 BOLD="\033[1m"
@@ -28,10 +35,14 @@ def grep(file_name, pattern):
       return True
   return False
   
-def shell_exec(command, error=True, no_return=False):
+def shell_exec(command, error=True, no_return=False, user=""):
   '''
   Execute a shell command and handles output verbosity.
   '''
+  
+  if (user):
+    command="su " + user + ' -c "' + command + '"'
+
   app.print_verbose("Command: " + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -69,6 +80,69 @@ def handle_subprocess(p, error=True):
             
   return stdout, stderr
   
+def shell_exec_p(command, error=True, no_return=False, user="", timeout=None, expect="", send=""):
+
+  if (user):
+    command="su " + user + ' -c "' + command + '"'
+
+  app.print_verbose("Command: " + command)
+  out = pexpect.spawn(command,
+    cwd=os.getcwd()
+  )
+  app.print_verbose("---- Result ----", 2)
+  stdout=""
+  try:
+    if (expect):
+      while(True):
+        index = out.expect ([expect, pexpect.EOF, pexpect.TIMEOUT])
+        stdout+=out.before        
+        app.print_verbose(out.before, 2, new_line=False)      
+        if (index==0 or index==1):
+          out.send(send)
+          break
+  
+    while(True):    
+      txt=out.read_nonblocking(512, timeout)
+      app.print_verbose(txt, 2, new_line=False)
+      stdout+=txt
+
+  except pexpect.EOF:
+    pass
+
+  out.close()
+  if (out.exitstatus and error):
+    app.print_error("Invalid exitstatus %d" % out.exitstatus)
+
+  if (out.signalstatus and error):
+    app.print_error("Invalid signalstatus %d - %s" % out.signalstatus, out.status)
+  
+  # An extra line break for the looks.
+  if (stdout and app.options.verbose >=2):
+    print("\n"),
+            
+  return stdout
+
+def shell_run(command, user="", events=""):
+
+  if (user):
+    command="su " + user + ' -c "' + command + '"'
+
+  app.print_verbose("Command: " + command)
+  (stdout, exit_status) = pexpect.run(command,
+    cwd=os.getcwd(),
+    events=events,
+    withexitstatus=True,
+    timeout=10000
+  )
+
+  app.print_verbose("---- Result (" + str(exit_status) + ")----", 2)
+  app.print_verbose(stdout, 2)
+  
+  if (exit_status == None):
+    raise Exception("Couldnt execute " + command)
+            
+  return stdout
+         
 def set_config_property(file_name, search_exp, replace_exp):
   '''Change or add a config property to a specific value'''
   if os.path.exists(file_name):

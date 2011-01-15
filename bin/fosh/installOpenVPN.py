@@ -59,6 +59,12 @@ def install_openvpn_server(args):
   iptables.iptables("-t nat -A POSTROUTING -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
   iptables.iptables("-I INPUT 1 -m state --state NEW -m tcp -p tcp --dport 1194 -j ACCEPT")
   
+  # Don't get this to work
+  #iptables -I INPUT 2 -p tcp -m state --state NEW -m multiport --dports 80,443,8080,8181,4848 -j ACCEPT
+  
+  # Ports to allow to use on the network.
+  iptables.iptables("-I RH-Firewall-1-INPUT -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
+  
   # To protect the network.
   iptables.iptables("-A FORWARD -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
   iptables.iptables('-A FORWARD -i eth0 -o tun0 -m state --state "ESTABLISHED,RELATED" -j ACCEPT')

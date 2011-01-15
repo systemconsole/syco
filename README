@@ -54,6 +54,8 @@ This version
 * Add user used by fosh, so it don't need to use root. Then prevent root ssh login.
   Kickstart command
   user --name=fosh --uid=500 --groups=wheel,root --password=nothingspecial
+* Is the ram option in install.cfg working? gf computer hasn't enough memory.  
+* Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
     
 Future version  
 * Realtime stdout output from ssh functions.
