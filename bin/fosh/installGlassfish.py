@@ -105,6 +105,18 @@ def uninstall_glassfish(args):
     general.shell_exec_p("rpm -e jdk-1.6.0_22-fcs")
 
 #
+# Public members 
+#
+# Might be used by other modules.
+#
+    
+def exec_asadmin(admin_port="", command=""):
+  if (admin_port):
+    return general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " " + command, user="glassfish")    
+  else:
+    return general.shell_exec_p("/usr/local/glassfish/bin/asadmin " + command, user="glassfish")    
+
+#
 # Options / private memembers
 #
 
@@ -610,6 +622,11 @@ def _set_iptables():
 #http://docs.sun.com/app/docs/doc/821-1751/abluc?l=en&a=view
 #asadmin> list-threadpools
 #
+
+#
+# Something to read.
+#
+# http://kalali.me/learning-glassfish-v3-command-line-administration-interface-cli/
 
 # 
 # change /opt/glassfishv3/glassfish/domains/domain1/config/domain.xml

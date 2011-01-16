@@ -2,6 +2,7 @@
 
 import sys, ConfigParser, os, re, socket
 import general
+from mysql import MysqlProperties
 
 #
 #  Contains global functions and settings for the fosh app
@@ -101,3 +102,18 @@ def get_guests(host_name):
         guests.append(value)
 
   return sorted(guests)      
+  
+def get_mysql_properties_list():
+  '''
+  Get properties for all database connections.
+  
+  TODO: Should be stored in install.cfg
+  
+  '''
+  list=[
+    MysqlProperties("farepayment",           "10.100.50.1", "root", "xxxx", "farepayment_stable"),    
+    MysqlProperties("farepayment_primary",   "10.100.50.1", "root", "xxxx", "farepayment_stable"),
+    MysqlProperties("farepayment_secondary", "10.100.50.1", "root", "xxxx", "farepayment_stable")
+  ]
+  return list
+  
