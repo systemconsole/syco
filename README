@@ -56,6 +56,7 @@ This version
   user --name=fosh --uid=500 --groups=wheel,root --password=nothingspecial
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.  
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
+* Read http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
     
 Future version  
 * Realtime stdout output from ssh functions.
@@ -71,6 +72,10 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-21
+# Draft of install-mysql
+# setup_iptables for installMysql
+
 2010-12-15
 # Install pexpect on all fosh servers.
 
