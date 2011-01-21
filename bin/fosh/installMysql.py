@@ -9,8 +9,6 @@
 # http://www.learn-mysql-tutorial.com/SecureInstall.cfm
 #
 # TODO:
-# * setup_iptables():
-# *  iptables 3306
 # * defragment_all_tables():  
 # *   ALTER TABLE xxx ENGINE=INNODB
 # * calculate_cardinality():
@@ -206,3 +204,7 @@ def mysql_exec(command, with_user=False, host="localhost"):
     cmd+="-uroot -p" + app.get_mysql_password() + " "
 
   general.shell_exec_p(cmd + '-e "' + command + '"')
+  
+def _setup_iptables():
+  pass
+# *  iptables 3306
