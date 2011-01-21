@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob, os, shutil, sys
+import re, subprocess, glob, os, shutil, sys, string
+from random import choice
 from socket import *  
 import app
 
@@ -182,7 +183,10 @@ def is_server_alive(server, port):
     
   if (result == 0):  
     return True
-  return False    
+  return False 
+  
+def generate_password(length=8, chars=string.letters + string.digits):
+  return ''.join([choice(chars) for i in range(length)])        
 
 def install_and_import_pexpect():
   '''
@@ -198,4 +202,3 @@ def install_and_import_pexpect():
     
 if __name__ == "__main__":
   pass
-    

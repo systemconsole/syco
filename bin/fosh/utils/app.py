@@ -61,6 +61,9 @@ def get_option(section, option):
 def get_root_password():
   return get_option("general", "root_password")
 
+def get_mysql_password():
+  return get_option("general", "mysql_password")
+
 def get_ip(host_name):
   return get_option(host_name, "server")
 
