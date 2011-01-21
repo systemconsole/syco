@@ -30,11 +30,11 @@ def install_cobbler(args):
   _install_cobbler()
   _modify_coppler_settings()
   _import_repos()
-  setup_all_systems()
+  setup_all_systems(args)
   _cobbler_sync
   ver_obj.mark_executed("install_cobbler", script_version)
 
-def setup_all_systems():
+def setup_all_systems(args):
   '''
   Update cobbler with all settings in install.cfg.
   

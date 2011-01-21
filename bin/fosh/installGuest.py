@@ -30,11 +30,11 @@ def install_guests(args):
     if (_is_guest_installed(guest_name, options="")):
       app.print_verbose(guest_name + " already installed", 2)
     else:
-      guests[guest_name]= host_name
+      guests[guest_name]=host_name
             
   for guest_name, host_name in guests.items():
     if (not _is_guest_installed(guest_name)):
-      install_guest(host_name, guest_name)
+      _install_guest(host_name, guest_name)
         
   # Wait for the installation process to finish,
   # And start the quests.  
@@ -45,7 +45,7 @@ def install_guests(args):
       if (_start_guest(guest_name)):
         del guests[guest_name]
               
-def install_guest(host_name, guest_name):
+def _install_guest(host_name, guest_name):
   app.print_verbose("Install " + guest_name + " on " + host_name)
 
   # Create the data lvm volumegroup
