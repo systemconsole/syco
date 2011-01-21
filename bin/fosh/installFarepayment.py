@@ -8,6 +8,7 @@
 import os, time, stat, shutil
 import app, general, version 
 from installGlassfish import exec_asadmin
+from installMysql import mysql_exec
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -28,7 +29,7 @@ def install_farepayment(args):
   for domain_name, admin_port in [["domain1", "6048"], ["domain2", "7048"]]:
     _create_security_realm(domain_name, admin_port)
     
-  return
+  return 
   
   for domain_name, admin_port in [["domain1", "6048"], ["domain2", "7048"]]:    
     for mysql_properties in app.get_mysql_properties_list():      
@@ -151,3 +152,18 @@ def deploy_farepayment():
 #  /usr/local/glassfish/bin/asadmin list-applications
 #  Deploying in glassfish
 #  http://docs.sun.com/app/docs/doc/821-1750?l=en
+
+def _create_databases():
+  '''
+  Install the mysql databases used by farepayment.
+  
+  These databases are installed on the primary master, and will be replicated
+  to the secondary master.
+  
+  TODO
+  
+  '''
+  primary_master_db_ip=args[1]
+  mysql_exec("create database dynamicDocumentsProduction;", True, primary_master_db_ip)
+  mysql_exec("create database fareofficeEclBackstageProduction;", True, primary_master_db_ip)
+  mysql_exec("create database fareofficeEclProduction;", True, primary_master_db_ip)
