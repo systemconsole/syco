@@ -19,7 +19,7 @@ def install_guests(args):
   general.shell_exec("yum -y install koan")
 
   # Wait to install guests until fo-tp-install is alive.
-  while (not installCobbler.is_fo_tp_install_alive()):
+  while (not is_fo_tp_install_alive()):
     app.print_error("fo-tp-install is not alive, try again in 15 seconds.")
     time.sleep(15)
 

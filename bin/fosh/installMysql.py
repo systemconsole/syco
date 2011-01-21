@@ -60,7 +60,7 @@ script_version = 1
 def build_commands(commands):
   commands.add("install-mysql",             install_mysql,             help="Install mysql server on the current server.")  
   commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")  
-  commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master, fosh install_mysql_replication 10.100.100.100")
+  commands.add("install-mysql-replication", install_mysql_replication, "[primary_master_ip]", help="Start repliaction from secondary master, fosh install_mysql_replication 10.100.100.100")
   commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
     
 def install_mysql(args):  
@@ -130,7 +130,7 @@ def install_mysql(args):
   mysql_exec("RESET MASTER;")  
   mysql_exec("FLUSH PRIVILEGES;")
   
-  #TODO ver_obj.mark_executed("InstallMysql", script_version)  
+  ver_obj.mark_executed("InstallMysql", script_version)  
 
 def uninstall_mysql(args):  
   '''

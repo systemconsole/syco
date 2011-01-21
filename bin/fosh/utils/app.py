@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 
 import sys, ConfigParser, os, re, socket
-import general
 from mysql import MysqlProperties
+
+# Constants
+BOLD="\033[1m"
+RESET="\033[0;0m"
 
 #
 #  Contains global functions and settings for the fosh app
@@ -23,7 +26,7 @@ config = ConfigParser.RawConfigParser()
 config.read(config_file_name)
 
 def print_error(message, verbose_level=1):
-  print_verbose(message, verbose_level=verbose_level, caption=general.BOLD + "Error: " + general.RESET)
+  print_verbose(message, verbose_level=verbose_level, caption=BOLD + "Error: " + RESET)
     
 def print_info(message):
   print_verbose(message, caption="Info: ") 

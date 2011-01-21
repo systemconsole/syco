@@ -5,17 +5,6 @@ from random import choice
 from socket import *  
 import app
 
-# Import the pexpect module, will be installed if not already done.
-try:
-  import pexpect
-except:
-  shell_exec("yum -y install pexpect")
-  import pexpect
-
-# Constants
-BOLD="\033[1m"
-RESET="\033[0;0m"
-
 def remove_file(path):
   '''
   Remove file(s) in path, can use wildcard.
@@ -198,7 +187,14 @@ def install_and_import_pexpect():
     return pexpect
   except:
     shell_exec("yum -y install pexpect")
-    install_and_import_pexpect()  
+    install_and_import_pexpect()      
+    
+# Import the pexpect module, will be installed if not already done.
+try:
+  import pexpect
+except:
+  shell_exec("yum -y install pexpect")
+  import pexpect
     
 if __name__ == "__main__":
   pass
