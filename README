@@ -75,6 +75,8 @@ CHANGELOG
 2011-01-21
 # Draft of install-mysql
 # setup_iptables for installMysql
+# Working install-mysql
+# Working install-mysql-replication.
 
 2010-12-15
 # Install pexpect on all fosh servers.

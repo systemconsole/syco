@@ -44,17 +44,14 @@ def setup_all_systems(args):
   _remove_all_systems()
   for host_name in app.get_servers():
     ip=app.get_ip(host_name)
-    ram=app.get_ip(host_name)
-    cpu=app.get_ip(host_name)
 
     # IS KVM host?
-    if (len(app.get_guests(host_name))):
-      mac=app.get_mac(host_name)
-      app.print_verbose("Install host " + host_name + " with ip " + ip + " and mac " + mac)
-      _host_add(host_name, ip, mac, ram, cpu)
+    if (len(app.get_guests(host_name))):      
+      app.print_verbose("Install host " + host_name + "(" + ip + ")")
+      _host_add(host_name, ip)
     else:
-      app.print_verbose("Install guest " + host_name + " with ip " + ip)
-      _guest_add(host_name, ip, ram, cpu)
+      app.print_verbose("Install guest " + host_name + "(" + ip + ")")
+      _guest_add(host_name, ip)
           
 def install_epel_repo():
   '''
@@ -196,22 +193,24 @@ def _cobbler_sync():
   general.shell_exec("cobbler sync")
   general.shell_exec("cobbler report")
   
-def _host_add(name, ip, mac, ram=1024, cpu=1):
+def _host_add(host_name, ip):
+  mac=app.get_mac(host_name)
   general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
-      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
-      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +
+      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
       "--mac=" + mac)
 
-def _guest_add(name, ip, ram=1024, cpu=1):
-  disk_var=app.get_disk_var(name)
+def _guest_add(host_name, ip):
+  disk_var=app.get_disk_var(host_name)
   disk_var=int(disk_var)*1024
-  
+  ram=app.get_ram(host_name)
+  cpu=app.get_cpu(host_name)
+    
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest " 
       "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
-      "--virt-path=\"/dev/VolGroup00/" + name + "\" " +
-      "--virt-ram=" + str(ram) + " --virt-cpus= " + str(cpu) + " " +      
-      "--name=" + name + " --hostname=" + name + " --ip=" + str(ip) + " " +
+      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
+      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +      
+      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
       "--ksmeta=\"disk_var=" + str(disk_var) + "\"") 
 
 def _remove_all_systems():

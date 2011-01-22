@@ -39,34 +39,50 @@ def print_verbose(message, verbose_level = 1, caption="", new_line=True):
     messages.append(message)
   else:
     messages = message
-  
+      
   for msg in messages:    
     host=socket.gethostname() + ": "
-    if (msg):
-      msg=re.sub("[\n]", "\n" + host + caption, str(msg))
-    msg=host + caption + msg
+    if (len(msg)>0):
+      msg=re.sub("[\n]", "\n" + host + caption, str(msg))    
   
     if (options.verbose >= verbose_level):    
       if (new_line):
-        print(msg)
+        sys.stdout.write(host + caption + msg + "\n")
       else:
-        print msg,
+        sys.stdout.write(msg)
+        
+    sys.stdout.flush()
 
 def get_option(section, option):
   if (config.has_section(section)):
     if (config.has_option(section, option)):
       return config.get(section, option)  
     else:      
-      print_error("Can't find option '" + option + "' in section '" + section + "' in install.cfg")          
+      raise Exception("Can't find option '" + option + "' in section '" + section + "' in install.cfg")
   else:
-    print_error("Can't find section '" + section + "' in install.cfg")
+    raise Exception("Can't find section '" + section + "' in install.cfg")
           
 def get_root_password():
   return get_option("general", "root_password")
 
 def get_mysql_password():
-  return get_option("general", "mysql_password")
+  return get_option("general", "mysql.password")
 
+def get_mysql_primary_master():
+  return get_ip(get_option("general", "mysql.primary_master"))
+
+def get_mysql_secondary_master():
+  return get_ip(get_option("general", "mysql.secondary_master"))
+  
+def get_installation_server():
+  return get_option("general", "installation_server")
+
+def get_installation_server_ip():
+  return get_ip(get_installation_server())
+
+def get_dns_resolvers():
+  return get_option("general", "dns_resolvers")
+    
 def get_ip(host_name):
   return get_option(host_name, "server")
 
