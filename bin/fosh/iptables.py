@@ -17,7 +17,7 @@
 # * SSH to the server should only be allowed from certain ips.
 
 import os
-import app, general
+import app, general, net
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -72,6 +72,8 @@ def iptables_setup(args):
   _create_chains()  
   _setup_general_rules()  
   _setup_ssh_rules()
+  _setup_dns_resolver_rules()
+  _setup_installation_server_rules()
   
   if (os.access("/usr/bin/mysqld_safe", os.F_OK)):      
     _setup_mysql_rules()
@@ -129,7 +131,7 @@ def _setup_general_rules():
   iptables("-A OUTPUT -p ICMP -j icmp_packets")
   
   app.print_verbose("From Localhost interface to Localhost IP's.")
-  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
+  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT") 
   
 def _setup_ssh_rules():
   '''
@@ -140,11 +142,39 @@ def _setup_ssh_rules():
   ssh_ports="22,34"
   iptables("-A INPUT -p tcp  -m multiport --dports " + ssh_ports + " -j allowed")
   iptables("-A OUTPUT -p tcp -m multiport --dports " + ssh_ports + " -j ACCEPT")
+
+def _setup_dns_resolver_rules():
+  '''
+  Allow this server to communicate with an dns resolver.
+  
+  '''
+
+  inet_ip=net.get_lan_ip()  
+  for resolver_ip in app.get_dns_resolvers().split(" "):
+    iptables("-A OUTPUT -p udp -s " + inet_ip + " --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+    iptables("-A INPUT  -p udp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT")
+    iptables("-A OUTPUT -p tcp -s " + inet_ip + "  --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+    iptables("-A INPUT  -p tcp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT")
+
+def _setup_installation_server_rules():
+  '''
+  Open http access to the installation server.
+  
+  TODO: Move all repos to the install server and harden the iptables.
+  
+  '''
+  app.print_verbose("Setup http access to installation server.")  
+  #ip=app.get_installation_server_ip()
+  #iptables("-A OUTPUT -p tcp -d " + ip + " -m multiport --dports 80,443 -j ACCEPT")
+  iptables("-A OUTPUT -p tcp -m multiport --dports 80,443 -j ACCEPT")
   
 def _setup_mysql_rules():
   app.print_verbose("Setup mysql input rule.")
   mysql_ports="3306"
   iptables("-A INPUT -p TCP -m multiport --dports " + mysql_ports + " -j allowed")
+  
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports " + mysql_ports + " -j allowed")
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports " + mysql_ports + " -j allowed")
   
 def _setup_glassfish_rules():
   app.print_verbose("Setup glassfish input rule.")
@@ -164,7 +194,7 @@ def _closing_chains():
   
 def _setup_postrouting():  
   app.print_verbose("Enable simple IP Forwarding and Network Address Translation.")
-  #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $INET_IP")
+  #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
   #iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
   
 def _iptables_save():  

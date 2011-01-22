@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob, os, shutil, sys, string
+import re, subprocess, glob, os, shutil, sys, string, time
 from random import choice
 from socket import *  
 import app
@@ -159,11 +159,11 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.close()
 
 def is_server_alive(server, port):
-  '''Check if the remote server is up and running.
+  '''
+  Check if the remote server is up and running.
   
   '''
   try:
-    #app.print_verbose("Is " + server + ":" + port + " alive?", 2)
     s = socket(AF_INET, SOCK_STREAM)
     s.settimeout(5)
     result = s.connect_ex((server, int(port)))   
@@ -173,6 +173,17 @@ def is_server_alive(server, port):
   if (result == 0):  
     return True
   return False 
+  
+def wait_for_server_to_start(server, port):
+  '''
+  Wait until a network port is opened.
+  
+  '''
+  app.print_verbose("Wait until " + server + " on port " + port + " starts.", new_line=False)
+  while(not is_server_alive(server, port)):
+    app.print_verbose(".", new_line=False)
+    time.sleep(5)
+  app.print_verbose(".")  
   
 def generate_password(length=8, chars=string.letters + string.digits):
   return ''.join([choice(chars) for i in range(length)])        

@@ -50,7 +50,7 @@
 #     http://dev.mysql.com/doc/refman/5.0/en/order-by-optimization.html
 
 import fileinput, shutil, os, socket
-import app, general, version, net
+import app, general, version
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -58,16 +58,17 @@ import app, general, version, net
 script_version = 1
 
 def build_commands(commands):
-  commands.add("install-mysql",             install_mysql,             help="Install mysql server on the current server.")  
+  commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]", help="Install mysql server on the current server.")  
   commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")  
-  commands.add("install-mysql-replication", install_mysql_replication, "[primary_master_ip]", help="Start repliaction from secondary master, fosh install_mysql_replication 10.100.100.100")
-  commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
+  commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master.")
+  commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")    
     
 def install_mysql(args):  
   '''
   Install and configure the mysql-server on the local host.
   
   '''
+
   global script_version
   app.print_verbose("Install mysql version: %d" % script_version)
   ver_obj = version.Version()
@@ -75,10 +76,19 @@ def install_mysql(args):
     app.print_verbose("   Already installed latest version")
     return
 
+  print len(args)
+  if (len(args) != 3):
+    raise Exception("fosh install-mysql [server-id] [innodb-buffer-pool-size]")
+    
+  server_id=args[1]
+  innodb_buffer_pool_size=args[2]
+    
   # Install the mysql-server packages.
   if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):      
     general.shell_exec_p("yum -y install mysql-server")
     general.shell_exec_p("chkconfig mysqld on ")
+    if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
+      raise Exception("Couldn't install mysql-server")
 
   # Disable mysql history logging
   if (os.access("/root/.mysql_history", os.F_OK)):  
@@ -107,8 +117,8 @@ def install_mysql(args):
   app.print_verbose("Install /etc/my.cnf")
   shutil.copy("/opt/fosh/var/mysql/my.cnf",  "/etc/my.cnf")
   for line in fileinput.FileInput("/etc/my.cnf", inplace=1):
-    line=line.replace("${server-id}", "1")
-    line=line.replace("${innodb_buffer_pool_size}", "1G")
+    line=line.replace("${server-id}", server_id)
+    line=line.replace("${innodb_buffer_pool_size}", innodb_buffer_pool_size)
     print line,
 
   # When the innodb files are configured to be large, it takes some time to 
@@ -121,11 +131,22 @@ def install_mysql(args):
   general.shell_exec_p("service mysqld start")
   
   # Secure the mysql installation.
+  mysql_exec("truncate mysql.db;")  
+  mysql_exec("delete from mysql.user where !(host='localhost' and user='root');")
+
+  user="'root'@'localhost'"
   mysql_exec("UPDATE mysql.user SET Password=PASSWORD('" + app.get_mysql_password() + "') WHERE user='root';")
-  mysql_exec("DELETE FROM mysql.user WHERE User='root' AND Host!='localhost';")
+  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
+
+  user="'root'@'" + app.get_mysql_primary_master() + "'"
+  mysql_exec("CREATE USER " + user + " IDENTIFIED BY '" + app.get_mysql_password() + "';")
+  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
+
+  user="'root'@'" + app.get_mysql_secondary_master() + "'"
+  mysql_exec("CREATE USER " + user + " IDENTIFIED BY '" + app.get_mysql_password() + "';")
+  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
+
   mysql_exec("DROP DATABASE test;")
-  mysql_exec("DELETE FROM mysql.db WHERE db like 'test%';")
-  mysql_exec("DELETE FROM mysql.user WHERE user = '';")
   mysql_exec("SELECT host,user FROM mysql.user;")
   mysql_exec("RESET MASTER;")  
   mysql_exec("FLUSH PRIVILEGES;")
@@ -155,32 +176,23 @@ def install_mysql_replication(args):
   This function should be executed on the secondary master, after the
   primary master has been configured.
   
-  The ip number for the primary mysql master should be eneted on the command
-  line.
-
-  Example:
-  fosh install-mysql-replication 10.100.100.100
-    
   '''
-  if (len(args) <= 1):
-    raise Exception("Error: No master database ip entered.")
+  general.wait_for_server_to_start(app.get_mysql_primary_master(), "3306")
 
-  primary_master_db_ip=args[1]
-  secondary_master_db_ip=net.get_lan_ip()
   repl_password=general.generate_password(20)
+  
+  for ip in [app.get_mysql_primary_master(), app.get_mysql_secondary_master()]:
+    mysql_exec("stop slave;", True, ip)
+    mysql_exec("delete from mysql.user where User = 'repl';", True, ip)
+    mysql_exec("flush privileges;", True, ip)
+    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + app.get_mysql_primary_master() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
+    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + app.get_mysql_secondary_master() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
+    if (ip==app.get_mysql_primary_master()):
+      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + app.get_mysql_secondary_master() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+    else:
+      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + app.get_mysql_primary_master() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+    mysql_exec("start slave;", True, ip)
 
-  mysql_exec("stop slave;", True)  
-  mysql_exec("delete from mysql.user where User = 'repl';", True)
-  mysql_exec("flush privileges;", True)
-  mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + primary_master_db_ip + "' IDENTIFIED BY '" + repl_password + "';", True)
-  mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + secondary_master_db_ip + "' IDENTIFIED BY '" + repl_password + "';", True)
-  
-  mysql_exec("CHANGE MASTER TO MASTER_HOST='" + primary_master_db_ip + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "', MASTER_LOG_FILE='bin'", True)
-  mysql_exec("CHANGE MASTER TO MASTER_HOST='" + primary_master_db_ip + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "', MASTER_LOG_FILE='bin'", True, primary_master_db_ip)
-  
-  mysql_exec("start slave;", True)  
-  create_databases()
-  
 def test_mysql(args):
   '''
   Run all mysql unittests, to test the MySQL daemon on the current hardware.
@@ -204,7 +216,3 @@ def mysql_exec(command, with_user=False, host="localhost"):
     cmd+="-uroot -p" + app.get_mysql_password() + " "
 
   general.shell_exec_p(cmd + '-e "' + command + '"')
-  
-def _setup_iptables():
-  pass
-# *  iptables 3306
