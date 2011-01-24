@@ -74,6 +74,9 @@ def iptables_setup(args):
   _setup_ssh_rules()
   _setup_dns_resolver_rules()
   _setup_installation_server_rules()
+
+  if (os.access("/etc/ntp", os.F_OK)):      
+    _setup_ntp_rules()
   
   if (os.access("/usr/bin/mysqld_safe", os.F_OK)):      
     _setup_mysql_rules()
@@ -167,6 +170,18 @@ def _setup_installation_server_rules():
   #ip=app.get_installation_server_ip()
   #iptables("-A OUTPUT -p tcp -d " + ip + " -m multiport --dports 80,443 -j ACCEPT")
   iptables("-A OUTPUT -p tcp -m multiport --dports 80,443 -j ACCEPT")
+
+def _setup_ntp_rules():
+  '''
+  Allow NTP client/server traffic.
+  
+  TODO: Only allow traffic to dedicated NTP servers and clients.
+        Maybe this rule need to be in installNTP.py.
+  
+  '''
+  app.print_verbose("Setup NTP input/output rule.")  
+  iptables("-A INPUT  -p UDP --dport 123 -j allowed")
+  iptables("-A OUTPUT -p UDP --dport 123 -j allowed")
   
 def _setup_mysql_rules():
   app.print_verbose("Setup mysql input rule.")

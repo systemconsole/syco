@@ -33,6 +33,12 @@ TODO
 
 This version
 
+* installGlassfish on all fp- servers
+* installFarepayment on all fp-servers
+  create database
+  deploy ear
+* installRentalFront on all fo- servers  
+
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
@@ -72,6 +78,12 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-24
+# More secure configuration of NTP. (Still missing optimal iptables)
+
+2011-01-23
+# Working draft of installNTP.py
+
 2011-01-21
 # Draft of install-mysql
 # setup_iptables for installMysql
