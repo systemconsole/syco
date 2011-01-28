@@ -12,18 +12,22 @@ def get_interface_ip(ifname):
     struct.pack('256s', ifname[:15])    
   )[20:24])
 
+# Cache variable for lan_ip
+lan_ip=""
 def get_lan_ip():
-  ip = socket.gethostbyname(socket.gethostname())
-  
-  if ip.startswith("127.") and os.name != "nt":
-    interfaces = ["eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
+  global lan_ip
+  if (lan_ip==""):
+    lan_ip = socket.gethostbyname(socket.gethostname())
     
-    for ifname in interfaces:      
-      try:      
-        ip = get_interface_ip(ifname)      
-        break;
+    if lan_ip.startswith("127.") and os.name != "nt":
+      interfaces = ["eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
       
-      except IOError:      
-        pass
+      for ifname in interfaces:      
+        try:      
+          lan_ip = get_interface_ip(ifname)      
+          break;
+        
+        except IOError:      
+          pass
       
-  return ip
+  return lan_ip

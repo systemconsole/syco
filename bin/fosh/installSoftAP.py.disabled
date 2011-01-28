@@ -1,0 +1,162 @@
+#! /usr/bin/env python
+
+# Install a Software Wireless Access Point using airbase-ng.
+#  
+# Base on
+# http://ubuntuforums.org/showthread.php?p=9814665
+#
+
+import app, general, version
+
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+script_version = 1
+
+def build_commands(commands):
+  '''
+  Defines the commands that can be executed through the fosh.py shell script. 
+  
+  '''
+  commands.add("install-softap",   install_softap,   help="Install a Software Wireless Access Point using airbase-ng.")
+  commands.add("uninstall-softap", uninstall_softap, help="Uninstall the Software Wireless Access Point using airbase-ng.")
+
+def install_softap(args):
+  '''
+  The main installation function.
+  
+  '''
+  global script_version
+  app.print_verbose("Install SoftAp version: %d" % script_version)
+
+  try:
+    ver_obj = version.Version()
+    if ver_obj.is_executed("InstallSoftAp", script_version):
+      app.print_verbose("   Already installed latest version")
+      return
+      
+    _must_use_root_user()
+    
+    #
+    # Install software
+    #
+    
+    apt-get install Aircrack-ng
+    apt-get install Macchanger
+    # dhcpd3 server with a GUI interface to make life easy
+    apt-get install GADMIN-DHCPD    
+     
+    #   
+    # Start wlan1 into monitor mode and change the mac address to cover your butt.
+    #
+    # starts wlan1 into monitor mode mon0
+    airmon-ng start wlan1 
+    
+    # Takes mon0 down so we can change the mac
+    ifconfig mon0 down 
+
+    # Can be any mac you want
+    macchanger -m DE:AD:C0:DE:BA:5E 
+    
+    # Brings mon0 back up
+    ifconfig mon0 up 
+
+    #
+    # Test your mon0 to make sure it can packet inject and bring up airbase-ng.
+    #
+    # When airbase-ng comes up you will notice it created at0, this is where 
+    # the airbase comunicates with any other program you wish. at0 could be 
+    # routed though a packet sniffer or pointed at an internal dns or http server. 
+    # For now we will point at0 at eth0 so that all traffic on at0 can go out to 
+    # the internet though your box.    
+    #
+        
+    # Is test mode should return "Injection is Working!"
+    aireplay-ng -9 mon0 
+    
+    # Brings airbase-ng up on channel 1 with a name of testap    
+    airbase-ng -c 1 -e testap 
+    
+    #
+    # Setting up the DHCPD server. 
+    # This has to be configured to your box using your specified ip numbers. 
+    #
+sudo gedit /etc/dhcp3/dhcpd.conf << this is the config file for dhcpd. it might have a different path on your machine
+
+option T150 code 150 = string;
+deny client-updates;
+one-lease-per-client false;
+allow bootp;
+ddns-updates off;
+ddns-update-style interim;
+authoritative;
+
+
+subnet 192.168.0.0 netmask 255.255.255.0 {
+interface at0;
+range 192.168.0.2 192.168.0.10;
+option routers 192.168.0.1;
+option subnet-mask 255.255.255.0;
+option domain-name-servers 192.168.0.1;
+allow unknown-clients;
+
+}
+    #
+    # Now we will set up IP tables to send the traffic from your softAP to eth0.
+    #
+    
+    # iptables cleanup
+    iptables --flush
+    iptables --table nat --flush
+    iptables --delete-chain
+    iptables --table nat --delete-chain
+
+    # DNS
+    iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to 192.168.1.1 
+
+    # gateway to ext. router
+    iptables --table nat --append POSTROUTING --out-interface eth0 -j MASQUERADE 
+
+    # rogue gateway
+    iptables --append FORWARD --in-interface at0 -j ACCEPT
+
+    # protect LAN from WLAN (DROP/REJECT)
+    iptables -t nat -A PREROUTING -s 192.168.1.128/25 -d 192.168.1.0/25 -j DROP 
+
+    # This line has to be ran after any update to IP tables to activate the changes
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    
+    #
+    #
+    
+    #general.set_config_property("/etc/profile", 'export JAVA_HOME=/usr/java/latest',  'export JAVA_HOME=/usr/java/latest')
+    #general.set_config_property("/etc/profile", 'export PATH=$PATH:/usr/java/latest/bin',  'export PATH=$PATH:/usr/java/latest/bin')   
+  
+    # Restart to take effect
+    #general.shell_exec_p("/etc/init.d/glassfish restart")
+  
+    #TODO ver_obj.mark_executed("InstallSoftAp", script_version)  
+  except Exception, error_text:
+    app.print_error("Failed to install SoftAp")
+    app.print_error(error_text)
+    traceback.print_exc(file=sys.stdout)
+  
+  _delete_install_dir()
+    
+def uninstall_softap(args):
+  '''
+  The main uninstall function.
+    
+  '''
+  app.print_verbose("Uninstall softap version: %d" % script_version)
+        
+  #if (_is_glassfish_user_installed()):
+    #general.shell_exec_p("/etc/init.d/glassfish stop", user="glassfish")
+
+def _must_use_root_user():
+  '''
+  Check if script is executed as root, raise Exception if not.
+  
+  TODO: Create the function
+  '''
+  pass

@@ -9,6 +9,7 @@
 # http://www.learn-mysql-tutorial.com/SecureInstall.cfm
 #
 # TODO:
+# * Remove the root user, only have personal sysop accounts.
 # * defragment_all_tables():  
 # *   ALTER TABLE xxx ENGINE=INNODB
 # * calculate_cardinality():
@@ -71,10 +72,8 @@ def install_mysql(args):
 
   global script_version
   app.print_verbose("Install mysql version: %d" % script_version)
-  ver_obj = version.Version()
-  if ver_obj.is_executed("InstallMysql", script_version):
-    app.print_verbose("   Already installed latest version")
-    return
+  ver_obj = version.Version("InstallMysql", script_version)
+  ver_obj.check_executed()
 
   print len(args)
   if (len(args) != 3):
@@ -131,27 +130,23 @@ def install_mysql(args):
   general.shell_exec_p("service mysqld start")
   
   # Secure the mysql installation.
-  mysql_exec("truncate mysql.db;")  
-  mysql_exec("delete from mysql.user where !(host='localhost' and user='root');")
+  mysql_exec("truncate mysql.db")  
+  mysql_exec("truncate mysql.user")
 
-  user="'root'@'localhost'"
-  mysql_exec("UPDATE mysql.user SET Password=PASSWORD('" + app.get_mysql_password() + "') WHERE user='root';")
-  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
-
-  user="'root'@'" + app.get_mysql_primary_master() + "'"
-  mysql_exec("CREATE USER " + user + " IDENTIFIED BY '" + app.get_mysql_password() + "';")
-  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
-
-  user="'root'@'" + app.get_mysql_secondary_master() + "'"
-  mysql_exec("CREATE USER " + user + " IDENTIFIED BY '" + app.get_mysql_password() + "';")
-  mysql_exec("GRANT ALL PRIVILEGES ON *.* TO " + user + " WITH GRANT OPTION;")
+  mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
+    "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
+    "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
+    "'root'@'" + app.get_mysql_primary_master()   + "' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
+    "'root'@'" + app.get_mysql_secondary_master() + "' " + "IDENTIFIED BY '" + app.get_mysql_password() + "' "
+    "WITH GRANT OPTION "
+  )
 
   mysql_exec("DROP DATABASE test;")
   mysql_exec("SELECT host,user FROM mysql.user;")
   mysql_exec("RESET MASTER;")  
   mysql_exec("FLUSH PRIVILEGES;")
   
-  ver_obj.mark_executed("InstallMysql", script_version)  
+  ver_obj.mark_executed()
 
 def uninstall_mysql(args):  
   '''
@@ -202,7 +197,7 @@ def test_mysql(args):
   general.shell_exec_p("perl /usr/share/mysql-test/mysql-test-run.pl")
   general.shell_exec_p("yum -y remove mysql-test")
     
-def mysql_exec(command, with_user=False, host="localhost"):
+def mysql_exec(command, with_user=False, host="127.0.0.1"):
   '''
   Execute a MySQL query, through the command line mysql console.
   
@@ -216,3 +211,10 @@ def mysql_exec(command, with_user=False, host="localhost"):
     cmd+="-uroot -p" + app.get_mysql_password() + " "
 
   general.shell_exec_p(cmd + '-e "' + command + '"')
+  
+def install_mysql_client():
+    '''
+    Install mysql command line client.
+    
+    '''
+    general.shell_exec_p("yum -y install mysql.x86_64")

@@ -1,11 +1,15 @@
 #! /usr/bin/env python
 
-import sys, ConfigParser, os, re, socket
-from mysql import MysqlProperties
+import sys, ConfigParser, os, re, socket, getpass
+import passwordStore
 
 # Constants
+#
 BOLD="\033[1m"
 RESET="\033[0;0m"
+
+# The folder where files (rpm etc.) that should be installed, are stored.
+INSTALL_DIR="/tmp/install/"
 
 #
 #  Contains global functions and settings for the fosh app
@@ -20,6 +24,12 @@ options = Options()
 version="0.1"
 parser=''
 
+# Root password for linux shell.
+root_password = None
+
+PASSWORD_STORE_PATH = "/opt/fosh/etc/passwordstore"
+
+# 
 fosh_path=os.path.abspath(sys.path[0] + "/../") 
 config_file_name=fosh_path + "/etc/install.cfg"
 config = ConfigParser.RawConfigParser()
@@ -42,7 +52,7 @@ def print_verbose(message, verbose_level = 1, caption="", new_line=True):
       
   for msg in messages:    
     host=socket.gethostname() + ": "
-    if (len(msg)>0):
+    if (len(str(msg))>0):
       msg=re.sub("[\n]", "\n" + host + caption, str(msg))    
   
     if (options.verbose >= verbose_level):    
@@ -61,8 +71,32 @@ def get_option(section, option):
       raise Exception("Can't find option '" + option + "' in section '" + section + "' in install.cfg")
   else:
     raise Exception("Can't find section '" + section + "' in install.cfg")
-          
+
+def get_password(service, user_name):
+  '''
+  Get password from the password store.
+  
+  '''
+  if (not get_password.password_store):
+    print "create password store"
+    get_password.password_store=passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+  return get_password.password_store.get_password(service, user_name)
+get_password.password_store=None
+  
 def get_root_password():
+  '''
+  Ask the user to enter the linux shell root password.
+  
+  TODO: Verify that it's the right password, raise Exception otherwise.
+  
+  '''
+  global root_password
+  
+  while(root_password==""):
+    root_password=getpass.getpass("Enter root password: ")
+  return root_password
+
+def get_root_password_hash():
   return get_option("general", "root_password")
 
 def get_mysql_password():
@@ -123,19 +157,4 @@ def get_guests(host_name):
       if ("guest" in option):
         guests.append(value)
 
-  return sorted(guests)      
-  
-def get_mysql_properties_list():
-  '''
-  Get properties for all database connections.
-  
-  TODO: Should be stored in install.cfg
-  
-  '''
-  list=[
-    MysqlProperties("farepayment",           "10.100.50.1", "root", "xxxx", "farepayment_stable"),    
-    MysqlProperties("farepayment_primary",   "10.100.50.1", "root", "xxxx", "farepayment_stable"),
-    MysqlProperties("farepayment_secondary", "10.100.50.1", "root", "xxxx", "farepayment_stable")
-  ]
-  return list
-  
+  return sorted(guests)

@@ -40,8 +40,9 @@ class Ssh:
     
     Connect to the remote host, execute the command 
     and closes the conneciton.    
+    
     '''
-    app.print_verbose("SSH Command on " + socket.gethostname() + ": " + command)
+    app.print_verbose("SSH Command on " + self.server + ": " + command)
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -83,6 +84,14 @@ class Ssh:
       
               
     return stdout, stderr
+    
+  def mysql_exec(self, command):
+    '''
+    Execute a MySQL query, through the command line mysql console over SSH.
+    
+    '''
+    # TODO: Hide password verbose print.
+    self.ssh("mysql -uroot -p" + app.get_mysql_password() + " -e " + '"' + command + '"')
          
 #  def ssh_old(self, command):
 #    app.print_verbose("SSH Command: " + command)

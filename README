@@ -33,11 +33,16 @@ TODO
 
 This version
 
-* installGlassfish on all fp- servers
-* installFarepayment on all fp-servers
-  create database
-  deploy ear
-* installRentalFront on all fo- servers  
+* installHttpd 
+* installModsecurity
+* installFarepayment adapt to installHttpd, installModsecurity
+
+* installGlassfish on all fp-servers.
+* installFarepayment on all fp-servers.
+* installRentalFront on all fo-servers.
+* Rename to syscon.
+* Move from github to svn.
+* Add private/public script folder.
 
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
@@ -78,6 +83,15 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-28 - Daniel Lindh - Added git-clean command
+2011-01-28 - Daniel Lindh - Version 1.0.0 of installFarepayment completed.
+2011-01-28 - Daniel Lindh - Version 1.0.0 of PasswordStore completed.
+
+2011-01-27
+# installFarepayment
+  create database
+  deploy ear
+
 2011-01-24
 # More secure configuration of NTP. (Still missing optimal iptables)
 

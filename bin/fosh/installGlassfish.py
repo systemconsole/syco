@@ -11,13 +11,16 @@
 #  http://www.java.net/forums/glassfish/glassfish 
 #
 
-import os, time, stat, shutil, traceback, sys
+import os, time, stat, shutil, traceback, sys, re
 import app, general, version
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
 script_version = 1
+
+GLASSFISH_PATH = "/usr/local/glassfish/"
+GLASSFISH_DOMAINS_PATH = "/usr/local/glassfish/glassfish/domains/"
 
 def build_commands(commands):
   '''
@@ -36,17 +39,13 @@ def install_glassfish(args):
   app.print_verbose("Install glassfish3 version: %d" % script_version)
 
   try:
-    _update_glassfish()
-    return
     ver_obj = version.Version()
     if ver_obj.is_executed("InstallGlassfish", script_version):
       app.print_verbose("   Already installed latest version")
       return
     
-    if (not _create_install_dir()):                
-      app.print_error("Can't create install dir.")
-      return    
-  
+    general.create_install_dir()
+      
     #os.environ["JAVA_HOME"] = "/usr/java/latest"
     #os.environ["PATH"] = os.environ["JAVA_HOME"] + "/bin:" + os.environ["PATH"]
     general.set_config_property("/etc/profile", 'export JAVA_HOME=/usr/java/latest',  'export JAVA_HOME=/usr/java/latest')
@@ -74,7 +73,7 @@ def install_glassfish(args):
     app.print_error(error_text)
     traceback.print_exc(file=sys.stdout)
   
-  _delete_install_dir()
+  general.delete_install_dir()
     
 def uninstall_glassfish(args):
   '''
@@ -162,29 +161,6 @@ def _install_software():
   _install_jdk()  
   _install_glassfish()
   _install_eclipselink()   
-
-def _create_install_dir():
-  '''
-  Create folder where installation files are stored during installation.
-  
-  '''
-  if (not os.access("/tmp/install", os.W_OK|os.X_OK)):
-    os.mkdir("/tmp/install")
-    
-  if (os.access("/tmp/install", os.W_OK|os.X_OK)):
-    os.chmod("/tmp/install", stat.S_IROTH|stat.S_IWOTH|stat.S_IXOTH)
-    os.chdir("/tmp/install")
-    return True
-  else:
-    return False
-
-def _delete_install_dir():
-  '''
-  Delete the folder where installation files are stored during installation.
-  
-  '''
-  #TODO temporary removed shutil.rmtree("/tmp/install", ignore_errors=True)
-  pass
 
 def _install_jdk():
   '''
@@ -452,11 +428,14 @@ def _update_glassfish():
   http://docs.sun.com/app/docs/doc/821-1751/ghapp?l=en&a=view
   
   '''
+  # pkg refresh must be in a writeable dir.
+  os.chdir("/tmp")
+    
   general.shell_exec_p("yum -y install libidn")
   general.shell_run("/usr/local/glassfish/bin/pkg refresh --full", 
     user="glassfish",
     events={
-      'Would you like to install this software now (y/n): ': "y\n"
+      re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
     }
   )  
   general.shell_exec_p("chcon -f -t textrel_shlib_t /usr/local/glassfish/pkg/vendor-packages/OpenSSL/crypto.so") 
@@ -467,7 +446,7 @@ def _update_glassfish():
   general.shell_run("/usr/local/glassfish/bin/pkg refresh --full", 
     user="glassfish",
     events={
-      'Would you like to install this software now (y/n): ': "y\n"
+      re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
     }
   )  
 
