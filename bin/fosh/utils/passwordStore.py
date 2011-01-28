@@ -24,7 +24,7 @@ Credits:
   http://pypi.python.org/pypi/keyring
   
 Changelog:
-  Daniel Lindh - 2011-01-28 - Version 1.0.0 of PasswordStore completed.
+  2011-01-28 - Daniel Lindh - Version 1.0.0 of PasswordStore completed.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -103,7 +103,7 @@ class PasswordStore:
     user_password = self.cipher.decrypt(base64.b64decode(crypted_file_password)).rstrip(self.PADDING)
   
     if (len(user_password) == 0):
-      user_password = self._get_password_from_user("Enter password for service " + service + " user " + user_name + ":")
+      user_password = self._get_password_from_user('Enter password for service "' + service + '" with username "' + user_name + '":')
       self.set_password(service, user_name, user_password)
 
     if (len(user_password) == 0):

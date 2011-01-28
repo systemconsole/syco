@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import subprocess, os, sys, time, paramiko, getpass, threading
+import subprocess, os, sys, time, paramiko, threading
 import ssh, app
 from exception import SettingsError
 
@@ -105,8 +105,9 @@ class RemoteInstall:
   def _set_servers(self, host_name):
     '''
     Set servers/hosts to perform the remote install on.
+    
     '''
-    self.password = self._get_password()
+    self.password = app.get_root_password()
     if (host_name):
       self.servers = [host_name]
     else:    
@@ -202,7 +203,3 @@ class RemoteInstall:
 
     ssh.ssh("/opt/fosh/bin/fosh.py install-fosh")
     
-  def _get_password(self):
-    while(True):
-      password=getpass.getpass("Password? ")
-      return password

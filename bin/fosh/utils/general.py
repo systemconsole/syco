@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import re, subprocess, glob, os, shutil, sys, string, time
+import re, subprocess, glob, os, shutil, sys, string, time, stat
 from random import choice
 from socket import *  
 import app
@@ -187,6 +187,42 @@ def wait_for_server_to_start(server, port):
   
 def generate_password(length=8, chars=string.letters + string.digits):
   return ''.join([choice(chars) for i in range(length)])        
+
+def download_file(src, dst):
+  '''
+  Download a file using wget, and place in the installation tmp folder.
+  
+  '''
+  create_install_dir()  
+  os.chdir(app.INSTALL_DIR)
+  if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
+    shell_exec_p("wget " + src)
+
+  if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
+    raise Exception("Couldn't download: " + dst)
+
+def create_install_dir():
+  '''
+  Create folder where installation files are stored during installation.
+  
+  '''
+  if (not os.access(app.INSTALL_DIR, os.W_OK|os.X_OK)):
+    os.mkdir(app.INSTALL_DIR)
+    
+  if (os.access(app.INSTALL_DIR, os.W_OK|os.X_OK)):
+    os.chmod(app.INSTALL_DIR, stat.S_IROTH|stat.S_IWOTH|stat.S_IXOTH)
+    os.chdir(app.INSTALL_DIR)
+  else:
+    raise Exception("Can't create install dir.")
+
+def delete_install_dir():
+  '''
+  Delete the folder where installation files are stored during installation.
+  
+  '''
+  app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
+  shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
+  pass
 
 def install_and_import_pexpect():
   '''

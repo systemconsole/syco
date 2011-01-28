@@ -135,6 +135,7 @@ def _setup_general_rules():
   
   app.print_verbose("From Localhost interface to Localhost IP's.")
   iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT") 
+  iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT") 
   
 def _setup_ssh_rules():
   '''
@@ -185,16 +186,18 @@ def _setup_ntp_rules():
   
 def _setup_mysql_rules():
   app.print_verbose("Setup mysql input rule.")
-  mysql_ports="3306"
-  iptables("-A INPUT -p TCP -m multiport --dports " + mysql_ports + " -j allowed")
+  iptables("-A INPUT -p TCP -m multiport --dports 3306 -j allowed")
   
-  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports " + mysql_ports + " -j allowed")
-  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports " + mysql_ports + " -j allowed")
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed")
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed")
   
 def _setup_glassfish_rules():
   app.print_verbose("Setup glassfish input rule.")
   glassfish_ports="6048,6080,6081,7048,7080,7081"
   iptables("-A INPUT -p TCP -m multiport --dports " + glassfish_ports + " -j allowed")
+
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed")
+  iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed")
 
 def _closing_chains():
   app.print_verbose("Allow all established and related packets incoming from anywhere.")
@@ -214,4 +217,4 @@ def _setup_postrouting():
   
 def _iptables_save():  
   app.print_verbose("Save current iptables rules to /etc/iptables.")
-  general.shell_exec("/sbin/iptables-save ")
+  general.shell_exec("/sbin/iptables-save > /etc/sysconfig/iptables")
