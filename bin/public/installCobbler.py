@@ -151,7 +151,7 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/cobbler/settings", '^server:.*',                    "server: " + app.get_ip("fo-tp-install"))
   general.set_config_property("/etc/cobbler/settings", '^next_server:.*',               "next_server: " + app.get_ip("fo-tp-install"))
   general.set_config_property("/etc/cobbler/settings", '^default_virt_bridge:.*',       "default_virt_bridge: br1")  
-  general.set_config_property("/etc/cobbler/settings", '^default_password_crypted:.*',  "default_password_crypted: " + app.get_root_password())
+  general.set_config_property("/etc/cobbler/settings", '^default_password_crypted:.*',  "default_password_crypted: " + app.get_root_password_hash())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*',         "default_virt_type: qemu")  
   general.set_config_property("/etc/cobbler/settings", '^anamon_enabled:.*',            "anamon_enabled: 1")  
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*',   "yum_post_install_mirror: 1")  

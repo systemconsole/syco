@@ -145,10 +145,10 @@ def install_mysql(args):
   mysql_exec("truncate mysql.user")
 
   mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
-    "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
-    "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
-    "'root'@'" + app.get_mysql_primary_master()   + "' " + "IDENTIFIED BY '" + app.get_mysql_password() + "', "
-    "'root'@'" + app.get_mysql_secondary_master() + "' " + "IDENTIFIED BY '" + app.get_mysql_password() + "' "
+    "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+    "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+    "'root'@'" + app.get_mysql_primary_master()   + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+    "'root'@'" + app.get_mysql_secondary_master() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
     "WITH GRANT OPTION "
   )
 
@@ -219,7 +219,7 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
     cmd+= "-h" + host + " "
   
   if (with_user):
-    cmd+="-uroot -p" + app.get_mysql_password() + " "
+    cmd+="-uroot -p" + app.get_mysql_root_password() + " "
 
   general.shell_exec_p(cmd + '-e "' + command + '"')
   
