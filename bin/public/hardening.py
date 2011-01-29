@@ -6,7 +6,7 @@ Read more
 http://www.linuxforums.org/forum/red-hat-fedora-linux/166631-redhat-centos-hardening-customizing-removing-excess.html
 http://www.nsa.gov/ia/_files/factshe...phlet-i731.pdf
 http://wiki.centos.org/HowTos/OS_Protection
-  
+
 Changelog:
   2011-01-29 - Daniel Lindh - Adding file header and comments
 '''
@@ -26,24 +26,21 @@ import app, general, version
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-script_version = 1
+SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("hardening", hardening, help="Harden the computer by removeing unnessary services add security fixes etc.")
-  
+
 def hardening(args):
   '''
-  The main function  
-  
+  The main function
+
   '''
-  global script_version
-  app.print_verbose("Harden host version: %d" % script_version)
-  
-  ver_obj = version.Version()
-  if (ver_obj.is_executed("HardeningHost", script_version)):
-    app.print_verbose("   Already installed latest version")
-    return
-  
+  app.print_verbose("Harden host version: %d" % SCRIPT_VERSION)
+
+  version_obj = version.Version("hardeningHost", SCRIPT_VERSION)
+  version_obj.check_executed()
+
   #_user_add()
   _enable_selinux()
   _disable_services()
@@ -54,37 +51,37 @@ def hardening(args):
   _clear_login_screen()
   _yum_update()
   _disable_ip6_support()
-  
-  ver_obj.mark_executed("HardeningHost", script_version)
+
+  version_obj.mark_executed()
 
 #def _user_add():
 #  app.print_verbose('User add')
-#  
+#
 #  name = ""
 #  while name == "":
 #    name = raw_input("User name:")
-#  
+#
 #  general.shell_exec("useradd " + name + " -G wheel,root")
 #  error while general.shell_exec("passwd " + name):
 #    pass
-#    
+#
 #  general.shell_exec("chmod +w /etc/sudoers")
 #  general.set_config_property("/etc/sudoers",'^# %wheel.*ALL=\(ALL\).*ALL$',"%wheel        ALL=(ALL)       ALL")
-#  general.shell_exec("chmod 0440 /etc/sudoers")     
-#  
+#  general.shell_exec("chmod 0440 /etc/sudoers")
+#
 #  process = subprocess.Popen('visudo -c', shell=True, stdout=subprocess.PIPE)
 #  if process.communicate()[0][:-1] != "/etc/sudoers: parsed OK":
 #    app.print_error("/etc/sudoers is not ok")
-#    sys.exit()  
+#    sys.exit()
 
 def _enable_selinux():
   '''
   All machines should have selinux on by default.
   For more info: http://www.crypt.gen.nz/selinux/disable_selinux.html
-  
-  '''    
+
+  '''
   app.print_verbose("Enable SELinux")
-  if (general.grep("/etc/selinux/config", "SELINUX=enforcing") or 
+  if (general.grep("/etc/selinux/config", "SELINUX=enforcing") or
       general.grep("/etc/selinux/config", "SELINUX=permissive")):
     general.set_config_property("/etc/selinux/config", '^SELINUX=.*$',     "SELINUX=enforcing")
     general.set_config_property("/etc/selinux/config", '^SELINUXTYPE=.*$', "SELINUXTYPE=targeted")
@@ -95,21 +92,21 @@ def _disable_services():
   '''
   Turn of autostart of services that are not used, and dont need to be used
   on a default centos server.
-  
+
   Which services are autostarted
   chkconfig  --list |grep on
-  
+
   Which services are autostarted in level 3
   chkconfig --list |grep "3:on" |awk '{print $1}' |sort
-  
+
   What status has the services, started/stopped?
   /sbin/service --status-all
-  
+
   For more info:
   http://www.sonoracomm.com/support/18-support/114-minimal-svcs
   http://www.imminentweb.com/technologies/centos-disable-unneeded-services-boot-time
-  http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/  
-  
+  http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/
+
   TODO:
   Also add this to the kickstart files?
   '''
@@ -120,7 +117,7 @@ def _disable_services():
   _disable_service("cpuspeed")
   _disable_service("cups")
   _disable_service("gpm")
-  _disable_service("yum-updatesd") 
+  _disable_service("yum-updatesd")
   _disable_service("portmap")
   _disable_service("sendmail")
   _disable_service("mcstrans")
@@ -140,9 +137,9 @@ def _disable_services():
 
 def _disable_virtual_terminals():
   '''
-  Minimize use of memory, and disable possiblity to forget a tty logged in 
+  Minimize use of memory, and disable possiblity to forget a tty logged in
   when leaving the machine.
-  
+
   '''
   app.print_verbose("Disable virtual terminals")
   general.set_config_property("/etc/inittab", "^[#]?2:2345:respawn:/sbin/mingetty tty2$","#2:2345:respawn:/sbin/mingetty tty2")
@@ -150,11 +147,11 @@ def _disable_virtual_terminals():
   general.set_config_property("/etc/inittab", "^[#]?4:2345:respawn:/sbin/mingetty tty4$","#4:2345:respawn:/sbin/mingetty tty4")
   general.set_config_property("/etc/inittab", "^[#]?5:2345:respawn:/sbin/mingetty tty5$","#5:2345:respawn:/sbin/mingetty tty5")
   general.set_config_property("/etc/inittab", "^[#]?6:2345:respawn:/sbin/mingetty tty6$","#6:2345:respawn:/sbin/mingetty tty6")
-    
+
 def _remove_rpms():
   '''
   Remove rpms that are not used on our default installations
-  
+
   '''
   app.print_verbose("Remove rpms")
   _rpm_remove("unix2dos-2.2-26.2.3.el5")
@@ -166,10 +163,10 @@ def _remove_rpms():
 
 def _customize_shell():
   app.print_verbose("Customize shell")
-  
+
   print "   Add Date And Time To History Output"
   general.set_config_property("/etc/bashrc", "^export HISTTIMEFORMAT=.*$","export HISTTIMEFORMAT=\"%h/%d - %H:%M:%S \"")
-  
+
   print "   Add Color To Grep"
   general.set_config_property("/root/.bash_profile", "^export GREP_COLOR=.*$","export GREP_COLOR='1;32'")
   general.set_config_property("/root/.bash_profile", "^export GREP_OPTIONS=.*$","export GREP_OPTIONS=--color=auto")
@@ -178,17 +175,17 @@ def _customize_shell():
 
 def _hardening():
   app.print_verbose("Hardening")
-  
+
   app.print_verbose("   Disable usb drives.")
   general.set_config_property("/etc/modprobe.d/blacklist-usbstorage", "^blacklist usb-storage$", "blacklist usb-storage")
-  
+
   # todo:
   #app.print_verbose("   Disallow Root Ssh Login (Must Su To Root)")
   #general.set_config_property("/etc/ssh/sshd_config", "^[#]*PermitRootLogin.*$", "PermitRootLogin no")
-  
+
   app.print_verbose("   Store passwords sha512 instead of md5")
   general.shell_exec("authconfig --passalgo=sha512 --update")
-  
+
   app.print_verbose("   Help kernel to prevent certain kinds of attacks")
   general.set_config_property("/etc/sysctl.conf", "^net.ipv4.icmp_ignore_bogus_error_messages=.*$","net.ipv4.icmp_ignore_bogus_error_messages=1")
   general.set_config_property("/etc/sysctl.conf", "^kernel.exec-shield=.*$","kernel.exec-shield=1")
@@ -229,9 +226,9 @@ def _disable_service(name):
       ):
     subprocess.call(["/sbin/service", name, "stop"])
     app.print_verbose("   service " + name + " stop")
-     
+
 def _rpm_remove(name):
   '''Remove rpm packages'''
   process=subprocess.Popen('rpm -q ' + name, shell=True, stdout=subprocess.PIPE)
   if process.communicate()[0][:-1] != "package " + name + " is not installed":
-    general.shell_exec("rpm -e " + name)        
+    general.shell_exec("rpm -e " + name)
