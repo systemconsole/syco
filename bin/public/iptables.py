@@ -1,20 +1,33 @@
-#! /usr/bin/env python
-#
-# Setup an iptable firewall according to the installed services.
-# 
-# If for example mysql installed, port 3306 will be opened for incoming.
-#
-# This script is based on Oskar Andreassons rc.DMZ.firewall.txt
-# Read and learn more about iptables.
-# http://www.frozentux.net/iptables-tutorial/scripts/rc.DMZ.firewall.txt
-# http://www.frozentux.net/iptables-tutorial/iptables-tutorial.html
-# http://manpages.ubuntu.com/manpages/jaunty/man8/iptables.8.html
-# http://www.cipherdyne.org/psad/
-#
-# TODO: 
-# * Add recent http://www.snowman.net/projects/ipt_recent/
-#   http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
-# * SSH to the server should only be allowed from certain ips.
+#!/usr/bin/env python
+'''
+Setup an iptable firewall according to the installed services.
+
+If for example mysql installed, port 3306 will be opened for incoming.
+
+This script is based on Oskar Andreassons rc.DMZ.firewall.txt
+Read and learn more about iptables.
+http://www.frozentux.net/iptables-tutorial/scripts/rc.DMZ.firewall.txt
+http://www.frozentux.net/iptables-tutorial/iptables-tutorial.html
+http://manpages.ubuntu.com/manpages/jaunty/man8/iptables.8.html
+http://www.cipherdyne.org/psad/
+
+TODO: 
+* Add recent http://www.snowman.net/projects/ipt_recent/
+  http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
+* SSH to the server should only be allowed from certain ips.
+  
+Changelog:
+  2011-01-29 - Daniel Lindh - Adding file header and comments
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["Oskar Andreasson"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import os
 import app, general, net

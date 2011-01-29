@@ -1,21 +1,31 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Install NTP Client/Server
 
-#
-# Install NTP Client/Server
-#
-# http://www.cyberciti.biz/faq/rhel-fedora-centos-configure-ntp-client-server/
-# http://www.pool.ntp.org/en/use.html
-# http://www.gsp.com/cgi-bin/man.cgi?section=5&topic=ntp.conf
-# 
-# Shell commands that can be nice to use when testing.
-# ntpdate -qdv localhost
-# ntpq -pn
-# ntptrace
-# watch ntpq -c lpee
-#
-# TODO
-# * Anything speial that needs to be done on KVM guests?
-# * SSL or other keys to the ntp server?
+http://www.cyberciti.biz/faq/rhel-fedora-centos-configure-ntp-client-server/
+http://www.pool.ntp.org/en/use.html
+http://www.gsp.com/cgi-bin/man.cgi?section=5&topic=ntp.conf
+ 
+Shell commands that can be nice to use when testing.
+ntpdate -qdv localhost
+ntpq -pn
+ntptrace
+watch ntpq -c lpee
+
+TODO
+* Anything speial that needs to be done on KVM guests?
+* SSL or other keys to the ntp server?
+
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import os
 import app, general, version

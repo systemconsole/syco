@@ -1,14 +1,25 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Install the server to act as a KVM host.
 
-#  Install the server to act as a kvm host.
-#  
-#  KVM Installation doc
-#  http://www.linuxjournal.com/article/9764
-#  http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
-#  http://wiki.centos.org/HowTos/KVM
-#  http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
-#  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
-#  http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/  
+Read more:
+http://www.linuxjournal.com/article/9764
+http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
+http://wiki.centos.org/HowTos/KVM
+http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
+http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/  
+
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import os, subprocess, re, ConfigParser, time
 import app, general, version

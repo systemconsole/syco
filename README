@@ -33,7 +33,10 @@ TODO
 
 This version
 
-
+* Use PasswordStore everywhere in the code
+* Refactor ssh.py 
+* Refactor version.py 
+* Refactor all common files.
 
 * installHttpd 
 * installModsecurity
@@ -45,6 +48,7 @@ This version
 * Rename to syscon.
 * Move from github to svn.
 
+* Add right licence to all files. Add licence file to root folder.
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
@@ -84,6 +88,7 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-29 - Daniel Lindh - Adding file header and comments to all fosh files.
 2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
 2011-01-28 - Daniel Lindh - Added git-clean command
 2011-01-28 - Daniel Lindh - Version 1.0.0 of installFarepayment completed.
