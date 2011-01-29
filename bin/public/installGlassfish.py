@@ -131,21 +131,6 @@ def exec_asadmin(admin_port="", command=""):
 # Options / private memembers
 #
 
-def _get_master_password():
-  '''
-  Only used to sign keystore etc, never used to login somewhere,
-  never transfered over network.
-  
-  '''
-  return "changeme"
-
-def _get_admin_password():
-  return "changeme"
-  
-#
-# Private funtions
-#
-
 def _is_glassfish_user_installed():  
   '''
   Check if glassfish user is installed.
@@ -284,16 +269,16 @@ def _set_domain_passwords(domain_name, admin_port):
     user="glassfish",
     events={
       "Enter Current Master Password> " : "changeit\n",
-      "Enter New_Master_Password password> " : _get_master_password() + "\n", 
-      "Enter New_Master_Password password again> " : _get_master_password() + "\n"
+      "Enter New_Master_Password password> " : app.get_glassfish_master_password() + "\n", 
+      "Enter New_Master_Password password again> " : app.get_glassfish_master_password() + "\n"
    }
   )
   
   # Create new cert for https  
   os.chdir("/usr/local/glassfish/glassfish/domains/" + domain_name + "/config/")
-  general.shell_exec_p("keytool -delete -alias s1as -keystore keystore.jks -storepass " + _get_master_password(), user="glassfish")
-  general.shell_exec_p('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + _get_master_password() + ' -keystore keystore.jks -storepass ' + _get_master_password(), user="glassfish")
-  general.shell_exec_p("keytool -list -keystore keystore.jks -storepass " + _get_master_password(), user="glassfish")
+  general.shell_exec_p("keytool -delete -alias s1as -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec_p('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + app.get_glassfish_master_password() + ' -keystore keystore.jks -storepass ' + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec_p("keytool -list -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
 
   general.shell_exec_p("/usr/local/glassfish/bin/asadmin start-domain " + domain_name, user="glassfish")  
   
@@ -303,8 +288,8 @@ def _set_domain_passwords(domain_name, admin_port):
     events={
       '(?i)Enter admin user name \[default: admin\]> ': "admin\n",
       '(?i)Enter admin password> ': "\n",
-      '(?i)Enter new admin password> ': _get_admin_password() + "\n",
-      '(?i)Enter new admin password again> ': _get_admin_password() + "\n"      
+      '(?i)Enter new admin password> ': app.get_glassfish_admin_password() + "\n",
+      '(?i)Enter new admin password again> ': app.get_glassfish_admin_password() + "\n"      
     }
   )  
 
@@ -313,7 +298,7 @@ def _set_domain_passwords(domain_name, admin_port):
     user="glassfish",
     events={
       "Enter admin user name \[default: admin\]> " : "admin\n", 
-      "Enter admin password> " : _get_admin_password() + "\n"
+      "Enter admin password> " : app.get_glassfish_admin_password() + "\n"
     }
   )  
   

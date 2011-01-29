@@ -25,19 +25,21 @@ import app, general
 from exception import SettingsError
 
 class Ssh:
-  server="127.0.0.1"
-  port="22"  
-  user="root"
-  password=""
+  server = "127.0.0.1"
+  port = "22"  
+  user = "root"
+  password = None
+  mysql_password = None
 
   ssh_key_dir=os.environ['HOME'] + "/.ssh"
   ssh_private_key_file=ssh_key_dir + "/id_fosh_rsa"
   ssh_public_key_file=ssh_key_dir + "/id_fosh_rsa.pub"
   key_is_installed=False
   
-  def __init__(self, server, password):
-    self.server=server
-    self.password=password
+  def __init__(self, server, password, mysql_password=None):
+    self.server = server
+    self.password = password
+    self.mysql_password = mysql_password
     
   def rsync(self, from_path, to_path, extra=""):
     general.shell_exec(
@@ -102,15 +104,15 @@ class Ssh:
     Execute a MySQL query, through the command line mysql console over SSH.
     
     '''
-    # TODO: Hide password verbose print.
-    self.ssh("mysql -uroot -p" + app.get_mysql_password() + " -e " + '"' + command + '"')
+    if (not self.mysql_password):
+      raise Exception("No mysql root password was defined")
+    # TODO: Hide password verbose print.      
+    self.ssh("mysql -uroot -p" + self.mysql_password + " -e " + '"' + command + '"')
          
   def install_ssh_key(self):
     '''
     Install ssh keys on a remote server.
-    
-    Enables password less login.
-    
+
     Raise Exception if any error.
     
     '''

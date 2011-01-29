@@ -30,6 +30,10 @@ def build_commands(commands):
 def remote_install(args):
   '''
   '''
+  # Ask the user for all passwords that might be used in the remote install
+  # so the installation can go on headless.
+  app.init_all_passwords()
+  
   remote_host=args[1]
   obj = RemoteInstall()
   obj.run(remote_host)
@@ -41,7 +45,6 @@ class RemoteInstall:
   the script will retry to connect every 5 second until it answers.
   
   '''
-  password=""
   servers={}
   
   # All hosts that are alive.
@@ -56,7 +59,7 @@ class RemoteInstall:
   # Abort error
   abort_error={}
   
-  def run(self, host_name="", password=""):
+  def run(self, host_name=""):
     '''
     Start the installation
         
@@ -94,7 +97,7 @@ class RemoteInstall:
       server = app.config.get(host_name, "server")
       app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
       
-      obj = ssh.Ssh(server, self.password)
+      obj = ssh.Ssh(server, app.get_root_password())
       self._validate_alive(obj, host_name)
       app.print_verbose("========================================================================================")
       app.print_verbose("=== Update " + host_name + " (" + server + ")")
@@ -122,7 +125,6 @@ class RemoteInstall:
     Set servers/hosts to perform the remote install on.
     
     '''
-    self.password = app.get_root_password()
     if (host_name):
       self.servers = [host_name]
     else:    

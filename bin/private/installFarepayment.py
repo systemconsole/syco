@@ -91,29 +91,30 @@ class InstallFarepayment:
     mysql_properties_list = None
 
     # Initialize the all properties for the mysql connection.
-    def init_mysql_properties(self, environment):
-      username = "fp_" + environment
-      mysql_password = app.get_password("mysql", username)
-      
+    def init_mysql_properties(self, environment):            
       if (self.environment =="integration"):
+          mysql_password = app.get_mysql_fp_integration_password()
           self.mysql_properties_list = [
             MysqlProperties("farepayment",           "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
             MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
             MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
             
       if (self.environment =="stable"):
+          mysql_password = app.get_mysql_fp_stable_password()
           self.mysql_properties_list = [
             MysqlProperties("farepayment",           "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
             MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
             MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
             
       if (self.environment =="qa"):
+          mysql_password = app.get_mysql_fp_qa_password()
           self.mysql_properties_list = [
           MysqlProperties("farepayment",           "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
           MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
           MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
           
       if (self.environment =="production"):
+          mysql_password = app.get_mysql_fp_production_password()
           self.mysql_properties_list = [
           MysqlProperties("farepayment",           "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
           MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
@@ -127,7 +128,7 @@ class InstallFarepayment:
       self.environment=environment
       
       # Get SVN password from user.
-      svn_password = app.get_password("svn", "fo_svn")
+      svn_password = app.get_svn_password()
 
       # Add svn login data to the url.      
       self.farepayment_realm_url = "https://" + self.svn_user + ":" + svn_password + "@" + self.farepayment_realm_url

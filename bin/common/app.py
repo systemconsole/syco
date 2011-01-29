@@ -16,7 +16,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import sys, ConfigParser, os, re, socket, getpass
-import passwordStore
+import passwordStore, general
 
 # Constants
 #
@@ -38,9 +38,6 @@ options = Options()
 # The version of the fosh script
 version="0.1"
 parser=''
-
-# Root password for linux shell.
-root_password = None
 
 PASSWORD_STORE_PATH = "/opt/fosh/etc/passwordstore"
 
@@ -82,6 +79,67 @@ def print_verbose(message, verbose_level = 1, caption="", new_line=True):
         
     sys.stdout.flush()
 
+def _get_password(service, user_name):
+  '''Get a password from the password store.'''
+  if (not get_password.password_store):  
+    get_password.password_store=passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+  return get_password.password_store.get_password(service, user_name)
+_get_password.password_store=None
+  
+def get_root_password():
+  '''The linux shell root password.'''
+  return _get_password("linux", "root")
+
+def get_root_password_hash():
+  '''Openssl hash of the linux root password.'''
+  root_password = get_root_password()
+  hash_root_password = general.shell_exec_p("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'")
+  return hash_root_password
+  
+def get_svn_password():
+  '''The svn password for user syscon_svn'''
+  return _get_password("svn", "syscon_svn")  
+
+def get_glassfish_master_password():
+  '''Used to sign keystore, never transfered over network.'''
+  return _get_password("glassfish", "master")
+  
+def get_glassfish_admin_password():
+  '''Login to asadmin or web admin console'''
+  return _get_password("glassfish", "admin")
+
+def get_mysql_root_password():
+  '''The root password for the mysql service.'''
+  return _get_password("mysql", "root")
+
+def get_mysql_fp_integration_password():
+  '''A user password for the mysql service, used by Farepayment'''
+  return _get_password("mysql", "fp_integration")
+
+def get_mysql_fp_stable_password():
+  '''A user password for the mysql service, used by Farepayment'''
+  return _get_password("mysql", "fp_stable")
+
+def get_mysql_fp_qa_password():
+  '''A user password for the mysql service, used by Farepayment'''
+  return _get_password("mysql", "fp_qa")
+
+def get_mysql_fp_production_password():
+  '''A user password for the mysql service, used by Farepayment'''
+  return _get_password("mysql", "fp_production")          
+
+def init_all_passwords():
+  '''Ask the user for all passwords used by fosh, and add to passwordstore.'''
+  get_root_password()
+  get_svn_password()
+  get_glassfish_master_password()
+  get_glassfish_admin_password()
+  get_mysql_root_password()
+  get_mysql_fp_integration_password()
+  get_mysql_fp_stable_password()
+  get_mysql_fp_qa_password()
+  get_mysql_fp_production_password()
+
 def get_option(section, option):
   if (config.has_section(section)):
     if (config.has_option(section, option)):
@@ -90,36 +148,6 @@ def get_option(section, option):
       raise Exception("Can't find option '" + option + "' in section '" + section + "' in install.cfg")
   else:
     raise Exception("Can't find section '" + section + "' in install.cfg")
-
-def get_password(service, user_name):
-  '''
-  Get password from the password store.
-  
-  '''
-  if (not get_password.password_store):
-    print "create password store"
-    get_password.password_store=passwordStore.PasswordStore(PASSWORD_STORE_PATH)
-  return get_password.password_store.get_password(service, user_name)
-get_password.password_store=None
-  
-def get_root_password():
-  '''
-  Ask the user to enter the linux shell root password.
-  
-  TODO: Verify that it's the right password, raise Exception otherwise.
-  
-  '''
-  global root_password
-  
-  while(root_password==""):
-    root_password=getpass.getpass("Enter root password: ")
-  return root_password
-
-def get_root_password_hash():
-  return get_option("general", "root_password")
-
-def get_mysql_password():
-  return get_option("general", "mysql.password")
 
 def get_mysql_primary_master():
   return get_ip(get_option("general", "mysql.primary_master"))
