@@ -116,7 +116,7 @@ class RemoteInstall:
   def _execute(self, obj, host_name):
     self.installed[host_name]="Progress"
     for option, command in app.get_commands(host_name):
-      obj.ssh(command)
+      obj.ssh_exec(command)
     self.installed[host_name]="Yes"
     app.print_verbose("")    
 
@@ -146,7 +146,7 @@ class RemoteInstall:
         app.print_verbose("In install.cfg, cant find ip for " + host_name)
 
   def _validate_alive(self, ssh_obj, host_name):
-    if (ssh_obj.is_alive()):      
+    if (ssh_obj.is_alive()):
       self.alive[host_name]="Yes"
     else:
       self.alive[host_name]="No"
@@ -215,8 +215,5 @@ class RemoteInstall:
     '''
     app.print_verbose("Install fosh on remote host")
     ssh.rsync(os.path.abspath(sys.path[0] + "/../") + "/" ,  "/opt/fosh", "--exclude version.cfg")
-    ssh.rsync(os.environ['HOME'] + "/.ssh/id_rsa", os.environ['HOME'] + "/.ssh/id_rsa")
-    ssh.rsync(os.environ['HOME'] + "/.ssh/id_fosh_rsa*", os.environ['HOME'] + "/.ssh/")
-
-    ssh.ssh("/opt/fosh/bin/fosh.py install-fosh")
+    ssh.ssh_exec("/opt/fosh/bin/fosh.py install-fosh")
     
