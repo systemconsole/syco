@@ -1,78 +1,174 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Main file for executing fosh commands.
 
-import sys, types
-sys.path.append(sys.path[0] + "/fosh")
-sys.path.append(sys.path[0] + "/fosh/utils")
+fosh is a command line shell, used to execute customized installation scripts 
+for linux services and softwares.
 
-import os, inspect
+Examples:
+fosh install-fosh
+  
+Changelog:
+  2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["Mattias Hemmingsson"]
+__license__ = "???"
+__version__ = "0.1"
+__status__ = "Production"
+
+import sys, types, os, inspect
 from optparse import OptionParser
+
+#
+# Adding file directories for inclusions.
+#
+
+# Common classes/functions that are used by the project.
+sys.path.append(sys.path[0] + "/common/")
 
 import app
 
-#  Import all py files in the fosh modules dir "fosh/bin/fosh"
-for module in os.listdir(app.fosh_path + "/bin/fosh/"):
-  if module == '__init__.py' or module[-3:] != '.py':
+# Files published to public repos.
+sys.path.append(app.FOSH_PUBLIC_PATH)
+
+# Files only available in private repos. Could be installation of private
+# software that no one else has access to, or find uninteressted.
+sys.path.append(app.FOSH_PRIVATE_PATH)
+
+#  Import all py files including fosh commands.
+command_dir = os.listdir(app.FOSH_PUBLIC_PATH)
+command_dir += os.listdir(app.FOSH_PRIVATE_PATH)
+
+for module in command_dir:
+  if (module == '__init__.py' or module[-3:] != '.py'):
     continue
-  py_command=module[:-3] + "=__import__(\"" + module[:-3] + "\", locals(), globals())"
+  py_command = module[:-3] + "=__import__(\"" + module[:-3] + "\", locals(), globals())"
   exec(py_command)
 
 class Commands:
-  name_list={}
-  func_list={}
-  arguments_list={}
-  help_list={}
+  '''
+  Control which command line commands that can be executed.
   
+  '''
+
+  class CommandList:
+    '''
+    Stores added commands for a specific type [public|private}
+    
+    '''
+    name_list = {}
+    func_list = {} 
+    arguments_list = {}
+    help_list = {}
+        
+    def __init__(self):
+      self.name_list = {}
+      self.func_list = {} 
+      self.arguments_list = {}
+      self.help_list = {}
+  
+  # Lists of all public and private commands
+  commands = {"public":CommandList(), "private":CommandList}
+  
+  # The command type add() will add to.
+  current_type = "public"  
+
+  # The maximum char length of name + argument
+  name_length = 0
+    
   def add(self, name, func, arguments="", help=""):
-    self.name_list[name]=name.lower()
-    self.func_list[name]=func
-    self.arguments_list[name]=arguments
-    self.help_list[name]=help
-
-  def get_help(self):
-    help=""
-    name_list=sorted(self.name_list)
-    for name in name_list:
-      help+=(self.name_list[name] + " " + self.arguments_list[name]).ljust(25) + "- " + self.help_list[name].ljust(20) + "\n"
-
-    return help
+    '''
+    Add a command that are able to be executed from the fosh command line.
+    
+    This is a callback function used by the modules.
+    
+    '''
+    self.commands[self.current_type].name_list[name] = name.lower()
+    self.commands[self.current_type].func_list[name] = func
+    self.commands[self.current_type].arguments_list[name] = arguments.strip("[]")
+    if (self.commands[self.current_type].arguments_list[name]):
+      self.commands[self.current_type].arguments_list[name] = "{" + self.commands[self.current_type].arguments_list[name] + "}"
+    
+    self.commands[self.current_type].help_list[name] = help.rstrip(".") + "."
+    
+    self.name_length = max(self.name_length, len(name))
 
   def execute(self, args):
+    '''
+    Execute a command in a module.
+    
+    '''
     command = args[0].lower();
 
-    if command in self.name_list:
-      self.func_list[command](args) 
+    if command in self.commands["public"].name_list:
+      self.commands["public"].func_list[command](args) 
+    elif command in self.commands["private"].name_list:
+      self.commands["private"].func_list[command](args) 
     else:
       app.parser.error('Unknown command %s' % command)
 
-  def __init__(self):    
-    for obj in self._get_modules():
-      try:
-        obj.build_commands(self)
-                    
-      except AttributeError, e:
-        app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
-      except NameError, e:
-        app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))       
-      
-  def _get_modules(self):
+  def get_help(self):
     '''
-    Return a list of objects representing all available fosh modules
+    Get the full help text for all commands. 
+    
+    '''    
+    help = ""
+    help += "Public commands\n"
+    help += self._get_help_for_command_type("public")
+    help += "\nPrivate commands:\n"    
+    help += self._get_help_for_command_type("private")
+    return help
+    
+  def _get_help_for_command_type(self, type):
+    '''
+    Build help string for one command type (public or private)
+    
+    '''
+    help = ""
+    name_list = sorted(self.commands[type].name_list) 
+    for name in name_list:
+      help += self.commands[type].name_list[name].ljust(self.name_length) + " - " 
+      help += self.commands[type].help_list[name] + " " + self.commands[type].arguments_list[name] + "\n"
+
+    return help
+
+  def __init__(self):
+    '''
+    Read command directories (public and private) and add commands.
+    
+    '''
+    try:
+      self.current_type = "public"
+      for obj in self._get_modules(app.FOSH_PUBLIC_PATH):
+        obj.build_commands(self)
+
+      self.current_type = "private"        
+      for obj in self._get_modules(app.FOSH_PRIVATE_PATH):
+        obj.build_commands(self)
+                  
+    except AttributeError, e:
+      app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
+    except NameError, e:
+      app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))       
+      
+  def _get_modules(self, commands_path):
+    '''
+    Return a list of objects representing all available fosh modules in specified folder.
     
     '''
     modules=[]
-    for module in os.listdir(app.fosh_path + "/bin/fosh/"):
-      try:
-        if module == '__init__.py' or module[-3:] != '.py':
-            continue
-        module=module[:-3]    
-        obj = getattr(sys.modules[__name__], module)
-        modules.append(obj)
-        
-      except NameError, e:
-        app.print_error("   " + module + " is not a namespace or class")
-      except AttributeError:
-        raise NameError("%s doesn't exist." % module)
-  
+    for module in os.listdir(commands_path):
+      if (module == '__init__.py' or module[-3:] != '.py'):
+          continue
+      module = module[:-3]
+      obj = getattr(sys.modules[__name__], module)
+      modules.append(obj)
+
     return modules       
 
 def main():
@@ -83,21 +179,22 @@ def main():
   
   '''
   # Module variables
-  cmd_list=Commands()
+  cmd_list = Commands()
   
-  usage="usage: %prog [options] command\n"
-  usage+=cmd_list.get_help()
+  usage = "usage: %prog [options] command\n\n"
+  usage += "Commands:\n"
+  usage += cmd_list.get_help()
     
-  app.parser = OptionParser(usage, version="%prog " + app.version)
-  app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1)
-  app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose")
+  app.parser = OptionParser(usage=usage, version="%prog " + app.version, add_help_option=True)
+  app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1, help="Show more output.")
+  app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose", help="Show no output.")
 
   (app.options, args) = app.parser.parse_args()
   
   app.print_verbose(app.parser.get_version())
 
   if len(args) < 1 and 2 > len(args):
-    app.parser.error("Incorrect number of arguments")
+    app.parser.print_help()
   else:            
     cmd_list.execute(args) 
                  

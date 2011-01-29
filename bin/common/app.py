@@ -30,6 +30,10 @@ root_password = None
 PASSWORD_STORE_PATH = "/opt/fosh/etc/passwordstore"
 
 # 
+FOSH_PATH=os.path.abspath(sys.path[0] + "/../") 
+FOSH_PUBLIC_PATH=os.path.abspath(FOSH_PATH + "/bin/public/") 
+FOSH_PRIVATE_PATH=os.path.abspath(FOSH_PATH + "/bin/private/") 
+
 fosh_path=os.path.abspath(sys.path[0] + "/../") 
 config_file_name=fosh_path + "/etc/install.cfg"
 config = ConfigParser.RawConfigParser()

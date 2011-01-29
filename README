@@ -33,6 +33,8 @@ TODO
 
 This version
 
+
+
 * installHttpd 
 * installModsecurity
 * installFarepayment adapt to installHttpd, installModsecurity
@@ -42,7 +44,6 @@ This version
 * installRentalFront on all fo-servers.
 * Rename to syscon.
 * Move from github to svn.
-* Add private/public script folder.
 
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
@@ -83,6 +84,7 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
 2011-01-28 - Daniel Lindh - Added git-clean command
 2011-01-28 - Daniel Lindh - Version 1.0.0 of installFarepayment completed.
 2011-01-28 - Daniel Lindh - Version 1.0.0 of PasswordStore completed.
