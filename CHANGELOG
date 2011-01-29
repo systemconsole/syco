@@ -1,7 +1,6 @@
 TODO
 ---
 
-* Refactor ssh.py 
 * Refactor version.py 
 * Refactor all common files.
 
@@ -55,6 +54,7 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-29 - Daniel Lindh - Refactoring and cleaning up the SSH code.
 2001-01-29 - Daniel Lindh - Use PasswordStore everywhere in the code where passwords are used.
 2011-01-29 - Daniel Lindh - Adding file header and comments to all fosh files.
 2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
