@@ -1,15 +1,27 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Install glassfish with optimizations, security and common plugins.
+ 
+Read more
+http://docs.sun.com/app/docs/coll/1343.13?l=en
+http://docs.sun.com/app/docs/doc/821-1757/aboaa?l=en&a=view
+http://docs.sun.com/app/docs/doc/821-1751?l=en
+http://www.nabisoft.com/tutorials/glassfish/installing-glassfish-301-on-ubuntu
+http://iblog.humani-tech.com/?p=505
+http://www.java.net/forums/glassfish/glassfish 
 
-# Install the server to act as a kvm host.
-#  
-# Glassfish Installation doc
-#  http://docs.sun.com/app/docs/coll/1343.13?l=en
-#  http://docs.sun.com/app/docs/doc/821-1757/aboaa?l=en&a=view
-#  http://docs.sun.com/app/docs/doc/821-1751?l=en
-#  http://www.nabisoft.com/tutorials/glassfish/installing-glassfish-301-on-ubuntu
-#  http://iblog.humani-tech.com/?p=505
-#  http://www.java.net/forums/glassfish/glassfish 
-#
+Changelog:
+  2011-01-29 - Daniel Lindh - Adding file header and comments
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import os, time, stat, shutil, traceback, sys, re
 import app, general, version

@@ -1,4 +1,19 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Instal all KVM guest defined for this server in etc/install.cfg
+
+Changelog:
+  2011-01-29 - Daniel Lindh - Adding file header and comments
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import socket, shutil, time, os
 import app, general, version, iptables, installCobbler
@@ -9,7 +24,7 @@ import app, general, version, iptables, installCobbler
 script_version = 1
 
 def build_commands(commands):
-  commands.add("install-guests", install_guests, help="Install guests on host defined in install.cfg.")
+  commands.add("install-guests", install_guests, help="Instal all KVM guest defined for this server in install.cfg.")
                
 def install_guests(args):
   '''

@@ -1,7 +1,22 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Hold properties for a mysql connection needed by glassfish applications.
 
-# Example
-# MysqlProperties("fosh", "10.0.0.2", "root", "xxxx", "fosh_stable", ["127.0.0.1", "localhost"])
+Example
+MysqlProperties("fosh", "10.0.0.2", "root", "xxxx", "fosh_stable", ["127.0.0.1", "localhost"])
+
+Changelog:
+  2011-01-29 - Daniel Lindh - Adding file header and comments
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 class MysqlProperties:
   pool_name=""

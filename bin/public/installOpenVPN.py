@@ -1,14 +1,25 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+'''
+Install the server to act as a openvpn server
 
-# Install the server to act as a openvpn server
-#
-# Will use 10.100.10.0:1194 as the vpn client net
-# 
-# More info about openvpn.
-# http://openvpn.net/index.php/open-source/documentation/howto.html
-# http://notes.brooks.nu/2008/08/openvpn-setup-on-centos-52/
-# http://www.howtoforge.com/openvpn-server-on-centos-5.2
-# http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
+Will use 10.100.10.0:1194 as the vpn client net
+ 
+More info about openvpn.
+http://openvpn.net/index.php/open-source/documentation/howto.html
+http://notes.brooks.nu/2008/08/openvpn-setup-on-centos-52/
+http://www.howtoforge.com/openvpn-server-on-centos-5.2
+http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
+
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel.lindh@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
 
 import os, subprocess, time, stat
 import app, general, version, iptables
