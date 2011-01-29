@@ -3,13 +3,18 @@
 Install the server to act as a openvpn server
 
 Will use 10.100.10.0:1194 as the vpn client net
- 
+
 More info about openvpn.
 http://openvpn.net/index.php/open-source/documentation/howto.html
 http://notes.brooks.nu/2008/08/openvpn-setup-on-centos-52/
 http://www.howtoforge.com/openvpn-server-on-centos-5.2
 http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
 
+TODO
+* yum installopenvpn-auth-ldap ??
+
+CHANGELOG
+2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -23,13 +28,13 @@ __status__ = "Production"
 
 import os, subprocess, time, stat
 import app, general, version, iptables
-    
+
 pexpect=general.install_and_import_pexpect()
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-script_version = 1
+SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
@@ -38,14 +43,11 @@ def build_commands(commands):
 def install_openvpn_server(args):
   '''
   The actual installation of openvpn server.
-  
+
   '''
-  global script_version
-  app.print_verbose("Install openvpn server version: %d" % script_version)
-  ver_obj = version.Version()
-  if ver_obj.is_executed("InstallOpenvpnServer", script_version):
-    app.print_verbose("   Already installed latest version")
-    return
+  app.print_verbose("Install openvpn server version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("InstallOpenvpnServer", script_version)
+  version_obj.check_executed()
 
   general.shell_exec("yum -y install openvpn")
 
@@ -66,49 +68,49 @@ def install_openvpn_server(args):
 
   # To be able to route trafic to internal network
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
-  general.shell_exec("echo 1 > /proc/sys/net/ipv4/ip_forward")  
+  general.shell_exec("echo 1 > /proc/sys/net/ipv4/ip_forward")
   iptables.iptables("-t nat -A POSTROUTING -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
   iptables.iptables("-I INPUT 1 -m state --state NEW -m tcp -p tcp --dport 1194 -j ACCEPT")
-  
+
   # Don't get this to work
   #iptables -I INPUT 2 -p tcp -m state --state NEW -m multiport --dports 80,443,8080,8181,4848 -j ACCEPT
-  
+
   # Ports to allow to use on the network.
   iptables.iptables("-I RH-Firewall-1-INPUT -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
-  
+
   # To protect the network.
   iptables.iptables("-A FORWARD -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
   iptables.iptables('-A FORWARD -i eth0 -o tun0 -m state --state "ESTABLISHED,RELATED" -j ACCEPT')
-  general.shell_exec("service iptables save")  
+  general.shell_exec("service iptables save")
 
   general.shell_exec("/etc/init.d/openvpn restart")
   general.shell_exec("chkconfig openvpn on")
-  
+
   build_client_certs(args)
-    
-  ver_obj.mark_executed("InstallOpenvpnServer", script_version)
-  
+
+  version_obj.mark_executed()
+
 def build_client_certs(args):
   os.chdir("/etc/openvpn/easy-rsa/keys")
   general.set_config_property("/etc/cronjob", "01 * * * * root run-parts fosh build_client_certs", "01 * * * * root run-parts fosh build_client_certs")
   general.shell_exec("cp " + app.fosh_path + "/var/openvpn/client.conf ./client.conf")
   general.shell_exec("cp " + app.fosh_path + "/doc/openvpn/install.txt .")
-  
+
   for user in os.listdir("/home"):
     cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
     valid_file="lost+found" not in user
     if valid_file and not cert_already_installed:
       os.chdir("/etc/openvpn/easy-rsa/")
       general.set_config_property("/etc/openvpn/easy-rsa/build-key-pkcs12", '.*export EASY_RSA.*', 'source ./vars;export EASY_RSA="${EASY_RSA:-.}"')
-                  
-      out = pexpect.run("./build-key-pkcs12 --batch " + user, 
-        cwd="/etc/openvpn/easy-rsa/", 
+
+      out = pexpect.run("./build-key-pkcs12 --batch " + user,
+        cwd="/etc/openvpn/easy-rsa/",
         events={'(?i)Enter Export Password:':'\n', '(?i)Verifying - Enter Export Password:':'\n'}
       )
       app.print_verbose(out)
-      
 
-      # Config client.crt      
+
+      # Config client.crt
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
 
@@ -117,6 +119,3 @@ def build_client_certs(args):
       # Set permission for the user who now owns the file.
       os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
       pexpect.run("chown " + user + ":" + user + " /home/" + user +"/openvpn_client_keys.zip ")
-
-# TODO/OTHER
-# yum installopenvpn-auth-ldap ??
