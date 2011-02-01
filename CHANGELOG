@@ -1,7 +1,6 @@
 TODO
 ---
 
-* Refactor app.py
 * Refactor general.py Use same shell_exec command
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
