@@ -1,9 +1,10 @@
 TODO
 ---
 
-* Refactor version.py 
-* Refactor all common files.
-* Use same shell_exec command
+* Refactor app.py
+* Refactor general.py Use same shell_exec command
+* Refactor iptable.py, add a rule chain that can be controlled from other scripts?
+  Or is it good as it is, so the iptables script are not dependent on other script
 
 * Rename installFoTpInstall and all other relations to fo-tp
 
@@ -21,6 +22,8 @@ TODO
 * Move from github to office svn.
 
 * Uninstall programs, modify version.cfg
+
+* Install clam
 
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.  
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
@@ -57,6 +60,7 @@ Future version
 
 CHANGELOG
 ---------
+2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
 2011-01-29 - Daniel Lindh - Refactoring and cleaning up the SSH code.
 2001-01-29 - Daniel Lindh - Use PasswordStore everywhere in the code where passwords are used.
 2011-01-29 - Daniel Lindh - Adding file header and comments to all fosh files.
