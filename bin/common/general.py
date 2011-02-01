@@ -3,6 +3,7 @@
 General python functions that don't fit in it's own file.
 
 Changelog:
+  2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
   2011-02-01 - Daniel Lindh - Refactoring and comments.
   2011-01-29 - Daniel Lindh - Adding file header and comments
 '''
@@ -86,7 +87,7 @@ def download_file(src, dst):
   create_install_dir()
   os.chdir(app.INSTALL_DIR)
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    shell_exec_p("wget " + src)
+    shell_exec("wget " + src)
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
@@ -122,86 +123,46 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
   
-def shell_exec(command, error=True, no_return=False, user=""):
+def shell_exec(command, user="", timeout=None, expect="", send="", cwd=os.getcwd()):
   '''
-  Execute a shell command and handles output verbosity.
+  Execute a shell command using pexpect, and writing verbose affected output.
 
   '''
-  
-  if (user):
-    command = "su " + user + ' -c "' + command + '"'
-
-  app.print_verbose("Command: " + command)
-  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-  if (no_return):
-    return "", ""
-  else:
-    return handle_subprocess(p, error)
-  
-def handle_subprocess(p, error=True):  
-  stdout = ""
-  stderr = ""
-  while (True):
-    for txt in p.stdout:
-      # Only write caption once.
-      if (stdout == ""):
-        app.print_verbose("---- Result ----", 2)
-      app.print_verbose(txt.strip(), 2, new_line=False)
-      stdout += txt
-      
-    for txt in p.stderr:
-      stderr += txt
-  
-    if (p.poll() != None):
-      break
-              
-  if (stderr and error):
-    app.print_error(stderr.strip())
-
-  if (p.returncode and error):
-    app.print_error("Invalid returncode %d" % p.returncode)
-
-  # An extra line break for the looks.
-  if (stdout and app.options.verbose >= 2):
-    print("\n"),
-            
-  return stdout, stderr
-  
-def shell_exec_p(command, error=True, no_return=False, user="", timeout=None, expect="", send=""):
-
   if (user):
     command = "su " + user + ' -c "' + command + '"'
 
   app.print_verbose("Command: " + command)
   out = pexpect.spawn(command,
-    cwd=os.getcwd()
+    cwd=cwd
   )
   app.print_verbose("---- Result ----", 2)
+  caption=True
   stdout = ""
   try:
     if (expect):
       while(True):
         index = out.expect([expect, pexpect.EOF, pexpect.TIMEOUT])
         stdout += out.before
-        app.print_verbose(out.before, 2, new_line=False)      
+        app.print_verbose(out.before, 2, new_line=False, enable_caption=caption)
+        caption=False
         if (index == 0 or index == 1):
           out.send(send)
           break
   
     while(True):    
       txt = out.read_nonblocking(512, timeout)
-      app.print_verbose(txt, 2, new_line=False)
+      app.print_verbose(txt, 2, new_line=False, enable_caption=caption)
+      caption=False
       stdout += txt
 
   except pexpect.EOF:
     pass
 
   out.close()
-  if (out.exitstatus and error):
+  if (out.exitstatus):
     app.print_error("Invalid exitstatus %d" % out.exitstatus)
 
-  if (out.signalstatus and error):
+  if (out.signalstatus):
     app.print_error("Invalid signalstatus %d - %s" % out.signalstatus, out.status)
   
   # An extra line break for the looks.
@@ -211,7 +172,14 @@ def shell_exec_p(command, error=True, no_return=False, user="", timeout=None, ex
   return stdout
 
 def shell_run(command, user="", events=""):
+  '''
+  Execute a shell command using pexpect.run, and writing verbose affected output.
 
+  Use shell_exec if possible.
+
+  #TODO: Try to replace this with shell_exec
+
+  '''
   if (user):
     command = "su " + user + ' -c "' + command + '"'
 

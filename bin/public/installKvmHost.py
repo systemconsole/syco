@@ -61,13 +61,13 @@ def install_kvmhost(self):
   general.shell_exec("setenforce 1")
 
   # Is virsh started?
-  result,err = general.shell_exec("virsh nodeinfo", os.F_OK)
+  result = general.shell_exec("virsh nodeinfo", os.F_OK)
   if "CPU model:           x86_64" not in result:
     app.print_error("virsh not installed.")
     self._abort_kvm_host_installation()
     return
 
-  result,err = general.shell_exec("virsh -c qemu:///system list")
+  result = general.shell_exec("virsh -c qemu:///system list")
   if "Id Name" not in result:
     app.print_error("virsh not installed.")
     self._abort_kvm_host_installation()

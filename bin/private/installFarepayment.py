@@ -233,7 +233,7 @@ class InstallFarepayment:
 
     general.download_file(url, name)
     os.chdir(app.INSTALL_DIR)
-    general.shell_exec_p("gunzip -f " + name)
+    general.shell_exec("gunzip -f " + name)
 
     # Remove the .gz from the filename
     name = os.path.splitext(name)[0]
@@ -246,10 +246,10 @@ class InstallFarepayment:
     Used by farepayment to log xml requests etc.
 
     '''
-    general.shell_exec_p("mkdir /var/log/farepayment")
-    general.shell_exec_p("chown glassfish:glassfishadm /var/log/farepayment")
-    general.shell_exec_p("touch /var/log/farepayment/repository.dat")
-    general.shell_exec_p("chown glassfish:glassfishadm /var/log/farepayment/repository.dat")
+    general.shell_exec("mkdir /var/log/farepayment")
+    general.shell_exec("chown glassfish:glassfishadm /var/log/farepayment")
+    general.shell_exec("touch /var/log/farepayment/repository.dat")
+    general.shell_exec("chown glassfish:glassfishadm /var/log/farepayment/repository.dat")
 
   def _create_security_realm(self, domain_name, admin_port):
     '''
@@ -260,10 +260,10 @@ class InstallFarepayment:
     farepayment_realm_name = os.path.basename(self.prop.farepayment_realm_url)
     general.download_file(self.prop.farepayment_realm_url, farepayment_realm_name)
 
-    general.shell_exec_p("unzip -o " + farepayment_realm_name, user="glassfish")
+    general.shell_exec("unzip -o " + farepayment_realm_name, user="glassfish")
     os.chdir(app.INSTALL_DIR)
-    general.shell_exec_p("rm -rf " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/classes/com", user="glassfish")
-    general.shell_exec_p("cp -r " + app.INSTALL_DIR + "com " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/classes/", user="glassfish")
+    general.shell_exec("rm -rf " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/classes/com", user="glassfish")
+    general.shell_exec("cp -r " + app.INSTALL_DIR + "com " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/classes/", user="glassfish")
 
     # Configure realm in glassfish
     general.set_config_property(GLASSFISH_DOMAINS_PATH + domain_name + "/config/login.conf",

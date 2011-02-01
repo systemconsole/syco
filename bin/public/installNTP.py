@@ -58,9 +58,9 @@ def install_ntp(args):
 
   # Install the NTP packages.
   if (not os.access("/etc/ntp.conf", os.F_OK)):
-    general.shell_exec_p("yum -y install ntp")
+    general.shell_exec("yum -y install ntp")
 
-  general.shell_exec_p("chkconfig ntpd on")
+  general.shell_exec("chkconfig ntpd on")
 
   # Set ntp-server configs
   #
@@ -97,7 +97,7 @@ def install_ntp(args):
     general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server 1.se.pool.ntp.org")
     general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server 2.se.pool.ntp.org")
 
-  general.shell_exec_p("service ntpd start")
+  general.shell_exec("service ntpd start")
 
   version_obj.mark_executed()
 
@@ -107,5 +107,5 @@ def uninstall_ntp(args):
 
   '''
   if (os.access("/etc/ntp.conf", os.F_OK)):
-    general.shell_exec_p("service ntpd stop")
-  general.shell_exec_p("yum -y remove ntp ")
+    general.shell_exec("service ntpd stop")
+  general.shell_exec("yum -y remove ntp ")

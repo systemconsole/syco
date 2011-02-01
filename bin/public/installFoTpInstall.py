@@ -26,7 +26,7 @@ def build_commands(commands):
 #
 def install_fo_tp_install(args):
   # Is fo-tp-install already installed?
-  result, error = general.shell_exec("virsh list --all")
+  result = general.shell_exec("virsh list --all")
   if ("fo-tp-install" in result):
     app.print_error("fo-tp-install already installed")
     return
@@ -45,7 +45,9 @@ def install_fo_tp_install(args):
   general.shell_exec("service nfs restart")
 
   # Create the data lvm volumegroup
-  result,err=general.shell_exec("lvdisplay -v /dev/VolGroup00/fo-tp-install", error=False)
+  # TODO: Do we need the erro = False
+  # result,err=general.shell_exec("lvdisplay -v /dev/VolGroup00/fo-tp-install", error=False)
+  result = general.shell_exec("lvdisplay -v /dev/VolGroup00/fo-tp-install")
   if ("/dev/VolGroup00/fo-tp-install" not in result):
     general.shell_exec("lvcreate -n fo-tp-install -L 100G VolGroup00")
 

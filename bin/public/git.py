@@ -35,9 +35,9 @@ def git_commit(args):
   '''
   comment = args[1]
   git_clean(args)
-  general.shell_exec("cd " + app.FOSH_PATH + ";git add *")
-  general.shell_exec("cd " + app.FOSH_PATH + ";git commit -a -m'%s'" % comment)
-  general.shell_exec("cd " + app.FOSH_PATH + ";git push origin")
+  general.shell_exec("git add *", cwd=app.FOSH_PATH)
+  general.shell_exec("git commit -a -m'" + comment + "'", cwd=app.FOSH_PATH)
+  general.shell_exec("git push origin", cwd=app.FOSH_PATH)
   
 def git_clean(args):
   general.shell_exec("find " + app.FOSH_PATH + " -iname '*.pyc' -delete")

@@ -95,21 +95,21 @@ def install_mysql(args):
 
   # Install the mysql-server packages.
   if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):
-    general.shell_exec_p("yum -y install mysql-server")
-    general.shell_exec_p("chkconfig mysqld on ")
+    general.shell_exec("yum -y install mysql-server")
+    general.shell_exec("chkconfig mysqld on ")
     if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
       raise Exception("Couldn't install mysql-server")
 
   # Disable mysql history logging
   if (os.access("/root/.mysql_history", os.F_OK)):
-    general.shell_exec_p("rm /root/.mysql_history")
-  general.shell_exec_p("ln -s /dev/null /root/.mysql_history")
+    general.shell_exec("rm /root/.mysql_history")
+  general.shell_exec("ln -s /dev/null /root/.mysql_history")
 
   # Used to log slow queries, configed in my.cnf with log-slow-queries=
-  general.shell_exec_p("touch /var/log/mysqld-slow.log")
-  general.shell_exec_p("chown mysql:mysql /var/log/mysqld-slow.log")
-  general.shell_exec_p("chmod 0640 /var/log/mysqld-slow.log")
-  general.shell_exec_p("chcon system_u:object_r:mysqld_log_t:s0 /var/log/mysqld-slow.log")
+  general.shell_exec("touch /var/log/mysqld-slow.log")
+  general.shell_exec("chown mysql:mysql /var/log/mysqld-slow.log")
+  general.shell_exec("chmod 0640 /var/log/mysqld-slow.log")
+  general.shell_exec("chcon system_u:object_r:mysqld_log_t:s0 /var/log/mysqld-slow.log")
 
   # Not used at the moment, just preventing mysql to load any modules.
   if (not os.access("/usr/share/mysql/plugins", os.W_OK|os.X_OK)):
@@ -122,7 +122,7 @@ def install_mysql(args):
   # disk controllers may be unable to disable the write-back cache.
   #
   # TODO: Might need to be done from bios?
-  general.shell_exec_p("hdparm -W0 /dev/mapper/VolGroup00-var")
+  general.shell_exec("hdparm -W0 /dev/mapper/VolGroup00-var")
 
   app.print_verbose("Install /etc/my.cnf")
   shutil.copy("/opt/fosh/var/mysql/my.cnf",  "/etc/my.cnf")
@@ -138,7 +138,7 @@ def install_mysql(args):
     line=line.replace("STARTTIMEOUT=30", "STARTTIMEOUT=120")
     print line,
 
-  general.shell_exec_p("service mysqld start")
+  general.shell_exec("service mysqld start")
 
   # Secure the mysql installation.
   mysql_exec("truncate mysql.db")
@@ -165,15 +165,15 @@ def uninstall_mysql(args):
 
   '''
   if (os.access("/etc/init.d/mysqld", os.F_OK)):
-    general.shell_exec_p("/etc/init.d/mysqld stop")
-  general.shell_exec_p("yum -y groupremove MySQL Database")
-  general.shell_exec_p("rm -f /root/.mysql_history")
-  general.shell_exec_p("rm -fr /usr/share/mysql")
-  general.shell_exec_p("rm -fr /var/lib/mysql")
-  general.shell_exec_p("rm -f /var/log/mysqld-slow.log")
-  general.shell_exec_p("rm -f /var/log/mysqld.log.rpmsave")
-  general.shell_exec_p("rm -f /var/log/mysqld.log")
-  general.shell_exec_p("rm -f /etc/my.cnf")
+    general.shell_exec("/etc/init.d/mysqld stop")
+  general.shell_exec("yum -y groupremove MySQL Database")
+  general.shell_exec("rm -f /root/.mysql_history")
+  general.shell_exec("rm -fr /usr/share/mysql")
+  general.shell_exec("rm -fr /var/lib/mysql")
+  general.shell_exec("rm -f /var/log/mysqld-slow.log")
+  general.shell_exec("rm -f /var/log/mysqld.log.rpmsave")
+  general.shell_exec("rm -f /var/log/mysqld.log")
+  general.shell_exec("rm -f /etc/my.cnf")
 
 def install_mysql_replication(args):
   '''
@@ -204,9 +204,9 @@ def test_mysql(args):
   Run all mysql unittests, to test the MySQL daemon on the current hardware.
 
   '''
-  general.shell_exec_p("yum -y install mysql-test")
-  general.shell_exec_p("perl /usr/share/mysql-test/mysql-test-run.pl")
-  general.shell_exec_p("yum -y remove mysql-test")
+  general.shell_exec("yum -y install mysql-test")
+  general.shell_exec("perl /usr/share/mysql-test/mysql-test-run.pl")
+  general.shell_exec("yum -y remove mysql-test")
 
 def mysql_exec(command, with_user=False, host="127.0.0.1"):
   '''
@@ -221,11 +221,11 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
   if (with_user):
     cmd+="-uroot -p" + app.get_mysql_root_password() + " "
 
-  general.shell_exec_p(cmd + '-e "' + command + '"')
+  general.shell_exec(cmd + '-e "' + command + '"')
 
 def install_mysql_client():
   '''
   Install mysql command line client.
 
   '''
-  general.shell_exec_p("yum -y install mysql.x86_64")
+  general.shell_exec("yum -y install mysql.x86_64")
