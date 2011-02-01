@@ -15,7 +15,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import general, app, version
+import general, app
 
 def build_commands(commands):
   commands.add("vir-rm", vir_rm, "[server]", help="Remove a KVM guest from this KVM host.")

@@ -26,7 +26,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, subprocess, time, stat
+import os, stat
 import app, general, version, iptables
 
 pexpect=general.install_and_import_pexpect()

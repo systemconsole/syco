@@ -63,7 +63,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import fileinput, shutil, os, socket
+import fileinput, shutil, os
 import app, general, version
 
 # The version of this module, used to prevent

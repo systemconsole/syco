@@ -48,10 +48,9 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, time, stat, shutil
-import app, general, version, net
-from ssh import Ssh
-from installGlassfish import exec_asadmin, GLASSFISH_DOMAINS_PATH, GLASSFISH_PATH
+import os
+import app, general, version
+from installGlassfish import exec_asadmin, GLASSFISH_DOMAINS_PATH
 from mysql import MysqlProperties
 from installMysql import mysql_exec
 

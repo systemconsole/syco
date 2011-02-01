@@ -15,7 +15,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import sys, ConfigParser, os, re, socket, getpass
+import sys, ConfigParser, os, re, socket
 import passwordStore, general
 
 # Constants

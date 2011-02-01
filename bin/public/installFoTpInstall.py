@@ -16,8 +16,8 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import sys, os, fileinput, re, shlex, subprocess, time
-import app, general, version
+import os, time
+import app, general
 
 def build_commands(commands):
   commands.add("install-fo-tp-install", install_fo_tp_install, help="Install kvm guest for fo-tp-install")

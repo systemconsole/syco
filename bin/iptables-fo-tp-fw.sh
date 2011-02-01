@@ -204,7 +204,7 @@ $IPTABLES -A FORWARD -i $DMZ_IFACE -o $INET_IFACE -j ACCEPT
 # LAN are allowed to access DMZ
 $IPTABLES -A FORWARD -i $LAN_IFACE -o $DMZ_IFACE -j ACCEPT
 
-# LAN are allowed to access DMZ (TODO TEMPORARY)
+# TODO LAN are allowed to access DMZ
 $IPTABLES -A FORWARD -i $LAN_IFACE -o $INET_IFACE -j ACCEPT
 
 # LAN are allowed to access internet

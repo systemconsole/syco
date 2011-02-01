@@ -16,8 +16,8 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import socket, shutil, time, os
-import app, general, version, iptables, installCobbler
+import socket, time
+import app, general, installCobbler
 
 def build_commands(commands):
   commands.add("install-guests", install_guests, help="Instal all KVM guest defined for this server in install.cfg.")

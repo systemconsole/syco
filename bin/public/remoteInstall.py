@@ -15,7 +15,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import subprocess, os, sys, time, paramiko, threading
+import os, sys, time, paramiko, threading
 import ssh, app
 from exception import SettingsError
 
