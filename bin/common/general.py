@@ -15,7 +15,15 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import re, subprocess, glob, os, shutil, sys, string, time, stat
+import re
+import subprocess
+import glob
+import os
+import shutil
+import string
+import time
+import stat
+
 from random import choice
 from socket import *  
 import app

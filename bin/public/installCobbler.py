@@ -18,7 +18,7 @@ __status__ = "Production"
 
 #! /usr/bin/env python
 
-import socket, shutil, time, os
+import shutil, time, os
 import app, general, version, iptables
 
 # The version of this module, used to prevent

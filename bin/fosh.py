@@ -21,7 +21,7 @@ __license__ = "???"
 __version__ = "0.1"
 __status__ = "Production"
 
-import sys, types, os, inspect
+import sys, os
 from optparse import OptionParser
 
 #

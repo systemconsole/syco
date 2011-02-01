@@ -37,7 +37,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 from Crypto.Cipher import AES
-import base64, os, ConfigParser, crypt, getpass, sys, string, re
+import base64, os, ConfigParser, crypt, getpass, sys, string
       
 class PasswordStore:
 

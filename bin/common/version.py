@@ -31,7 +31,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import ConfigParser, sys, os, socket
+import ConfigParser, socket
 import app
 
 class Version:

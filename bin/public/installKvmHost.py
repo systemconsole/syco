@@ -23,7 +23,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, subprocess, re, ConfigParser, time
+import os, re, time
 import app, general, version
 
 # The version of this module, used to prevent
