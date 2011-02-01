@@ -76,7 +76,7 @@ def install_glassfish(args):
       _install_domains_plugins(domain_name)
 
     # Restart to take effect
-    general.shell_exec_p("/etc/init.d/glassfish restart")
+    general.shell_exec("/etc/init.d/glassfish restart")
 
     _update_glassfish()
 
@@ -98,23 +98,23 @@ def uninstall_glassfish(args):
   os.chdir("/tmp")
 
   if (_is_glassfish_user_installed()):
-    general.shell_exec_p("/etc/init.d/glassfish stop", user="glassfish")
-    general.shell_exec_p("rm -rf /usr/local/glassfish")
-    general.shell_exec_p("rm -rf /home/glassfish")
+    general.shell_exec("/etc/init.d/glassfish stop", user="glassfish")
+    general.shell_exec("rm -rf /usr/local/glassfish")
+    general.shell_exec("rm -rf /home/glassfish")
 
-    general.shell_exec_p("chkconfig --del glassfish")
-    general.shell_exec_p("rm /etc/init.d/glassfish")
-    general.shell_exec_p("userdel glassfish")
-    general.shell_exec_p("groupdel glassfishadm")
+    general.shell_exec("chkconfig --del glassfish")
+    general.shell_exec("rm /etc/init.d/glassfish")
+    general.shell_exec("userdel glassfish")
+    general.shell_exec("groupdel glassfishadm")
 
   if (os.access("/usr/java/jdk1.6.0_22", os.F_OK)):
-    general.shell_exec_p("rpm -e sun-javadb-core-10.5.3-0.2")
-    general.shell_exec_p("rpm -e sun-javadb-client-10.5.3-0.2")
-    general.shell_exec_p("rpm -e  sun-javadb-demo-10.5.3-0.2")
-    general.shell_exec_p("rpm -e sun-javadb-docs-10.5.3-0.2")
-    general.shell_exec_p("rpm -e sun-javadb-javadoc-10.5.3-0.2")
-    general.shell_exec_p("rpm -e sun-javadb-common-10.5.3-0.2")
-    general.shell_exec_p("rpm -e jdk-1.6.0_22-fcs")
+    general.shell_exec("rpm -e sun-javadb-core-10.5.3-0.2")
+    general.shell_exec("rpm -e sun-javadb-client-10.5.3-0.2")
+    general.shell_exec("rpm -e  sun-javadb-demo-10.5.3-0.2")
+    general.shell_exec("rpm -e sun-javadb-docs-10.5.3-0.2")
+    general.shell_exec("rpm -e sun-javadb-javadoc-10.5.3-0.2")
+    general.shell_exec("rpm -e sun-javadb-common-10.5.3-0.2")
+    general.shell_exec("rpm -e jdk-1.6.0_22-fcs")
 
 #
 # Public members
@@ -124,9 +124,9 @@ def uninstall_glassfish(args):
 
 def exec_asadmin(admin_port="", command=""):
   if (admin_port):
-    return general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " " + command, user="glassfish")
+    return general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " " + command, user="glassfish")
   else:
-    return general.shell_exec_p("/usr/local/glassfish/bin/asadmin " + command, user="glassfish")
+    return general.shell_exec("/usr/local/glassfish/bin/asadmin " + command, user="glassfish")
 
 #
 # Options / private memembers
@@ -171,7 +171,7 @@ def _install_jdk():
   if (not os.access(jdk_install_dir, os.F_OK)):
     os.chdir("/tmp/install")
     if (not os.access(jdk_install_file, os.F_OK)):
-      general.shell_exec_p("wget http://10.100.100.200/cobbler/repo_mirror/java/" + jdk_install_file, user="glassfish")
+      general.shell_exec("wget http://10.100.100.200/cobbler/repo_mirror/java/" + jdk_install_file, user="glassfish")
       time.sleep(1)
       os.chmod(jdk_install_file, stat.S_IXUSR|stat.S_IRUSR)
 
@@ -196,7 +196,7 @@ def _install_glassfish():
   if (not os.access(glassfish_install_dir + "/glassfish", os.F_OK)):
     os.chdir("/tmp/install")
     if (not os.access("glassfish-3.0.1-unix.sh", os.F_OK)):
-      general.shell_exec_p("wget http://download.java.net/glassfish/3.0.1/release/glassfish-3.0.1-unix.sh", user="glassfish")
+      general.shell_exec("wget http://download.java.net/glassfish/3.0.1/release/glassfish-3.0.1-unix.sh", user="glassfish")
       time.sleep(1)
 
     # Create installation dir
@@ -208,14 +208,14 @@ def _install_glassfish():
     # Set executeion permissions and run the installation.
     os.chmod("glassfish-3.0.1-unix.sh", stat.S_IXUSR|stat.S_IRUSR)
     shutil.copy("/opt/fosh/var/glassfish/glassfish-3.0.1-unix-answer", "/tmp/install/glassfish-3.0.1-unix-answer")
-    general.shell_exec_p("./glassfish-3.0.1-unix.sh -a glassfish-3.0.1-unix-answer -s", user="glassfish")
+    general.shell_exec("./glassfish-3.0.1-unix.sh -a glassfish-3.0.1-unix-answer -s", user="glassfish")
 
     # Install the start script
     if (not os.access("/etc/init.d/glassfish", os.F_OK)):
       shutil.copy("/opt/fosh/var/glassfish/glassfish", "/etc/init.d/glassfish")
-      general.shell_exec_p("chmod 0755 /etc/init.d/glassfish")
-      general.shell_exec_p("chkconfig --add glassfish")
-      general.shell_exec_p("chkconfig --level 3 glassfish on")
+      general.shell_exec("chmod 0755 /etc/init.d/glassfish")
+      general.shell_exec("chkconfig --add glassfish")
+      general.shell_exec("chkconfig --level 3 glassfish on")
 
   if (not os.access(glassfish_install_dir + "/glassfish/domains/domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + glassfish_install_dir)
@@ -232,38 +232,38 @@ def _install_eclipselink():
   '''
   os.chdir("/tmp/install")
   if (not os.access("eclipselink-plugins-2.1.2.v20101206-r8635.zip", os.F_OK)):
-    general.shell_exec_p("wget http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
-    general.shell_exec_p("wget -qO eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1 http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip&type=sha1", user="glassfish")
+    general.shell_exec("wget http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
+    general.shell_exec("wget -qO eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1 http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip&type=sha1", user="glassfish")
     time.sleep(1)
-    sha1sum=general.shell_exec_p("sha1sum --check eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1", user="glassfish")
+    sha1sum=general.shell_exec("sha1sum --check eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1", user="glassfish")
     if (r"eclipselink-plugins-2.1.2.v20101206-r8635.zip: OK" not in sha1sum):
       raise Exception("Invalid checksum for eclipselink")
 
-  general.shell_exec_p("unzip -oq eclipselink-plugins-2.1.2.v20101206-r8635.zip")
+  general.shell_exec("unzip -oq eclipselink-plugins-2.1.2.v20101206-r8635.zip")
 
-  general.shell_exec_p("cp org.eclipse.persistence.antlr_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.antlr.jar", user="glassfish")
-  general.shell_exec_p("cp org.eclipse.persistence.jpa_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.jpa.jar", user="glassfish")
-  general.shell_exec_p("cp org.eclipse.persistence.asm_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.asm.jar", user="glassfish")
-  general.shell_exec_p("cp org.eclipse.persistence.jpa.modelgen_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.jpa.modelgen.jar", user="glassfish")
-  general.shell_exec_p("cp org.eclipse.persistence.core_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.core.jar", user="glassfish")
-  general.shell_exec_p("cp org.eclipse.persistence.oracle_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.oracle.jar", user="glassfish")
-  general.shell_exec_p("cp javax.persistence_2.0.1.v201006031150.jar /usr/local/glassfish/glassfish/modules/javax.persistence.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.antlr_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.antlr.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.jpa_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.jpa.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.asm_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.asm.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.jpa.modelgen_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.jpa.modelgen.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.core_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.core.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.oracle_2.1.2.v20101206-r8635.jar /usr/local/glassfish/glassfish/modules/org.eclipse.persistence.oracle.jar", user="glassfish")
+  general.shell_exec("cp javax.persistence_2.0.1.v201006031150.jar /usr/local/glassfish/glassfish/modules/javax.persistence.jar", user="glassfish")
 
 def _create_domains(domain_name, port_base):
   '''
   Creating two domains for each applications, one active and one passive.
 
   '''
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin stop-domain " + domain_name, user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin delete-domain " + domain_name, user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin create-domain --portbase " + port_base + " --nopassword " + domain_name, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin stop-domain " + domain_name, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin delete-domain " + domain_name, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin create-domain --portbase " + port_base + " --nopassword " + domain_name, user="glassfish")
 
 def _set_domain_passwords(domain_name, admin_port):
   '''
   Security configuration
 
   '''
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin stop-domain " + domain_name, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin stop-domain " + domain_name, user="glassfish")
 
   # Change master password, default=empty
   general.shell_run("/usr/local/glassfish/bin/asadmin change-master-password --savemasterpassword=true " + domain_name,
@@ -277,11 +277,11 @@ def _set_domain_passwords(domain_name, admin_port):
 
   # Create new cert for https
   os.chdir("/usr/local/glassfish/glassfish/domains/" + domain_name + "/config/")
-  general.shell_exec_p("keytool -delete -alias s1as -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
-  general.shell_exec_p('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + app.get_glassfish_master_password() + ' -keystore keystore.jks -storepass ' + app.get_glassfish_master_password(), user="glassfish")
-  general.shell_exec_p("keytool -list -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec("keytool -delete -alias s1as -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + app.get_glassfish_master_password() + ' -keystore keystore.jks -storepass ' + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec("keytool -list -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
 
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin start-domain " + domain_name, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin start-domain " + domain_name, user="glassfish")
 
   # Change admin password
   general.shell_run("/usr/local/glassfish/bin/asadmin --port " + admin_port + " change-admin-password",
@@ -305,13 +305,13 @@ def _set_domain_passwords(domain_name, admin_port):
 
 def _set_domain_configs(admin_port):
   # Disable sending x-powered-by in http header (Glassfish obfuscation)
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.admin-listener.http.xpowered-by=false", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.network-config.protocols.protocol.admin-listener.http.xpowered-by=false", user="glassfish")
 
   # Disable auto-deployment
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.admin-service.das-config.autodeploy-enabled=false", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.admin-service.das-config.dynamic-reload-enabled=false", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.admin-service.das-config.autodeploy-enabled=false", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " set server.admin-service.das-config.dynamic-reload-enabled=false", user="glassfish")
 
 def _install_domains_plugins(domain_name):
    _install_mysql_connector(domain_name)
@@ -325,19 +325,19 @@ def _install_mysql_connector(domain_name):
   os.chdir("/tmp/install")
 
   if (not os.access("mysql-connector-java-5.1.14.tar.gz", os.F_OK)):
-    general.shell_exec_p("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz", user="glassfish")
-    general.shell_exec_p("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
+    general.shell_exec("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz", user="glassfish")
+    general.shell_exec("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
     time.sleep(1)
 
-  general.shell_exec_p("gpg --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5", user="glassfish")
-  signature=general.shell_exec_p("gpg --verify mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
+  general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5", user="glassfish")
+  signature=general.shell_exec("gpg --verify mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
   if (r'Good signature from "MySQL Package signing key (www.mysql.com) <build@mysql.com>"' not in signature):
     app.print_error("Invalid signature.")
     return
 
   # TODO: Should it be under /ext/.
-  general.shell_exec_p("tar zxf mysql-connector-java-5.1.14.tar.gz", user="glassfish")
-  general.shell_exec_p("cp mysql-connector-java-5.1.14/mysql-connector-java-5.1.14-bin.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("tar zxf mysql-connector-java-5.1.14.tar.gz", user="glassfish")
+  general.shell_exec("cp mysql-connector-java-5.1.14/mysql-connector-java-5.1.14-bin.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
 
 def _install_google_guice(domain_name):
   '''
@@ -347,13 +347,13 @@ def _install_google_guice(domain_name):
   '''
   os.chdir("/tmp/install")
   if (not os.access("guice-2.0.zip", os.F_OK)):
-    general.shell_exec_p("wget http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
+    general.shell_exec("wget http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
     time.sleep(1)
-    general.shell_exec_p("unzip -oq guice-2.0.zip", user="glassfish")
+    general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
 
-  general.shell_exec_p("cp guice-2.0/guice-2.0.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec_p("cp guice-2.0/guice-assistedinject-2.0.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec_p("cp guice-2.0/aopalliance.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/guice-2.0.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/guice-assistedinject-2.0.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/aopalliance.jar /usr/local/glassfish/glassfish/domains/" + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
   '''
@@ -374,35 +374,35 @@ def _set_jvm_options(admin_port):
   )
 
   # It's a server not a client.
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options -client", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -server", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options -client", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -server", user="glassfish")
 
   # Change min and max heap space (ordinary heap = app objects)
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options -Xmx512m", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Xmx" + max_heap, user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Xms" + min_heap, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options -Xmx512m", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Xmx" + max_heap, user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Xms" + min_heap, user="glassfish")
 
   # (perm heap = app class definitions)
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options '-XX\:MaxPermSize=192m'", user="glassfish")
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:MaxPermSize=" + max_perm_heap_size + "'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " delete-jvm-options '-XX\:MaxPermSize=192m'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:MaxPermSize=" + max_perm_heap_size + "'", user="glassfish")
 
   # http://wikis.sun.com/display/HotSpotInternals/CompressedOops
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+UseCompressedOops'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+UseCompressedOops'", user="glassfish")
 
   # Use optimized versions of Get<Primitive>Field.
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+UseFastAccessorMethods'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+UseFastAccessorMethods'", user="glassfish")
 
   # http://en.wikipedia.org/wiki/Escape_analysis
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+DoEscapeAnalysis'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+DoEscapeAnalysis'", user="glassfish")
 
   # http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+AggressiveOpts'", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options '-XX\:+AggressiveOpts'", user="glassfish")
 
   # Get rid of http header field value "server" (Glassfish obfuscation)
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dproduct.name=\"\"", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dproduct.name=\"\"", user="glassfish")
 
   # Security: Disable the stacktrace for SOAP fault message
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dcom.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dcom.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true", user="glassfish")
 
   #
   # Tell glassfish-gui that it is not allowed to connect to internet.
@@ -416,7 +416,7 @@ def _set_jvm_options(admin_port):
   #      task page
   #    * The information frame under Common Task page will not be rendered.
   #
-  general.shell_exec_p("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dcom.sun.enterprise.tools.admingui.NO_NETWORK=true", user="glassfish")
+  general.shell_exec("/usr/local/glassfish/bin/asadmin --port " + admin_port + " create-jvm-options -Dcom.sun.enterprise.tools.admingui.NO_NETWORK=true", user="glassfish")
 
 def _update_glassfish():
   '''
@@ -429,14 +429,14 @@ def _update_glassfish():
   # pkg refresh must be in a writeable dir.
   os.chdir("/tmp")
 
-  general.shell_exec_p("yum -y install libidn")
+  general.shell_exec("yum -y install libidn")
   general.shell_run("/usr/local/glassfish/bin/pkg refresh --full",
     user="glassfish",
     events={
       re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
     }
   )
-  general.shell_exec_p("chcon -f -t textrel_shlib_t /usr/local/glassfish/pkg/vendor-packages/OpenSSL/crypto.so")
+  general.shell_exec("chcon -f -t textrel_shlib_t /usr/local/glassfish/pkg/vendor-packages/OpenSSL/crypto.so")
 
   # Need to run a second time, in the first run the pkg software might
   # have been installed, and after that the chcon needs to be executed
@@ -448,9 +448,9 @@ def _update_glassfish():
     }
   )
 
-  general.shell_exec_p("/etc/init.d/glassfish stop")
-  general.shell_exec_p("/usr/local/glassfish/bin/pkg image-update", user="glassfish")
-  general.shell_exec_p("/etc/init.d/glassfish start")
+  general.shell_exec("/etc/init.d/glassfish stop")
+  general.shell_exec("/usr/local/glassfish/bin/pkg image-update", user="glassfish")
+  general.shell_exec("/etc/init.d/glassfish start")
 
 def _set_iptables():
   pass
@@ -610,7 +610,7 @@ def _set_iptables():
 # Didn't get this to work. Need to use --secure on all asadmin.
 # Maybe it works in glassfish 3.1
 # The creates ssl connection between asadmin and DAS or other nodes
-# TODO:general.shell_exec_p("/usr/local/glassfish/bin/asadmin set server-config.network-config.protocols.protocol.admin-listener.security-enabled=true", user="glassfish")
+# TODO:general.shell_exec("/usr/local/glassfish/bin/asadmin set server-config.network-config.protocols.protocol.admin-listener.security-enabled=true", user="glassfish")
 #
 
 #

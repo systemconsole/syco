@@ -78,16 +78,17 @@ def print_error(message, verbose_level=1):
   '''
   print_verbose(message, verbose_level=verbose_level, caption=BOLD + "Error: " + RESET)
 
-def print_verbose(message, verbose_level=1, caption="", new_line=True):
+def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_caption=True):
   '''
   Print a text to the stdout, affected by the verbose level.
 
   All print to screen done by fosh should be done with this.
 
-  #TODO: The caption are not always written ok when using new_line=False, see example at the bottom 
+  #TODO: The caption are not always written ok when using new_line=False, see example at the bottom.
+
   '''
   if (caption):
-    caption += " "
+    caption += " "  
   caption = time.strftime('%Y-%m-%d %H:%M:%S') + " - " + socket.gethostname() + " - " + caption
 
   messages = []
@@ -103,8 +104,12 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True):
       msg = re.sub("[\n]", "\n" + caption, str(msg))
 
     if (options.verbose >= verbose_level):
+      msg = str(msg)
+      if (enable_caption):
+        msg = caption + msg
+
       if (new_line):
-        msg = caption + str(msg) + "\n"
+        msg += "\n"
       
       sys.stdout.write(msg)
       sys.stdout.flush()
@@ -129,7 +134,7 @@ def get_root_password_hash():
 
   '''
   root_password = get_root_password()
-  hash_root_password = general.shell_exec_p("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'")
+  hash_root_password = general.shell_exec("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'")
   return hash_root_password
 
 def get_svn_password():
@@ -272,14 +277,15 @@ Another new line
 
 last new line'''
   print_verbose(long_text, caption="fo-tp-vh01", new_line=False)
-  print_verbose(", and some more text on the last line", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=True)
+  print_verbose(", and some more text on the last line", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="fo-tp-vh01", new_line=True, enable_caption=False)
 

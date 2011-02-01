@@ -59,6 +59,8 @@ Future version
 
 CHANGELOG
 ---------
+2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
+2011-02-01 - Daniel Lindh - Refactoring and comments in general.py.
 2011-02-01 - Daniel Lindh - Some minor refactoring and commenting in app.py
 2011-02-01 - Daniel Lindh - Fixed unused imports (found by netbeans)
 2011-01-30 - Daniel Lindh - Refactoring the use off class Version.

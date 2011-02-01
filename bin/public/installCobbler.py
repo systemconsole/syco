@@ -165,7 +165,9 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName fo-tp-install:80")
 
   general.shell_exec("/etc/init.d/httpd restart")
-  general.shell_exec("/etc/init.d/cobblerd restart", no_return=True)
+  # TODO: Do we need no_return=True
+  # general.shell_exec("/etc/init.d/cobblerd restart", no_return=True)
+  general.shell_exec("/etc/init.d/cobblerd restart")
 
   # Wait for cobblered to restart
   time.sleep(1)
@@ -228,6 +230,6 @@ def _guest_add(host_name, ip):
       "--ksmeta=\"disk_var=" + str(disk_var) + "\"")
 
 def _remove_all_systems():
-  stdout, stderr = general.shell_exec("cobbler system list")
+  stdout = general.shell_exec("cobbler system list")
   for name in stdout.rsplit():
     general.shell_exec("cobbler system remove --name " + name)
