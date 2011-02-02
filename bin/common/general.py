@@ -3,6 +3,7 @@
 General python functions that don't fit in it's own file.
 
 Changelog:
+  2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir
   2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
   2011-02-01 - Daniel Lindh - Refactoring and comments.
   2011-01-29 - Daniel Lindh - Adding file header and comments
@@ -79,15 +80,19 @@ def delete_install_dir():
   shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
   pass
 
-def download_file(src, dst):
+def download_file(src, dst=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
+  download_file("http://www.example.com/file.gz", "file.gz")
+
   '''
-  create_install_dir()
-  os.chdir(app.INSTALL_DIR)
+  if (not dst):
+    dst = os.path.basename(src)
+  
+  create_install_dir()  
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    shell_exec("wget " + src)
+    shell_exec("wget -O " + app.INSTALL_DIR + dst + " " + src)
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
@@ -136,7 +141,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=os.getcwd
     cwd=cwd
   )
   app.print_verbose("---- Result ----", 2)
-  caption=True
+  caption = True
   stdout = ""
   try:
     if (expect):
@@ -144,7 +149,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=os.getcwd
         index = out.expect([expect, pexpect.EOF, pexpect.TIMEOUT])
         stdout += out.before
         app.print_verbose(out.before, 2, new_line=False, enable_caption=caption)
-        caption=False
+        caption = False
         if (index == 0 or index == 1):
           out.send(send)
           break
@@ -152,7 +157,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=os.getcwd
     while(True):    
       txt = out.read_nonblocking(512, timeout)
       app.print_verbose(txt, 2, new_line=False, enable_caption=caption)
-      caption=False
+      caption = False
       stdout += txt
 
   except pexpect.EOF:
@@ -244,4 +249,4 @@ def install_and_import_pexpect():
 pexpect = install_and_import_pexpect()
 
 if __name__ == "__main__":
-  pass
+  download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
