@@ -14,7 +14,8 @@ TODO
 See bottom of file
 
 Changelog:
-2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
+2011-02-03 - Daniel Lindh - Bug fixing after all refactoring.
+2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, hGLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
 2011-02-03 - Daniel Lindh - Changed use of shell_exec to asadmin_exec
 2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
 2011-01-29 - Daniel Lindh - Adding file header and comments
@@ -34,7 +35,6 @@ import re
 import shutil
 import stat
 import sys
-import time
 import traceback
 
 import app
@@ -46,6 +46,9 @@ import version
 # once on the same host.
 SCRIPT_VERSION = 1
 
+# NOTE: Remember to change path in
+# var/glassfish/glassfish
+# var/glassfish-3.0.1-unix-answer
 GLASSFISH_VERSION = "glassfish.3.0.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
@@ -104,23 +107,25 @@ def install_glassfish(args):
     app.print_error(error_text)
     traceback.print_exc(file=sys.stdout)
 
-  general.delete_install_dir()
+  #general.delete_install_dir()
 
 def uninstall_glassfish(args):
   '''
   The main function the glassfish uninstallation.
 
   '''
-  app.print_verbose("Uninstall glassfish3 version: %d" % SCRIPT_VERSION)
-
-  os.chdir("/tmp")
+  app.print_verbose("Uninstall glassfish3 version: %d" % SCRIPT_VERSION) 
 
   if (_is_glassfish_user_installed()):
+    # Change dir if some of the rm commands fails, so not everythig will
+    # be deleted by mistake.
+    os.chdir("/tmp")
+
     general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
     general.shell_exec("rm -rf " + GLASSFISH_PATH)
     general.shell_exec("rm -rf /home/glassfish")
 
-    general.shell_exec("chkconfig --del glassfish")
+    general.shell_exec("chkconfig --del " + GLASSFISH_VERSION)
     general.shell_exec("rm " + "/etc/init.d/" + GLASSFISH_VERSION)
     general.shell_exec("userdel glassfish")
     general.shell_exec("groupdel glassfishadm")
@@ -191,8 +196,7 @@ def _install_jdk():
   if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.shell_exec("wget" + JDK_REPO_URL, user="glassfish")
-      time.sleep(1)
+      general.download_file(JDK_REPO_URL, user="glassfish")
       os.chmod(JDK_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
 
     if (os.access(JDK_INSTALL_FILE, os.F_OK)):
@@ -213,8 +217,7 @@ def _install_glassfish():
   if (not os.access(GLASSFISH_PATH + "/glassfish", os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(GLASSFISH_INSTALL_FILE, os.F_OK)):
-      general.shell_exec("wget " + GLASSFISH_REPO_URL, user="glassfish")
-      time.sleep(1)
+      general.download_file(GLASSFISH_REPO_URL, user="glassfish")
 
     # Create installation dir
     if (not os.access(GLASSFISH_PATH, os.F_OK)):
@@ -234,7 +237,7 @@ def _install_glassfish():
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
 
-  if (not os.access(GLASSFISH_DOMAIN_PATH + "domain1/config/domain.xml", os.F_OK)):
+  if (not os.access(GLASSFISH_DOMAINS_PATH + "domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + GLASSFISH_PATH)
 
   if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
@@ -249,9 +252,11 @@ def _install_eclipselink():
   '''
   os.chdir(app.INSTALL_DIR)
   if (not os.access("eclipselink-plugins-2.1.2.v20101206-r8635.zip", os.F_OK)):
-    general.shell_exec("wget http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
-    general.shell_exec("wget -qO eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1 http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip&type=sha1", user="glassfish")
-    time.sleep(1)
+    general.download_file("http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
+    general.download_file("http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip&type=sha1",
+      "eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1",
+      user="glassfish"
+    )
     sha1sum = general.shell_exec("sha1sum --check eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1", user="glassfish")
     if (r"eclipselink-plugins-2.1.2.v20101206-r8635.zip: OK" not in sha1sum):
       raise Exception("Invalid checksum for eclipselink")
@@ -342,9 +347,8 @@ def _install_mysql_connector(domain_name):
   os.chdir(app.INSTALL_DIR)
 
   if (not os.access("mysql-connector-java-5.1.14.tar.gz", os.F_OK)):
-    general.shell_exec("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz", user="glassfish")
-    general.shell_exec("wget http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
-    time.sleep(1)
+    general.download_file("http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz", user="glassfish")
+    general.download_file("http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
 
   general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5", user="glassfish")
   signature = general.shell_exec("gpg --verify mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
@@ -364,8 +368,7 @@ def _install_google_guice(domain_name):
   '''
   os.chdir(app.INSTALL_DIR)
   if (not os.access("guice-2.0.zip", os.F_OK)):
-    general.shell_exec("wget http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
-    time.sleep(1)
+    general.download_file("http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
     general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
 
   general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")

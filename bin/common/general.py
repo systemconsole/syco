@@ -3,6 +3,7 @@
 General python functions that don't fit in it's own file.
 
 Changelog:
+  2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
   2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir
   2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
   2011-02-01 - Daniel Lindh - Refactoring and comments.
@@ -93,14 +94,13 @@ def download_file(src, dst=None, user=""):
   create_install_dir()  
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     shell_exec("wget -O " + app.INSTALL_DIR + dst + " " + src, user=user)
+    # Looks like the file is not flushed to disk immediatley, 
+    # making the script not able to read the file immediatley after it's
+    # downloaded. A sleep fixes this.
+    time.sleep(2)
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    raise Exception("Couldn't download: " + dst)
-  
-  # Looks like the file is not flushed to disk immediatley, 
-  # making the script not able to read the file immediatley after it's
-  # downloaded. A sleep fixes this.
-  time.sleep(1)
+    raise Exception("Couldn't download: " + dst)    
 
 def generate_password(length=8, chars=string.letters + string.digits):
   '''Generate a random password'''

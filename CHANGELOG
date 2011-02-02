@@ -1,6 +1,8 @@
 TODO
 ---
 
+* Check all use of os.chdir before shell_exec, shell_exec has it's own working dir.
+
 * installHttpd 
 * installModsecurity
 * installFarepayment adapt to installHttpd, installModsecurity
@@ -57,6 +59,11 @@ Future version
 
 CHANGELOG
 ---------
+2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
+2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir
+2011-02-03 - Daniel Lindh - Changed name of svn user to syscon.
+2011-02-03 - Daniel Lindh - Saving passwords to file after they have been executed entered by user.
+2011-02-03 - Daniel Lindh - Invalid use of variables in version.mark_executed(), crashed the program.
 2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
 2011-02-03 - Daniel Lindh - Replace /opt/fosh with app.FOSH_PATH in all files.
 2011-02-03 - Daniel Lindh - Changed use of shell_exec to asadmin_exec

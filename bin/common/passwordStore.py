@@ -150,7 +150,7 @@ class PasswordStore:
     else:
       # If the password where stored in the config file, ask the user to 
       # verify the master password.
-      user_password = self._get_password_from_user("Verify the master password: ", False)
+      user_password = self._get_password_from_user("Verify the fosh master password: ", False)
   
     user_password = self._pad(user_password)
     crypted_user_password = crypt.crypt(user_password, user_password)
