@@ -66,10 +66,10 @@ class Version:
     if not config.has_section(self.hostname):
       config.add_section(self.hostname)
 
-    config.set(self.hostname, command, version)
-    configFile = open(self.config_file_name, 'wb')
-    config.write(configFile)
-    configFile.close()
+    config.set(self.hostname, self.command, self.version)
+    config_file = open(self.config_file_name, 'wb')
+    config.write(config_file)
+    config_file.close()
 
   def _is_executed(self, command=command, version=version):
     '''
