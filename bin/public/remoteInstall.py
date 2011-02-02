@@ -209,6 +209,6 @@ class RemoteInstall:
 
     '''
     app.print_verbose("Install fosh on remote host")
-    ssh.rsync(os.path.abspath(sys.path[0] + "/../") + "/" ,  "/opt/fosh", "--exclude version.cfg")
-    ssh.ssh_exec("/opt/fosh/bin/fosh.py install-fosh")
+    ssh.rsync(app.FOSH_PATH, app.FOSH_PATH, "--exclude version.cfg")
+    ssh.ssh_exec(app.FOSH_PATH + "bin/fosh.py install-fosh")
 

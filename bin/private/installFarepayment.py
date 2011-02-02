@@ -50,7 +50,7 @@ __status__ = "Production"
 
 import os
 import app, general, version
-from installGlassfish import exec_asadmin, GLASSFISH_DOMAINS_PATH
+from installGlassfish import asadmin_exec, GLASSFISH_DOMAINS_PATH
 from mysql import MysqlProperties
 from installMysql import mysql_exec
 
@@ -270,8 +270,8 @@ class InstallFarepayment:
       r"farepaymentRealm { com.fareoffice.farepayment.realm.FarepaymentLoginModule required; };",
       r"farepaymentRealm { com.fareoffice.farepayment.realm.FarepaymentLoginModule required; };"
     )
-    exec_asadmin(admin_port, "delete-auth-realm farepayment-realm")
-    exec_asadmin(admin_port, "create-auth-realm --classname com.fareoffice.farepayment.realm.FarepaymentRealm --property datasource-jndi=jdbc/farepayment farepayment-realm")
+    asadmin_exec("delete-auth-realm farepayment-realm", admin_port)
+    asadmin_exec("create-auth-realm --classname com.fareoffice.farepayment.realm.FarepaymentRealm --property datasource-jndi=jdbc/farepayment farepayment-realm", admin_port)
 
   def _set_farepayment_environment(self, admin_port):
     '''
@@ -283,7 +283,7 @@ class InstallFarepayment:
 
     '''
     convert = {"sandbox":"local", "integration":"integration", "stable":"qa", "candidate":"qa", "production":"production"}
-    exec_asadmin(admin_port, "create-system-properties com.fareoffice.farepayment.core.environment=" + convert[self.prop.environment])
+    asadmin_exec("create-system-properties com.fareoffice.farepayment.core.environment=" + convert[self.prop.environment], admin_port)
 
   def _create_password_alias(self, admin_port, prop):
     '''
@@ -293,9 +293,9 @@ class InstallFarepayment:
     '${ALIAS=mysql-password}' can be inserted in the domain.xml where mysql connection is configured.
 
     '''
-    exec_asadmin("delete-password-alias " + prop.password_alias, user="glassfish")
-    exec_asadmin("create-password-alias " + prop.password_alias,
-      user="glassfish",
+    asadmin_exec("delete-password-alias " + prop.password_alias, admin_port)
+    asadmin_exec("create-password-alias " + prop.password_alias,
+      admin_port,
       events={
         '(?i)Enter the alias password> ': prop.password + "\n",
         '(?i)Enter the alias password again> ': prop.password + "\n"
@@ -307,26 +307,27 @@ class InstallFarepayment:
     Create connection pool and jdbc resource to the mysql server.
 
     '''
-    exec_asadmin(admin_port, "delete-jdbc-connection-pool --cascade " + prop.pool_name)
+    asadmin_exec("delete-jdbc-connection-pool --cascade " + prop.pool_name, admin_port)
 
-    exec_asadmin(admin_port,
+    asadmin_exec(
       'create-jdbc-connection-pool ' +
       '--datasourceclassname com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource ' +
       '--restype javax.sql.ConnectionPoolDataSource ' +
       '--property "serverName=' + prop.server + ':port=3306:User=' + prop.user + ':Password=${alias=' + prop.password_alias + '}:characterEncoding=UTF-8:databaseName=' + prop.database + '" '+
-      prop.pool_name
+      prop.pool_name,
+      admin_port
     )
 
-    exec_asadmin(admin_port, "create-jdbc-resource --connectionpoolid " + prop.pool_name + " " + prop.jdbc_name)
+    asadmin_exec("create-jdbc-resource --connectionpoolid " + prop.pool_name + " " + prop.jdbc_name, admin_port)
 
     # http://blogs.sun.com/JagadishPrasath/entry/connection_validation_in_glassfish_jdbc
-    exec_asadmin(admin_port, "set domain.resources.jdbc-connection-pool." + prop.pool_name + ".is-connection-validation-required=true")
-    exec_asadmin(admin_port, "set domain.resources.jdbc-connection-pool." + prop.pool_name + ".connection-validation-method=auto-commit")
+    asadmin_exec("set domain.resources.jdbc-connection-pool." + prop.pool_name + ".is-connection-validation-required=true", admin_port)
+    asadmin_exec("set domain.resources.jdbc-connection-pool." + prop.pool_name + ".connection-validation-method=auto-commit", admin_port)
 
     # What jdbc-resources and connectionpools are configured
     if (app.options.verbose > 1):
-      exec_asadmin(admin_port, "get domain.resources.jdbc-connection-pool." + prop.pool_name + ".*")
-      exec_asadmin(admin_port, "list-jdbc-resources")
+      asadmin_exec("get domain.resources.jdbc-connection-pool." + prop.pool_name + ".*", admin_port)
+      asadmin_exec("list-jdbc-resources", admin_port)
 
   def _set_database_resource_password_bugfix(self):
     '''
@@ -338,7 +339,7 @@ class InstallFarepayment:
     '''
     # <property name="Password" value="mysql-password" />
     for domain_name, admin_port in self.prop.domains:
-      exec_asadmin(command="stop-domain " + domain_name)
+      asadmin_exec("stop-domain " + domain_name)
 
       for mysql_properties in self.prop.mysql_properties_list:
         general.set_config_property(GLASSFISH_DOMAINS_PATH + domain_name + "/config/domain.xml",
@@ -346,14 +347,14 @@ class InstallFarepayment:
           r'      <property name="password" value="${ALIAS=' + mysql_properties.password_alias + '}" />'
       )
 
-      exec_asadmin(command="start-domain " + domain_name)
+      asadmin_exec(command="start-domain " + domain_name)
 
   def _test_database_connections(self, admin_port, prop):
     '''
     Test if the connection to the mysql database is up and running.
 
     '''
-    exec_asadmin(admin_port, "ping-connection-pool " + prop.pool_name)
+    asadmin_exec("ping-connection-pool " + prop.pool_name, admin_port)
 
   def _deploy_farepayment(self, admin_port):
     '''
@@ -364,12 +365,12 @@ class InstallFarepayment:
     general.download_file(self.prop.farepayment_url, farepayment_name)
 
     # Deploy the farepayment ear
-    exec_asadmin(admin_port, "undeploy " + app.INSTALL_DIR + farepayment_name)
-    exec_asadmin(admin_port, "deploy " + app.INSTALL_DIR + farepayment_name)
+    asadmin_exec("undeploy " + app.INSTALL_DIR + farepayment_name, admin_port)
+    asadmin_exec("deploy " + app.INSTALL_DIR + farepayment_name, admin_port)
 
     # What applications are installed?
     if (app.options.verbose > 1):
-      exec_asadmin(admin_port, "list-applications")
+      asadmin_exec("list-applications", admin_port)
 
 if __name__ != "__main__":
   install_farepayment_obj=InstallFarepayment()

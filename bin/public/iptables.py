@@ -31,6 +31,7 @@ __status__ = "Production"
 
 import os
 import app, general, net
+from installGlassfish import GLASSFISH_PATH
 
 def build_commands(commands):
   commands.add("iptables-clear", iptables_clear, help="Clear all rules from iptables.")
@@ -89,7 +90,7 @@ def iptables_setup(args):
   if (os.access("/usr/bin/mysqld_safe", os.F_OK)):
     _setup_mysql_rules()
 
-  if (os.access("/usr/local/glassfish", os.F_OK)):
+  if (os.access(GLASSFISH_PATH, os.F_OK)):
     _setup_glassfish_rules()
 
   _closing_chains()

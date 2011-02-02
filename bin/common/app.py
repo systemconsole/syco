@@ -50,7 +50,7 @@ FOSH_ETC_PATH = FOSH_PATH + "etc/"
 INSTALL_DIR = "/tmp/install/"
 
 # All passwords used by fosh are stored in this enrypted file.
-PASSWORD_STORE_PATH = "/opt/fosh/etc/passwordstore"
+PASSWORD_STORE_PATH = FOSH_PATH + "etc/passwordstore"
 
 # String codes affecting output to shell.
 BOLD = "\033[1m"
