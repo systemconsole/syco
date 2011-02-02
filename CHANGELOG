@@ -60,6 +60,7 @@ CHANGELOG
 ---------
 2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
 2011-02-03 - Daniel Lindh - Replace /opt/fosh with app.FOSH_PATH in all files.
+2011-02-03 - Daniel Lindh - Changed use of shell_exec to asadmin_exec
 2011-02-01 - Daniel Lindh - Fixed the output of print_verbose and shell_exec.
 2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
 2011-02-01 - Daniel Lindh - Refactoring and comments in general.py.
