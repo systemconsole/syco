@@ -80,7 +80,7 @@ def delete_install_dir():
   shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
   pass
 
-def download_file(src, dst=None):
+def download_file(src, dst=None, user=""):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -92,10 +92,15 @@ def download_file(src, dst=None):
   
   create_install_dir()  
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    shell_exec("wget -O " + app.INSTALL_DIR + dst + " " + src)
+    shell_exec("wget -O " + app.INSTALL_DIR + dst + " " + src, user=user)
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
+  
+  # Looks like the file is not flushed to disk immediatley, 
+  # making the script not able to read the file immediatley after it's
+  # downloaded. A sleep fixes this.
+  time.sleep(1)
 
 def generate_password(length=8, chars=string.letters + string.digits):
   '''Generate a random password'''
@@ -128,13 +133,16 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
   
-def shell_exec(command, user="", timeout=None, expect="", send="", cwd=os.getcwd()):
+def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
 
   '''
   if (user):
     command = "su " + user + ' -c "' + command + '"'
+
+  if (not cwd):
+    cwd = os.getcwd()
 
   app.print_verbose("Command: " + command)
   out = pexpect.spawn(command,
@@ -250,3 +258,5 @@ pexpect = install_and_import_pexpect()
 
 if __name__ == "__main__":
   download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
+  os.chdir("/tmp/install")
+  print shell_exec("ls -alvh")
