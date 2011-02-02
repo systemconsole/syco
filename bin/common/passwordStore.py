@@ -79,7 +79,7 @@ class PasswordStore:
     Store password file to disk.
     
     '''
-    self._save_password_file()
+    self.save_password_file()
     
   def set_password(self, service, user_name, password):
     '''
@@ -109,7 +109,19 @@ class PasswordStore:
     if (len(user_password) == 0):
       raise Exception("No password was typed for service " + service + " user " + user_name + ".")
       
-    return user_password  
+    return user_password
+
+  def save_password_file(self):
+    '''
+    Store all passwords to file.
+
+    '''
+    if (self.config_file_is_modified):
+      config_file = open(self.file_path, 'w')
+      self.config.write(config_file)
+
+      if (config_file):
+        config_file.close()
 
   def _pad(self, s):
     '''
@@ -224,19 +236,7 @@ class PasswordStore:
         config.add_section(section)
 
     config.set(section, option, value)
-    self.config_file_is_modified=True
-    
-  def _save_password_file(self):
-    '''
-    Store all passwords to file.
-    
-    '''
-    if (self.config_file_is_modified):
-      config_file = open(self.file_path, 'w')
-      self.config.write(config_file)
-
-      if (config_file):
-        config_file.close()
+    self.config_file_is_modified=True    
 
   def _escape_for_ini(self, value):
     '''

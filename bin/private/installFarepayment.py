@@ -73,7 +73,7 @@ class InstallFarepayment:
     domains = [["domain1", "6048"], ["domain2", "7048"]]
 
     # User and password to login to svn
-    svn_user = "fosh_svn"
+    svn_user = "syscon"
     svn_password = None
 
     # The URL and name for the farepayment-realm ear dependency.

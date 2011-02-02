@@ -35,7 +35,7 @@ version = "0.1"
 parser = ''
 
 # FOSH root folder.
-FOSH_PATH = os.path.abspath(sys.path[0] + "/../")
+FOSH_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
 
 # Scripts that should be availble in public repos.
 FOSH_PUBLIC_PATH = os.path.abspath(FOSH_PATH + "/bin/public/")
@@ -119,9 +119,12 @@ def _get_password(service, user_name):
   Get a password from the password store.
 
   '''
-  if (not get_password.password_store):
-    get_password.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
-  return get_password.password_store.get_password(service, user_name)
+  if (not _get_password.password_store):
+    _get_password.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+  password = _get_password.password_store.get_password(service, user_name)
+  _get_password.password_store.save_password_file()
+  return password
+
 _get_password.password_store = None
 
 def get_root_password():
@@ -139,7 +142,7 @@ def get_root_password_hash():
 
 def get_svn_password():
   '''The svn password for user syscon_svn'''
-  return _get_password("svn", "syscon_svn")
+  return _get_password("svn", "syscon")
 
 def get_glassfish_master_password():
   '''Used to sign keystore, never transfered over network.'''
