@@ -16,8 +16,11 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, time
-import app, general
+import os
+import time
+
+import app
+import general
 
 def build_commands(commands):
   commands.add("install-fo-tp-install", install_fo_tp_install, help="Install kvm guest for fo-tp-install")
@@ -39,8 +42,8 @@ def install_fo_tp_install(args):
     general.shell_exec("mount -o ro /dev/dvd /media/dvd")
 
   # Export kickstart file
-  general.set_config_property("/etc/exports", '^/opt/fosh/var/.*$',   "/opt/fosh/var/ *(rw)")
-  general.set_config_property("/etc/exports", '^/media/dvd/.*$',   "/media/dvd/ *(rw)")
+  general.set_config_property("/etc/exports", '^' + app.FOSH_PATH + 'var/.*$', app.FOSH_PATH + "var/ *(rw)")
+  general.set_config_property("/etc/exports", '^/media/dvd/.*$', "/media/dvd/ *(rw)")
   general.shell_exec("service portmap restart")
   general.shell_exec("service nfs restart")
 
@@ -52,14 +55,14 @@ def install_fo_tp_install(args):
     general.shell_exec("lvcreate -n fo-tp-install -L 100G VolGroup00")
 
   # Create the KVM image
-  general.shell_exec("""virt-install --connect qemu:///system --name fo-tp-install --ram 2048 --vcpus=2 \
-    --disk path=/dev/VolGroup00/fo-tp-install \
-    --location nfs:10.100.100.212:/media/dvd \
-    --vnc --noautoconsole --hvm --accelerate \
-    --check-cpu \
-    --os-type linux --os-variant=rhel5.4 \
-    --network=bridge:br1 \
-    -x \"ks=nfs:10.100.100.212:/opt/fosh/var/fo-tp-install.ks\"""")
+  general.shell_exec("virt-install --connect qemu:///system --name fo-tp-install --ram 2048 --vcpus=2 " +
+    "--disk path=/dev/VolGroup00/fo-tp-install " +
+    "--location nfs:10.100.100.212:/media/dvd " +
+    "--vnc --noautoconsole --hvm --accelerate " +
+    "--check-cpu " +
+    "--os-type linux --os-variant=rhel5.4 " +
+    "--network=bridge:br1 " +
+    '-x "ks=nfs:10.100.100.212:' + app.FOSH_PATH + 'var/fo-tp-install.ks"')
 
   # Waiting for the installation process to complete, and halt the guest.
   while(True):
@@ -75,6 +78,6 @@ def install_fo_tp_install(args):
 
   general.shell_exec("service nfs stop")
   general.shell_exec("service portmap stop")
-  general.set_config_property("/etc/exports", '^/opt/fosh/var/.*$', "")
-  general.set_config_property("/etc/exports", '^/media/dvd/.*$',    "")
+  general.set_config_property("/etc/exports", '^' + app.FOSH_PATH + 'var/.*$', "")
+  general.set_config_property("/etc/exports", '^/media/dvd/.*$', "")
   general.shell_exec("umount /media/dvd")

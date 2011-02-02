@@ -16,8 +16,6 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-#! /usr/bin/env python
-
 import shutil, time, os
 import app, general, version, iptables
 

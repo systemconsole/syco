@@ -1,12 +1,6 @@
 TODO
 ---
 
-* Refactor general.py Use same shell_exec command
-* Refactor iptable.py, add a rule chain that can be controlled from other scripts?
-  Or is it good as it is, so the iptables script are not dependent on other script
-
-* Rename installFoTpInstall and all other relations to fo-tp
-
 * installHttpd 
 * installModsecurity
 * installFarepayment adapt to installHttpd, installModsecurity
@@ -14,9 +8,13 @@ TODO
 * Install all fp-servers..
 
 * installRentalFront.py
-
 * Install all rentalfront-servers.
 
+
+* Refactor iptable.py, add a rule chain that can be controlled from other scripts?
+  Or is it good as it is, so the iptables script are not dependent on other script
+
+* Rename installFoTpInstall and all other relations to fo-tp
 * Rename to syscon.
 * Move from github to office svn.
 
@@ -24,6 +22,7 @@ TODO
 
 * Install clam
 
+* -f (force), will ignore the version.check_executed()
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.  
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
 * Add right licence to all files. Add licence file to root folder.
@@ -48,7 +47,7 @@ TODO
 Future version  
 * Realtime stdout output from ssh functions.
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
-* The guests should use the repos on the fo-tp-install.
+* The guests should use the repos on the fo-tp-install.x¤
 * The guest should be locally "firewalled" to not be able to reach out to anything
   more then they need. Only repo updates on fo-tp-install.
 * Run "remote-install-deamon" on fo-tp-install.
@@ -59,6 +58,9 @@ Future version
 
 CHANGELOG
 ---------
+2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
+2011-02-03 - Daniel Lindh - Replace /opt/fosh with app.FOSH_PATH in all files.
+2011-02-01 - Daniel Lindh - Fixed the output of print_verbose and shell_exec.
 2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
 2011-02-01 - Daniel Lindh - Refactoring and comments in general.py.
 2011-02-01 - Daniel Lindh - Some minor refactoring and commenting in app.py

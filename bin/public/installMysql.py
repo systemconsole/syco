@@ -125,7 +125,7 @@ def install_mysql(args):
   general.shell_exec("hdparm -W0 /dev/mapper/VolGroup00-var")
 
   app.print_verbose("Install /etc/my.cnf")
-  shutil.copy("/opt/fosh/var/mysql/my.cnf",  "/etc/my.cnf")
+  shutil.copy(app.FOSH_PATH + "var/mysql/my.cnf",  "/etc/my.cnf")
   for line in fileinput.FileInput("/etc/my.cnf", inplace=1):
     line=line.replace("${server-id}", server_id)
     line=line.replace("${innodb_buffer_pool_size}", innodb_buffer_pool_size)
