@@ -11,7 +11,7 @@
 # Author: Daniel Lindh (daniel@fareoffice.com)
 #
  
-GLASSFISH_PATH=/usr/local/glassfish/glassfish;
+GLASSFISH_PATH=/usr/local/glassfish.3.0.1/glassfish;
 export GLASSFISH_PATH
  
 OWNER=glassfish;
