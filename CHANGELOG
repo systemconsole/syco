@@ -59,6 +59,7 @@ Future version
 
 CHANGELOG
 ---------
+2011-02-03 - Daniel Lindh - Fixes in installFarepayment after previous refactoring.
 2011-02-03 - Daniel Lindh - Bugfixing in glassfish installation after all refactoring.
 2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
 2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir

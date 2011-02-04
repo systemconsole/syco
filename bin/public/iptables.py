@@ -114,7 +114,7 @@ def _create_chains():
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
   iptables("-A bad_tcp_packets -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j REJECT --reject-with tcp-reset")
-  iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOG --log-prefix \"IPT: New not syn:\"")
+  iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOG --log-prefix 'IPT: New not syn:'")
   iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j DROP")
 
   app.print_verbose("Create allowed chain.")
@@ -215,14 +215,14 @@ def _closing_chains():
   iptables("-A FORWARD -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
 
   app.print_verbose("Log weird packets that don't match the above.")
-  iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix \"IPT: INPUT packet died: \"")
-  iptables("-A OUTPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix \"IPT: OUTPUT packet died: \"")
-  iptables("-A FORWARD -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix \"IPT: FORWARD packet died: \"")
+  iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: INPUT packet died: '")
+  iptables("-A OUTPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: OUTPUT packet died: '")
+  iptables("-A FORWARD -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: FORWARD packet died: '")
 
 def _setup_postrouting():
   app.print_verbose("Enable simple IP Forwarding and Network Address Translation.")
   #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
-  #iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+  #iptables("-t nat -A POSTROUTING -o eth0 -j MASQUERADE")
 
 def _iptables_save():
   app.print_verbose("Save current iptables rules to /etc/iptables.")

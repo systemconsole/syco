@@ -172,6 +172,13 @@ def get_mysql_fp_production_password():
   '''A user password for the mysql service, used by Farepayment'''
   return _get_password("mysql", "fp_production")
 
+def init_mysql_passwords():
+  get_mysql_root_password()
+  get_mysql_fp_integration_password()
+  get_mysql_fp_stable_password()
+  get_mysql_fp_qa_password()
+  get_mysql_fp_production_password()
+
 def init_all_passwords():
   '''
   Ask the user for all passwords used by fosh, and add to passwordstore.
@@ -181,11 +188,7 @@ def init_all_passwords():
   get_svn_password()
   get_glassfish_master_password()
   get_glassfish_admin_password()
-  get_mysql_root_password()
-  get_mysql_fp_integration_password()
-  get_mysql_fp_stable_password()
-  get_mysql_fp_qa_password()
-  get_mysql_fp_production_password()
+  init_mysql_passwords()
 
 def get_option(section, option):
   '''

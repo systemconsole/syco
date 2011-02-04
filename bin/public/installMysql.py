@@ -93,6 +93,9 @@ def install_mysql(args):
   server_id=args[1]
   innodb_buffer_pool_size=args[2]
 
+  # Initialize all passwords used by the script
+  app.init_mysql_passwords()
+
   # Install the mysql-server packages.
   if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):
     general.shell_exec("yum -y install mysql-server")
@@ -213,6 +216,9 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
   Execute a MySQL query, through the command line mysql console.
 
   '''
+  command = command.replace('\\', '\\\\')
+  command = command.replace('"', r'\"')
+
   cmd="mysql "
 
   if (host):
@@ -221,7 +227,7 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
   if (with_user):
     cmd+="-uroot -p" + app.get_mysql_root_password() + " "
 
-  general.shell_exec(cmd + '-e "' + command + '"')
+  return general.shell_exec(cmd + '-e "' + command + '"')
 
 def install_mysql_client():
   '''

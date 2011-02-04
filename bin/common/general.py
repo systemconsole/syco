@@ -81,19 +81,27 @@ def delete_install_dir():
   shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
   pass
 
-def download_file(src, dst=None, user=""):
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
   download_file("http://www.example.com/file.gz", "file.gz")
 
   '''
+  app.print_verbose("Download: " + src)
   if (not dst):
     dst = os.path.basename(src)
   
   create_install_dir()  
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    shell_exec("wget -O " + app.INSTALL_DIR + dst + " " + src, user=user)
+    cmd = "-O " + app.INSTALL_DIR + dst
+    if (remote_user):
+      cmd += " --user=" + remote_user
+
+    if (remote_password):
+      cmd += " --password=" + remote_password
+
+    shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley, 
     # making the script not able to read the file immediatley after it's
     # downloaded. A sleep fixes this.
@@ -138,16 +146,16 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
   Execute a shell command using pexpect, and writing verbose affected output.
 
   '''
-  if (user):
-    command = "su " + user + ' -c "' + command + '"'
-
   if (not cwd):
     cwd = os.getcwd()
+  
+  args=[]
+  if (user):
+    args.append(user)
+  args.append('-c ' + command)
 
-  app.print_verbose("Command: " + command)
-  out = pexpect.spawn(command,
-    cwd=cwd
-  )
+  app.print_verbose("Command: su " + user + " -c '" + command + "'")
+  out = pexpect.spawn("su", args, cwd=cwd)
   app.print_verbose("---- Result ----", 2)
   caption = True
   stdout = ""
@@ -193,8 +201,7 @@ def shell_run(command, user="", events=""):
   #TODO: Try to replace this with shell_exec
 
   '''
-  if (user):
-    command = "su " + user + ' -c "' + command + '"'
+  command = "su " + user + ' -c "' + command + '"'
 
   app.print_verbose("Command: " + command)
   (stdout, exit_status) = pexpect.run(command,
@@ -257,6 +264,13 @@ def install_and_import_pexpect():
 pexpect = install_and_import_pexpect()
 
 if __name__ == "__main__":
+  command = 'echo "moo"'
+  command = command.replace('\\', '\\\\')
+  command = command.replace('"', r'\"')
+  command = 'su -c"' + command + '"'
+  print command
+  print shell_exec(command)
+
   download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
   os.chdir("/tmp/install")
   print shell_exec("ls -alvh")

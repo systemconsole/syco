@@ -49,10 +49,13 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import app, general, version
-from installGlassfish import asadmin_exec, GLASSFISH_DOMAINS_PATH
-from mysql import MysqlProperties
+
+import app
+import general
+import version
+from installGlassfish import GLASSFISH_DOMAINS_PATH, asadmin_exec
 from installMysql import mysql_exec
+from mysql import MysqlProperties
 
 class InstallFarepayment:
 
@@ -77,63 +80,57 @@ class InstallFarepayment:
     svn_password = None
 
     # The URL and name for the farepayment-realm ear dependency.
-    farepayment_realm_url = "www.fareonline.net/fo/stable/farepayment/realm/1.0.0/farepayment-realm-1.0.0.zip"
+    FAREPAYMENT_REALM_URL = "http://www.fareonline.net/fo/tags/farepayment/realm/1.0.0/farepayment-realm-1.0.0.zip"
 
     # The URL and name for Farepayment ear.
-    farepayment_url = "www.fareonline.net/fo/stable/farepayment/1.1.0/dist/farepayment-ear-1.1.0.ear"
+    FAREPAYMENT_URL = "http://www.fareonline.net/fo/tags/farepayment/main/1.1.0/dist/farepayment-ear-1.1.0.ear"
 
     # Test database sql script url.
-    create_sql_url = "www.fareonline.net/fo/stable/farepayment/1.1.0/db/create_db.sql.gz"
-    test_data_sql_url = "www.fareonline.net/fo/stable/farepayment/1.1.0/db/create_test_data.sql.gz"
+    CREATE_SQL_URL = "http://www.fareonline.net/fo/tags/farepayment/main/1.1.0/db/create_db.sql.gz"
+    TEST_DATA_SQL_URL = "http://www.fareonline.net/fo/tags/farepayment/main/1.1.0/db/create_test_data.sql.gz"
 
     # Properties for the mysql connection.
     mysql_properties_list = None
 
     # Initialize the all properties for the mysql connection.
     def init_mysql_properties(self, environment):
-      if (self.environment =="integration"):
-          mysql_password = app.get_mysql_fp_integration_password()
-          self.mysql_properties_list = [
-            MysqlProperties("farepayment",           "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-            MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-            MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
+      if (self.environment == "integration"):
+        mysql_password = app.get_mysql_fp_integration_password()
+        self.mysql_properties_list = [
+          MysqlProperties("farepayment", "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+          MysqlProperties("farepayment_primary", "10.100.100.140", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+          MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_integration", mysql_password, "farepayment_integration", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
 
-      if (self.environment =="stable"):
-          mysql_password = app.get_mysql_fp_stable_password()
-          self.mysql_properties_list = [
-            MysqlProperties("farepayment",           "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-            MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-            MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
+      if (self.environment == "stable"):
+        mysql_password = app.get_mysql_fp_stable_password()
+        self.mysql_properties_list = [
+          MysqlProperties("farepayment", "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+          MysqlProperties("farepayment_primary", "10.100.100.140", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+          MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_stable", mysql_password, "farepayment_stable", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
 
-      if (self.environment =="qa"):
-          mysql_password = app.get_mysql_fp_qa_password()
-          self.mysql_properties_list = [
-          MysqlProperties("farepayment",           "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-          MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-          MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
+      if (self.environment == "qa"):
+        mysql_password = app.get_mysql_fp_qa_password()
+        self.mysql_properties_list = [
+        MysqlProperties("farepayment", "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+        MysqlProperties("farepayment_primary", "10.100.100.140", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+        MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_qa", mysql_password, "farepayment_qa", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
 
-      if (self.environment =="production"):
-          mysql_password = app.get_mysql_fp_production_password()
-          self.mysql_properties_list = [
-          MysqlProperties("farepayment",           "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-          MysqlProperties("farepayment_primary",   "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
-          MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
+      if (self.environment == "production"):
+        mysql_password = app.get_mysql_fp_production_password()
+        self.mysql_properties_list = [
+        MysqlProperties("farepayment", "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+        MysqlProperties("farepayment_primary", "10.100.100.140", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"]),
+        MysqlProperties("farepayment_secondary", "10.100.100.141", "fp_production", mysql_password, "farepayment_production", ["10.100.100.130", "10.100.100.131", "10.100.100.132"])]
 
     def init_properties(self, environment):
       '''
       Initialize all properties for installFarepayment, and ask user for all passwords.
 
       '''
-      self.environment=environment
+      self.environment = environment
 
       # Get SVN password from user.
-      svn_password = app.get_svn_password()
-
-      # Add svn login data to the url.
-      self.farepayment_realm_url = "https://" + self.svn_user + ":" + svn_password + "@" + self.farepayment_realm_url
-      self.farepayment_url       = "https://" + self.svn_user + ":" + svn_password + "@" + self.farepayment_url
-      self.create_sql_url        = "https://" + self.svn_user + ":" + svn_password + "@" + self.create_sql_url
-      self.test_data_sql_url     = "https://" + self.svn_user + ":" + svn_password + "@" + self.test_data_sql_url
+      self.svn_password = app.get_svn_password()
 
       self.init_mysql_properties(environment)
 
@@ -147,7 +144,7 @@ class InstallFarepayment:
         if (val not in ["local", "integration", "stable", "qa", "production"]):
           raise Exception("Invalid value for variable: " + name + " with value " + val)
 
-      self.__dict__[name]=val
+      self.__dict__[name] = val
 
   # Properties for installFarepayment
   prop = Properties()
@@ -164,7 +161,7 @@ class InstallFarepayment:
 
     self.prop.init_properties(args[1])
 
-    version_obj=version.Version("installFarepayment" + self.prop.environment, self.SCRIPT_VERSION)
+    version_obj = version.Version("installFarepayment" + self.prop.environment, self.SCRIPT_VERSION)
     version_obj.check_executed()
 
     self._create_log_folder()
@@ -199,10 +196,10 @@ class InstallFarepayment:
 
     self.prop.init_properties(args[1])
 
-    version_obj=version.Version("installFarepaymentDb" + self.prop.environment, self.SCRIPT_VERSION)
+    version_obj = version.Version("installFarepaymentDb" + self.prop.environment, self.SCRIPT_VERSION)
     version_obj.check_executed()
 
-    mysql_properties=self.prop.mysql_properties_list[0]
+    mysql_properties = self.prop.mysql_properties_list[0]
     mysql_exec("create database IF NOT EXISTS " + mysql_properties.database, True)
 
     mysql_exec("DROP USER " + mysql_properties.user_spec, True)
@@ -212,8 +209,14 @@ class InstallFarepayment:
       True
     )
 
-    self._mysql_exec_url(mysql_properties, self.prop.create_sql_url)
-    self._mysql_exec_url(mysql_properties, self.prop.test_data_sql_url)
+    self._mysql_exec_url(mysql_properties, self.prop.CREATE_SQL_URL,
+      remote_user=self.prop.svn_user,
+      remote_password=self.prop.svn_password
+    )
+    self._mysql_exec_url(mysql_properties, self.prop.TEST_DATA_SQL_URL,
+      remote_user=self.prop.svn_user,
+      remote_password=self.prop.svn_password
+    )
 
     general.delete_install_dir()
     version_obj.mark_executed()
@@ -221,7 +224,7 @@ class InstallFarepayment:
   #
   # Options / private memembers
   #
-  def _mysql_exec_url(self, mysql_properties, url):
+  def _mysql_exec_url(self, mysql_properties, url, remote_user=None, remote_password=None):
     '''
     Download a gziped sql-file, uncompress and insert into mysql.
 
@@ -231,22 +234,23 @@ class InstallFarepayment:
     # Extract the basename of the url ie. db.sql.gz
     name = os.path.basename(url)
 
-    general.download_file(url, name)
-    os.chdir(app.INSTALL_DIR)
-    general.shell_exec("gunzip -f " + name)
+    general.download_file(url, name, remote_user=remote_user, remote_password=remote_password)
+    if (os.access(name, os.F_OK)):
+      general.shell_exec("gunzip -f " + name, cwd=app.INSTALL_DIR)
 
     # Remove the .gz from the filename
     name = os.path.splitext(name)[0]
 
     # Run all sql queries in the database defined by mysql_properties.
-    mysql_exec("use " + mysql_properties.database +"\n\. " + app.INSTALL_DIR + name, True)
+    mysql_exec("use " + mysql_properties.database + "\n\. " + app.INSTALL_DIR + name, True)
 
   def _create_log_folder(self):
     '''
     Used by farepayment to log xml requests etc.
 
     '''
-    general.shell_exec("mkdir /var/log/farepayment")
+    if (not os.access("/var/log/farepayment", os.F_OK)):
+      general.shell_exec("mkdir /var/log/farepayment")
     general.shell_exec("chown glassfish:glassfishadm /var/log/farepayment")
     general.shell_exec("touch /var/log/farepayment/repository.dat")
     general.shell_exec("chown glassfish:glassfishadm /var/log/farepayment/repository.dat")
@@ -257,8 +261,10 @@ class InstallFarepayment:
 
     '''
     # Install Realm files.
-    farepayment_realm_name = os.path.basename(self.prop.farepayment_realm_url)
-    general.download_file(self.prop.farepayment_realm_url, farepayment_realm_name)
+    farepayment_realm_name = os.path.basename(self.prop.FAREPAYMENT_REALM_URL)
+    general.download_file(self.prop.FAREPAYMENT_REALM_URL, farepayment_realm_name,
+      remote_user=self.prop.svn_user,
+      remote_password=self.prop.svn_password)
 
     general.shell_exec("unzip -o " + farepayment_realm_name, user="glassfish")
     os.chdir(app.INSTALL_DIR)
@@ -313,7 +319,7 @@ class InstallFarepayment:
       'create-jdbc-connection-pool ' +
       '--datasourceclassname com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource ' +
       '--restype javax.sql.ConnectionPoolDataSource ' +
-      '--property "serverName=' + prop.server + ':port=3306:User=' + prop.user + ':Password=${alias=' + prop.password_alias + '}:characterEncoding=UTF-8:databaseName=' + prop.database + '" '+
+      '--property "serverName=' + prop.server + ':port=3306:User=' + prop.user + ':Password=${alias=' + prop.password_alias + '}:characterEncoding=UTF-8:databaseName=' + prop.database + '" ' +
       prop.pool_name,
       admin_port
     )
@@ -361,8 +367,10 @@ class InstallFarepayment:
     Deploy the farepayment ear to glassfish.
 
     '''
-    farepayment_name = os.path.basename(self.prop.farepayment_url)
-    general.download_file(self.prop.farepayment_url, farepayment_name)
+    farepayment_name = os.path.basename(self.prop.FAREPAYMENT_URL)
+    general.download_file(self.prop.FAREPAYMENT_URL, farepayment_name,
+      remote_user=self.prop.svn_user,
+      remote_password=self.prop.svn_password)
 
     # Deploy the farepayment ear
     asadmin_exec("undeploy " + app.INSTALL_DIR + farepayment_name, admin_port)
@@ -373,7 +381,7 @@ class InstallFarepayment:
       asadmin_exec("list-applications", admin_port)
 
 if __name__ != "__main__":
-  install_farepayment_obj=InstallFarepayment()
+  install_farepayment_obj = InstallFarepayment()
   def build_commands(commands):
-    commands.add("install-farepayment",    install_farepayment_obj.install_farepayment,    "environment", help="Install Farepayment on a Glassfish v3 prepared application server.")
+    commands.add("install-farepayment", install_farepayment_obj.install_farepayment, "environment", help="Install Farepayment on a Glassfish v3 prepared application server.")
     commands.add("install-farepayment-db", install_farepayment_obj.install_farepayment_db, "environment", help="Install Farepayment database and users on a mysql server.")
