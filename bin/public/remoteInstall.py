@@ -100,6 +100,8 @@ class RemoteInstall:
 
       obj.install_ssh_key()
       self._install_fosh_on_remote_host(obj)
+
+      # TODO: Create an expect "Verify the fosh master password:" and type password.
       self._execute(obj, host_name)
     except SettingsError, e:
       app.print_error(e, 2)
