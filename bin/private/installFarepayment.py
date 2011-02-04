@@ -373,7 +373,7 @@ class InstallFarepayment:
       remote_password=self.prop.svn_password)
 
     # Deploy the farepayment ear
-    asadmin_exec("undeploy " + app.INSTALL_DIR + farepayment_name, admin_port)
+    asadmin_exec("undeploy " + os.path.splitext(farepayment_name)[0], admin_port)
     asadmin_exec("deploy " + app.INSTALL_DIR + farepayment_name, admin_port)
 
     # What applications are installed?
