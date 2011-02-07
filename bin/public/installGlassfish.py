@@ -353,8 +353,7 @@ def _install_mysql_connector(domain_name):
   general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5", user="glassfish")
   signature = general.shell_exec("gpg --verify mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
   if (r'Good signature from "MySQL Package signing key (www.mysql.com) <build@mysql.com>"' not in signature):
-    app.print_error("Invalid signature.")
-    return
+    raise Exception("Invalid signature.")
 
   # TODO: Should it be under /ext/.
   general.shell_exec("tar zxf mysql-connector-java-5.1.14.tar.gz", user="glassfish")
