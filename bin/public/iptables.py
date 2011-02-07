@@ -18,7 +18,7 @@ TODO:
 
 Changelog:
 110205 DALI - Added allowed_udp chain to use with UDP rules.
-110205 DALI - Added support for httpd and modsecurity
+110205 DALI - Added support for httpd and modsecurity.
 110129 DALI - Adding file header and comments
 '''
 
