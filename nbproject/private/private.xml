@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1">
+        <file>
+            <url>bin/common/app.py</url>
+            <line>88</line>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/1">
+        <file>file:/Volumes/10.100.100.200/bin/public/installHttpd.py</file>
+        <file>file:/Volumes/10.100.100.200/var/private/httpd/conf.d/vhost-www-farepayment-com.conf</file>
+        <file>file:/Volumes/10.100.100.200/var/private/httpd/ssl/www.farepayment.com.pem</file>
+    </open-files>
+</project-private>
