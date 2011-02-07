@@ -1,9 +1,7 @@
 TODO
 ---
 
-* Check all use of os.chdir before shell_exec, shell_exec has it's own working dir.
-
-* installHttpd 
+* installHttpd
 * installModsecurity
 * installFarepayment adapt to installHttpd, installModsecurity
 
@@ -19,18 +17,31 @@ TODO
 * Rename to syscon.
 * Move from github to office svn.
 
+* installHudson
+* instalSonar
+
+* Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html
+
 * Uninstall programs, modify version.cfg
 
 * Install clam
 
+* Iptable rules on fo-tp-install should be synced in iptables-setup
+
+* Build report tool to check swap memory.
+  A webserver should never ever have to swap, as swapping increases the latency
+  of each request beyond a point that users consider "fast enough".
+* Immunize all config files with "chattr +i xx", files that shouldn't be modified by anyone.
+* semanage on all files we are using chcon on.
+* Mask password that are written to the stdout.
 * -f (force), will ignore the version.check_executed()
-* Is the ram option in install.cfg working? gf computer hasn't enough memory.  
+* Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
 * Add right licence to all files. Add licence file to root folder.
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
-* Write installLDAP.py script.  
+* Write installLDAP.py script.
 * Add epel repo to fo-tp-install
   repo --name=lepel       --baseurl=http://10.0.0.1:81/yum-repos/epel/i386
 
@@ -38,17 +49,17 @@ TODO
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/kickstart.template
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/post/
 * Harden according to, or later version.
-  http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf  
+  http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf
 * Harden, remove/disable these services
-  hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm  
+  hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm
 * Add user used by fosh, so it don't need to use root. Then prevent root ssh login.
   user --name=fosh --uid=500 --groups=wheel,root --password=nothingspecial
 * Read http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
-    
-Future version  
+
+Future version
 * Realtime stdout output from ssh functions.
 * fosh remote-install, should loop and wait for all clients to become alive. Then run all commands on them.
-* The guests should use the repos on the fo-tp-install.x¤
+* The guests should use the repos on the fo-tp-install.xï¿½
 * The guest should be locally "firewalled" to not be able to reach out to anything
   more then they need. Only repo updates on fo-tp-install.
 * Run "remote-install-deamon" on fo-tp-install.
@@ -59,6 +70,13 @@ Future version
 
 CHANGELOG
 ---------
+MAHE=Mattias Hemmingsson
+DALI=Daniel Lindh
+
+110207 DALI - Adding configuration of httpd and modsec for farepayment.
+110205 DALI - Added allowed_udp chain to use with UDP rules for iptables.
+110205 DALI - Added support for httpd and modsecurity for iptables.
+110128 DALI - Version 1.0.0 of installFarepayment completed.
 2011-02-03 - Daniel Lindh - Fixes in installFarepayment after previous refactoring.
 2011-02-03 - Daniel Lindh - Bugfixing in glassfish installation after all refactoring.
 2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
