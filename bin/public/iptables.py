@@ -17,7 +17,9 @@ TODO:
 * SSH to the server should only be allowed from certain ips.
 
 Changelog:
-  2011-01-29 - Daniel Lindh - Adding file header and comments
+110205 DALI - Added allowed_udp chain to use with UDP rules.
+110205 DALI - Added support for httpd and modsecurity
+110129 DALI - Adding file header and comments
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -93,6 +95,9 @@ def iptables_setup(args):
   if (os.access(GLASSFISH_PATH, os.F_OK)):
     _setup_glassfish_rules()
 
+  if (os.path.exists('/etc/httpd/conf/httpd.conf')):
+    _setup_httpd()
+
   _closing_chains()
   _setup_postrouting()
   _iptables_save()
@@ -122,6 +127,14 @@ def _create_chains():
   iptables("-A allowed -p TCP --syn -j ACCEPT")
   iptables("-A allowed -p TCP -m state --state ESTABLISHED,RELATED -j ACCEPT")
   iptables("-A allowed -p TCP -j DROP")
+
+  app.print_verbose("Create allowed chain.")
+  iptables("-N allowed_udp")
+  iptables("-A allowed_udp -p UDP -j ACCEPT")
+  # TODO: Possible to restrict more?
+  #iptables("-A allowed_udp -p UDP --syn -j ACCEPT")
+  #iptables("-A allowed_udp -p UDP -m state --state ESTABLISHED,RELATED -j ACCEPT")
+  #iptables("-A allowed_udp -p UDP -j DROP")
 
   app.print_verbose("Create ICMP rules.")
   iptables("-N icmp_packets")
@@ -190,8 +203,8 @@ def _setup_ntp_rules():
 
   '''
   app.print_verbose("Setup NTP input/output rule.")
-  iptables("-A INPUT  -p UDP --dport 123 -j allowed")
-  iptables("-A OUTPUT -p UDP --dport 123 -j allowed")
+  iptables("-A INPUT  -p UDP --dport 123 -j allowed_udp")
+  iptables("-A OUTPUT -p UDP --dport 123 -j allowed_udp")
 
 def _setup_mysql_rules():
   app.print_verbose("Setup mysql input rule.")
@@ -207,6 +220,10 @@ def _setup_glassfish_rules():
 
   iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed")
   iptables("-A OUTPUT -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed")
+
+def _setup_httpd():
+  app.print_verbose("Setup httpd input rule.")
+  iptables("-A INPUT -p TCP -m multiport --dports 80,443 -j allowed")
 
 def _closing_chains():
   app.print_verbose("Allow all established and related packets incoming from anywhere.")
