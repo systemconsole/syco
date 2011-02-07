@@ -46,25 +46,26 @@ def install_openvpn_server(args):
 
   '''
   app.print_verbose("Install openvpn server version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallOpenvpnServer", script_version)
+  version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
   general.shell_exec("yum -y install openvpn")
 
-  general.shell_exec("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
-  general.shell_exec("cp " + app.FOSH_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
+  if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
+    general.shell_exec("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
+    general.shell_exec("cp " + app.FOSH_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
 
-  # Prepare the ca cert generation.
-  general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="SE"')
-  general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="NA"')
-  general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CITY.*',     'export KEY_CITY="STOCKHOLM"')
-  general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_ORG.*',      'export KEY_ORG="FAREOFFICE"')
-  general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="ssladmin@fareoffice.com"')
+    # Prepare the ca cert generation.
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="SE"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="NA"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CITY.*',     'export KEY_CITY="STOCKHOLM"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_ORG.*',      'export KEY_ORG="FAREOFFICE"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="ssladmin@fareoffice.com"')
 
-  # Generate CA cert
-  os.chdir("/etc/openvpn/easy-rsa/")
-  general.shell_exec(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-  general.shell_exec("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
+    # Generate CA cert
+    os.chdir("/etc/openvpn/easy-rsa/")
+    general.shell_exec(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
+    general.shell_exec("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
   # To be able to route trafic to internal network
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
@@ -76,7 +77,8 @@ def install_openvpn_server(args):
   #iptables -I INPUT 2 -p tcp -m state --state NEW -m multiport --dports 80,443,8080,8181,4848 -j ACCEPT
 
   # Ports to allow to use on the network.
-  iptables.iptables("-I RH-Firewall-1-INPUT -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
+  iptables.iptables("-I INPUT -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
+  iptables.iptables("-I FORWARD -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
 
   # To protect the network.
   iptables.iptables("-A FORWARD -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
