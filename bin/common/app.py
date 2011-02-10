@@ -41,7 +41,7 @@ FOSH_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
 FOSH_PUBLIC_PATH = os.path.abspath(FOSH_PATH + "/bin/public/")
 
 # Scripts that should only be available in private repos.
-FOSH_PRIVATE_PATH = os.path.abspath(FOSH_PATH + "/bin/private/")
+FOSH_USR_PATH = os.path.abspath(FOSH_PATH + "/usr/")
 
 # Etc (config) files.
 FOSH_ETC_PATH = FOSH_PATH + "etc/"

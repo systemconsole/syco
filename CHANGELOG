@@ -75,7 +75,8 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
-110210 DALI - Moving private files to private repo.:w
+110210 DALI - Move private plugins from bin/private to usr/
+110210 DALI - Moving private files to private repo.
 110207 DALI - Adding configuration of httpd and modsec for farepayment.
 110205 DALI - Added allowed_udp chain to use with UDP rules for iptables.
 110205 DALI - Added support for httpd and modsecurity for iptables.
