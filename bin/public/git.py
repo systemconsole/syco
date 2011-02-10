@@ -11,6 +11,7 @@ Changelog:
   2011-01-28 - Daniel Lindh - Added git-clean command
   2011-01-xx - Daniel Lindh - Added git-commit command
 
+TODO: Add commit for all plugins.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
