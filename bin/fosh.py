@@ -9,7 +9,8 @@ Examples:
 fosh install-fosh
   
 Changelog:
-  2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
+110210 DALI - Move private plugins from bin/private to usr/
+110129 DALI - Added public and private command types, refactoring of code.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -36,13 +37,14 @@ import app
 # Files published to public repos.
 sys.path.append(app.FOSH_PUBLIC_PATH)
 
-# Files only available in private repos. Could be installation of private
-# software that no one else has access to, or find uninteressted.
-sys.path.append(app.FOSH_PRIVATE_PATH)
-
 #  Import all py files including fosh commands.
 command_dir = os.listdir(app.FOSH_PUBLIC_PATH)
-command_dir += os.listdir(app.FOSH_PRIVATE_PATH)
+
+# Files only available in private user repos.
+for plugin in os.listdir(app.FOSH_USR_PATH):
+  plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+  sys.path.append(plugin_path)
+  command_dir += os.listdir(plugin_path)
 
 for module in command_dir:
   if (module == '__init__.py' or module[-3:] != '.py'):
@@ -120,7 +122,7 @@ class Commands:
     help = ""
     help += "Public commands\n"
     help += self._get_help_for_command_type("public")
-    help += "\nPrivate commands:\n"    
+    help += "\nUser commands:\n"
     help += self._get_help_for_command_type("private")
     return help
     
@@ -147,9 +149,11 @@ class Commands:
       for obj in self._get_modules(app.FOSH_PUBLIC_PATH):
         obj.build_commands(self)
 
-      self.current_type = "private"        
-      for obj in self._get_modules(app.FOSH_PRIVATE_PATH):
-        obj.build_commands(self)
+      self.current_type = "private"
+      for plugin in os.listdir(app.FOSH_USR_PATH):
+        plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+        for obj in self._get_modules(plugin_path):
+         obj.build_commands(self)
                   
     except AttributeError, e:
       app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
