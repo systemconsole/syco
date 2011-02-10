@@ -2,4 +2,4 @@ etc/passwordstore
 etc/version.cfg
 usr/
 *.pyc
-
+.DS_Store
