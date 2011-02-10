@@ -7,6 +7,12 @@ cat ~/.ssh/id_rsa.pub
 # Insert the output into www.github.com.
 git clone git@github.com:arlukin/fosh.git
 
+# Add private/customized scripts.
+cd fosh
+mkdir usr
+cd usr
+git clone git@github.com:arlukin/fosh-template.git
+
 DOCUMENTATION
 -------------
 
