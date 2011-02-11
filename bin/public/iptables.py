@@ -17,6 +17,7 @@ TODO:
 * SSH to the server should only be allowed from certain ips.
 
 Changelog:
+110211 DALI - Allow GPG to talk to keyserver.ubuntu.com:11371
 110205 DALI - Added allowed_udp chain to use with UDP rules.
 110205 DALI - Added support for httpd and modsecurity.
 110129 DALI - Adding file header and comments
@@ -84,6 +85,7 @@ def iptables_setup(args):
   _setup_general_rules()
   _setup_ssh_rules()
   _setup_dns_resolver_rules()
+  _setup_gpg_rules()
   _setup_installation_server_rules()
 
   if (os.access("/etc/ntp", os.F_OK)):
@@ -174,13 +176,16 @@ def _setup_dns_resolver_rules():
   Allow this server to communicate with an dns resolver.
 
   '''
-
   inet_ip=net.get_lan_ip()
   for resolver_ip in app.get_dns_resolvers().split(" "):
     iptables("-A OUTPUT -p udp -s " + inet_ip + " --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
     iptables("-A INPUT  -p udp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT")
     iptables("-A OUTPUT -p tcp -s " + inet_ip + "  --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
     iptables("-A INPUT  -p tcp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT")
+
+def _setup_gpg_rules():
+  # Allow GPG to talk to keyserver.ubuntu.com:11371
+  iptables("-A OUTPUT -p tcp -d 91.189.89.49 --dport 11371 -j allowed")
 
 def _setup_installation_server_rules():
   '''
