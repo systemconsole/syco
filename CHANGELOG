@@ -1,15 +1,13 @@
 TODO
 ---
 
-* installHttpd
-* installModsecurity
+* installGit
 
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
 
 * Rename installFoTpInstall and all other relations to fo-tp
-* Rename to syscon.
-* Move from github to office svn.
+* Rename to syco/syscon.
 
 * installHudson
 * instalSonar
@@ -67,6 +65,7 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110212 DALI - installHttpd workign with httpd and mod_sec.
 110212 DALI - Added scripts that should be executed during installation phase.
 110212 DALI - Renamed fo-tp-svn to fo-tp-vcs (version control system).
 110212 DALI - Disabled modsec rule "block not allowed urls.", things got to complicated in installFarepayment.
@@ -74,57 +73,58 @@ DALI=Daniel Lindh
 110212 DALI - Modsecurity-crs file was downloaded to the wrong filename.
 110212 DALI - Automatically delete install dir when fosh exit.
 110212 DALI - Set java and java_home path for the currently logged in user, when installing glassfish.
+
 110210 DALI - Move private plugins from bin/private to usr/
 110210 DALI - Moving private files to private repo.
 110207 DALI - Adding configuration of httpd and modsec for farepayment.
 110205 DALI - Added allowed_udp chain to use with UDP rules for iptables.
 110205 DALI - Added support for httpd and modsecurity for iptables.
 110128 DALI - Version 1.0.0 of installFarepayment completed.
-2011-02-03 - Daniel Lindh - Fixes in installFarepayment after previous refactoring.
-2011-02-03 - Daniel Lindh - Bugfixing in glassfish installation after all refactoring.
-2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
-2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir
-2011-02-03 - Daniel Lindh - Changed name of svn user to syscon.
-2011-02-03 - Daniel Lindh - Saving passwords to file after they have been executed entered by user.
-2011-02-03 - Daniel Lindh - Invalid use of variables in version.mark_executed(), crashed the program.
-2011-02-03 - Daniel Lindh - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
-2011-02-03 - Daniel Lindh - Replace /opt/fosh with app.FOSH_PATH in all files.
-2011-02-03 - Daniel Lindh - Changed use of shell_exec to asadmin_exec
-2011-02-01 - Daniel Lindh - Fixed the output of print_verbose and shell_exec.
-2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
-2011-02-01 - Daniel Lindh - Refactoring and comments in general.py.
-2011-02-01 - Daniel Lindh - Some minor refactoring and commenting in app.py
-2011-02-01 - Daniel Lindh - Fixed unused imports (found by netbeans)
-2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
-2011-01-29 - Daniel Lindh - Refactoring and cleaning up the SSH code.
-2001-01-29 - Daniel Lindh - Use PasswordStore everywhere in the code where passwords are used.
-2011-01-29 - Daniel Lindh - Adding file header and comments to all fosh files.
-2011-01-29 - Daniel Lindh - Added public and private command types, refactoring of code.
+20110203 DALI - Fixes in installFarepayment after previous refactoring.
+20110203 DALI - Bugfixing in glassfish installation after all refactoring.
+20110203 DALI - shell_exec didn't execute the command in the current working directory.
+20110203 DALI - download_file only need first argument, and will download the file to install dir
+20110203 DALI - Changed name of svn user to syscon.
+20110203 DALI - Saving passwords to file after they have been executed entered by user.
+20110203 DALI - Invalid use of variables in version.mark_executed(), crashed the program.
+20110203 DALI - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
+20110203 DALI - Replace /opt/fosh with app.FOSH_PATH in all files.
+20110203 DALI - Changed use of shell_exec to asadmin_exec
+20110201 DALI - Fixed the output of print_verbose and shell_exec.
+20110201 DALI - Replaced shell_exec with shell_exec_p everywhere in the code.
+20110201 DALI - Refactoring and comments in general.py.
+20110201 DALI - Some minor refactoring and commenting in app.py
+20110201 DALI - Fixed unused imports (found by netbeans)
+20110130 DALI - Refactoring the use off class Version.
+20110129 DALI - Refactoring and cleaning up the SSH code.
+20010129 DALI - Use PasswordStore everywhere in the code where passwords are used.
+20110129 DALI - Adding file header and comments to all fosh files.
+20110129 DALI - Added public and private command types, refactoring of code.
 
-2011-01-28 - Daniel Lindh - Added git-clean command
-2011-01-28 - Daniel Lindh - Version 1.0.0 of installFarepayment completed.
-2011-01-28 - Daniel Lindh - Version 1.0.0 of PasswordStore completed.
+20110128 DALI - Added git-clean command
+20110128 DALI - Version 1.0.0 of installFarepayment completed.
+20110128 DALI - Version 1.0.0 of PasswordStore completed.
 
-2011-01-27 - Daniel Lindh - installFarepayment, create database, deploy ear
-2011-01-27 - Daniel Lindh - installGlassfish.py script
+20110127 DALI - installFarepayment, create database, deploy ear
+20110127 DALI - installGlassfish.py script
 
-2011-01-24 - Daniel Lindh - More secure configuration of NTP. (Still missing optimal iptables)
+20110124 DALI - More secure configuration of NTP. (Still missing optimal iptables)
 
-2011-01-23 - Daniel Lindh - Working draft of installNTP.py
+20110123 DALI - Working draft of installNTP.py
 
-2011-01-21 - Daniel Lindh - Draft of install-mysql
-2011-01-21 - Daniel Lindh - setup_iptables for installMysql
-2011-01-21 - Daniel Lindh - Working install-mysql
-2011-01-21 - Daniel Lindh - Working install-mysql-replication.
+20110121 DALI - Draft of install-mysql
+20110121 DALI - setup_iptables for installMysql
+20110121 DALI - Working install-mysql
+20110121 DALI - Working install-mysql-replication.
 
-2010-12-15 - Daniel Lindh - Install pexpect on all fosh servers.
+20101215 DALI - Install pexpect on all fosh servers.
 
-2010-12-14 - Daniel Lindh - Write installVpn.py script to install openvpn.
+20101214 DALI - Write installVpn.py script to install openvpn.
 
-2010-12-10 - Daniel Lindh - Indicate disk space to use for a guest in install.cfg
-2010-12-10 - Daniel Lindh - Configure install.cfg to use all computers.
-2010-12-10 - Daniel Lindh - Read "configuration" of which commands to use from the dir bin/fosh/fosh/
-                            http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
+20101210 DALI - Indicate disk space to use for a guest in install.cfg
+20101210 DALI - Configure install.cfg to use all computers.
+20101210 DALI - Read "configuration" of which commands to use from the dir bin/fosh/fosh/
+                http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
 
-2010-12-09 - Daniel Lindh - Install all servers with pxe.
-2010-12-09 - Daniel Lindh -  Move dhcp to fo-tp-install
+20101209 DALI - Install all servers with pxe.
+20101209 DALI - Move dhcp to fo-tp-install
