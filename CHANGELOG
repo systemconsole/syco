@@ -1,16 +1,8 @@
 TODO
 ---
 
-* Update server sitemap file with Rentalfront servers.
-
 * installHttpd
 * installModsecurity
-* installFarepayment adapt to installHttpd, installModsecurity
-
-* Install all fp-servers..
-
-* installRentalFront.py
-* Install all rentalfront-servers.
 
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
@@ -75,6 +67,13 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110212 DALI - Added scripts that should be executed during installation phase.
+110212 DALI - Renamed fo-tp-svn to fo-tp-vcs (version control system).
+110212 DALI - Disabled modsec rule "block not allowed urls.", things got to complicated in installFarepayment.
+110212 DALI - Enable SELinux httpd_can_network_connect on apache servers, to get mod_proxy working.
+110212 DALI - Modsecurity-crs file was downloaded to the wrong filename.
+110212 DALI - Automatically delete install dir when fosh exit.
+110212 DALI - Set java and java_home path for the currently logged in user, when installing glassfish.
 110210 DALI - Move private plugins from bin/private to usr/
 110210 DALI - Moving private files to private repo.
 110207 DALI - Adding configuration of httpd and modsec for farepayment.
