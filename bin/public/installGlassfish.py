@@ -81,6 +81,10 @@ def install_glassfish(args):
 
     general.create_install_dir()
 
+    # Set java path for the currently logged in user.
+    os.environ["JAVA_HOME"] = "/usr/java/latest"
+    os.environ["PATH"] = "/usr/java/latest/bin:" + os.environ["PATH"]
+
     # Set java path for all users on the server.
     general.set_config_property("/etc/profile", 'export JAVA_HOME=/usr/java/latest', 'export JAVA_HOME=/usr/java/latest')
     general.set_config_property("/etc/profile", 'export PATH=$PATH:/usr/java/latest/bin', 'export PATH=$PATH:/usr/java/latest/bin')
@@ -114,7 +118,7 @@ def uninstall_glassfish(args):
   The main function the glassfish uninstallation.
 
   '''
-  app.print_verbose("Uninstall glassfish3 version: %d" % SCRIPT_VERSION) 
+  app.print_verbose("Uninstall glassfish3 version: %d" % SCRIPT_VERSION)
 
   if (_is_glassfish_user_installed()):
     # Change dir if some of the rm commands fails, so not everythig will
@@ -250,6 +254,7 @@ def _install_eclipselink():
   http://blogs.sun.com/GlassFishPersistence/entry/updating_eclipselink_bundles_in_glassfish
 
   '''
+  general.create_install_dir()
   os.chdir(app.INSTALL_DIR)
   if (not os.access("eclipselink-plugins-2.1.2.v20101206-r8635.zip", os.F_OK)):
     general.download_file("http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
