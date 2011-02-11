@@ -77,11 +77,12 @@ def install_httpd(args):
   _install_httpd()
   _install_mod_security()
   _update_modsec_rules()
-  set_file_permissions()
+  _enable_se_linux()
 
+  set_file_permissions()
   general.shell_exec("/etc/init.d/httpd restart")
 
-  #TODO version_obj.mark_executed()
+  version_obj.mark_executed()
 
 def set_file_permissions():
   general.shell_exec("chmod 644 /etc/httpd/conf.d/*")
@@ -162,11 +163,11 @@ def _install_mod_security():
   general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz/download")
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz.asc/download")
+  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz/download", MODSEC_RULES_FILE + ".tar.gz")
+  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz.asc/download", MODSEC_RULES_FILE + ".tar.gz.asc")
 
   os.chdir(app.INSTALL_DIR)
-  #general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 4EF28948")
+  general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 4EF28948")
   signature = general.shell_exec("gpg " + MODSEC_RULES_FILE + ".tar.gz.asc")
   if (r'Good signature from "Ryan Barnett (OWASP Core Rule Set Project Leader) <rbarnett@trustwave.com>"' not in signature):
     raise Exception("Invalid signature.")
@@ -177,3 +178,6 @@ def _update_modsec_rules():
 
   # Install customized rules.
   general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
+
+def _enable_se_linux():
+  general.shell_exec("/usr/sbin/setsebool httpd_can_network_connect 1")
