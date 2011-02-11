@@ -3,6 +3,7 @@
 General python functions that don't fit in it's own file.
 
 Changelog:
+110211 DALI - Automatically delete install dir when script exits.
 110203 DALI - Installation of pexpect didn't work when it was at the bottom of the file.
 110203 DALI - shell_exec didn't execute the command in the current working directory.
 110203 DALI - download_file only need first argument, and will download the file to install dir
@@ -69,6 +70,15 @@ def grep(file_name, pattern):
       return True
   return False
 
+def delete_install_dir():
+  '''
+  Delete the folder where installation files are stored during installation.
+
+  '''
+  app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
+  shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
+  pass
+
 def create_install_dir():
   '''
   Create folder where installation files are stored during installation.
@@ -86,14 +96,8 @@ def create_install_dir():
   else:
     raise Exception("Can't create install dir.")
 
-def delete_install_dir():
-  '''
-  Delete the folder where installation files are stored during installation.
-
-  '''
-  app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
-  shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
-  pass
+  import atexit
+  atexit.register(delete_install_dir)
 
 def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
   '''
