@@ -1,0 +1,57 @@
+'''
+Adapted git commands for fosh.
+
+$ fosh git-commit "Commit comment"
+Add all files in fosh folder git repo on github.
+
+$ fosh git-clean
+Remove files that should not be added to the git-repo. For now .pyc files.
+
+Changelog:
+  2011-01-28 - Daniel Lindh - Added git-clean command
+  2011-01-xx - Daniel Lindh - Added git-commit command
+
+TODO: Add commit for all plugins.
+'''
+
+__author__ = "daniel.lindh@cybercow.se"
+__copyright__ = "Copyright 2011, The syscon project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "daniel@cybercow.se"
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
+
+import app
+import general
+
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+SCRIPT_VERSION = 1
+
+def build_commands(commands):
+  commands.add("install-git-server", install_git_server, help="Install git server")
+  commands.add("git-commit", git_commit, "[comment]", help="Commit changes to fosh to github")
+  commands.add("git-clean", git_clean, help="Remove files that should not be added to the git-repo. For now .pyc files.")
+
+def install_git_server(args):
+  app.print_verbose("Install Git-Server version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("InstallGit", SCRIPT_VERSION)
+  version_obj.check_executed()
+
+  #version_obj.mark_executed()
+
+def git_commit(args):
+  '''
+  Commit the fosh folder to the github repository.
+
+  '''
+  comment = args[1]
+  git_clean(args)
+  general.shell_exec("git add *", cwd=app.FOSH_PATH)
+  general.shell_exec("git commit -a -m'" + comment + "'", cwd=app.FOSH_PATH)
+  general.shell_exec("git push origin", cwd=app.FOSH_PATH)
+
+def git_clean(args):
+  general.shell_exec("find " + app.FOSH_PATH + " -iname '*.pyc' -delete")
