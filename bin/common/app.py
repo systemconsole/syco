@@ -3,8 +3,9 @@
 Application global wide helper functions.
 
 Changelog:
-  2011-02-01 - Daniel Lindh - Some minor refactoring and commenting.
-  2011-01-29 - Daniel Lindh - Adding file header and comments
+110211 DALI - Removed dependency from General.py
+110201 DALI - Some minor refactoring and commenting.
+110129 DALI - Adding file header and comments.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -22,8 +23,8 @@ import re
 import socket
 import sys
 import time
+import subprocess
 
-import general
 import passwordStore
 
 #
@@ -91,7 +92,7 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
 
   '''
   if (caption):
-    caption += " "  
+    caption += " "
   caption = time.strftime('%Y-%m-%d %H:%M:%S') + " - " + socket.gethostname() + " - " + caption
 
   messages = []
@@ -102,7 +103,7 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
 
   # Output will look like
   # fo-tp-system: Caption This is a message
-  for msg in messages:    
+  for msg in messages:
     if (len(str(msg)) > 0):
       msg = re.sub("[\n]", "\n" + caption, str(msg))
 
@@ -113,7 +114,7 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
 
       if (new_line):
         msg += "\n"
-      
+
       sys.stdout.write(msg)
       sys.stdout.flush()
 
@@ -140,7 +141,8 @@ def get_root_password_hash():
 
   '''
   root_password = get_root_password()
-  hash_root_password = general.shell_exec("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'")
+  p = subprocess.Popen("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'", shell=True)
+  hash_root_password, stderr = p.communicate()
   return hash_root_password
 
 def get_svn_password():
