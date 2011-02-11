@@ -3,11 +3,12 @@
 General python functions that don't fit in it's own file.
 
 Changelog:
-  2011-02-03 - Daniel Lindh - shell_exec didn't execute the command in the current working directory.
-  2011-02-03 - Daniel Lindh - download_file only need first argument, and will download the file to install dir
-  2011-02-01 - Daniel Lindh - Replaced shell_exec with shell_exec_p everywhere in the code.
-  2011-02-01 - Daniel Lindh - Refactoring and comments.
-  2011-01-29 - Daniel Lindh - Adding file header and comments
+110203 DALI - Installation of pexpect didn't work when it was at the bottom of the file.
+110203 DALI - shell_exec didn't execute the command in the current working directory.
+110203 DALI - download_file only need first argument, and will download the file to install dir
+110201 DALI - Replaced shell_exec with shell_exec_p everywhere in the code.
+110201 DALI - Refactoring and comments.
+110129 DALI - Adding file header and comments
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -31,6 +32,19 @@ from random import choice
 from socket import *
 
 import app
+
+def install_and_import_pexpect():
+  '''
+  Import the pexpect module, will be installed if not already done.
+
+  '''
+  try:
+    import pexpect
+    return pexpect
+  except:
+    subprocess.Popen("yum -y install pexpect", shell=True)
+
+pexpect = install_and_import_pexpect()
 
 def remove_file(path):
   '''
@@ -91,8 +105,8 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
   app.print_verbose("Download: " + src)
   if (not dst):
     dst = os.path.basename(src)
-  
-  create_install_dir()  
+
+  create_install_dir()
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     cmd = "-O " + app.INSTALL_DIR + dst
     if (remote_user):
@@ -102,13 +116,13 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
       cmd += " --password=" + remote_password
 
     shell_exec("wget " + cmd + " " + src, user=user)
-    # Looks like the file is not flushed to disk immediatley, 
+    # Looks like the file is not flushed to disk immediatley,
     # making the script not able to read the file immediatley after it's
     # downloaded. A sleep fixes this.
     time.sleep(2)
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    raise Exception("Couldn't download: " + dst)    
+    raise Exception("Couldn't download: " + dst)
 
 def generate_password(length=8, chars=string.letters + string.digits):
   '''Generate a random password'''
@@ -140,7 +154,7 @@ def wait_for_server_to_start(server, port):
     app.print_verbose(".", new_line=False)
     time.sleep(5)
   app.print_verbose(".")
-  
+
 def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
@@ -148,7 +162,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
   '''
   if (not cwd):
     cwd = os.getcwd()
-  
+
   args=[]
   if (user):
     args.append(user)
@@ -169,8 +183,8 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
         if (index == 0 or index == 1):
           out.send(send)
           break
-  
-    while(True):    
+
+    while(True):
       txt = out.read_nonblocking(512, timeout)
       app.print_verbose(txt, 2, new_line=False, enable_caption=caption)
       caption = False
@@ -185,11 +199,11 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
 
   if (out.signalstatus):
     app.print_error("Invalid signalstatus %d - %s" % out.signalstatus, out.status)
-  
+
   # An extra line break for the looks.
   if (stdout and app.options.verbose >= 2):
     print("\n"),
-            
+
   return stdout
 
 def shell_run(command, user="", events=""):
@@ -213,12 +227,12 @@ def shell_run(command, user="", events=""):
 
   app.print_verbose("---- Result (" + str(exit_status) + ")----", 2)
   app.print_verbose(stdout, 2)
-  
+
   if (exit_status == None):
     raise Exception("Couldnt execute " + command)
-            
+
   return stdout
-         
+
 def set_config_property(file_name, search_exp, replace_exp):
   '''
   Change or add a config property to a specific value.
@@ -237,31 +251,17 @@ def set_config_property(file_name, search_exp, replace_exp):
           line = re.sub(search_exp, replace_exp, line)
           exist = True
         w.write(line)
-      
+
       if exist == False:
         w.write(replace_exp + "\n")
     finally:
-      r.close() 
-      w.close() 
+      r.close()
+      w.close()
       os.remove(file_name + ".bak")
   else:
     w = open(file_name, 'w')
     w.write(replace_exp)
     w.close()
-
-def install_and_import_pexpect():
-  '''
-  Import the pexpect module, will be installed if not already done.
-
-  '''
-  try:
-    import pexpect
-    return pexpect
-  except:
-    shell_exec("yum -y install pexpect")
-    install_and_import_pexpect()
-
-pexpect = install_and_import_pexpect()
 
 if __name__ == "__main__":
   command = 'echo "moo"'
