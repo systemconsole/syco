@@ -55,7 +55,7 @@ MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE +
 MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
 MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
 
-MODSEC_RULES_FILE = "modsecurity-crs_2.1.1"
+MODSEC_RULES_FILE = "modsecurity-crs_2.1.2"
 
 def build_commands(commands):
   '''
@@ -137,8 +137,8 @@ def _install_mod_security():
     general.download_file(MODSEC_ASC_REPO_URL)
 
     os.chdir(app.INSTALL_DIR)
-    general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 6980F8B0", user="glassfish")
-    signature = general.shell_exec("gpg --verify " + MODSEC_ASC_FILE, user="glassfish")
+    general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 6980F8B0")
+    signature = general.shell_exec("gpg --verify " + MODSEC_ASC_FILE)
     if (r'Good signature from "Breno Silva Pinto <bpinto@trustwave.com>"' not in signature):
       raise Exception("Invalid signature.")
 
@@ -155,7 +155,7 @@ def _install_mod_security():
     # Remove needed packages for installation of modsec.
     # TODO: See if their is any other dependencies to thease packages.
     general.shell_exec("yum -y erase httpd-devel apr-devel apr-util-devel "+
-      "cpp cyrus-sasl-devel db4-devel expat-devel glibc-devel " +
+      "cpp gcc cyrus-sasl-devel db4-devel expat-devel glibc-devel " +
       "glibc-headers kernel-headers libgomp openldap-devel pkgconfig pcre-devel " +
       "libxml2-devel zlib-devel")
 
