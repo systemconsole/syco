@@ -41,10 +41,11 @@ sys.path.append(app.FOSH_PUBLIC_PATH)
 command_dir = os.listdir(app.FOSH_PUBLIC_PATH)
 
 # Files only available in private user repos.
-for plugin in os.listdir(app.FOSH_USR_PATH):
-  plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
-  sys.path.append(plugin_path)
-  command_dir += os.listdir(plugin_path)
+if (os.access(app.FOSH_USR_PATH, os.F_OK)):
+  for plugin in os.listdir(app.FOSH_USR_PATH):
+    plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+    sys.path.append(plugin_path)
+    command_dir += os.listdir(plugin_path)
 
 for module in command_dir:
   if (module == '__init__.py' or module[-3:] != '.py'):
@@ -150,10 +151,11 @@ class Commands:
         obj.build_commands(self)
 
       self.current_type = "private"
-      for plugin in os.listdir(app.FOSH_USR_PATH):
-        plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
-        for obj in self._get_modules(plugin_path):
-         obj.build_commands(self)
+      if (os.access(app.FOSH_USR_PATH, os.F_OK)):
+        for plugin in os.listdir(app.FOSH_USR_PATH):
+          plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+          for obj in self._get_modules(plugin_path):
+           obj.build_commands(self)
                   
     except AttributeError, e:
       app.print_error("   Problem with " + repr(obj) + ", error:: " + repr(e.args))
