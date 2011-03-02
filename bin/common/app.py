@@ -53,6 +53,9 @@ INSTALL_DIR = "/tmp/install/"
 # All passwords used by fosh are stored in this enrypted file.
 PASSWORD_STORE_PATH = FOSH_PATH + "etc/passwordstore"
 
+# When a general username is required.
+SERVER_ADMIN_NAME = "syco"
+
 # Logs will be sent to this email from the servers.
 SERVER_ADMIN_EMAIL = "syscon@cybercow.se"
 
