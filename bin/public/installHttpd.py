@@ -80,7 +80,7 @@ def install_httpd(args):
   _enable_se_linux()
 
   set_file_permissions()
-  general.shell_exec("/etc/init.d/httpd restart")
+  general.shell_exec("/etc/init.d/httpd start")
 
   version_obj.mark_executed()
 
