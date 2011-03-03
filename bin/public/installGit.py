@@ -116,7 +116,7 @@ def install_git_server(args):
   )
   shutil.copy(app.FOSH_PATH + "var/git/git.conf", "/etc/httpd/conf.d/git.conf")
 
-  general.set_config_property("/var/www/git/gitweb.cgi", "^our.*projectroot.*", 'our $projectroot = "/var/lib/git"')
+  general.set_config_property("/var/www/git/gitweb.cgi", "^our.*projectroot.*", 'our $projectroot = "/var/lib/git";')
   general.shell_exec("ln -s /git /var/www/git/git")
 
   # Install cgit
@@ -142,10 +142,10 @@ def install_git_server(args):
   general.shell_exec("rm -f /var/cache/cgit/50100000")
   general.shell_exec("cat /etc/cgitrepos")
 
-  general.shell_exec("/etc/init.d/httpd start")
+  general.shell_exec("/etc/init.d/httpd restart")
 
   # Install startpage
-  shutil.copy(app.FOSH_PATH + "var/git/noindex.html", "/var/www/error/noindex.html")
+  shutil.copy(app.FOSH_PATH + "var/git/index.html", "/var/www/html/index.html")
 
   #version_obj.mark_executed()
 
