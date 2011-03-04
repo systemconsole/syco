@@ -117,7 +117,7 @@ def install_git_server(args):
   shutil.copy(app.FOSH_PATH + "var/git/git.conf", "/etc/httpd/conf.d/git.conf")
 
   general.set_config_property("/var/www/git/gitweb.cgi", "^our.*projectroot.*", 'our $projectroot = "/var/lib/git";')
-  general.shell_exec("ln -s /git /var/www/git/git")
+  #general.shell_exec("ln -s /var/lib/git /var/www/git/git")
 
   # Install cgit
   general.shell_exec("yum -y install cgit")
