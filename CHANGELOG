@@ -3,7 +3,6 @@ TODO
 
 Version 1
 ---------
-* vir-list, show all guests on all hosts based on install.cfg
 * Rename to syco/syscon.
 * Uninstall programs, modify version.cfg
 * -f (force), will ignore the version.check_executed()
@@ -45,6 +44,8 @@ Version 5
 * installOpenvpn, has the client openvpn certs a unique common name?
 * installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
+* User can use syco with a console/shell behaviour. Much like mysql, virsh,
+  asadmin console. The user can login to a remote host and run local commands.
 
 Harden
 ------
@@ -82,6 +83,7 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110304 DALI - vir-list, show all guests on all hosts based on install.cfg
 110212 DALI - installHttpd workign with httpd and mod_sec.
 110212 DALI - Added scripts that should be executed during installation phase.
 110212 DALI - Renamed fo-tp-svn to fo-tp-vcs (version control system).
