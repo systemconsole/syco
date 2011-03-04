@@ -163,6 +163,9 @@ def uninstall_git_server(args):
   general.shell_exec("rm /root/.gitconfig")
   general.shell_exec("userdel git")
 
+  version_obj = version.Version("InstallGit", SCRIPT_VERSION)
+  version_obj.mark_uninstalled()
+
 def git_commit(args):
   '''
   Commit the fosh folder to the github repository.

@@ -177,6 +177,8 @@ def uninstall_mysql(args):
   general.shell_exec("rm -f /var/log/mysqld.log.rpmsave")
   general.shell_exec("rm -f /var/log/mysqld.log")
   general.shell_exec("rm -f /etc/my.cnf")
+  version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
+  version_obj.mark_uninstalled()
 
 def install_mysql_replication(args):
   '''

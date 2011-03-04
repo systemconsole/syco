@@ -143,6 +143,8 @@ def uninstall_glassfish(args):
     general.shell_exec("rpm -e sun-javadb-common-10.5.3-0.2")
     general.shell_exec("rpm -e jdk-1.6.0_22-fcs")
 
+  version_obj = version.Version("InstallGlassfish", SCRIPT_VERSION)
+  version_obj.mark_uninstalled()
 #
 # Public members
 #

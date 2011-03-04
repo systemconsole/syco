@@ -52,7 +52,7 @@ def install_ca(args):
   return
   app.print_verbose("Install CA version: %d" % script_version)
   version_obj = version.Version("InstallCa", script_version)
-  version_obj.mark_executed()
+  version_obj.check_executed()
 
   if os.path.exists('/etc/ssl/ca/private/ca.key'):
     app.print_verbose("CA is already installed")
@@ -84,4 +84,8 @@ def uninstall_ca(args):
 
   if (os.path.exists('/etc/ssl/ca/private/ca.key')):
     general.shell_exec("rm -rf /etc/ssl/")
+
+  version_obj = version.Version("InstallCa", script_version)
+  version_obj.mark_uninstalled()
+
 

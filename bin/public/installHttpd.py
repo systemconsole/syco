@@ -106,6 +106,9 @@ def uninstall_httpd(args):
     general.shell_exec("rm -rf /var/www/html")
     general.shell_exec("rm -r /usr/lib64/httpd/modules/mod_security2.so")
 
+  version_obj = version.Version("Installhttpd", SCRIPT_VERSION)
+  version_obj.mark_uninstalled()
+  
 def _install_httpd():
   # Install yum packages for apache httpd
   if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
