@@ -269,6 +269,22 @@ def get_commands(host_name):
 
   return sorted(options)
 
+def get_hosts():
+  '''Get the hostname of all kvm hosts.'''
+  hosts = []
+
+  for host_name in get_servers():
+    if is_host(host_name):
+      hosts.append(host_name)
+  return sorted(hosts)
+
+def is_host(host_name):
+  if (config.has_section(host_name)):
+    for option, value in config.items(host_name):
+      if ("guest" in option):
+        return True
+  return False
+
 def get_guests(host_name):
   '''Get the hostname of all guests that should be installed on the kvm host name.'''
   guests = []
