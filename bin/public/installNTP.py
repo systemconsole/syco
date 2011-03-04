@@ -109,3 +109,6 @@ def uninstall_ntp(args):
   if (os.access("/etc/ntp.conf", os.F_OK)):
     general.shell_exec("service ntpd stop")
   general.shell_exec("yum -y remove ntp ")
+
+  version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
+  version_obj.mark_uninstalled()

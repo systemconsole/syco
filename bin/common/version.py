@@ -60,16 +60,15 @@ class Version:
     version has been executed on the current server.
 
     '''
-    config = ConfigParser.RawConfigParser()
-    config.read(self.config_file_name)
+    self._set_version(self.version)
 
-    if not config.has_section(self.hostname):
-      config.add_section(self.hostname)
+  def mark_uninstalled(self):
+    '''
+    Mark that a specific command/routine/script with a verion 0, which means
+    that the command has not been executed on the current server.
 
-    config.set(self.hostname, self.command, self.version)
-    config_file = open(self.config_file_name, 'wb')
-    config.write(config_file)
-    config_file.close()
+    '''
+    self._set_version(0)
 
   def _is_executed(self, command=command, version=version):
     '''
@@ -85,3 +84,19 @@ class Version:
         if config.getint(self.hostname, command) >= version:
           return True
     return False
+
+  def _set_version(self, version):
+    '''
+    Set version to version config file.
+
+    '''
+    config = ConfigParser.RawConfigParser()
+    config.read(self.config_file_name)
+
+    if not config.has_section(self.hostname):
+      config.add_section(self.hostname)
+
+    config.set(self.hostname, self.command, version)
+    config_file = open(self.config_file_name, 'wb')
+    config.write(config_file)
+    config_file.close()
