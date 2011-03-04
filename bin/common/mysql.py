@@ -3,7 +3,7 @@
 Hold properties for a mysql connection needed by glassfish applications.
 
 Example
-MysqlProperties("fosh", "10.0.0.2", "root", "xxxx", "fosh_stable", ["127.0.0.1", "localhost"])
+MysqlProperties("syco", "10.0.0.2", "root", "xxxx", "syco_stable", ["127.0.0.1", "localhost"])
 
 Changelog:
   2011-01-29 - Daniel Lindh - Adding file header and comments

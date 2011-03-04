@@ -99,9 +99,9 @@ class RemoteInstall:
       app.print_verbose("========================================================================================")
 
       obj.install_ssh_key()
-      self._install_fosh_on_remote_host(obj)
+      self._install_syco_on_remote_host(obj)
 
-      # TODO: Create an expect "Verify the fosh master password:" and type password.
+      # TODO: Create an expect "Verify the syco master password:" and type password.
       self._execute(obj, host_name)
     except SettingsError, e:
       app.print_error(e, 2)
@@ -206,11 +206,11 @@ class RemoteInstall:
     else:
       return "?"
 
-  def _install_fosh_on_remote_host(self, ssh):
-    '''Rsync fosh to remote server, and install it
+  def _install_syco_on_remote_host(self, ssh):
+    '''Rsync syco to remote server, and install it
 
     '''
-    app.print_verbose("Install fosh on remote host")
-    ssh.rsync(app.FOSH_PATH, app.FOSH_PATH, "--exclude version.cfg")
-    ssh.ssh_exec(app.FOSH_PATH + "bin/fosh.py install-fosh")
+    app.print_verbose("Install syco on remote host")
+    ssh.rsync(app.SYCO_PATH, app.SYCO_PATH, "--exclude version.cfg")
+    ssh.ssh_exec(app.SYCO_PATH + "bin/syco.py install-syco")
 

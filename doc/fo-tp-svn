@@ -17,7 +17,7 @@ service httpd start
 chkconfig httpd on
 
 # Setup svn
-cp fosh/var/fo-tp-svn/subversion.conf /etc/httpd/conf.d/subversion.conf
+cp syco/var/fo-tp-svn/subversion.conf /etc/httpd/conf.d/subversion.conf
 
 # Enable selinux
 # http://ejohansson.se/archives/2007/11/04/selinux-subversion-and-mod_svn/

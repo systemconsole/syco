@@ -1,5 +1,5 @@
 '''
-Handling git from fosh.
+Handling git from syco.
 
 Read more
 http://whygitisbetterthanx.com/
@@ -10,13 +10,13 @@ http://gitready.com/
 https://git.wiki.kernel.org/index.php/Interfaces,_frontends,_and_tools
 http://nfocipher.com/index.php?op=ViewArticle&articleId=12&blogId=1
 
-$ fosh install-git-server
+$ syco install-git-server
 Install git server software on current host.
 
-$ fosh git-commit "Commit comment"
-Add all files in fosh folder git repo on github.
+$ syco git-commit "Commit comment"
+Add all files in syco folder git repo on github.
 
-$ fosh git-clean
+$ syco git-clean
 Remove files that should not be added to the git-repo. For now .pyc files.
 
 Changelog:
@@ -24,7 +24,7 @@ Changelog:
   2011-01-xx - Daniel Lindh - Added git-commit command
 
 TODO: Add commit for all plugins.
-TODO: use fosh install-httpd ???
+TODO: use syco install-httpd ???
 TODO: git-svn, sync with the fo svn.
 
 '''
@@ -53,7 +53,7 @@ SCRIPT_VERSION = 1
 def build_commands(commands):
   commands.add("install-git-server",   install_git_server, help="Install git server")
   commands.add("uninstall-git-server", uninstall_git_server, help="Uninstall git server")
-  commands.add("git-commit", git_commit, "[comment]", help="Commit changes to fosh to github")
+  commands.add("git-commit", git_commit, "[comment]", help="Commit changes to syco to github")
   commands.add("git-clean", git_clean, help="Remove files that should not be added to the git-repo. For now .pyc files.")
 
 def install_git_server(args):
@@ -80,8 +80,8 @@ def install_git_server(args):
   general.shell_exec("ln -s /var/lib/git /git")
 
   # Setup repo
-  general.shell_exec("git clone --bare git://github.com/arlukin/fosh.git /var/lib/git/fosh.git")
-  general.shell_exec("git clone --bare git://github.com/arlukin/fosh-template.git /var/lib/git/syco-private.git")
+  general.shell_exec("git clone --bare git://github.com/systemconsole/syco.git /var/lib/git/syco.git")
+  general.shell_exec("git clone --bare git://github.com/systemconsole/syco-template.git /var/lib/git/syco-private.git")
 
   #
   # Create an empty repo
@@ -114,7 +114,7 @@ def install_git_server(args):
       re.compile('Is this ok [(]y[/]n[)][:].*'): "y\r\n"
     }
   )
-  shutil.copy(app.FOSH_PATH + "var/git/git.conf", "/etc/httpd/conf.d/git.conf")
+  shutil.copy(app.SYCO_PATH + "var/git/git.conf", "/etc/httpd/conf.d/git.conf")
 
   general.set_config_property("/var/www/git/gitweb.cgi", "^our.*projectroot.*", 'our $projectroot = "/var/lib/git";')
   #general.shell_exec("ln -s /var/lib/git /var/www/git/git")
@@ -145,7 +145,7 @@ def install_git_server(args):
   general.shell_exec("/etc/init.d/httpd restart")
 
   # Install startpage
-  shutil.copy(app.FOSH_PATH + "var/git/index.html", "/var/www/html/index.html")
+  shutil.copy(app.SYCO_PATH + "var/git/index.html", "/var/www/html/index.html")
 
   #version_obj.mark_executed()
 
@@ -168,14 +168,14 @@ def uninstall_git_server(args):
 
 def git_commit(args):
   '''
-  Commit the fosh folder to the github repository.
+  Commit the syco folder to the github repository.
 
   '''
   comment = args[1]
   git_clean(args)
-  general.shell_exec("git add *", cwd=app.FOSH_PATH)
-  general.shell_exec("git commit -a -m'" + comment + "'", cwd=app.FOSH_PATH)
-  general.shell_exec("git push origin", cwd=app.FOSH_PATH)
+  general.shell_exec("git add *", cwd=app.SYCO_PATH)
+  general.shell_exec("git commit -a -m'" + comment + "'", cwd=app.SYCO_PATH)
+  general.shell_exec("git push origin", cwd=app.SYCO_PATH)
 
 def git_clean(args):
-  general.shell_exec("find " + app.FOSH_PATH + " -iname '*.pyc' -delete")
+  general.shell_exec("find " + app.SYCO_PATH + " -iname '*.pyc' -delete")

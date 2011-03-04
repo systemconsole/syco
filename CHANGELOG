@@ -1,10 +1,6 @@
 TODO
 ====
 
-Version 1
----------
-* Rename to syco/syscon.
-
 Version 2
 ---------
 * Adapt installation to glassfish3
@@ -56,8 +52,8 @@ Harden
   http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf
 * Harden, remove/disable these services
   hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm
-* Add user used by fosh, so it don't need to use root. Then prevent root ssh login.
-  user --name=fosh --uid=500 --groups=wheel,root --password=nothingspecial
+* Add user used by syco, so it don't need to use root. Then prevent root ssh login.
+  user --name=syco --uid=500 --groups=wheel,root --password=nothingspecial
 * Immunize all config files with "chattr +i xx", files that shouldn't be modified by anyone.
 * semanage on all files we are using chcon on.
 * Mask password that are written to the stdout.
@@ -66,21 +62,23 @@ Harden
 
 Remote-install
 --------------
-* fosh remote-install, should loop and wait for all clients to become alive.
+* syco remote-install, should loop and wait for all clients to become alive.
   Then run all commands on them.
 * The guests should use the repos from the cobbler server.
 * The guest should be locally "firewalled" to not be able to reach out to 
   anything more then they need.
 * Run "remote-install-deamon" on cobbler server.
 * The remote-install deamon should check for changes in install.cfg.
-* Add all output from fosh to a log file.
-* Add "fosh remote-install" in kickstart for fo-tp-install
+* Add all output from syco to a log file.
+* Add "syco remote-install" in kickstart for fo-tp-install
 
 CHANGELOG
 =========
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110204 DALI - Rename project to syco (System Console) and pushed to
+              github.com/systemconsole/syco.git
 110304 DALI - When user add -f (force) to command line, version.check_executed()
               ignores value in version.cfg.
 110304 DALI - When user run an uninstall command, the version.cfg should be reset to version 0.
@@ -91,7 +89,7 @@ DALI=Daniel Lindh
 110212 DALI - Disabled modsec rule "block not allowed urls.", things got to complicated in installFarepayment.
 110212 DALI - Enable SELinux httpd_can_network_connect on apache servers, to get mod_proxy working.
 110212 DALI - Modsecurity-crs file was downloaded to the wrong filename.
-110212 DALI - Automatically delete install dir when fosh exit.
+110212 DALI - Automatically delete install dir when syco exit.
 110212 DALI - Set java and java_home path for the currently logged in user, when installing glassfish.
 110210 DALI - Move private plugins from bin/private to usr/
 110210 DALI - Moving private files to private repo.
@@ -107,7 +105,7 @@ DALI=Daniel Lindh
 110203 DALI - Saving passwords to file after they have been executed entered by user.
 110203 DALI - Invalid use of variables in version.mark_executed(), crashed the program.
 110203 DALI - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
-110203 DALI - Replace /opt/fosh with app.FOSH_PATH in all files.
+110203 DALI - Replace /opt/syco with app.SYCO_PATH in all files.
 110203 DALI - Changed use of shell_exec to asadmin_exec
 110201 DALI - Fixed the output of print_verbose and shell_exec.
 110201 DALI - Replaced shell_exec with shell_exec_p everywhere in the code.
@@ -117,7 +115,7 @@ DALI=Daniel Lindh
 110130 DALI - Refactoring the use off class Version.
 110129 DALI - Refactoring and cleaning up the SSH code.
 110129 DALI - Use PasswordStore everywhere in the code where passwords are used.
-110129 DALI - Adding file header and comments to all fosh files.
+110129 DALI - Adding file header and comments to all syco files.
 110129 DALI - Added public and private command types, refactoring of code.
 110128 DALI - Added git-clean command
 110128 DALI - Version 1.0.0 of installFarepayment completed.
@@ -130,11 +128,11 @@ DALI=Daniel Lindh
 110121 DALI - setup_iptables for installMysql
 110121 DALI - Working install-mysql
 110121 DALI - Working install-mysql-replication.
-101215 DALI - Install pexpect on all fosh servers.
+101215 DALI - Install pexpect on all syco servers.
 101214 DALI - Write installVpn.py script to install openvpn.
 101210 DALI - Indicate disk space to use for a guest in install.cfg
 101210 DALI - Configure install.cfg to use all computers.
-101210 DALI - Read "configuration" of which commands to use from the dir bin/fosh/fosh/
+101210 DALI - Read "configuration" of which commands to use from the dir bin/syco/syco/
               http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
 101209 DALI - Install all servers with pxe.
 101209 DALI - Move dhcp to fo-tp-install

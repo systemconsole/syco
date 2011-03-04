@@ -152,9 +152,9 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*',   "yum_post_install_mirror: 1")
   general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*',               "manage_dhcp: 1")
 
-  shutil.copyfile(app.FOSH_PATH + "/var/fo-tp-host.ks", "/var/lib/cobbler/kickstarts/fo-tp-host.ks")
-  shutil.copyfile(app.FOSH_PATH + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
-  shutil.copyfile(app.FOSH_PATH + "/var/fo-tp-install/dhcp.template", "/etc/cobbler/dhcp.template")
+  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-host.ks", "/var/lib/cobbler/kickstarts/fo-tp-host.ks")
+  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
+  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-install/dhcp.template", "/etc/cobbler/dhcp.template")
 
   # Config crontab to update repo automagically
   general.set_config_property("/etc/crontab", "01 \* \* \* \* root cobbler reposync \-\-tries\=3 \-\-no\-fail", "01 * * * * root cobbler reposync --tries=3 --no-fail")

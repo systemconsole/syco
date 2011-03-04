@@ -40,7 +40,7 @@ class Version:
   command = None
   version = None
 
-  config_file_name = app.FOSH_ETC_PATH + "version.cfg"
+  config_file_name = app.SYCO_ETC_PATH + "version.cfg"
 
   def __init__(self, command, version):
     self.command = command

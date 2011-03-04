@@ -62,7 +62,7 @@ JDK_REPO_URL = "http://10.100.100.200/cobbler/repo_mirror/java/" + JDK_INSTALL_F
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the fosh.py shell script.
+  Defines the commands that can be executed through the syco.py shell script.
 
   '''
   commands.add("install-glassfish", install_glassfish, help="Install glassfish3 on the current server.")
@@ -233,12 +233,12 @@ def _install_glassfish():
 
     # Set executeion permissions and run the installation.
     os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-    shutil.copy(app.FOSH_PATH + "var/glassfish/glassfish-3.0.1-unix-answer", "/tmp/install/glassfish-3.0.1-unix-answer")
+    shutil.copy(app.SYCO_PATH + "var/glassfish/glassfish-3.0.1-unix-answer", "/tmp/install/glassfish-3.0.1-unix-answer")
     general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a glassfish-3.0.1-unix-answer -s", user="glassfish")
 
     # Install the start script
     if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
-      shutil.copy(app.FOSH_PATH + "var/glassfish/glassfish", "/etc/init.d/" + GLASSFISH_VERSION)
+      shutil.copy(app.SYCO_PATH + "var/glassfish/glassfish", "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")

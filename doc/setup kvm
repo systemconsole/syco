@@ -8,7 +8,7 @@ h2. Prerequisite
 
 h2. Install KVM host
 
-fosh install-kvmhost
+syco install-kvmhost
 
 h1. Setup KVM guest
 
