@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Install and configure fosh to be used on localhost.
+Install and configure syco to be used on localhost.
 
 Changelog:
   2011-01-29 - Daniel Lindh - Adding file header and comments
@@ -19,17 +19,17 @@ import os, sys
 import app
 
 def build_commands(commands):
-  commands.add("install-fosh", install_fosh, help="Install the fosh script on the current server.")
+  commands.add("install-syco", install_syco, help="Install the syco script on the current server.")
 
-def install_fosh(args):
+def install_syco(args):
   '''
   Install/configure this script on the current computer.
 
   '''
-  app.print_verbose("Install fosh")
-  if (os.access('/sbin/fosh', os.F_OK) == False):
-    app.print_verbose("Create symlink /sbin/fosh")
-    os.symlink(sys.path[0] + '/fosh.py', '/sbin/fosh')
+  app.print_verbose("Install syco")
+  if (os.access('/sbin/syco', os.F_OK) == False):
+    app.print_verbose("Create symlink /sbin/syco")
+    os.symlink(sys.path[0] + '/syco.py', '/sbin/syco')
   else:
     app.print_verbose("   Already installed")
 

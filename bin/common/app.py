@@ -28,30 +28,30 @@ import subprocess
 import passwordStore
 
 #
-#  Contains global functions and settings for the fosh app
+#  Contains global functions and settings.
 #
 
-# The version of the fosh script
+# The version of the syco script
 version = "0.1"
 parser = ''
 
-# FOSH root folder.
-FOSH_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
+# SYCO root folder.
+SYCO_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
 
 # Scripts that should be availble in public repos.
-FOSH_PUBLIC_PATH = os.path.abspath(FOSH_PATH + "/bin/public/")
+SYCO_PUBLIC_PATH = os.path.abspath(SYCO_PATH + "/bin/public/")
 
 # Scripts that should only be available in private repos.
-FOSH_USR_PATH = os.path.abspath(FOSH_PATH + "/usr/")
+SYCO_USR_PATH = os.path.abspath(SYCO_PATH + "/usr/")
 
 # Etc (config) files.
-FOSH_ETC_PATH = FOSH_PATH + "etc/"
+SYCO_ETC_PATH = SYCO_PATH + "etc/"
 
-# Files (rpm etc.) that should be installed by fosh, are temporary stored here.
+# Files (rpm etc.) that should be installed by syco, are temporary stored here.
 INSTALL_DIR = "/tmp/install/"
 
-# All passwords used by fosh are stored in this enrypted file.
-PASSWORD_STORE_PATH = FOSH_PATH + "etc/passwordstore"
+# All passwords used by syco are stored in this enrypted file.
+PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
 
 # When a general username is required.
 SERVER_ADMIN_NAME = "syco"
@@ -64,7 +64,7 @@ BOLD = "\033[1m"
 RESET = "\033[0;0m"
 
 # Global accessible object containing all install.cfg options.
-config_file_name = FOSH_ETC_PATH + "install.cfg"
+config_file_name = SYCO_ETC_PATH + "install.cfg"
 config = ConfigParser.RawConfigParser()
 config.read(config_file_name)
 
@@ -83,7 +83,7 @@ def print_error(message, verbose_level=1):
   '''
   Print bold error text to stdout, affected by the verbolse level.
 
-  All error print to screen done by fosh should be done with this.
+  All error print to screen done by syco should be done with this.
 
   '''
   print_verbose(message, verbose_level=verbose_level, caption=BOLD + "Error: " + RESET)
@@ -92,7 +92,7 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
   '''
   Print a text to the stdout, affected by the verbose level.
 
-  All print to screen done by fosh should be done with this.
+  All print to screen done by syco should be done with this.
 
   #TODO: The caption are not always written ok when using new_line=False, see example at the bottom.
 
@@ -192,7 +192,7 @@ def init_mysql_passwords():
 
 def init_all_passwords():
   '''
-  Ask the user for all passwords used by fosh, and add to passwordstore.
+  Ask the user for all passwords used by syco, and add to passwordstore.
 
   '''
   get_root_password()

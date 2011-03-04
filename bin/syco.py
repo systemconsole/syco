@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 '''
-Main file for executing fosh commands.
+Main file for executing syco commands.
 
-fosh is a command line shell, used to execute customized installation scripts 
+syco is a command line shell, used to execute customized installation scripts 
 for linux services and softwares.
 
 Examples:
-fosh install-fosh
+syco install-syco
   
 Changelog:
 110210 DALI - Move private plugins from bin/private to usr/
@@ -35,15 +35,15 @@ sys.path.append(sys.path[0] + "/common/")
 import app
 
 # Files published to public repos.
-sys.path.append(app.FOSH_PUBLIC_PATH)
+sys.path.append(app.SYCO_PUBLIC_PATH)
 
-#  Import all py files including fosh commands.
-command_dir = os.listdir(app.FOSH_PUBLIC_PATH)
+#  Import all py files including syco commands.
+command_dir = os.listdir(app.SYCO_PUBLIC_PATH)
 
 # Files only available in private user repos.
-if (os.access(app.FOSH_USR_PATH, os.F_OK)):
-  for plugin in os.listdir(app.FOSH_USR_PATH):
-    plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+  for plugin in os.listdir(app.SYCO_USR_PATH):
+    plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
     sys.path.append(plugin_path)
     command_dir += os.listdir(plugin_path)
 
@@ -86,7 +86,7 @@ class Commands:
     
   def add(self, name, func, arguments="", help=""):
     '''
-    Add a command that are able to be executed from the fosh command line.
+    Add a command that are able to be executed from the syco command line.
     
     This is a callback function used by the modules.
     
@@ -147,13 +147,13 @@ class Commands:
     '''
     try:
       self.current_type = "public"
-      for obj in self._get_modules(app.FOSH_PUBLIC_PATH):
+      for obj in self._get_modules(app.SYCO_PUBLIC_PATH):
         obj.build_commands(self)
 
       self.current_type = "private"
-      if (os.access(app.FOSH_USR_PATH, os.F_OK)):
-        for plugin in os.listdir(app.FOSH_USR_PATH):
-          plugin_path = os.path.abspath(app.FOSH_USR_PATH + "/" + plugin + "/bin/")
+      if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+        for plugin in os.listdir(app.SYCO_USR_PATH):
+          plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
           for obj in self._get_modules(plugin_path):
            obj.build_commands(self)
                   
@@ -164,7 +164,7 @@ class Commands:
       
   def _get_modules(self, commands_path):
     '''
-    Return a list of objects representing all available fosh modules in specified folder.
+    Return a list of objects representing all available syco modules in specified folder.
     
     '''
     modules=[]

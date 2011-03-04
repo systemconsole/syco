@@ -8,7 +8,7 @@ http://www.techrepublic.com/blog/10things/10-things-you-should-do-to-secure-apac
 http://www.petefreitag.com/item/505.cfm
 
 Changelog:
-110204 - DALI - Refactoring and merging with main branch of fosh.
+110204 - DALI - Refactoring and merging with main branch of syco.
 1101xx - MAHE - Draft of installHttpd
 
 
@@ -59,7 +59,7 @@ MODSEC_RULES_FILE = "modsecurity-crs_2.1.2"
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the fosh.py shell script.
+  Defines the commands that can be executed through the syco.py shell script.
 
   '''
   commands.add("install-httpd", install_httpd, help="Install apache webbserver on the current server.")
@@ -116,9 +116,9 @@ def _install_httpd():
     general.shell_exec("chkconfig httpd on")
 
   # Copy config files
-  general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/conf/httpd.conf /etc/httpd/conf/")
-  general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/conf.d/001-common.conf /etc/httpd/conf.d/")
-  general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/conf.d/002-ssl.conf /etc/httpd/conf.d/ssl.conf")
+  general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf/httpd.conf /etc/httpd/conf/")
+  general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/001-common.conf /etc/httpd/conf.d/")
+  general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/002-ssl.conf /etc/httpd/conf.d/ssl.conf")
   general.shell_exec("mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/002-ssl.conf")
 
   # Secure httpd.conf
@@ -129,7 +129,7 @@ def _install_httpd():
   general.shell_exec("rm -f /etc/httpd/conf.d/welcome.conf")
 
   # Install web pages
-  general.shell_exec("cp -r " + app.FOSH_PATH + "var/httpd/html/* /var/www/html/")
+  general.shell_exec("cp -r " + app.SYCO_PATH + "var/httpd/html/* /var/www/html/")
 
 def _install_mod_security():
   if (not os.access("/usr/lib64/httpd/modules/mod_security2.so", os.F_OK)):
@@ -163,7 +163,7 @@ def _install_mod_security():
       "libxml2-devel zlib-devel")
 
   # Install mode-sec config files.
-  general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
+  general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
   general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz/download", MODSEC_RULES_FILE + ".tar.gz")
@@ -180,7 +180,7 @@ def _update_modsec_rules():
   general.shell_exec("mv /etc/httpd/" + MODSEC_RULES_FILE + " /etc/httpd/modsecurity.d")
 
   # Install customized rules.
-  general.shell_exec("cp " + app.FOSH_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
+  general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
 
 def _enable_se_linux():
   general.shell_exec("/usr/sbin/setsebool httpd_can_network_connect 1")

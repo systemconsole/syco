@@ -88,7 +88,7 @@ def install_mysql(args):
 
   print len(args)
   if (len(args) != 3):
-    raise Exception("fosh install-mysql [server-id] [innodb-buffer-pool-size]")
+    raise Exception("syco install-mysql [server-id] [innodb-buffer-pool-size]")
 
   server_id=args[1]
   innodb_buffer_pool_size=args[2]
@@ -128,7 +128,7 @@ def install_mysql(args):
   general.shell_exec("hdparm -W0 /dev/mapper/VolGroup00-var")
 
   app.print_verbose("Install /etc/my.cnf")
-  shutil.copy(app.FOSH_PATH + "var/mysql/my.cnf",  "/etc/my.cnf")
+  shutil.copy(app.SYCO_PATH + "var/mysql/my.cnf",  "/etc/my.cnf")
   for line in fileinput.FileInput("/etc/my.cnf", inplace=1):
     line=line.replace("${server-id}", server_id)
     line=line.replace("${innodb_buffer_pool_size}", innodb_buffer_pool_size)

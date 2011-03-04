@@ -4,7 +4,7 @@ TODO, THIS FILE IS NOT READY TO USE.
 
 
 Changelog:
-110204 - DALI - Refactoring and merging with main branch of fosh.
+110204 - DALI - Refactoring and merging with main branch of syco.
 1101xx - MAHE - Draft of installHttpd
 
 TODO:
@@ -38,7 +38,7 @@ script_version = 1
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the fosh.py shell script. 
+  Defines the commands that can be executed through the syco.py shell script. 
   
   '''
   commands.add("install-ca", install_ca, help="Install CA on the server.")
@@ -64,7 +64,7 @@ def install_ca(args):
     #creating certs
     os.chdir("/etc/ssl")
     general.shell_exec("openssl genrsa -out ca/private/ca.key 4096")
-    general.shell_exec("openssl req -new -key ca/private/ca.key -out ca/ca.csr -subj '/O=fosh/OU=Sysop fosh Labs/CN=www.fosh.org'")
+    general.shell_exec("openssl req -new -key ca/private/ca.key -out ca/ca.csr -subj '/O=syco/OU=System Console Project/CN=systemconsole.github.com'")
     general.shell_exec("openssl x509 -req -days 365 -in ca/ca.csr -signkey ca/private/ca.key -out ca/ca.crt ")
 
     #creating server certs

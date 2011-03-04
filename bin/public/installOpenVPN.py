@@ -53,7 +53,7 @@ def install_openvpn_server(args):
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
     general.shell_exec("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
-    general.shell_exec("cp " + app.FOSH_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
+    general.shell_exec("cp " + app.SYCO_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
 
     # Prepare the ca cert generation.
     general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="SE"')
@@ -94,9 +94,9 @@ def install_openvpn_server(args):
 
 def build_client_certs(args):
   os.chdir("/etc/openvpn/easy-rsa/keys")
-  general.set_config_property("/etc/cronjob", "01 * * * * root run-parts fosh build_client_certs", "01 * * * * root run-parts fosh build_client_certs")
-  general.shell_exec("cp " + app.FOSH_PATH + "/var/openvpn/client.conf ./client.conf")
-  general.shell_exec("cp " + app.FOSH_PATH + "/doc/openvpn/install.txt .")
+  general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
+  general.shell_exec("cp " + app.SYCO_PATH + "/var/openvpn/client.conf ./client.conf")
+  general.shell_exec("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
 
   for user in os.listdir("/home"):
     cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)

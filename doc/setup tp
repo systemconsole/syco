@@ -8,9 +8,9 @@ This machine is the first machine that will be setup.
   Configure the bios.
 * Setup centos 
   This must be done by hand, no installation server exists now.
-* Download fosh from git
+* Download syco from git
 * Install all software on fo-tp-vh01
-  fosh remote-install fo-tp-vh01
+  syco remote-install fo-tp-vh01
   
 h2. Setup all kvm hosts fo-tp-vh02 -- fo-tp-vh04
 
@@ -21,4 +21,4 @@ h2. Setup all kvm hosts fo-tp-vh02 -- fo-tp-vh04
 h2. Setup all other guests
 
 On fo-fp-install
-* fosh remote-install  
+* syco remote-install  

@@ -1,36 +1,37 @@
-Fareoffice Shell
-A bunch of sysadmin functions used at Fareoffice.
+System Console
+==============
+Customized scripts for installation of services/application on linux servers.
 
 CLONING
 ssh-keygen -t rsa
 cat ~/.ssh/id_rsa.pub
 # Insert the output into www.github.com.
-git clone git@github.com:arlukin/fosh.git
+git clone git@github.com:arlukin/syco.git
 
 # Add private/customized scripts.
-cd fosh
+cd syco
 mkdir usr
 cd usr
-git clone git@github.com:arlukin/fosh-template.git
+git clone git@github.com:arlukin/syco-template.git
 
 DOCUMENTATION
 -------------
 
-THE FLOW OF THE "fosh remote-install"
+THE FLOW OF THE "syco remote-install"
 
-* Download fosh from git
-* On fo-tp-vh01 "fosh remote-install fo-tp-vh01"
-** On fo-tp-vh01 "fosh hardening"
-** On fo-tp-vh01 "fosh install-kvmhost"
-** On fo-tp-vh01 "fosh install-fo-tp-install"
-** On fo-tp-vh01 "fosh install-guests"
+* Download syco from git
+* On fo-tp-vh01 "syco remote-install fo-tp-vh01"
+** On fo-tp-vh01 "syco hardening"
+** On fo-tp-vh01 "syco install-kvmhost"
+** On fo-tp-vh01 "syco install-fo-tp-install"
+** On fo-tp-vh01 "syco install-guests"
 *** On fo-tp-vh01, install fp-tp-system1
 *** On fo-tp-vh01, install fp-tp-gf
-** On fo-tp-install "fosh git-clone"
-** On fo-tp-install "fosh hardening"
-** On fo-tp-install "fosh install-cobbler"
-** On fo-tp-install "fosh remote-install"
+** On fo-tp-install "syco git-clone"
+** On fo-tp-install "syco hardening"
+** On fo-tp-install "syco install-cobbler"
+** On fo-tp-install "syco remote-install"
 *** Look for alive hosts defined in install.cfg
-*** Run "fosh remote-install xx" on the host alive.
+*** Run "syco remote-install xx" on the host alive.
 *** Continue until "remote-install" has been executed on all servers. 
 
