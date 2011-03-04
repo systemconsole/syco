@@ -4,7 +4,6 @@ TODO
 Version 1
 ---------
 * Rename to syco/syscon.
-* -f (force), will ignore the version.check_executed()
 
 Version 2
 ---------
@@ -82,6 +81,8 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110304 DALI - When user add -f (force) to command line, version.check_executed()
+              ignores value in version.cfg.
 110304 DALI - When user run an uninstall command, the version.cfg should be reset to version 0.
 110304 DALI - vir-list, show all guests on all hosts based on install.cfg
 110212 DALI - installHttpd workign with httpd and mod_sec.

@@ -74,6 +74,9 @@ class Options:
   # Set by -v and -q.
   verbose = 1
 
+  # Set by -f
+  force = 0
+
 options = Options()
 
 def print_error(message, verbose_level=1):

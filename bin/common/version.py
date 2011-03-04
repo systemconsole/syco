@@ -50,8 +50,8 @@ class Version:
     '''
     Check if the command has been executed, raise Exception otherwise.
 
-    '''
-    if (self._is_executed(self.command, self.version)):
+    '''    
+    if (app.options.force == 0 and self._is_executed(self.command, self.version)):
       raise Exception("Command " + str(self.command) + " version " + str(self.version) + " is already executed")
 
   def mark_executed(self):
