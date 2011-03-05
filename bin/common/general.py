@@ -2,20 +2,12 @@
 '''
 General python functions that don't fit in it's own file.
 
-Changelog:
-110211 DALI - Automatically delete install dir when script exits.
-110203 DALI - Installation of pexpect didn't work when it was at the bottom of the file.
-110203 DALI - shell_exec didn't execute the command in the current working directory.
-110203 DALI - download_file only need first argument, and will download the file to install dir
-110201 DALI - Replaced shell_exec with shell_exec_p everywhere in the code.
-110201 DALI - Refactoring and comments.
-110129 DALI - Adding file header and comments
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"

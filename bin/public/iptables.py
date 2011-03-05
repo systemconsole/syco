@@ -16,17 +16,12 @@ TODO:
   http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
 * SSH to the server should only be allowed from certain ips.
 
-Changelog:
-110211 DALI - Allow GPG to talk to keyserver.ubuntu.com:11371
-110205 DALI - Added allowed_udp chain to use with UDP rules.
-110205 DALI - Added support for httpd and modsecurity.
-110129 DALI - Adding file header and comments
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["Oskar Andreasson"]
 __license__ = "???"
 __version__ = "1.0.0"

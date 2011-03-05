@@ -2,16 +2,12 @@
 '''
 Application global wide helper functions.
 
-Changelog:
-110211 DALI - Removed dependency from General.py
-110201 DALI - Some minor refactoring and commenting.
-110129 DALI - Adding file header and comments.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"

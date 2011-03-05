@@ -16,14 +16,12 @@ TODO
 * Anything speial that needs to be done on KVM guests?
 * SSL or other keys to the ntp server?
 
-CHANGELOG
-2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"

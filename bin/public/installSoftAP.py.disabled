@@ -16,12 +16,13 @@ http://www.backtrack-linux.org/forums/beginners-forum/1939-lucafas-tutorial-soft
 http://www.backtrack-linux.org/forums/backtrack-howtos/28111-new-script-capturing-passwords-sslstrip-airssl-sh.html
 http://www.howtoforge.com/dhcp_server_linux_debian_sarge
 http://www.backtrack-linux.org/forums/backtrack-videos/32462-[script]-[video]-fakeap_pwn-v0-3-a.html
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"

@@ -22,15 +22,13 @@ Examples:
 Credits:
   Based on Kang Zhangs "Python Keyring Lib" project.
   http://pypi.python.org/pypi/keyring
-  
-Changelog:
-  2011-01-28 - Daniel Lindh - Version 1.0.0 of PasswordStore completed.
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["Kang Zhang"]
 __license__ = "???"
 __version__ = "1.0.0"
