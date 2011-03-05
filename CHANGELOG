@@ -72,6 +72,10 @@ Remote-install
 * Add all output from syco to a log file.
 * Add "syco remote-install" in kickstart for fo-tp-install
 
+Other
+-----
+* Check articles http://articles.slicehost.com/sitemap
+
 CHANGELOG
 =========
 MAHE=Mattias Hemmingsson
