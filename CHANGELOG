@@ -8,7 +8,6 @@ Version 2
 * installHudson
 * instalSonar
 * Write installLDAP.py script.
-* Create webpage for systemconsole.github.com
 
 Version 3
 ---------
@@ -78,6 +77,7 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110205 DALI - Create webpage for systemconsole.github.com
 110205 DALI - Removed changelog from all scripts. The changelog is to be found
               in the git log.
 110204 DALI - Rename project to syco (System Console) and pushed to
