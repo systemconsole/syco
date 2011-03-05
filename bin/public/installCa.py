@@ -2,13 +2,6 @@
 '''
 TODO, THIS FILE IS NOT READY TO USE.
 
-
-Changelog:
-110204 - DALI - Refactoring and merging with main branch of syco.
-1101xx - MAHE - Draft of installHttpd
-
-TODO:
-
 '''
 
 __author__ = "mattias@fareoffice.com"

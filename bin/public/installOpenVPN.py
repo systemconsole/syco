@@ -10,17 +10,15 @@ http://notes.brooks.nu/2008/08/openvpn-setup-on-centos-52/
 http://www.howtoforge.com/openvpn-server-on-centos-5.2
 http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
 
-#TODO: yum installopenvpn-auth-ldap ??
-#TODO: Remove pexpect, use general.shell_exec
+TODO: yum installopenvpn-auth-ldap ??
+TODO: Remove pexpect, use general.shell_exec
 
-CHANGELOG
-2011-01-30 - Daniel Lindh - Refactoring the use off class Version.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"

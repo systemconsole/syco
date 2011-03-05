@@ -19,10 +19,6 @@ Add all files in syco folder git repo on github.
 $ syco git-clean
 Remove files that should not be added to the git-repo. For now .pyc files.
 
-Changelog:
-  2011-01-28 - Daniel Lindh - Added git-clean command
-  2011-01-xx - Daniel Lindh - Added git-commit command
-
 TODO: Add commit for all plugins.
 TODO: use syco install-httpd ???
 TODO: git-svn, sync with the fo svn.
@@ -30,9 +26,10 @@ TODO: git-svn, sync with the fo svn.
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel@cybercow.se"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"

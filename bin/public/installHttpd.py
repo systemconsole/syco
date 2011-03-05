@@ -7,11 +7,6 @@ http://httpd.apache.org/docs/2.2/misc/perf-tuning.html
 http://www.techrepublic.com/blog/10things/10-things-you-should-do-to-secure-apache/477
 http://www.petefreitag.com/item/505.cfm
 
-Changelog:
-110204 - DALI - Refactoring and merging with main branch of syco.
-1101xx - MAHE - Draft of installHttpd
-
-
 TODO: http://httpd.apache.org/docs/2.2/mod/directives.html
 TODO: Add http://httpd.apache.org/docs/2.2/mod/mod_status.html
     disabled for best performance
@@ -30,10 +25,10 @@ TODO: When modsec fails, execute a shell script that looks for info about the at
 '''
 
 __author__ = "mattias@fareoffice.com"
-__copyright__ = "Copyright 2011, Fareoffice Car Rental SolutionsAB"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel@fareoffice.com"
-__credits__ = ["Daniel LIndh"]
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"

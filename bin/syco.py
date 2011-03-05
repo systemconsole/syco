@@ -7,16 +7,13 @@ for linux services and softwares.
 
 Examples:
 syco install-syco
-  
-Changelog:
-110210 DALI - Move private plugins from bin/private to usr/
-110129 DALI - Added public and private command types, refactoring of code.
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["Mattias Hemmingsson"]
 __license__ = "???"
 __version__ = "0.1"

@@ -78,6 +78,8 @@ CHANGELOG
 MAHE=Mattias Hemmingsson
 DALI=Daniel Lindh
 
+110205 DALI - Removed changelog from all scripts. The changelog is to be found
+              in the git log.
 110204 DALI - Rename project to syco (System Console) and pushed to
               github.com/systemconsole/syco.git
 110304 DALI - When user add -f (force) to command line, version.check_executed()

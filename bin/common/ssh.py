@@ -19,15 +19,12 @@ http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-diffe
 http://www.linuxplanet.com/linuxplanet/tutorials/6618/1/
 http://www.lag.net/paramiko/docs/
   
-Changelog:
-	2011-01-29 - Daniel Lindh - Refactoring and cleaning up the code.
-  2011-01-29 - Daniel Lindh - Adding file header and comments
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
-__copyright__ = "Copyright 2011, The syscon project"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel.lindh@cybercow.se"
+__email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
