@@ -5,9 +5,10 @@ Version 2
 ---------
 * Adapt installation to glassfish3
   http://glassfish.java.net/docs/3.1/installation-guide.pdf
+* installLDAP.py
+* installBind.py
 * installHudson
 * instalSonar
-* Write installLDAP.py script.
 
 Version 3
 ---------
