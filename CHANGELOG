@@ -23,6 +23,7 @@ Refactor
 
 Version 4
 ---------
+* Check "gerrit" code review software and implement on vcs server.
 * Create install-svn
 * Build report tool to check swap memory.
   A webserver should never ever have to swap, as swapping increases the latency
