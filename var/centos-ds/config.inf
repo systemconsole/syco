@@ -1,0 +1,28 @@
+[General]
+AdminDomain = fareonline.net
+SuiteSpotGroup = nobody
+ConfigDirectoryLdapURL = ldap://ldap.fareonline.net:389/o=NetscapeRoot
+ConfigDirectoryAdminID = admin
+SuiteSpotUserID = nobody
+FullMachineName = ldap.fareonline.net
+
+[admin]
+ServerAdminID = admin
+SysUser = nobody
+ServerIpAddress = 0.0.0.0
+Port = 9830
+
+[slapd]
+InstallLdifFile = suggest
+ServerIdentifier = ldap
+ServerPort = 389
+AddOrgEntries = Yes
+RootDN = cn=Directory Manager
+SlapdConfigForMC = yes
+Suffix = dc=fareonline, dc=net
+UseExistingMC = 0
+AddSampleEntries = No
+#ConfigFile = repluser.ldif
+#ConfigFile = changelog.ldif
+#ConfigFile = replica.ldif
+#ConfigFile = replagreement.ldif
