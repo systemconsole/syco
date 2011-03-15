@@ -43,7 +43,7 @@ SCRIPT_VERSION = 1
 # NOTE: Remember to change path in
 # var/glassfish/glassfish
 # var/glassfish-3.0.1-unix-answer
-GLASSFISH_VERSION = "glassfish.3.0.1"
+GLASSFISH_VERSION = "glassfish-3.0.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
@@ -227,12 +227,12 @@ def _install_glassfish():
 
     # Set executeion permissions and run the installation.
     os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-    shutil.copy(app.SYCO_PATH + "var/glassfish/glassfish-3.0.1-unix-answer", "/tmp/install/glassfish-3.0.1-unix-answer")
-    general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a glassfish-3.0.1-unix-answer -s", user="glassfish")
+    shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", "/tmp/install/" + GLASSFISH_VERSION + "-unix-answer")
+    general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
 
     # Install the start script
     if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
-      shutil.copy(app.SYCO_PATH + "var/glassfish/glassfish", "/etc/init.d/" + GLASSFISH_VERSION)
+      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION, "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
