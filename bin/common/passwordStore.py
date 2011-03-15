@@ -144,11 +144,11 @@ class PasswordStore:
     if (len(crypted_file_password) == 0):  
       # If no password where stored in the config file, ask the user for 
       # a new master password.
-      user_password = self._get_password_from_user("Enter the master password: ")
+      user_password = self._get_password_from_user("Enter the SYCO master password: ")
     else:
       # If the password where stored in the config file, ask the user to 
       # verify the master password.
-      user_password = self._get_password_from_user("Verify the syco master password: ", False)
+      user_password = self._get_password_from_user("Verify the SYCO master password: ", False)
   
     user_password = self._pad(user_password)
     crypted_user_password = crypt.crypt(user_password, user_password)
