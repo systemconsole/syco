@@ -11,7 +11,7 @@ http://iblog.humani-tech.com/?p=505
 http://www.java.net/forums/glassfish/glassfish
 
 TODO
-See bottom of file
+See installGlassfish31.py
 
 '''
 
@@ -50,9 +50,16 @@ GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 GLASSFISH_INSTALL_FILE = "glassfish-3.0.1-unix.sh"
 GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
 
-JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_22"
-JDK_INSTALL_FILE = "jdk-6u22-linux-x64-rpm.bin"
+# http://www.oracle.com/technetwork/java/javase/downloads/index.html
+JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
+JDK_INSTALL_FILE = "jdk-6u24-linux-x64-rpm.bin"
 JDK_REPO_URL = "http://10.100.100.200/cobbler/repo_mirror/java/" + JDK_INSTALL_FILE
+
+# Mysql Connector
+# http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
+MYSQL_CONNECTOR_VERSION  = "mysql-connector-java-5.1.15"
+MYSQL_CONNECTOR_FILE     = MYSQL_CONNECTOR_VERSION + ".tar.gz"
+MYSQL_CONNECTOR_REPO_URL = "http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/" + MYSQL_CONNECTOR_FILE
 
 def build_commands(commands):
   '''
@@ -76,10 +83,12 @@ def install_glassfish(args):
 
     # Set java path for the currently logged in user.
     os.environ["JAVA_HOME"] = "/usr/java/latest"
+    os.environ["JDK_HOME"] = "/usr/java/latest"
     os.environ["PATH"] = "/usr/java/latest/bin:" + os.environ["PATH"]
 
     # Set java path for all users on the server.
     general.set_config_property("/etc/profile", 'export JAVA_HOME=/usr/java/latest', 'export JAVA_HOME=/usr/java/latest')
+    general.set_config_property("/etc/profile", 'export JDK_HOME=/usr/java/latest', 'export JDK_HOME=/usr/java/latest')
     general.set_config_property("/etc/profile", 'export PATH=$PATH:/usr/java/latest/bin', 'export PATH=$PATH:/usr/java/latest/bin')
 
     #_set_iptables()
@@ -284,6 +293,7 @@ def _set_domain_passwords(domain_name, admin_port):
   )
 
   # Create new cert for https
+  # TODO move the fareoffice info to install.cfg
   os.chdir(GLASSFISH_DOMAINS_PATH + domain_name + "/config/")
   general.shell_exec("keytool -delete -alias s1as -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
   general.shell_exec('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + app.get_glassfish_master_password() + ' -keystore keystore.jks -storepass ' + app.get_glassfish_master_password(), user="glassfish")
@@ -332,18 +342,18 @@ def _install_mysql_connector(domain_name):
   '''
   os.chdir(app.INSTALL_DIR)
 
-  if (not os.access("mysql-connector-java-5.1.14.tar.gz", os.F_OK)):
-    general.download_file("http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz", user="glassfish")
-    general.download_file("http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
+  if (not os.access(MYSQL_CONNECTOR_FILE, os.F_OK)):
+      general.download_file(MYSQL_CONNECTOR_REPO_URL, user="glassfish")
+      general.download_file(MYSQL_CONNECTOR_REPO_URL + ".asc", user="glassfish")
 
   general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5", user="glassfish")
-  signature = general.shell_exec("gpg --verify mysql-connector-java-5.1.14.tar.gz.asc", user="glassfish")
+  signature = general.shell_exec("gpg --verify " + MYSQL_CONNECTOR_FILE + ".asc", user="glassfish")
   if (r'Good signature from "MySQL Package signing key (www.mysql.com) <build@mysql.com>"' not in signature):
     raise Exception("Invalid signature.")
 
   # TODO: Should it be under /ext/.
-  general.shell_exec("tar zxf mysql-connector-java-5.1.14.tar.gz", user="glassfish")
-  general.shell_exec("cp mysql-connector-java-5.1.14/mysql-connector-java-5.1.14-bin.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("tar zxf " + MYSQL_CONNECTOR_FILE, user="glassfish")
+  general.shell_exec("cp " + MYSQL_CONNECTOR_VERSION +"/" + MYSQL_CONNECTOR_VERSION + "-bin.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _install_google_guice(domain_name):
   '''
@@ -460,184 +470,3 @@ def _update_glassfish():
 
 def _set_iptables():
   pass
-#  #
-#  # Setup all iptable rules
-#  #
-#  4848 Administration Console
-#  8080 HTTP
-#  8081 HTTPS
-#  8686 Pure JMX clients
-#  3700 IIOP
-#  3820 IIOP/SSL
-#  3920 IIOP/SSL with mutual authentication
-#
-#  # ATTENTION: flush/delete all existing rules
-#  iptables -F
-#
-#  ################################################################
-#  # set the default policy for each of the pre-defined chains
-#  ################################################################
-#  iptables -P INPUT ACCEPT
-#  iptables -P OUTPUT ACCEPT
-#  iptables -P FORWARD DROP
-#
-#  # allow establishment of connections initialised by my outgoing packets
-#  iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-#
-#  # accept anything on localhost
-#  iptables -A INPUT -i lo -j ACCEPT
-#
-#  ################################################################
-#  #individual ports tcp
-#  ################################################################
-#  iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 8181 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-#  #uncomment next line to enable AdminGUI on port 4848:
-#  iptables -A INPUT -p tcp --dport 4848 -j ACCEPT
-#
-#  ################################################################
-#  #slow the amount of ssh connections by the same ip address:
-#  #wait 60 seconds if 3 times failed to connect
-#  ################################################################
-#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --set -j ACCEPT
-#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j DROP
-#
-#  #drop everything else
-#  iptables -A INPUT -j DROP
-#
-#  ################################################################
-#  #Redirection Rules
-#  ################################################################
-#  #1. redirection rules (allowing forwarding from localhost)
-#  iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
-#  iptables -t nat -A OUTPUT -o lo -p tcp --dport 443 -j REDIRECT --to-port 8181
-#
-#  #2. redirection http
-#  iptables -t nat -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 8080
-#
-#  #3. redirection https
-#  iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 8181
-#
-#
-#  ################################################################
-#  #save the rules somewhere and make sure
-#  #our rules get loaded if the ubuntu server is restarted
-#  ################################################################
-#  iptables-save > /etc/my-iptables.rules
-#  iptables-restore < /etc/my-iptables.rules
-#
-#  #List Rules to see what we have now
-#  iptables -L
-
-#
-# Questions?
-#* Ska vi kora fo och fp pa samma server cluster?
-#  2 domaner for fo, och tva domaner for fp?
-#
-#  Separata serverar
-#  + Miljoerna kan inte pa nagot satt paverka varandra.
-#
-#  Gemensama servrar
-#  + Utnyttjar alla servrar battre, cpu, disk och minne for virtualisering och OS blir mindre.
-#  + Far battre lastbalansering/failover
-#  + Vi kan strunta i vmware pa mysql och glassfish server.
-#
-#  * Varje doman har tilldelat minne, sa det spelar ingen roll
-#    om det ligger pa samma eller separata servrar.
-
-#
-
-#
-# Configure virutal servers/virtual hosts?
-#
-
-# Change folder where logs are stored
-#
-#http://docs.sun.com/app/docs/doc/821-1751/abluj?l=en&a=view
-#
-#stop glassfish
-#vi /usr/local/glassfish/glassfish/domains/domain1/config/logging.properties
-#change .sun.enterprise.server.logging.GFFileHandler.file
-#
-# Check if the log files are to big, backup, rotate.
-#
-
-#
-# Kolla av olika profiler (develop/cluster/enterprise)
-#
-
-#
-# http://docs.sun.com/app/docs/doc/821-1751/ghcjc?l=en&a=view
-# asadmin> create-system-properties http-listener-port=1088
-#
-
-#
-# For the monitor softare, to check if anything has changed.
-# It exist a monitor thing in the admin console
-#
-#tror det finns ett kommando som gor att resultatet ar mer latt parsat.
-#asadmin> list-system-properties
-#asadmin> list-applications --type web
-#asadmin> list-containers
-#asadmin> list-modules
-#asadmin> list-commands --localonly
-#asadmin> list-timers server
-#asadmin> show-component-status MEjbApp
-#asadmin> uptime
-#asadmin> generate-jvm-report --type summary
-#asadmin> list-logger-levels
-#
-#Check for more monitor data.
-#http://docs.sun.com/app/docs/doc/821-1751/ablur?l=en&a=view
-#
-
-#
-# Optimizations
-# http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html
-#
-
-#
-# Setup Thread pools
-#
-#http://docs.sun.com/app/docs/doc/821-1751/abluc?l=en&a=view
-#asadmin> list-threadpools
-#
-
-#
-# Something to read.
-#
-# http://kalali.me/learning-glassfish-v3-command-line-administration-interface-cli/
-
-#
-# change /opt/glassfishv3/glassfish/domains/domain1/config/domain.xml
-# Didn't get this to work. Need to use --secure on all asadmin.
-# Maybe it works in glassfish 3.1
-# The creates ssl connection between asadmin and DAS or other nodes
-# TODO:general.shell_exec("/usr/local/glassfish/bin/asadmin set server-config.network-config.protocols.protocol.admin-listener.security-enabled=true", user="glassfish")
-#
-
-#
-# Something in glassfish might need this, according to install requriments.
-#
-# yum install compat-libstdc++ compat-libgcc
-#
-
-#
-# Extending and Updating GlassFish Server Inside a Closed Network
-#
-# http://docs.sun.com/app/docs/doc/821-1751/gjcya?l=en&a=view
-#
-
-# Log to syslog instead??
-# com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true
-
-#
-# Turn on proxy
-# Might be useful if the server is locked down, and need to reach internet.
-# http://download.oracle.com/javase/6/docs/technotes/guides/net/proxies.html
-# /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyHost=my.proxy.host
-# /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyPort=3128
-#
