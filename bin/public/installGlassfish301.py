@@ -59,16 +59,15 @@ def build_commands(commands):
   Defines the commands that can be executed through the syco.py shell script.
 
   '''
-  commands.add("install-glassfish", install_glassfish, help="Install glassfish3 on the current server.")
-  commands.add("uninstall-glassfish", uninstall_glassfish, help="Uninstall glassfish3 on the current server.")
-
+  commands.add("install-" + GLASSFISH_VERSION, install_glassfish, help="Install " + GLASSFISH_VERSION + " on the current server.")
+  
 def install_glassfish(args):
   '''
   The main installation function the for the glassfish, dependencies and plugins.
 
   '''
   app.print_verbose("Install glassfish3 version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallGlassfish", SCRIPT_VERSION)
+  version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.check_executed()
 
   try:
@@ -107,37 +106,23 @@ def install_glassfish(args):
 
   #general.delete_install_dir()
 
-def uninstall_glassfish(args):
+def uninstall_glassfish():
   '''
   The main function the glassfish uninstallation.
+  
+  This function is executed from installGlassfish31
 
   '''
-  app.print_verbose("Uninstall glassfish3 version: %d" % SCRIPT_VERSION)
+  app.print_verbose("Uninstall " + GLASSFISH_VERSION + " version: %d" % SCRIPT_VERSION)
 
-  if (_is_glassfish_user_installed()):
-    # Change dir if some of the rm commands fails, so not everythig will
-    # be deleted by mistake.
+  if (os.access(GLASSFISH_PATH, os.F_OK)):
     os.chdir("/tmp")
-
     general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
     general.shell_exec("rm -rf " + GLASSFISH_PATH)
-    general.shell_exec("rm -rf /home/glassfish")
-
     general.shell_exec("chkconfig --del " + GLASSFISH_VERSION)
     general.shell_exec("rm " + "/etc/init.d/" + GLASSFISH_VERSION)
-    general.shell_exec("userdel glassfish")
-    general.shell_exec("groupdel glassfishadm")
 
-  if (os.access("/usr/java/jdk1.6.0_22", os.F_OK)):
-    general.shell_exec("rpm -e sun-javadb-core-10.5.3-0.2")
-    general.shell_exec("rpm -e sun-javadb-client-10.5.3-0.2")
-    general.shell_exec("rpm -e sun-javadb-demo-10.5.3-0.2")
-    general.shell_exec("rpm -e sun-javadb-docs-10.5.3-0.2")
-    general.shell_exec("rpm -e sun-javadb-javadoc-10.5.3-0.2")
-    general.shell_exec("rpm -e sun-javadb-common-10.5.3-0.2")
-    general.shell_exec("rpm -e jdk-1.6.0_22-fcs")
-
-  version_obj = version.Version("InstallGlassfish", SCRIPT_VERSION)
+  version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.mark_uninstalled()
 #
 # Public members
