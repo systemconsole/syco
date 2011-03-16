@@ -29,7 +29,7 @@ __status__ = "Production"
 
 import os
 import app, general, net
-from installGlassfish import GLASSFISH_PATH
+from installGlassfish31 import GLASSFISH_PATH
 
 def build_commands(commands):
   commands.add("iptables-clear", iptables_clear, help="Clear all rules from iptables.")
