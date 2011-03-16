@@ -13,8 +13,6 @@ http://www.java.net/forums/glassfish/glassfish
 TODO
 See bottom of file
 
-* Use create-service instead of our own init-d start script
-
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -51,13 +49,11 @@ GLASSFISH_VERSION = "glassfish-3.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
-# For production
-#GLASSFISH_INSTALL_FILE = "glassfish-3.1-unix.sh"
-#GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.1/release/" + GLASSFISH_INSTALL_FILE
+GLASSFISH_INSTALL_FILE = "glassfish-3.1-unix.sh"
+GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.1/release/" + GLASSFISH_INSTALL_FILE
 
-# TODO: Testing the latest glassfish.
-GLASSFISH_INSTALL_FILE = "latest-glassfish-unix.sh"
-GLASSFISH_REPO_URL="http://dlc.sun.com.edgesuite.net/glassfish/3.1/promoted/" + GLASSFISH_INSTALL_FILE
+#GLASSFISH_INSTALL_FILE = "glassfish.zip"
+#GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/7950/artifact/bundles/" + GLASSFISH_INSTALL_FILE
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
@@ -255,11 +251,18 @@ def _install_glassfish():
       os.chown(GLASSFISH_PATH, 150, 550)
 
     # Set executeion permissions and run the installation.
-    os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-    shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", "/tmp/install/" + GLASSFISH_VERSION + "-unix-answer")
-    general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
-    
+    if ".zip" in GLASSFISH_INSTALL_FILE:
+      general.shell_exec("unzip " + GLASSFISH_INSTALL_FILE + " -d " + GLASSFISH_PATH, user="glassfish")
+      general.shell_exec("mv " + GLASSFISH_PATH + "glassfish3/* " + GLASSFISH_PATH, user="glassfish")
+    else:
+      os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
+      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", "/tmp/install/" + GLASSFISH_VERSION + "-unix-answer")
+      general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
+
     # Install the start script
+    # It's possible to do this from glassfish with "asadmin create-service",
+    # but our own script is a little bit better. It creates startup log files
+    # and has a better "start user" functionality.
     if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
       shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION, "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
@@ -452,13 +455,13 @@ def _update_glassfish():
   os.chdir("/tmp")
 
   general.shell_exec("yum -y install libidn")
-  general.shell_exec("chcon -f -t textrel_shlib_t " + GLASSFISH_PATH + "pkg/vendor-packages/OpenSSL/crypto.so")
   general.shell_run(GLASSFISH_PATH + "bin/pkg refresh --full",
     user="glassfish",
     events={
       re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
     }
   )
+  general.shell_exec("chcon -f -t textrel_shlib_t " + GLASSFISH_PATH + "pkg/vendor-packages/OpenSSL/crypto.so")
 
   # Need to run a second time, in the first run the pkg software might
   # have been installed, and after that the chcon needs to be executed
@@ -564,6 +567,10 @@ def _set_iptables():
 #  * Varje doman har tilldelat minne, sa det spelar ingen roll
 #    om det ligger pa samma eller separata servrar.
 
+
+# In the "has anything changed, tool" run this, and see if any
+# values has been changed since last time the report was executed.
+# generate-jvm-report --type summary
 #
 
 #
@@ -662,4 +669,19 @@ def _set_iptables():
 # http://download.oracle.com/javase/6/docs/technotes/guides/net/proxies.html
 # /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyHost=my.proxy.host
 # /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyPort=3128
+#
+
+#
+# Activate mod_jk and loadbalancing
+# Use mod_jk to loadbalance between tc and nsg servers, maybe between nodes
+# in a cluster?
+# administration-guide.pdf page 118
+
+#
+# Forward SSL cert from apache to glassfish.
+# Documentation exists in redmine
+#
+
+#
+# Read performance-tuning-guide.pdf
 #
