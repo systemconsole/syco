@@ -32,7 +32,7 @@ SCRIPT_VERSION = 3
 def build_commands(commands):
   commands.add("install-kvmhost", install_kvmhost, help="Install kvm host on the current server.")
 
-def install_kvmhost(self):
+def install_kvmhost(args):
   '''
   The actual installation of the kvm host.
 
@@ -43,7 +43,7 @@ def install_kvmhost(self):
 
   if (not general.grep("/proc/cpuinfo", "vmx|svm")):
     app.print_error("CPU don't support virtualization.")
-    self._abort_kvm_host_installation()
+    _abort_kvm_host_installation()
     return
 
   # Install the kvm packages
@@ -59,16 +59,16 @@ def install_kvmhost(self):
   general.shell_exec("setenforce 1")
 
   # Is virsh started?
-  result = general.shell_exec("virsh nodeinfo", os.F_OK)
+  result = general.shell_exec("virsh nodeinfo")
   if "CPU model:           x86_64" not in result:
     app.print_error("virsh not installed.")
-    self._abort_kvm_host_installation()
+    _abort_kvm_host_installation()
     return
 
   result = general.shell_exec("virsh -c qemu:///system list")
   if "Id Name" not in result:
     app.print_error("virsh not installed.")
-    self._abort_kvm_host_installation()
+    _abort_kvm_host_installation()
     return
 
   # todo: Might fix mouse problems in the host when viewing through VNC.
@@ -89,8 +89,8 @@ def install_kvmhost(self):
   general.shell_exec("yum install bridge-utils")
 
   # Setup /etc/sysconfig/network-scripts/ifcfg-eth1
-  hwaddr = self._get_config_value("/etc/sysconfig/network-scripts/ifcfg-eth1", "HWADDR")
-  self._store_file("/etc/sysconfig/network-scripts/ifcfg-eth1",
+  hwaddr = _get_config_value("/etc/sysconfig/network-scripts/ifcfg-eth1", "HWADDR")
+  _store_file("/etc/sysconfig/network-scripts/ifcfg-eth1",
 """DEVICE=eth1
 HWADDR=%s
 ONBOOT=yes
@@ -101,7 +101,7 @@ BRIDGE=br1
 BOOTPROTO=dhcp""" % hwaddr)
 
   # Setup /etc/sysconfig/network-scripts/ifcfg-br1
-  self._store_file("/etc/sysconfig/network-scripts/ifcfg-br1",
+  _store_file("/etc/sysconfig/network-scripts/ifcfg-br1",
 """DEVICE=br1
 TYPE=Bridge
 BOOTPROTO=dhcp
@@ -130,7 +130,7 @@ ONBOOT=yes""")
   # doesn't proceed to next command in install.cfg
   time.sleep(1000)
 
-def _get_config_value(self, file_name, config_name):
+def _get_config_value(file_name, config_name):
   '''
   Get a value from an option in a config file.
   '''
@@ -141,7 +141,7 @@ def _get_config_value(self, file_name, config_name):
       return m.group(1)
   return False
 
-def _store_file(self, file_name, value):
+def _store_file(file_name, value):
   '''
   Store a text in a file.
   '''
@@ -150,7 +150,7 @@ def _store_file(self, file_name, value):
   FILE.writelines(value)
   FILE.close()
 
-def _abort_kvm_host_installation(self):
+def _abort_kvm_host_installation():
   '''
   Write error message for aborting the installation.
   '''
