@@ -49,11 +49,11 @@ GLASSFISH_VERSION = "glassfish-3.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
-GLASSFISH_INSTALL_FILE = "glassfish-3.1-unix.sh"
-GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.1/release/" + GLASSFISH_INSTALL_FILE
+#GLASSFISH_INSTALL_FILE = "glassfish-3.1-unix.sh"
+#GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.1/release/" + GLASSFISH_INSTALL_FILE
 
-#GLASSFISH_INSTALL_FILE = "glassfish.zip"
-#GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/7950/artifact/bundles/" + GLASSFISH_INSTALL_FILE
+GLASSFISH_INSTALL_FILE = "glassfish.zip"
+GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/7950/artifact/bundles/" + GLASSFISH_INSTALL_FILE
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
