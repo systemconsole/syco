@@ -230,6 +230,10 @@ def get_dns_resolvers():
   '''ip list of dns resolvers that are configured on all servers.'''
   return get_option("general", "dns_resolvers")
 
+def get_first_dns_resolver():
+  '''ip list of dns resolvers that are configured on all servers.'''
+  return get_dns_resolvers().split(None, 1)[0]
+
 def get_ip(host_name):
   '''Get ip for a specific host, as it is defined in install.cfg'''
   return get_option(host_name, "server")
@@ -258,15 +262,17 @@ def get_servers():
 
 def get_commands(host_name):
   '''Get all commands that should be executed on a host'''
-  options = []
+  commands = []
 
   if (config.has_section(host_name)):
     for option, value in config.items(host_name):
       option = option.lower()
       if "command" in option:
-        options.append([option, value])
+        if (options.verbose >= 2):
+          value += " -v"
+        commands.append([option, value])
 
-  return sorted(options)
+  return sorted(commands)
 
 def get_hosts():
   '''Get the hostname of all kvm hosts.'''
