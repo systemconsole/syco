@@ -17,7 +17,7 @@ import socket, time
 import app, general, installCobbler
 
 def build_commands(commands):
-  commands.add("install-guests", install_guests, help="Instal all KVM guest defined for this server in install.cfg.")
+  commands.add("install-guests", install_guests, help="Install all KVM guest defined for this server in install.cfg.")
 
 def install_guests(args):
   '''
@@ -58,7 +58,7 @@ def _install_guest(host_name, guest_name):
 
   # Create the data lvm volumegroup
   # TODO: Do we need error=False result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
-  resul = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name)
+  result = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name)
   if ("/dev/VolGroup00/" + guest_name not in result):
     disk_var_size=int(app.get_disk_var(guest_name))
     disk_used_by_other_log_vol=15
@@ -85,7 +85,7 @@ def _is_guest_installed(guest_name, options="--all"):
   Is the guest already installed on the kvm host.
 
   '''
-  resul = general.shell_exec("virsh list " + options)
+  result = general.shell_exec("virsh list " + options)
   if (guest_name in result):
     return True
   else:
