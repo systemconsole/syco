@@ -39,6 +39,7 @@ def install_cobbler(args):
   _install_cobbler()
   _modify_coppler_settings()
   _import_repos()
+  _refresh_all_profiles()
   setup_all_systems(args)
   _cobbler_sync
   version_obj.mark_executed()
@@ -47,9 +48,8 @@ def setup_all_systems(args):
   '''
   Update cobbler with all settings in install.cfg.
 
-  # TODO: Check these cobbler settings --dns-name
-
   '''
+  _refresh_all_profiles()
   _remove_all_systems()
   for host_name in app.get_servers():
     ip=app.get_ip(host_name)
@@ -62,6 +62,8 @@ def setup_all_systems(args):
       app.print_verbose("Install guest " + host_name + "(" + ip + ")")
       _guest_add(host_name, ip)
 
+  _cobbler_sync()
+  
 def install_epel_repo():
   '''
   Setup EPEL repository.
@@ -71,7 +73,7 @@ def install_epel_repo():
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
 
   '''
-  result, err = general.shell_exec("rpm -q epel-release-5-4.noarch")
+  result = general.shell_exec("rpm -q epel-release-5-4.noarch")
   if "package epel-release-5-4.noarch is not installed" in result:
     general.shell_exec("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm")
     app.print_verbose("(Don't mind the Header V3 DSA warning)")
@@ -186,8 +188,9 @@ def _import_repos():
   general.shell_exec("cobbler distro remove --name centos5.5-xen-x86_64")
   general.shell_exec("cobbler profile remove --name centos5.5-x86_64")
 
+def _refresh_all_profiles():
   # Setup installation profiles and systems
-  general.shell_exec("cobbler profile remove --name=centos5.5-x86_64")
+  general.shell_exec("cobbler profile remove --name=centos5.5-vm_guest")
   general.shell_exec("""cobbler profile add --name=centos5.5-vm_guest \
       --distro=centos5.5-x86_64 --virt-type=qemu \
       --virt-ram=1024 --virt-cpus=1 \
@@ -195,6 +198,7 @@ def _import_repos():
       --kickstart=/var/lib/cobbler/kickstarts/fo-tp-guest.ks \
       --virt-bridge=br1""")
 
+  general.shell_exec("cobbler profile remove --name=centos5.5-vm_host")
   general.shell_exec("""cobbler profile add --name=centos5.5-vm_host \
     --distro=centos5.5-x86_64 \
     --repos="centos5-updates-x86_64" \
@@ -204,10 +208,15 @@ def _cobbler_sync():
   general.shell_exec("cobbler sync")
   general.shell_exec("cobbler report")
 
+def _remove_all_systems():
+  stdout = general.shell_exec("cobbler system list")
+  for name in stdout.rsplit():
+    general.shell_exec("cobbler system remove --name " + name)
+
 def _host_add(host_name, ip):
   mac=app.get_mac(host_name)
   general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
-      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +      
       "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
       "--mac=" + mac)
 
@@ -218,13 +227,8 @@ def _guest_add(host_name, ip):
   cpu=app.get_cpu(host_name)
 
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest "
-      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+      "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +      
       "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
       "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
       "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
       "--ksmeta=\"disk_var=" + str(disk_var) + "\"")
-
-def _remove_all_systems():
-  stdout = general.shell_exec("cobbler system list")
-  for name in stdout.rsplit():
-    general.shell_exec("cobbler system remove --name " + name)
