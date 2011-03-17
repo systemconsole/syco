@@ -188,7 +188,7 @@ def main():
   usage += "Commands:\n"
   usage += cmd_list.get_help()
     
-  app.parser = OptionParser(usage=usage, version="%prog " + app.version, add_help_option=True)
+  app.parser = OptionParser(usage=usage, version="System Console " + app.version, add_help_option=True)
   app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1, help="Show more output.")
   app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose", help="Show no output.")
   app.parser.add_option("-f", "--force",   action="store_const", const=1, dest="force", default=0, help="Ignore version.cfg.")
