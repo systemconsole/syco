@@ -101,13 +101,45 @@ class PasswordStore:
     user_password = self.cipher.decrypt(base64.b64decode(crypted_file_password)).rstrip(self.PADDING)
   
     if (len(user_password) == 0):
-      user_password = self._get_password_from_user('Enter password for service "' + service + '" with username "' + user_name + '":')
+      user_password = self.get_password_from_user('Enter password for service "' + service + '" with username "' + user_name + '":')
       self.set_password(service, user_name, user_password)
 
     if (len(user_password) == 0):
       raise Exception("No password was typed for service " + service + " user " + user_name + ".")
       
     return user_password
+
+  def get_password_from_user(self, password_caption = "Please enter a password:", verify_password = True):
+    '''
+    Ask the user for a password on stdin, and validate it's strength.
+
+    verify_password
+    If True, the user has to type the password twice for veryfication.
+
+    '''
+    print(password_caption)
+    while (True):
+      password = getpass.getpass()
+
+      if (verify_password):
+        verify_password = getpass.getpass('Password (again): ')
+        if (password != verify_password):
+          sys.stderr.write("Error: Your passwords didn't match\n")
+          password = verify_password
+          continue
+      if '' == password.strip():
+        # forbid the blank password
+        sys.stderr.write("Error: blank passwords aren't allowed.\n")
+        password = None
+        continue
+      if len(password) > self.BLOCK_SIZE:
+        # block size of AES is less than 32
+        sys.stderr.write("Error: password can't be longer than 32.\n")
+        password = None
+        continue
+      break
+
+    return password  
 
   def save_password_file(self):
     '''
@@ -144,11 +176,11 @@ class PasswordStore:
     if (len(crypted_file_password) == 0):  
       # If no password where stored in the config file, ask the user for 
       # a new master password.
-      user_password = self._get_password_from_user("Enter the SYCO master password: ")
+      user_password = self.get_password_from_user("Enter the SYCO master password: ")
     else:
       # If the password where stored in the config file, ask the user to 
       # verify the master password.
-      user_password = self._get_password_from_user("Verify the SYCO master password: ", False)
+      user_password = self.get_password_from_user("Verify the SYCO master password: ", False)
   
     user_password = self._pad(user_password)
     crypted_user_password = crypt.crypt(user_password, user_password)
@@ -160,39 +192,7 @@ class PasswordStore:
       if (crypted_file_password != crypted_user_password):
         raise Exception("Invalid master password")
       
-    return user_password
-      
-  def _get_password_from_user(self, password_caption = "Please enter a password:", verify_password = True):
-    '''
-    Ask the user for a password on stdin, and validate it's strength.
-    
-    verify_password
-    If True, the user has to type the password twice for veryfication.
-    
-    '''
-    print(password_caption)
-    while (True):
-      password = getpass.getpass()
-      
-      if (verify_password):
-        verify_password = getpass.getpass('Password (again): ')        
-        if (password != verify_password):
-          sys.stderr.write("Error: Your passwords didn't match\n")
-          password = verify_password
-          continue        
-      if '' == password.strip():
-        # forbid the blank password
-        sys.stderr.write("Error: blank passwords aren't allowed.\n")
-        password = None
-        continue
-      if len(password) > self.BLOCK_SIZE:
-        # block size of AES is less than 32
-        sys.stderr.write("Error: password can't be longer than 32.\n")
-        password = None
-        continue
-      break
-      
-    return password  
+    return user_password      
 
   def _build_config_parser(self):
     '''
