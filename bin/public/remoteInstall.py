@@ -13,12 +13,13 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, sys, time, paramiko, threading
-import ssh, app
+import os, sys, time, paramiko, threading, socket
+import ssh, app, general
 from exception import SettingsError
 
 def build_commands(commands):
-  commands.add("remote-install", remote_install, "[server]", help="Connect to all servers, and run all commands defined in install.cfg.")
+  commands.add("remote-install", remote_install, "[hostname]", help="Connect to all servers, and run all commands defined in install.cfg.")
+  commands.add("install-local", install_local, "[hostname]", help="Run all commands defined in install.cfg.")
 
 def remote_install(args):
   '''
@@ -30,6 +31,16 @@ def remote_install(args):
   remote_host=args[1]
   obj = RemoteInstall()
   obj.run(remote_host)
+
+def install_local(args):
+  host_name = args[1]
+  if host_name == "":
+    host_name = socket.gethostname()
+  app.print_verbose("Install all commands defined in install.cfg for host " + host_name + ".")
+  
+  commands = app.get_commands(host_name)
+  for option, command in commands:
+    general.shell_exec(command)
 
 class RemoteInstall:
   '''Run commands defined in install.cfg on remote hosts through SSH.
