@@ -91,12 +91,12 @@ class Ssh:
 
     # Install key on remote host.
     self.ssh_exec(
-									"mkdir -p .ssh;" +
-									"chmod 700 .ssh;" +
-									"touch .ssh/authorized_keys;" +
-									"chmod 640 .ssh/authorized_keys;" +
-									"echo '" + idRsaPub + "' >> .ssh/authorized_keys"
-									)
+                  "mkdir -p .ssh;" +
+                  "chmod 700 .ssh;" +
+                  "touch .ssh/authorized_keys;" +
+                  "chmod 640 .ssh/authorized_keys;" +
+                  "echo '" + idRsaPub + "' >> .ssh/authorized_keys"
+                  )
 
     # Raise exception if the installation of the cert failed.
     if (not self._is_sshkey_installed()):
@@ -168,10 +168,10 @@ class Ssh:
     '''
     self.install_ssh_key()
     general.shell_exec(
-											 "rsync --delete -az -e 'ssh -o StrictHostKeychecking=no -p" + self.port + " -i " + self.ssh_private_key_file + "' " +
-											 extra + " " +
-											 from_path + " " + self.user + "@" + self.server + ":" + to_path
-											 )
+                       "rsync --delete -az -e 'ssh -o StrictHostKeychecking=no -p" + self.port + " -i " + self.ssh_private_key_file + "' " +
+                       extra + " " +
+                       from_path + " " + self.user + "@" + self.server + ":" + to_path
+                       )
 
   def _check_alive(self):
     '''Check if remote ssh server is alive, throw exception otherwise.'''
@@ -184,11 +184,11 @@ class Ssh:
       return True
 
     p = subprocess.Popen("ssh -T -o StrictHostKeychecking=no -o BatchMode=yes -o PasswordAuthentication=no -o GSSAPIAuthentication=no -i " + self.ssh_private_key_file + " " +
-												 self.user + "@" + self.server + ' "uname"',
-												 shell=True,
-												 stdout=subprocess.PIPE,
-												 stderr=subprocess.PIPE
-												 )
+                         self.user + "@" + self.server + ' "uname"',
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE
+                         )
 
     p.communicate()
     print p.returncode
