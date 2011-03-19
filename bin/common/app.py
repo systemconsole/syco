@@ -147,6 +147,10 @@ def get_root_password_hash():
   hash_root_password, stderr = p.communicate()
   return hash_root_password
 
+def get_user_password(username):
+  '''The linux shell password for a specific user.'''
+  return _get_password("linux", username)
+
 def get_svn_password():
   '''The svn password for user syscon_svn'''
   return _get_password("svn", "syscon")
