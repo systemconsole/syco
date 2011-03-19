@@ -126,7 +126,7 @@ def generate_password(length=8, chars=string.letters + string.digits):
 
 def is_server_alive(server, port):
   '''
-  Check if s port on a server is responding, this assumes the server is alive.
+  Check if port on a server is responding, this assumes the server is alive.
 
   '''
   try:
@@ -164,7 +164,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
     args.append(user)
   args.append('-c ' + command)
 
-  app.print_verbose("Command: su " + user + " -c '" + command + "'")
+  app.print_verbose("Command: su " + user + " -c '" + command + "'")  
   out = pexpect.spawn("su", args, cwd=cwd)
   app.print_verbose("---- Result ----", 2)
   caption = True
@@ -202,7 +202,7 @@ def shell_exec(command, user="", timeout=None, expect="", send="", cwd=None):
 
   return stdout
 
-def shell_run(command, user="", events=""):
+def shell_run(command, user="root", events={}):
   '''
   Execute a shell command using pexpect.run, and writing verbose affected output.
 
@@ -212,6 +212,10 @@ def shell_run(command, user="", events=""):
 
   '''
   command = "su " + user + ' -c "' + command + '"'
+
+  if (user != ""):
+    user_password = app.get_user_password(user)
+    events["(?i)Password: "] = user_password + "\n"
 
   app.print_verbose("Command: " + command)
   (stdout, exit_status) = pexpect.run(command,
