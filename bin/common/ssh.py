@@ -55,6 +55,9 @@ class Ssh:
   # Cache status of installed key.
   key_is_installed = False
 
+  # Configuration of the SSH command.
+  ssh_options = "-o StrictHostKeychecking=no -o BatchMode=yes -o PasswordAuthentication=no -o GSSAPIAuthentication=no"
+
   def __init__(self, server, password, mysql_password=None):
     '''
     Setup the server to configure with, and with what password.
@@ -168,7 +171,7 @@ class Ssh:
     '''
     self.install_ssh_key()
     general.shell_exec(
-                       "rsync --delete -az -e 'ssh -o StrictHostKeychecking=no -p" + self.port + " -i " + self.ssh_private_key_file + "' " +
+                       'rsync --delete -az -e "ssh ' + self.ssh_options + " -p" + self.port + " -i " + self.ssh_private_key_file + '" ' +
                        extra + " " +
                        from_path + " " + self.user + "@" + self.server + ":" + to_path
                        )
@@ -183,7 +186,7 @@ class Ssh:
     if (self.key_is_installed):
       return True
 
-    p = subprocess.Popen("ssh -T -o StrictHostKeychecking=no -o BatchMode=yes -o PasswordAuthentication=no -o GSSAPIAuthentication=no -i " + self.ssh_private_key_file + " " +
+    p = subprocess.Popen("ssh -T " + self.ssh_options + " -i " + self.ssh_private_key_file + " " +
                          self.user + "@" + self.server + ' "uname"',
                          shell=True,
                          stdout=subprocess.PIPE,
