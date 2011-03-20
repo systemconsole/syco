@@ -32,6 +32,9 @@ Version 4
 * Check cpu sensors (temp), IPMI??
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Add right licence to all files. Add licence file to root folder.
+* Add interactive shell functionality
+  http://docs.python.org/library/cmd.html
+  http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
 
 Version 5
 ---------
