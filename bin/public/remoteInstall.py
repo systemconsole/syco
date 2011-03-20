@@ -109,8 +109,7 @@ class RemoteInstall:
 
       obj.install_ssh_key()
       self._install_syco_on_remote_host(obj)
-
-      # TODO: Create an expect "Verify the syco master password:" and type password.
+      
       self._execute(obj, host_name)
     except SettingsError, e:
       app.print_error(e, 2)
@@ -121,7 +120,7 @@ class RemoteInstall:
 
   def _execute(self, obj, host_name):
     self.installed[host_name]="Progress"
-    for option, command in app.get_commands(host_name):
+    for option, command in app.get_commands(host_name):      
       obj.ssh_exec(command)
     self.installed[host_name]="Yes"
     app.print_verbose("")
