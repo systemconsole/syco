@@ -59,3 +59,12 @@ def get_lan_ip():
           pass
       
   return lan_ip
+
+def reverse_ip(str):
+	'''Reverse an ip from 1.2.3.4 to 4.3.2.1'''
+	reverse_str=""
+	for num in str.split("."):
+		if (reverse_str):
+			reverse_str = "." + reverse_str
+		reverse_str = num + reverse_str
+	return reverse_str
