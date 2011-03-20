@@ -34,6 +34,9 @@ Version 4
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Add right licence to all files. Add licence file to root folder.
 * Handle the reboot that is performed by installKvmHost.
+* Add interactive shell functionality
+  http://docs.python.org/library/cmd.html
+  http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
 
 Version 5
 ---------
