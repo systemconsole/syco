@@ -33,14 +33,20 @@ def remote_install(args):
   obj.run(remote_host)
 
 def install_local(args):
-  host_name = args[1]
+  host_name = ""
+  if len(args) == 2:
+    host_name = args[1]
+
   if host_name == "":
     host_name = socket.gethostname()
   app.print_verbose("Install all commands defined in install.cfg for host " + host_name + ".")
   
   commands = app.get_commands(host_name)
-  for option, command in commands:
-    general.shell_exec(command)
+  if len(commands) > 0:
+    for option, command in commands:
+      general.shell_exec(command)
+  else:
+    app.print_error("No commands for this host.")
 
 class RemoteInstall:
   '''Run commands defined in install.cfg on remote hosts through SSH.
