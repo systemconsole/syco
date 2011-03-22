@@ -13,8 +13,15 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, sys, time, paramiko, threading, socket
-import ssh, app, general
+import os
+import socket
+import sys
+import threading
+import time
+
+import app
+import general
+import ssh
 from exception import SettingsError
 
 def build_commands(commands):
@@ -28,7 +35,7 @@ def remote_install(args):
   # so the installation can go on headless.
   app.init_all_passwords()
 
-  remote_host=args[1]
+  remote_host = args[1]
   obj = RemoteInstall()
   obj.run(remote_host)
 
@@ -55,19 +62,19 @@ class RemoteInstall:
   the script will retry to connect every 5 second until it answers.
 
   '''
-  servers={}
+  servers = {}
 
   # All hosts that are alive.
-  alive={}
+  alive = {}
 
   # All hosts valid config status
-  invalid_config={}
+  invalid_config = {}
 
   # All hosts that has been installed.
-  installed={}
+  installed = {}
 
   # Abort error
-  abort_error={}
+  abort_error = {}
 
   def run(self, host_name=""):
     '''
@@ -82,14 +89,19 @@ class RemoteInstall:
       app.print_verbose(str(threading.activeCount()) + " threads are running.")
 
       for host_name in self.servers:
-        is_not_installed=(host_name not in self.installed)
-        has_no_abort_errors=(host_name not in self.abort_error)
+        is_not_installed = (host_name not in self.installed)
+        has_no_abort_errors = (host_name not in self.abort_error)
 
         if (is_not_installed and has_no_abort_errors):
-          t=threading.Thread(target=self._execute_commands, args=[host_name])
+          self.installed[host_name] = "Progress"
+          t = threading.Thread(target=self._execute_commands, args=[host_name])
           t.start()
 
-      time.sleep(30)
+      # End script if all threads are done, otherwise sleep for 30
+      for i in range(30):
+        time.sleep(1)
+        if len(self.servers) != len(self.installed):
+          break
 
     # Wait for all threads to finish
     for t in threading.enumerate():
@@ -120,15 +132,10 @@ class RemoteInstall:
     except SettingsError, e:
       app.print_error(e, 2)
 
-    except paramiko.AuthenticationException, e:
-      app.print_error(e.args)
-      self.abort_error[host_name]=e
-
-  def _execute(self, obj, host_name):
-    self.installed[host_name]="Progress"
+  def _execute(self, obj, host_name):    
     for option, command in app.get_commands(host_name):      
       obj.ssh_exec(command)
-    self.installed[host_name]="Yes"
+    self.installed[host_name] = "Yes"
     app.print_verbose("")
 
   def _set_servers(self, host_name):
@@ -151,16 +158,16 @@ class RemoteInstall:
 
     '''
     for host_name in self.servers:
-      self.invalid_config[host_name]="Yes"
+      self.invalid_config[host_name] = "Yes"
       if (not app.config.has_option(host_name, "server")):
-        self.invalid_config[host_name]="No"
+        self.invalid_config[host_name] = "No"
         app.print_verbose("In install.cfg, cant find ip for " + host_name)
 
   def _validate_alive(self, ssh_obj, host_name):
     if (ssh_obj.is_alive()):
-      self.alive[host_name]="Yes"
+      self.alive[host_name] = "Yes"
     else:
-      self.alive[host_name]="No"
+      self.alive[host_name] = "No"
       raise SettingsError(host_name + " is not alive.")
 
   def _print_install_stat(self):
@@ -178,17 +185,17 @@ class RemoteInstall:
       "ABORT ERROR".ljust(20)
     )
     app.print_verbose("   " +
-      ("-"*19).ljust(20) +
-      ("-"*14).ljust(15) +
-      ("-"*5).ljust(6) +
-      ("-"*12).ljust(13) +
-      ("-"*9).ljust(10) +
-      ("-"*20).ljust(21)
+      ("-" * 19).ljust(20) +
+      ("-" * 14).ljust(15) +
+      ("-" * 5).ljust(6) +
+      ("-" * 12).ljust(13) +
+      ("-" * 9).ljust(10) +
+      ("-" * 20).ljust(21)
     )
     for host_name in self.servers:
       app.print_verbose("   " +
         host_name.ljust(20) +
-        app.get_ip(host_name).ljust(15)+
+        app.get_ip(host_name).ljust(15) +
         self._get_alive(host_name).ljust(6) +
         self._get_invalid_config(host_name).ljust(13) +
         self._get_installed(host_name).ljust(10) +
