@@ -15,7 +15,6 @@ __status__ = "Production"
 
 import app
 import general
-import paramiko
 import ssh
 from exception import SettingsError
 
@@ -59,8 +58,5 @@ def vir_list(args):
         app.print_verbose("   Not online.")
   except SettingsError, e:
     app.print_error(e, 2)
-
-  except paramiko.AuthenticationException, e:
-    app.print_error(e.args)
     
   app.options.verbose = old_verbose

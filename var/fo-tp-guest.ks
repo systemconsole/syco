@@ -92,7 +92,6 @@ keyutils
 trousers
 fipscheck
 device-mapper-multipath
-#python-paramiko
 #-autofs
 
 %pre
@@ -123,4 +122,3 @@ $SNIPPET('post_anamon')
 $kickstart_done
 # End final steps
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-yum -y install python-paramiko

@@ -6,15 +6,13 @@ Examples:
 obj = Ssh("10.0.0.1", "password")
 try:
   obj.install_ssh_key()
-  print(obj.ssh_exec("uname -a"))
+  obj.ssh_exec("uname -a")
 except Exception, e:
   print("Error: " + str(e))
 except SettingsError, e:
   print("Error: " + str(e))
-except paramiko.AuthenticationException, e:
-  print("Error: " + str(e.args))
 
-Read more about paramiko
+Read more about paramiko (Currently not using paramiko)
 http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
 http://www.linuxplanet.com/linuxplanet/tutorials/6618/1/
 http://www.lag.net/paramiko/docs/
@@ -31,12 +29,14 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
+from repr import repr
 import subprocess
+import sys
+import pxssh, pexpect
 
 import app
 from exception import SettingsError
 import general
-import paramiko
 
 class Ssh:
 
@@ -109,7 +109,7 @@ class Ssh:
     '''Is remote ssh server alive.'''
     return general.is_server_alive(self.server, self.port)
 
-  def ssh_exec(self, command):
+  def ssh_exec(self, command, events = {}):
     '''
     Execute the ssh command.
 
@@ -117,40 +117,53 @@ class Ssh:
     and closes the conneciton.
 
     '''
+    try:
+      self._ssh_exec(command, events)
+    except pexpect.TIMEOUT, e:
+      app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command)
+      self.ssh_exec(command, events)
+  
+  def _ssh_exec(self, command, events):
     app.print_verbose("SSH Command on " + self.server + ": " + command)
 
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    events["Verify the SYCO master password:"] = app.get_master_password() + "\n"
 
-    ssh.connect(self.server, username=self.user, password=self.password)
+    keys = events.keys()
+    value = events.values()
 
-    stdin_file, stdout_file, stderr_file = ssh.exec_command(command)
-    stdin_file.close()
+    num_of_events = len(keys)
 
-    stdout = ""
-    stderr = ""
-    data = stdout_file.read().splitlines()
-    for line in data:
-      # Only write caption once.
-      if (stdout == ""):
-        app.print_verbose("---- Result ----", 2)
-      app.print_verbose(line, 2),
-      stdout += line
+    # When the ssh command are executed, and back to the command prompt.
+    keys.append("\[PEXPECT\]?")
+    # Get return from expect() instead of exception.
+    keys.append(pexpect.EOF)
+    keys.append(pexpect.TIMEOUT)
 
-    data = stderr_file.read().splitlines()
-    for line in data:
-      app.print_verbose(line, 2),
-      stderr += line
+    ssh = pxssh.pxssh()    
+    ssh.login(self.server, username=self.user, password=self.password)
+    
+    app.print_verbose("---- SSH Result - Start ----", 2)
+    app.print_verbose(ssh.before, 3, new_line=False)
+    
+    # Will duplicate output.
+    #ssh.logfile_read = sys.stdout
 
-    if (stderr):
-      app.print_error(stderr.strip())
+    ssh.sendline(command)
+
+    index=0    
+    while (index < num_of_events):
+      index = ssh.expect(keys)      
+
+      app.print_verbose(ssh.before, 2, new_line=True)
+
+      if index >= 0 and index < num_of_events:
+        ssh.sendline(value[index])
 
     # An extra line break for the looks.
-    if (stdout and app.options.verbose >= 2):
-      app.print_verbose("----------------", 2)
-      print("\n"),
+    if (app.options.verbose >= 2):      
+      app.print_verbose("---- SSH Result - End-------\n", 2)
 
-    return stdout, stderr
+    ssh.logout()
 
   def mysql_exec(self, command):
     '''
@@ -193,8 +206,7 @@ class Ssh:
                          stderr=subprocess.PIPE
                          )
 
-    p.communicate()
-    print p.returncode
+    p.communicate()    
 
     if (p.returncode > 0):
       self.key_is_installed = False
@@ -204,13 +216,13 @@ class Ssh:
     return self.key_is_installed
 
 if (__name__ == "__main__"):
-  obj = Ssh("10.0.0.1", "password")
+  app.options.verbose = 2
+  obj = Ssh("localhost", "password")
+
   try:
-    obj.install_ssh_key()
-    print(obj.ssh_exec("uname -a"))
+    #obj.install_ssh_key()
+    obj.ssh_exec("syco remote-install fo-tp-mysql-primary -v")
   except Exception, e:
     print("Error: " + str(e))
   except SettingsError, e:
     print("Error: " + str(e))
-  except paramiko.AuthenticationException, e:
-    print("Error: " + str(e.args))

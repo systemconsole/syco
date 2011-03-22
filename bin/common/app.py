@@ -132,21 +132,21 @@ def _get_password_store():
 
 _get_password_store.password_store = None
 
-def _get_master_password():
-  '''
-  Get a password from the password store.
-
-  '''
-  password = _get_password_store().get_master_password()
-  _get_password_store().save_password_file()
-  return password
-
 def _get_password(service, user_name):
   '''
   Get a password from the password store.
 
   '''
   password = _get_password_store().get_password(service, user_name)
+  _get_password_store().save_password_file()
+  return password
+
+def get_master_password():
+  '''
+  Get a password from the password store.
+
+  '''
+  password = _get_password_store().get_master_password()
   _get_password_store().save_password_file()
   return password
 
