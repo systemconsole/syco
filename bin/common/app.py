@@ -120,18 +120,35 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
       sys.stdout.write(msg)
       sys.stdout.flush()
 
+def _get_password_store():
+  '''
+  Get a password store object.
+
+  '''
+  if (not _get_password_store.password_store):
+    _get_password_store.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+
+  return _get_password_store.password_store
+
+_get_password_store.password_store = None
+
+def _get_master_password():
+  '''
+  Get a password from the password store.
+
+  '''
+  password = _get_password_store().get_master_password()
+  _get_password_store().save_password_file()
+  return password
+
 def _get_password(service, user_name):
   '''
   Get a password from the password store.
 
   '''
-  if (not _get_password.password_store):
-    _get_password.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
-  password = _get_password.password_store.get_password(service, user_name)
-  _get_password.password_store.save_password_file()
+  password = _get_password_store().get_password(service, user_name)
+  _get_password_store().save_password_file()
   return password
-
-_get_password.password_store = None
 
 def get_root_password():
   '''The linux shell root password.'''
