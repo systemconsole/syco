@@ -116,13 +116,12 @@ class PasswordStore:
     verify_password
     If True, the user has to type the password twice for veryfication.
 
-    '''
-    print(password_caption)
+    '''    
     while (True):
-      password = getpass.getpass()
+      password = getpass.getpass(password_caption)
 
       if (verify_password):
-        verify_password = getpass.getpass('Password (again): ')
+        verify_password = getpass.getpass(password_caption + '(again) ')
         if (password != verify_password):
           sys.stderr.write("Error: Your passwords didn't match\n")
           password = verify_password
