@@ -199,8 +199,11 @@ def main():
 
   if len(args) < 1 and 2 > len(args):
     app.parser.print_help()
-  else:            
-    cmd_list.execute(args) 
+  else:
+    try:
+      cmd_list.execute(args)
+    except Exception, e:
+      app.print_error(repr(e.args))
                  
 if __name__ == "__main__":    
   main()
