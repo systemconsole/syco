@@ -62,6 +62,9 @@ class PasswordStore:
   # The config parser object.
   config = None
 
+  # Cache of the master_password
+  master_password = None
+
   def __init__(self, file_path):
     '''
     Set the path to the password file.
@@ -70,7 +73,7 @@ class PasswordStore:
     self.file_path=file_path
 
     # create a cipher object using the random secret
-    self.cipher = AES.new(self._get_master_password())
+    self.cipher = AES.new(self.get_master_password())
 
   def __del__(self):
     '''
@@ -78,6 +81,44 @@ class PasswordStore:
     
     '''
     self.save_password_file()
+
+  def get_master_password(self):
+    '''
+    Get the master password from user.
+
+    If the master password is already stored in the password file, the user has
+    to verify the password.
+
+    If the master password are not stored in the password file, ask the user to
+    write the password twice to verify that it is the right password. The
+    password will then be stored in the password file.
+
+    '''
+
+    if (self.master_password is None):
+      crypted_file_password = self._get_from_file("general", "keystore_pass")
+
+      if (len(crypted_file_password) == 0):
+        # If no password where stored in the config file, ask the user for
+        # a new master password.
+        master_password = self.get_password_from_user("Enter the SYCO master password: ")
+      else:
+        # If the password where stored in the config file, ask the user to
+        # verify the master password.
+        master_password = self.get_password_from_user("Verify the SYCO master password: ", False)
+
+      master_password = self._pad(master_password)
+      crypted_master_password = crypt.crypt(master_password, master_password)
+
+      # If no file password where found, store master_password to file.
+      if (len(crypted_file_password) == 0):
+        self._set_to_file("general", "keystore_pass", crypted_master_password)
+      else:
+        if (crypted_file_password != crypted_master_password):
+          raise Exception("Invalid master password")
+      self.master_password = master_password
+
+    return self.master_password
     
   def set_password(self, service, user_name, password):
     '''
@@ -137,7 +178,6 @@ class PasswordStore:
         password = None
         continue
       break
-
     return password  
 
   def save_password_file(self):
@@ -155,43 +195,13 @@ class PasswordStore:
   def _pad(self, s):
     '''
     Add extra padding to a password, to be valid for AES.
-    '''
-    return s + (self.BLOCK_SIZE - len(s) % self.BLOCK_SIZE) * self.PADDING
-
-  def _get_master_password(self):
-    '''
-    Get the master password from user. 
-    
-    If the master password is already stored in the password file, the user has
-    to verify the password. 
-    
-    If the master password are not stored in the password file, the user to 
-    write the password twice to verify that it is the right password. The
-    password will then be stored in the password file.
     
     '''
-    crypted_file_password = self._get_from_file("general", "keystore_pass")
-
-    if (len(crypted_file_password) == 0):  
-      # If no password where stored in the config file, ask the user for 
-      # a new master password.
-      user_password = self.get_password_from_user("Enter the SYCO master password: ")
+    padding_length = self.BLOCK_SIZE - len(s)
+    if padding_length > 0:
+      return s + (padding_length % self.BLOCK_SIZE) * self.PADDING
     else:
-      # If the password where stored in the config file, ask the user to 
-      # verify the master password.
-      user_password = self.get_password_from_user("Verify the SYCO master password: ", False)
-  
-    user_password = self._pad(user_password)
-    crypted_user_password = crypt.crypt(user_password, user_password)
-    
-    # If no file password where found, store user_password to file.
-    if (len(crypted_file_password) == 0): 
-      self._set_to_file("general", "keystore_pass", crypted_user_password)
-    else:
-      if (crypted_file_password != crypted_user_password):
-        raise Exception("Invalid master password")
-      
-    return user_password      
+      return s
 
   def _build_config_parser(self):
     '''
@@ -266,3 +276,5 @@ if (__name__ == "__main__"):
   # Will ask the user for the password the first time.
   decoded = pws.get_password('mysql', 'syscon')
   print 'Decrypted string:', decoded
+
+  print pws.get_master_password()
