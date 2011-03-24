@@ -40,6 +40,10 @@ def remote_install(args):
   obj.run(remote_host)
 
 def install_local(args):
+  # Ask the user for all passwords that might be used in the remote install
+  # so the installation can go on headless.
+  app.init_all_passwords()
+
   host_name = ""
   if len(args) == 2:
     host_name = args[1]
