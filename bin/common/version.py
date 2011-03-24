@@ -31,6 +31,11 @@ __status__ = "Production"
 import ConfigParser, socket
 import app
 
+class VersionException(Exception):
+  '''
+  Raised for Version exceptions
+  '''
+
 class Version:
   hostname = socket.gethostname()
 
@@ -49,7 +54,7 @@ class Version:
 
     '''    
     if (app.options.force == 0 and self._is_executed(self.command, self.version)):
-      raise Exception("Command " + str(self.command) + " version " + str(self.version) + " is already executed")
+      raise VersionException("Command " + str(self.command) + " version " + str(self.version) + " is already executed")
 
   def mark_executed(self):
     '''
