@@ -29,7 +29,7 @@ from optparse import OptionParser
 # Common classes/functions that are used by the project.
 sys.path.append(sys.path[0] + "/common/")
 
-import app
+import app, version
 
 # Files published to public repos.
 sys.path.append(app.SYCO_PUBLIC_PATH)
@@ -202,7 +202,7 @@ def main():
   else:
     try:
       cmd_list.execute(args)
-    except Exception, e:
+    except version.VersionException, e:
       app.print_error(repr(e.args))
                  
 if __name__ == "__main__":    
