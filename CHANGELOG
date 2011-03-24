@@ -32,6 +32,7 @@ Version 4
   of each request beyond a point that users consider "fast enough".
 * Check cpu sensors (temp), IPMI??
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.
+* Move install.cfg to private repo.
 * Add right licence to all files. Add licence file to root folder.
 * Handle the reboot that is performed by installKvmHost.
 * Add interactive shell functionality
@@ -48,6 +49,7 @@ Version 5
   http://openvpn.net/index.php/open-source/documentation/howto.html#security
 * User can use syco with a console/shell behaviour. Much like mysql, virsh,
   asadmin console. The user can login to a remote host and run local commands.
+* Check this http://snorby.org/
 
 Harden
 ------
