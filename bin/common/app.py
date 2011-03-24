@@ -84,7 +84,7 @@ def print_error(message, verbose_level=1):
   '''
   print_verbose(message, verbose_level=verbose_level, caption=BOLD + "Error: " + RESET)
 
-def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_caption=True):
+def print_verbose(message, verbose_level=1, caption=None, new_line=True, enable_caption=True):
   '''
   Print a text to the stdout, affected by the verbose level.
 
@@ -95,6 +95,8 @@ def print_verbose(message, verbose_level=1, caption="", new_line=True, enable_ca
   '''
   if (caption):
     caption += " "
+  else:
+    caption=""
   caption = time.strftime('%Y-%m-%d %H:%M:%S') + " - " + socket.gethostname() + " - " + caption
 
   messages = []
@@ -216,6 +218,7 @@ def init_all_passwords():
   get_svn_password()
   get_glassfish_master_password()
   get_glassfish_admin_password()
+  get_user_password("glassfish")
   init_mysql_passwords()
 
 def get_option(section, option):
