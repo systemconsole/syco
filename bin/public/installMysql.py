@@ -83,8 +83,7 @@ def install_mysql(args):
   app.print_verbose("Install mysql version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
   version_obj.check_executed()
-
-  print len(args)
+  
   if (len(args) != 3):
     raise Exception("syco install-mysql [server-id] [innodb-buffer-pool-size]")
 
