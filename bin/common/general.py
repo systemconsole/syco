@@ -26,20 +26,8 @@ from random import choice
 from socket import *
 
 import app
-
-def install_and_import_pexpect():
-  '''
-  Import the pexpect module, will be installed if not already done.
-
-  '''
-  try:
-    import pexpect
-    return pexpect
-  except:
-    subprocess.Popen("yum -y install pexpect", shell=True)
-    time.sleep(2)
-
-pexpect = install_and_import_pexpect()
+import expect
+import pexpect
 
 def remove_file(path):
   '''
@@ -153,87 +141,11 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
 
-class syco_spawn(pexpect.spawn):
-  def expect_loop(self, searcher, timeout = -1, searchwindowsize = -1):
-    self.searcher = searcher
-
-    if timeout == -1:
-        timeout = self.timeout
-    if timeout is not None:
-        end_time = time.time() + timeout
-    if searchwindowsize == -1:
-        searchwindowsize = self.searchwindowsize
-
-    try:
-        incoming = self.buffer
-        freshlen = len(incoming)
-        while True: # Keep reading until exception or return.
-            app.print_verbose(incoming[ -freshlen : ], 2, new_line=False, enable_caption=False)
-            index = searcher.search(incoming, freshlen, searchwindowsize)
-            if index >= 0:
-                self.buffer = incoming[searcher.end : ]
-                self.before = incoming[ : searcher.start]
-                self.after = incoming[searcher.start : searcher.end]
-                self.match = searcher.match
-                self.match_index = index
-                return self.match_index
-            # No match at this point
-            if timeout < 0 and timeout is not None:
-                raise pexpect.TIMEOUT ('Timeout exceeded in expect_any().')
-            # Still have time left, so read more data
-            c = self.read_nonblocking (self.maxread, timeout)
-            freshlen = len(c)
-            time.sleep (0.0001)
-            incoming = incoming + c
-            if timeout is not None:
-                timeout = end_time - time.time()
-    except pexpect.EOF, e:
-        self.buffer = ''
-        self.before = incoming
-        self.after = pexpect.EOF
-        index = searcher.eof_index
-        if index >= 0:
-            self.match = pexpect.EOF
-            self.match_index = index
-            return self.match_index
-        else:
-            self.match = None
-            self.match_index = None
-            raise pexpect.EOF (str(e) + '\n' + str(self))
-    except pexpect.TIMEOUT, e:
-        self.buffer = incoming
-        self.before = incoming
-        self.after = pexpect.TIMEOUT
-        index = searcher.timeout_index
-        if index >= 0:
-            self.match = pexpect.TIMEOUT
-            self.match_index = index
-            return self.match_index
-        else:
-            self.match = None
-            self.match_index = None
-            raise pexpect.TIMEOUT (str(e) + '\n' + str(self))
-    except:
-        self.before = incoming
-        self.after = None
-        self.match = None
-        self.match_index = None
-        raise
-
-def shell_exec(command, user="", key=None, value=None, cwd=None):
+def shell_exec(command, user="", cwd=None, events=None):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
 
   '''
-  if key is None:
-      key = []
-      
-  if value is None:
-      value = []
-
-  if (not cwd):
-    cwd = os.getcwd()
-
   # Build command to execute
   args=[]
   if (user):
@@ -242,27 +154,37 @@ def shell_exec(command, user="", key=None, value=None, cwd=None):
 
   app.print_verbose("Command: su " + user + " -c '" + command + "'")
 
-  key.append("Verify the SYCO master password[:].*")
-  value.append(app.get_master_password() + "\r\n\r")
+  # Setting default events
+  if events is None:
+      events = {}
 
-  num_of_events = len(key)  
+  events["Verify the SYCO master password:"] = app.get_master_password() + "\n"
+
+  keys = events.keys()
+  value = events.values()
+
+  num_of_events = len(keys)
 
   # Timeout for ssh.expect
-  key.append(pexpect.TIMEOUT)
+  keys.append(pexpect.TIMEOUT)
 
   # When ssh.expect reaches the end of file. Probably never
   # does, is probably reaching [PEXPECT]# first.
-  key.append(pexpect.EOF)
+  keys.append(pexpect.EOF)
 
-  out = syco_spawn("su", args, cwd=cwd)
+  # Set current working directory
+  if (cwd == None):
+    cwd = os.getcwd()
+
+  out = expect.spawn("su", args, cwd=cwd)
+
   app.print_verbose("---- Result ----", 2)
-  caption = True
   stdout = ""
   index = 0
   while (index < num_of_events+1):
-    index = out.expect(key, timeout=3600)
+    index = out.expect(keys, timeout=3600)
     stdout += out.before      
-    caption = False
+
     if index >= 0 and index < num_of_events:
       out.send(value[index])      
     elif index == num_of_events:
