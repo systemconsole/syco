@@ -22,6 +22,7 @@ import time
 import app
 import general
 import net
+from iptables import iptables
 
 def build_commands(commands):
   commands.add("install-guest", install_guest, "hostname, ip", help="Install kvm guest from dvd, without cobbler.")
@@ -65,8 +66,10 @@ def install_guest(args):
   # Export kickstart file
   general.set_config_property("/etc/exports", '^' + app.SYCO_PATH + 'var/kickstart/generated.*$', app.SYCO_PATH + "var/kickstart/generated *(rw)")
   general.set_config_property("/etc/exports", '^/media/dvd/.*$', "/media/dvd/ *(rw)")
-  general.shell_exec("service portmap restart")
-  general.shell_exec("service nfs restart")
+
+  configure_nfs_with_static_ip()
+  add_temporary_nfs_iptables_rules()
+  restart_all_nfs_services()
 
   # Create the data lvm volumegroup
   result = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + hostname)
@@ -101,3 +104,70 @@ def install_guest(args):
   general.set_config_property("/etc/exports", '^' + app.SYCO_PATH + 'var/kickstart/generated.*$', "")
   general.set_config_property("/etc/exports", '^/media/dvd/.*$', "")
   general.shell_exec("umount /media/dvd")
+  remove_temporary_nfs_iptables_rules()
+
+def add_temporary_nfs_iptables_rules():
+  '''
+  Open iptables for NFS just during the installation.
+  
+  '''
+  app.print_verbose("Setup iptables for nfs")
+  remove_temporary_nfs_iptables_rules()
+
+  iptables("-N guest_installation")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 32803 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 32769 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 892 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 875 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 662 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 2020 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 2049 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p tcp --dport 111 -j ACCEPT")
+
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 32803 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 32769 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 892 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 875 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 662 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 2020 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 2049 -j ACCEPT")
+  iptables("-A guest_installation -m state --state NEW -p udp --dport 111 -j ACCEPT")
+
+  iptables("-I INPUT  -p ALL -j guest_installation")
+  iptables("-I OUTPUT -p ALL -j guest_installation")
+
+def remove_temporary_nfs_iptables_rules():
+  iptables("-F guest_installation")
+  iptables("-X guest_installation")
+  iptables("-D INPUT  -p ALL -j guest_installation")
+  iptables("-D OUTPUT -p ALL -j guest_installation")
+  pass
+
+def configure_nfs_with_static_ip():
+  '''
+  # http://www.cyberciti.biz/faq/centos-fedora-rhel-iptables-open-nfs-server-ports/
+  '''
+
+  app.print_verbose("Configure nfs static server ports.")
+  # TCP port rpc.lockd should listen on.
+  general.set_config_property("/etc/sysconfig/nfs", ".*LOCKD_TCPPORT.*", "LOCKD_TCPPORT=32803")
+
+  # UDP port rpc.lockd should listen on.
+  general.set_config_property("/etc/sysconfig/nfs", ".*LOCKD_UDPPORT.*", "LOCKD_UDPPORT=32769")
+
+  # Port rpc.mountd should listen on.
+  general.set_config_property("/etc/sysconfig/nfs", ".*MOUNTD_PORT.*", "MOUNTD_PORT=892")
+
+  # Port rquotad should listen on.
+  general.set_config_property("/etc/sysconfig/nfs", ".*RQUOTAD_PORT.*", "RQUOTAD_PORT=875")
+
+  # Port rpc.statd should listen on.
+  general.set_config_property("/etc/sysconfig/nfs", ".*STATD_PORT.*", "STATD_PORT=662")
+
+  # Outgoing port statd should used. The default is port is random
+  general.set_config_property("/etc/sysconfig/nfs", ".*STATD_OUTGOING_PORT.*", "STATD_OUTGOING_PORT=2020")
+
+def restart_all_nfs_services():
+  general.shell_exec("service portmap restart")
+  general.shell_exec("service nfs restart")
+  general.shell_exec("service rpcsvcgssd restart")
