@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 '''
-Install a KVM guest that should be used as an installation server.
+Install a KVM guest from DVD instead of cobbler, that most syco servers uses
+for installation.
 
 This script should be executed directly on a kvm host.
 
@@ -52,6 +53,7 @@ def install_guest(args):
     general.shell_exec("mount -o ro /dev/dvd /media/dvd")
 
   # Create kickstart for the installation
+  general.shell_exec("mkdir -p " + app.SYCO_PATH + "var/kickstart/generated")
   ks_path = app.SYCO_PATH + "var/kickstart/generated/" + hostname + ".ks"
   general.shell_exec("cp " + app.SYCO_PATH + "var/kickstart/dvd-guest.ks " + ks_path)
   general.set_config_property(ks_path, "\$\{HOSTNAME\}", hostname)
@@ -80,7 +82,7 @@ def install_guest(args):
     "--check-cpu " +
     "--os-type linux --os-variant=rhel5.4 " +
     "--network=bridge:br1 " +
-    '-x "ks=nfs:" + local_ip + ":' + ks_path)
+    '-x "ks=nfs:' + local_ip + ':' + ks_path + '"')
 
   # Waiting for the installation process to complete, and halt the guest.
   while(True):
@@ -96,6 +98,6 @@ def install_guest(args):
 
   general.shell_exec("service nfs stop")
   general.shell_exec("service portmap stop")
-  general.set_config_property("/etc/exports", '^' + app.SYCO_PATH + 'var/.*$', "")
+  general.set_config_property("/etc/exports", '^' + app.SYCO_PATH + 'var/kickstart/generated.*$', "")
   general.set_config_property("/etc/exports", '^/media/dvd/.*$', "")
   general.shell_exec("umount /media/dvd")
