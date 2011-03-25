@@ -77,8 +77,8 @@ keyutils
 trousers
 fipscheck
 device-mapper-multipath
-python26
-git
+
 
 %post
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+yum install -y python26 git
