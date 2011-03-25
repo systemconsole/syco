@@ -3,3 +3,4 @@ etc/version.cfg
 usr/
 *.pyc
 .DS_Store
+var/kickstart/generated
