@@ -147,17 +147,30 @@ class Ssh:
     # When ssh.expect reaches the end of file. Probably never
     # does, is probably reaching [PEXPECT]# first.
     keys.append(pexpect.EOF)
-    
+
+    # Disable verbose output for SSH login process.
+    # This outputs a lot of ugly useless text.
+    old_verbose = app.options.verbose
+    app.options.verbose = 0
+
     ssh = expect.sshspawn()
-    ssh.login(self.server, username=self.user, password=self.password)    
+    ssh.login(self.server, username=self.user, password=self.password)
     
-    app.print_verbose("---- SSH Result - Start ----", 2)
-    app.print_verbose(ssh.before, 3, new_line=False)
+    app.options.verbose = old_verbose
     
+    app.print_verbose("---- SSH Result - Start ----", 2)    
+
     ssh.sendline(command)
+
+    # First output from ssh.expect doesn't print the caption text before
+    # the output commes. This is for the executed command.
+    app.print_verbose("", 2, new_line=False, enable_caption=True)
 
     index=0    
     while (index < num_of_events+1):
+
+      # Check for strings in keys in the output from the SSH command,
+      # also uses print_verbose on all output from the result.
       index = ssh.expect(keys, timeout=3600)
       
       if index >= 0 and index < num_of_events:
@@ -174,7 +187,13 @@ class Ssh:
     if (app.options.verbose >= 2):      
       app.print_verbose("---- SSH Result - End-------\n", 2)
 
+    # Disable verbose output for SSH logout process.
+    # This because our CENTOS installation outputs a lot of newlines
+    # and a "clear screen" command, that makes the output look ugly.
+    old_verbose = app.options.verbose
+    app.options.verbose = 0
     ssh.logout()
+    app.options.verbose = old_verbose
 
   def mysql_exec(self, command):
     '''
