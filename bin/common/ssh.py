@@ -32,11 +32,12 @@ import os
 from repr import repr
 import subprocess
 import sys
-import pxssh, pexpect
 
 import app
 from exception import SettingsError
 import general
+import expect
+import pexpect
 
 class Ssh:
 
@@ -120,44 +121,54 @@ class Ssh:
     try:
       self._ssh_exec(command, events)
     except pexpect.TIMEOUT, e:
-      app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command)
+      app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command + str(e))
       self.ssh_exec(command, events)
   
-  def _ssh_exec(self, command, events):
+  def _ssh_exec(self, command, events=None):
     app.print_verbose("SSH Command on " + self.server + ": " + command)
+
+    # Setting default events
+    if events is None:
+        events = {}
 
     events["Verify the SYCO master password:"] = app.get_master_password() + "\n"
 
     keys = events.keys()
     value = events.values()
 
-    num_of_events = len(keys)
+    num_of_events = len(keys)    
+
+    # Timeout for ssh.expect
+    keys.append(pexpect.TIMEOUT)
 
     # When the ssh command are executed, and back to the command prompt.
     keys.append("\[PEXPECT\]?")
-    # Get return from expect() instead of exception.
-    keys.append(pexpect.EOF)
-    keys.append(pexpect.TIMEOUT)
 
-    ssh = pxssh.pxssh()    
-    ssh.login(self.server, username=self.user, password=self.password)
+    # When ssh.expect reaches the end of file. Probably never
+    # does, is probably reaching [PEXPECT]# first.
+    keys.append(pexpect.EOF)
+    
+    ssh = expect.sshspawn()
+    ssh.login(self.server, username=self.user, password=self.password)    
     
     app.print_verbose("---- SSH Result - Start ----", 2)
     app.print_verbose(ssh.before, 3, new_line=False)
     
-    # Will duplicate output.
-    #ssh.logfile_read = sys.stdout
-
     ssh.sendline(command)
 
     index=0    
-    while (index < num_of_events):
-      index = ssh.expect(keys)      
-
-      app.print_verbose(ssh.before, 2, new_line=True)
-
+    while (index < num_of_events+1):
+      index = ssh.expect(keys, timeout=3600)
+      
       if index >= 0 and index < num_of_events:
         ssh.sendline(value[index])
+      elif index == num_of_events:
+        app.print_error("Catched a timeout from ssh.expect, lets try again.")
+
+    # Print new line when finding the PEXPECT prompt.
+    if (app.options.verbose >= 2):
+      if index == num_of_events+1:
+        print ""
 
     # An extra line break for the looks.
     if (app.options.verbose >= 2):      
@@ -221,7 +232,7 @@ if (__name__ == "__main__"):
 
   try:
     #obj.install_ssh_key()
-    obj.ssh_exec("syco remote-install fo-tp-mysql-primary -v")
+    obj.ssh_exec("uname")
   except Exception, e:
     print("Error: " + str(e))
   except SettingsError, e:

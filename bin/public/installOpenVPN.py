@@ -27,7 +27,8 @@ __status__ = "Production"
 import os, stat
 import app, general, version, iptables
 
-pexpect=general.install_and_import_pexpect()
+import expect
+import pexpect
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
