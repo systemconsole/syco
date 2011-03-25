@@ -141,7 +141,6 @@ def remove_temporary_nfs_iptables_rules():
   iptables("-X guest_installation")
   iptables("-D INPUT  -p ALL -j guest_installation")
   iptables("-D OUTPUT -p ALL -j guest_installation")
-  pass
 
 def configure_nfs_with_static_ip():
   '''
