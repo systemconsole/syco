@@ -45,9 +45,12 @@ def get_lan_ip():
   '''
   global lan_ip
   if (lan_ip==""):
-    lan_ip = socket.gethostbyname(socket.gethostname())
+    try:
+      lan_ip = socket.gethostbyname(socket.gethostname())
+    except Exception:
+      pass    
     
-    if lan_ip.startswith("127.") and os.name != "nt":
+    if lan_ip == "" or (lan_ip.startswith("127.") and os.name != "nt"):
       interfaces = ["eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
       
       for ifname in interfaces:      
@@ -68,3 +71,7 @@ def reverse_ip(str):
 			reverse_str = "." + reverse_str
 		reverse_str = num + reverse_str
 	return reverse_str
+
+if (__name__ == "__main__"):
+  print get_lan_ip()
+  print get_interface_ip("eth0")
