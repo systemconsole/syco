@@ -1,14 +1,22 @@
 TODO
 ====
 
+Version 1
+---------
+* Rename installFoTpInstall and all other relations to fo-tp
+* Iptable rules on fo-tp-install should be synced in iptables-setup
+  They should also open up for tftp.
+* Reinstall fo-tp-install
+* Handle the reboot that is performed by installKvmHost.
+
 Version 2
 ---------
-* Adapt installation to glassfish3
-  http://glassfish.java.net/docs/3.1/installation-guide.pdf
-* installLDAP.py
-* installBind.py
+* installBind.
+* installRentalFront
+* installLDAP
+* installNagios
 * installHudson
-* instalSonar
+* installSonar
 
 Version 3
 ---------
@@ -19,9 +27,6 @@ Refactor
 --------
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
-* Rename installFoTpInstall and all other relations to fo-tp
-* Iptable rules on fo-tp-install should be synced in iptables-setup
-  They should also open up for tftp.
 
 Version 4
 ---------
@@ -34,7 +39,6 @@ Version 4
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Move install.cfg to private repo.
 * Add right licence to all files. Add licence file to root folder.
-* Handle the reboot that is performed by installKvmHost.
 * Add interactive shell functionality
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/

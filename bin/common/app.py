@@ -162,9 +162,9 @@ def get_root_password_hash():
 
   '''
   root_password = get_root_password()
-  p = subprocess.Popen("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'", shell=True)
+  p = subprocess.Popen("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'", stdout=subprocess.PIPE, shell=True)
   hash_root_password, stderr = p.communicate()
-  return hash_root_password
+  return str(hash_root_password)
 
 def get_user_password(username):
   '''The linux shell password for a specific user.'''
@@ -241,6 +241,10 @@ def get_mysql_primary_master():
 def get_mysql_secondary_master():
   '''IP or hostname for secondary mysql server.'''
   return get_ip(get_option("general", "mysql.secondary_master"))
+
+def get_gateway_server_ip():
+  '''The ip of the network gateway.'''
+  return get_option("general", "gateway")
 
 def get_installation_server():
   '''The hostname of the installation server.'''

@@ -36,13 +36,13 @@ lang en_US.UTF-8
 
 # Network information
 # Using "old" style networking config. Make sure all MAC-addresses are in cobbler to use the new-style config
-network --bootproto=static --ip=10.100.100.200 --netmask=255.255.0.0 --gateway=10.100.0.1 --hostname=fo-tp-install --device=eth0 --onboot=on --nameserver 10.100.0.4 
+network --bootproto=static --ip=${IP} --netmask=255.255.0.0 --gateway=${GATEWAY} --hostname=${HOSTNAME} --device=eth0 --onboot=on --nameserver ${NAMESERVER}
 
 # Reboot after installation
 reboot
 
 #Root password
-rootpw --iscrypted $1$vfg34t55$JsSc9Us8Aje0auu.4ZnHn1
+rootpw --iscrypted ${ROOT_PASSWORD}
 
 # SELinux configuration
 selinux --enforcing
