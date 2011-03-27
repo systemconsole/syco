@@ -1,4 +1,4 @@
-# Fareoffice fo-tp-install kickstart.
+# kickstart file for kvm guest installation with dvd (not with cobbler).
 # Author: Daniel Lindh
 # Created: 2010-11-29
 #
@@ -35,8 +35,7 @@ keyboard sv-latin1
 lang en_US.UTF-8
 
 # Network information
-# Using "old" style networking config. Make sure all MAC-addresses are in cobbler to use the new-style config
-network --bootproto=static --ip=${IP} --netmask=255.255.0.0 --gateway=${GATEWAY} --hostname=${HOSTNAME} --device=eth0 --onboot=on --nameserver ${NAMESERVER}
+network --bootproto=static --ip=${IP} --netmask=255.255.0.0 --gateway=${GATEWAY} --hostname=${HOSTNAME} --device=eth0 --onboot=on --nameserver=${NAMESERVER} --noipv6
 
 # Reboot after installation
 reboot

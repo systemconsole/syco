@@ -106,7 +106,7 @@ def print_verbose(message, verbose_level=1, caption=None, new_line=True, enable_
     messages = message
 
   # Output will look like
-  # fo-tp-system: Caption This is a message
+  # syco-system: Caption This is a message
   for msg in messages:
     if (len(str(msg)) > 0):
       msg = re.sub("[\n]", "\n" + caption, str(msg))
@@ -339,16 +339,16 @@ New line
 Another new line
 
 last new line'''
-  print_verbose(long_text, caption="fo-tp-vh01", new_line=False)
-  print_verbose(", and some more text on the last line", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=False, enable_caption=False)
-  print_verbose(".", caption="fo-tp-vh01", new_line=True, enable_caption=False)
+  print_verbose(long_text, caption="syco-vh01", new_line=False)
+  print_verbose(", and some more text on the last line", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=False, enable_caption=False)
+  print_verbose(".", caption="syco-vh01", new_line=True, enable_caption=False)
 

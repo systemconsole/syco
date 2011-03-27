@@ -26,9 +26,9 @@ def install_guests(args):
   installCobbler.install_epel_repo()
   general.shell_exec("yum -y install koan")
 
-  # Wait to install guests until fo-tp-install is alive.
-  while (not is_fo_tp_install_alive()):
-    app.print_error("fo-tp-install is not alive, try again in 15 seconds.")
+  # Wait to install guests until installation sterver is alive.
+  while (not is_installation_server_alive()):
+    app.print_error("installation server is not alive, will try again in 15 seconds.")
     time.sleep(15)
 
   guests={}
@@ -91,5 +91,5 @@ def _is_guest_installed(guest_name, options="--all"):
   else:
     return False
 
-def is_fo_tp_install_alive():
-  return general.is_server_alive("10.100.100.200", 22)
+def is_installation_server_alive():
+  return general.is_server_alive(app.get_installation_server_ip(), 22)
