@@ -84,7 +84,7 @@ def install_guest(args):
     "--vnc --noautoconsole --hvm --accelerate " +
     "--check-cpu " +
     "--os-type linux --os-variant=rhel5.4 " +
-    "--network=bridge:br1 " +
+    "--network bridge:br1 " +
     '-x "ks=nfs:' + local_ip + ':' + ks_path + '"')
 
   # Waiting for the installation process to complete, and halt the guest.
@@ -144,7 +144,8 @@ def remove_temporary_nfs_iptables_rules():
 
 def configure_nfs_with_static_ip():
   '''
-  # http://www.cyberciti.biz/faq/centos-fedora-rhel-iptables-open-nfs-server-ports/
+  http://www.cyberciti.biz/faq/centos-fedora-rhel-iptables-open-nfs-server-ports/
+
   '''
 
   app.print_verbose("Configure nfs static server ports.")

@@ -4,6 +4,7 @@ TODO
 Version 1
 ---------
 * Rename installFoTpInstall and all other relations to fo-tp
+* Reinstall the installation server, and test the modified scripts.
 * Iptable rules on fo-tp-install should be synced in iptables-setup
   They should also open up for tftp.
 * Reinstall fo-tp-install
@@ -30,6 +31,8 @@ Refactor
 
 Version 4
 ---------
+* Looks like the kvm host machines doesn't get any gatway after the installation.
+  /etc/sysconfig/network
 * Check "gerrit" code review software and implement on vcs server.
 * Create install-svn
 * Build report tool to check swap memory.

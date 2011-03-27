@@ -142,8 +142,8 @@ def _install_cobbler():
 
 def _modify_coppler_settings():
   app.print_verbose("Update cobbler config files")
-  general.set_config_property("/etc/cobbler/settings", '^server:.*',                    "server: " + app.get_ip("fo-tp-install"))
-  general.set_config_property("/etc/cobbler/settings", '^next_server:.*',               "next_server: " + app.get_ip("fo-tp-install"))
+  general.set_config_property("/etc/cobbler/settings", '^server:.*',                    "server: " + app.get_installation_server_ip())
+  general.set_config_property("/etc/cobbler/settings", '^next_server:.*',               "next_server: " + app.get_installation_server_ip())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_bridge:.*',       "default_virt_bridge: br1")
   general.set_config_property("/etc/cobbler/settings", '^default_password_crypted:.*',  "default_password_crypted: " + app.get_root_password_hash())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*',         "default_virt_type: qemu")
@@ -151,15 +151,15 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*',   "yum_post_install_mirror: 1")
   general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*',               "manage_dhcp: 1")
 
-  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-host.ks", "/var/lib/cobbler/kickstarts/fo-tp-host.ks")
-  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-guest.ks", "/var/lib/cobbler/kickstarts/fo-tp-guest.ks")
-  shutil.copyfile(app.SYCO_PATH + "/var/fo-tp-install/dhcp.template", "/etc/cobbler/dhcp.template")
+  shutil.copyfile(app.SYCO_PATH + "/var/kickstart/host.ks", "/var/lib/cobbler/kickstarts/host.ks")
+  shutil.copyfile(app.SYCO_PATH + "/var/kickstart/guest.ks", "/var/lib/cobbler/kickstarts/guest.ks")
+  shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
 
   # Config crontab to update repo automagically
   general.set_config_property("/etc/crontab", "01 \* \* \* \* root cobbler reposync \-\-tries\=3 \-\-no\-fail", "01 * * * * root cobbler reposync --tries=3 --no-fail")
 
   # Set apache servername
-  general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName fo-tp-install:80")
+  general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + app.get_installation_server() + ":80")
 
   general.shell_exec("/etc/init.d/httpd restart")
   # TODO: Do we need no_return=True
@@ -195,14 +195,14 @@ def _refresh_all_profiles():
       --distro=centos5.5-x86_64 --virt-type=qemu \
       --virt-ram=1024 --virt-cpus=1 \
       --repos="centos5-updates-x86_64" \
-      --kickstart=/var/lib/cobbler/kickstarts/fo-tp-guest.ks \
+      --kickstart=/var/lib/cobbler/kickstarts/guest.ks \
       --virt-bridge=br1""")
 
   general.shell_exec("cobbler profile remove --name=centos5.5-vm_host")
   general.shell_exec("""cobbler profile add --name=centos5.5-vm_host \
     --distro=centos5.5-x86_64 \
     --repos="centos5-updates-x86_64" \
-    --kickstart=/var/lib/cobbler/kickstarts/fo-tp-host.ks""")
+    --kickstart=/var/lib/cobbler/kickstarts/host.ks""")
 
 def _cobbler_sync():
   general.shell_exec("cobbler sync")
