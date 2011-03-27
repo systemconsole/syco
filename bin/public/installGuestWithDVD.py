@@ -5,6 +5,14 @@ for installation.
 
 This script should be executed directly on a kvm host.
 
+WARNING:
+Because of a bug in redhat/Centos it's required to have a DHCP server
+during the kickstart installation. Even though we use a static ip.
+Use "syco install-dhcp-server" before and "syco uninstall-dhcp-server" after
+you run this script.
+
+https://bugzilla.redhat.com/show_bug.cgi?id=392021
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -25,7 +33,7 @@ import net
 from iptables import iptables
 
 def build_commands(commands):
-  commands.add("install-guest", install_guest, "hostname, ip", help="Install kvm guest from dvd, without cobbler.")
+  commands.add("install-guest", install_guest, "hostname, ip", help="Install kvm guest from dvd, without cobbler (reguire dhcp).")
 
 # The main function
 #

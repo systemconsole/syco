@@ -1,6 +1,11 @@
 TODO
 ====
 
+install-dhcp-server minimal script.
+
+installGuestWithDVD requires a DHCP server because of a bug in centos.
+https://bugzilla.redhat.com/show_bug.cgi?id=392021
+
 Version 1
 ---------
 * Rename installFoTpInstall and all other relations to fo-tp
