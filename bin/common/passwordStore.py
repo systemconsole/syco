@@ -34,9 +34,24 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+import ConfigParser
+import base64
+import crypt
+import getpass
+import os
+import string
+import sys
+import subprocess
+import time
+
+# Install Crypto.Cipher if not already installed.
+stdoutdata = subprocess.Popen("rpm -qa python-crypto", shell=True, stdout=subprocess.PIPE).communicate()[0]
+if "python-crypto" not in stdoutdata:
+  subprocess.Popen("yum -y install python-crypto", shell=True).wait()
+  time.sleep(1)
+
 from Crypto.Cipher import AES
-import base64, os, ConfigParser, crypt, getpass, sys, string
-      
+
 class PasswordStore:
 
   # The block size for the cipher object; must be 16, 24, or 32 for AES.
@@ -70,7 +85,7 @@ class PasswordStore:
     Set the path to the password file.
     
     '''  
-    self.file_path=file_path
+    self.file_path = file_path
 
     # create a cipher object using the random secret
     self.cipher = AES.new(self.get_master_password())
@@ -125,7 +140,7 @@ class PasswordStore:
     Encrypt and store password in password file.
     
     '''
-    encrypted_password=base64.b64encode(self.cipher.encrypt(self._pad(password)))
+    encrypted_password = base64.b64encode(self.cipher.encrypt(self._pad(password)))
     self._set_to_file(service, user_name, encrypted_password)
     return encrypted_password
 
@@ -150,7 +165,7 @@ class PasswordStore:
       
     return user_password
 
-  def get_password_from_user(self, password_caption = "Please enter a password:", verify_password = True):
+  def get_password_from_user(self, password_caption="Please enter a password:", verify_password=True):
     '''
     Ask the user for a password on stdin, and validate it's strength.
 
@@ -209,9 +224,9 @@ class PasswordStore:
     
     '''
     if (not self.config):
-      self.config=ConfigParser.RawConfigParser()
+      self.config = ConfigParser.RawConfigParser()
       if (os.path.exists(self.file_path)):
-          self.config.read(self.file_path)
+        self.config.read(self.file_path)
     return self.config
     
   def _get_from_file(self, section, option):
@@ -221,7 +236,7 @@ class PasswordStore:
     '''
     section = self._escape_for_ini(section)
     option = self._escape_for_ini(option)
-    config=self._build_config_parser()
+    config = self._build_config_parser()
     
     if (config.has_section(section) and config.has_option(section, option)):
       return config.get(section, option)
@@ -237,13 +252,13 @@ class PasswordStore:
     '''
     section = self._escape_for_ini(section)
     option = self._escape_for_ini(option)
-    config=self._build_config_parser()
+    config = self._build_config_parser()
         
     if (not config.has_section(section)):
-        config.add_section(section)
+      config.add_section(section)
 
     config.set(section, option, value)
-    self.config_file_is_modified=True    
+    self.config_file_is_modified = True
 
   def _escape_for_ini(self, value):
     '''
@@ -251,7 +266,7 @@ class PasswordStore:
     only, and alphanumeric chars are preserved.
     
     '''
-    def escape_char(c, legal = self.LEGAL_CHARS):
+    def escape_char(c, legal=self.LEGAL_CHARS):
       '''
       Single char escape. Either normal char, or _<hexcode>
       
@@ -261,11 +276,11 @@ class PasswordStore:
       else:
         return "_"
         
-    return "".join( escape_char(c) for c in value )
+    return "".join(escape_char(c) for c in value)
 
 # Test the functionality 
 if (__name__ == "__main__"):
-  pws=PasswordStore("/tmp/test.conf")
+  pws = PasswordStore("/tmp/test.conf")
 
   # Don't ask the user for the password
   encoded = pws.set_password('mysql', 'root', 'This is my password')
