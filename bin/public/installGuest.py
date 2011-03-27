@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Instal all KVM guest defined for this server in etc/install.cfg
+Install all KVM guest defined for this server in etc/install.cfg
 
 '''
 
