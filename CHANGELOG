@@ -3,8 +3,6 @@ TODO
 
 Version 1
 ---------
-* Remote-install can handle installation of specific hosts from install.cfg,
-  instead of one or all.
 * Test that the remote-host installation works, by reinstalling fo-tp-vh03??
 
 Version 2
