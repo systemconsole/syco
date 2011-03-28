@@ -91,7 +91,7 @@ def refresh_repo(args):
 
   while(True):
     num_of_processes = subprocess.Popen("ps aux | grep wget", stdout=subprocess.PIPE, shell=True).communicate()[0].count("\n")    
-    if num_of_processes <=1:
+    if num_of_processes <=2:
       break
     app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
     time.sleep(10)
