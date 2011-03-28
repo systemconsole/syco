@@ -44,6 +44,10 @@ def remote_install(args):
   obj.run(remote_host)
 
 def install_local(args):
+  '''
+  Run all commands on the localhost.
+
+  '''
   # Ask the user for all passwords that might be used in the remote install
   # so the installation can go on headless.
   app.init_all_passwords()
@@ -71,7 +75,7 @@ class RemoteInstall:
   the script will retry to connect every 30 second until it answers.
 
   '''
-  servers = {}
+  servers = []
 
   # All hosts that are alive.
   alive = {}
@@ -185,12 +189,14 @@ class RemoteInstall:
 
     '''
     if (host_name):
-      self.servers = [host_name]
+      self.servers.append(host_name)
+      if (app.is_host(host_name)):
+        self.servers += app.get_guests(host_name)
     else:
       self.servers = app.get_servers()
 
     sorted(self.servers)
-
+    
   def _validate_install_config(self):
     '''
     Validate all host options in install.cfg.
