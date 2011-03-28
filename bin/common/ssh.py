@@ -180,13 +180,10 @@ class Ssh:
 
     # Disable verbose output for SSH login process.
     # This outputs a lot of ugly useless text.
-    old_verbose = app.options.verbose
-    app.options.verbose = 0
-
     ssh = expect.sshspawn()
+    ssh.disable_output()
     ssh.login(self.server, username=self.user, password=self.password)
-    
-    app.options.verbose = old_verbose
+    ssh.enable_output()
     
     app.print_verbose("---- SSH Result - Start ----", 2)    
 
@@ -222,10 +219,9 @@ class Ssh:
     # Disable verbose output for SSH logout process.
     # This because our CENTOS installation outputs a lot of newlines
     # and a "clear screen" command, that makes the output look ugly.
-    old_verbose = app.options.verbose
-    app.options.verbose = 0
+    ssh.disable_output()
     ssh.logout()
-    app.options.verbose = old_verbose
+    ssh.enable_output()
 
   def mysql_exec(self, command):
     '''

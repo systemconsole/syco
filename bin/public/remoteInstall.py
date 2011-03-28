@@ -97,22 +97,22 @@ class RemoteInstall:
     self._set_servers(host_name)
     self._validate_install_config()
 
-    while(len(self.servers) != len(self.installed)):
+    while(len(self.servers) != len(self.installed)):      
       self._print_install_stat()
       app.print_verbose(str(threading.activeCount()) + " threads are running.")
-
-      for host_name in self.servers:
+      
+      for host_name in self.servers:        
         if (not self._is_installed(host_name) and not self.has_abort_errors(host_name)):
           self.installed[host_name] = "Progress"
           t = threading.Thread(target=self._install_host, args=[host_name])
           t.start()
 
       # End script if all threads are done, otherwise sleep for 30
-      for i in range(30):
-        time.sleep(1)
-        if len(self.servers) != len(self.installed):
+      for i in range(30):        
+        time.sleep(1)        
+        if len(self.servers) == len(self.installed):
           break
-
+    
     # Wait for all threads to finish
     for t in threading.enumerate():
       if (threading.currentThread() != t):
@@ -148,11 +148,19 @@ class RemoteInstall:
       self._install_syco_on_remote_host(obj)      
       self._execute_commands(obj, host_name)
 
+    except pexpect.EOF, e:
+      app.print_error(e, 2)
+
+      # Remove progress state.
+      if host_name in self.installed:
+        del(self.installed[host_name])
+
     except SettingsError, e:
       app.print_error(e, 2)
 
       # Remove progress state.
-      del(self.installed[host_name])
+      if host_name in self.installed:
+        del(self.installed[host_name])
 
   def _install_syco_on_remote_host(self, ssh):
     '''
@@ -222,9 +230,10 @@ class RemoteInstall:
     Display information about the servers that are being installed.
 
     '''
+    app.print_verbose("\n\n\n")
     app.print_verbose(repr(len(self.servers)) + " servers left to install.")
     app.print_verbose("   " +
-      "SERVER NAME".ljust(20) +
+      "SERVER NAME".ljust(30) +
       "IP".ljust(15) +
       "ALIVE".ljust(6) +
       "VALID CONFIG".ljust(13) +
@@ -232,7 +241,7 @@ class RemoteInstall:
       "ABORT ERROR".ljust(20)
       )
     app.print_verbose("   " +
-      ("-" * 19).ljust(20) +
+      ("-" * 29).ljust(30) +
       ("-" * 14).ljust(15) +
       ("-" * 5).ljust(6) +
       ("-" * 12).ljust(13) +
@@ -241,7 +250,7 @@ class RemoteInstall:
       )
     for host_name in self.servers:
       app.print_verbose("   " +
-        host_name.ljust(20) +
+        host_name.ljust(30) +
         app.get_ip(host_name).ljust(15) +
         self._get_alive(host_name).ljust(6) +
         self._get_invalid_config(host_name).ljust(13) +

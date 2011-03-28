@@ -32,6 +32,16 @@ import pexpect
 import pxssh
 
 class spawn(pexpect.spawn):
+  
+  # What verbose level should be used with print_verbose
+  verbose_level = 2
+
+  def enable_output(self):
+    self.verbose_level = 2
+
+  def disable_output(self):
+    self.verbose_level = 10
+
   def expect_loop(self, searcher, timeout = -1, searchwindowsize = -1):
     '''
     Using print_verbose, to get realtime output. Everything else
@@ -51,7 +61,7 @@ class spawn(pexpect.spawn):
         incoming = self.buffer
         freshlen = len(incoming)
         while True: # Keep reading until exception or return.
-            app.print_verbose(incoming[ -freshlen : ], 2, new_line=False, enable_caption=False)
+            app.print_verbose(incoming[ -freshlen : ], self.verbose_level, new_line=False, enable_caption=False)
             index = searcher.search(incoming, freshlen, searchwindowsize)
             if index >= 0:
                 self.buffer = incoming[searcher.end : ]
@@ -106,6 +116,15 @@ class spawn(pexpect.spawn):
 
 class sshspawn(pxssh.pxssh):
 
+  # What verbose level should be used with print_verbose
+  verbose_level = 2
+
+  def enable_output(self):
+    self.verbose_level = 2
+
+  def disable_output(self):
+    self.verbose_level = 10
+
   def expect_loop(self, searcher, timeout = -1, searchwindowsize = -1):
     '''
     Using print_verbose, to get realtime output. Everything else
@@ -125,7 +144,7 @@ class sshspawn(pxssh.pxssh):
         incoming = self.buffer
         freshlen = len(incoming)
         while True: # Keep reading until exception or return.
-            app.print_verbose(incoming[ -freshlen : ], 2, new_line=False, enable_caption=False)
+            app.print_verbose(incoming[ -freshlen : ], self.verbose_level, new_line=False, enable_caption=False)
             index = searcher.search(incoming, freshlen, searchwindowsize)
             if index >= 0:
                 self.buffer = incoming[searcher.end : ]
