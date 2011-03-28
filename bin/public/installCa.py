@@ -5,7 +5,7 @@ TODO, THIS FILE IS NOT READY TO USE.
 '''
 
 __author__ = "mattias@fareoffice.com"
-__copyright__ = "Copyright 2011, Fareoffice Car Rental SolutionsAB"
+__copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "daniel@fareoffice.com"
 __credits__ = ["Daniel LIndh"]

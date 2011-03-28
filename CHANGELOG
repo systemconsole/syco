@@ -42,6 +42,7 @@ Version 4
 * Add interactive shell functionality
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+* Install ssh-keys on all syco-servers.
 
 Version 5
 ---------

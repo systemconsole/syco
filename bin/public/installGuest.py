@@ -66,7 +66,7 @@ def _install_guest(host_name, guest_name):
     vol_group_size=disk_var_size+disk_used_by_other_log_vol+extra_not_used_space
     general.shell_exec("lvcreate -n " + guest_name + " -L " + str(vol_group_size) + "G VolGroup00")
 
-  general.shell_exec("koan --server=10.100.100.200 --virt --system=" + guest_name)
+  general.shell_exec("koan --server=" + app.get_installation_server_ip() + " --virt --system=" + guest_name)
   general.shell_exec("virsh autostart " + guest_name)
 
 def _start_guest(guest_name):
