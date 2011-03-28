@@ -102,7 +102,7 @@ class RemoteInstall:
     self._set_servers(host_name)
     self._validate_install_config()
 
-    while(len(self.servers) != len(self.installed)):      
+    while(not self._is_all_servers_installed()):
       self._print_install_stat()
       app.print_verbose(str(threading.activeCount()) + " threads are running.")
       
@@ -115,7 +115,7 @@ class RemoteInstall:
       # End script if all threads are done, otherwise sleep for 30
       for i in range(30):        
         time.sleep(1)        
-        if len(self.servers) == len(self.installed):
+        if(self._is_all_servers_installed()):
           break
     
     # Wait for all threads to finish
@@ -123,6 +123,14 @@ class RemoteInstall:
       if (threading.currentThread() != t):
         t.join()
 
+  def _is_all_servers_installed(self):
+    installed = 0
+    for status in self.installed:
+      if (status == "yes"):
+        installed += 1
+
+    return (len(self.servers) == installed)
+  
   def _is_installed(self, host_name):
     if (host_name in self.installed and self.installed[host_name] == "Yes"):
       return True
@@ -235,7 +243,7 @@ class RemoteInstall:
     Display information about the servers that are being installed.
 
     '''
-    app.print_verbose("\n\n\n")
+    print("\n\n\n")
     app.print_verbose(repr(len(self.servers)) + " servers left to install.")
     app.print_verbose("   " +
       "SERVER NAME".ljust(30) +
@@ -262,7 +270,7 @@ class RemoteInstall:
         self._get_installed(host_name).ljust(10) +
         self._get_abort_errors(host_name)
         )
-    app.print_verbose("")
+    print("\n\n\n")
 
   def _get_alive(self, host_name):
     if (host_name in self.alive):
