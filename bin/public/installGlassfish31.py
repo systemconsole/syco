@@ -80,10 +80,6 @@ def install_glassfish(args):
   The main installation function the for the glassfish, dependencies and plugins.
 
   '''
-  for i in range(10):
-    app.print_verbose("mooo" + str(i))
-    time.sleep(2)
-  return
   app.print_verbose("Install glassfish3 version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.check_executed()
