@@ -30,6 +30,7 @@ import shutil
 import stat
 import sys
 import traceback
+import time
 
 import app
 import general
@@ -79,6 +80,10 @@ def install_glassfish(args):
   The main installation function the for the glassfish, dependencies and plugins.
 
   '''
+  for i in range(10):
+    app.print_verbose("mooo" + str(i))
+    time.sleep(2)
+  return
   app.print_verbose("Install glassfish3 version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.check_executed()
@@ -371,13 +376,13 @@ def _install_google_guice(domain_name):
 
   '''
   os.chdir(app.INSTALL_DIR)
-  if (not os.access("guice-2.0.zip", os.F_OK)):
-    general.download_file("http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
-    general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
+  if (not os.access("guice-3.0.zip", os.F_OK)):
+    general.download_file("http://google-guice.googlecode.com/files/guice-3.0.zip", user="glassfish")
+    general.shell_exec("unzip -oq guice-3.0.zip", user="glassfish")
 
-  general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/guice-assistedinject-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
   '''
