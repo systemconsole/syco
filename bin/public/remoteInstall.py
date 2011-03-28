@@ -24,6 +24,10 @@ import general
 import ssh
 from exception import SettingsError
 
+# Need to be after ssh, because ssh.py installs pexpect
+import pexpect
+import pxssh
+
 def build_commands(commands):
   commands.add("remote-install", remote_install, "[hostname]", help="Connect to all servers, and run all commands defined in install.cfg.")
   commands.add("install-local", install_local, "[hostname]", help="Run all commands defined in install.cfg.")
@@ -54,16 +58,17 @@ def install_local(args):
   
   commands = app.get_commands(host_name)
   if len(commands) > 0:
-    for option, command in commands:
+    for command in commands:
       general.shell_exec(command)
   else:
     app.print_error("No commands for this host.")
 
 class RemoteInstall:
-  '''Run commands defined in install.cfg on remote hosts through SSH.
+  '''
+  Run commands defined in install.cfg on remote hosts through SSH.
 
   If the remote host is not yet installed/started/available,
-  the script will retry to connect every 5 second until it answers.
+  the script will retry to connect every 30 second until it answers.
 
   '''
   servers = {}
@@ -93,12 +98,9 @@ class RemoteInstall:
       app.print_verbose(str(threading.activeCount()) + " threads are running.")
 
       for host_name in self.servers:
-        is_not_installed = (host_name not in self.installed)
-        has_no_abort_errors = (host_name not in self.abort_error)
-
-        if (is_not_installed and has_no_abort_errors):
+        if (not self._is_installed(host_name) and not self.has_abort_errors(host_name)):
           self.installed[host_name] = "Progress"
-          t = threading.Thread(target=self._execute_commands, args=[host_name])
+          t = threading.Thread(target=self._install_host, args=[host_name])
           t.start()
 
       # End script if all threads are done, otherwise sleep for 30
@@ -112,7 +114,16 @@ class RemoteInstall:
       if (threading.currentThread() != t):
         t.join()
 
-  def _execute_commands(self, host_name):
+  def _is_installed(self, host_name):
+    if (host_name in self.installed and self.installed[host_name] == "Yes"):
+      return True
+    else:
+      return False
+
+  def has_abort_errors(self, host_name):
+    return (host_name in self.abort_error)
+
+  def _install_host(self, host_name):
     '''
     Execute the commands on the remote host.
 
@@ -130,15 +141,41 @@ class RemoteInstall:
       app.print_verbose("========================================================================================")
 
       obj.install_ssh_key()
-      self._install_syco_on_remote_host(obj)
-      
-      self._execute(obj, host_name)
+      self._install_syco_on_remote_host(obj)      
+      self._execute_commands(obj, host_name)
+
     except SettingsError, e:
       app.print_error(e, 2)
 
-  def _execute(self, obj, host_name):    
-    for option, command in app.get_commands(host_name):      
-      obj.ssh_exec(command)
+      # Remove progress state.
+      del(self.installed[host_name])
+
+  def _install_syco_on_remote_host(self, ssh):
+    '''
+    Rsync syco to remote server, and install it
+
+    '''
+    app.print_verbose("Install syco on remote host")
+    ssh.rsync(app.SYCO_PATH, app.SYCO_PATH, "--exclude version.cfg")
+    ssh.ssh_exec(app.SYCO_PATH + "bin/syco.py install-syco")
+
+  def _execute_commands(self, obj, host_name):
+    commands = app.get_commands(host_name)
+
+    while(len(commands) != 0):
+      try:
+        obj.ssh_exec(commands[0])
+        commands.pop(0)
+      except ssh.SSHTerminatedException, e:
+        app.print_error("SSHTerminatedException on host " + host_name + " with command " + commands[0])
+        obj.wait_until_alive()
+        
+      except pexpect.EOF, e:
+        app.print_error("pexpect.EOF on host " + host_name + " with command " + commands[0])
+
+      except pxssh.ExceptionPxssh, e:
+        app.print_error("pxssh.ExceptionPxssh on host " + host_name + " with command " + commands[0] + ", might be because the remote host rebooted.")
+      
     self.installed[host_name] = "Yes"
     app.print_verbose("")
 
@@ -187,7 +224,7 @@ class RemoteInstall:
       "VALID CONFIG".ljust(13) +
       "INSTALLED".ljust(10) +
       "ABORT ERROR".ljust(20)
-    )
+      )
     app.print_verbose("   " +
       ("-" * 19).ljust(20) +
       ("-" * 14).ljust(15) +
@@ -195,7 +232,7 @@ class RemoteInstall:
       ("-" * 12).ljust(13) +
       ("-" * 9).ljust(10) +
       ("-" * 20).ljust(21)
-    )
+      )
     for host_name in self.servers:
       app.print_verbose("   " +
         host_name.ljust(20) +
@@ -204,7 +241,7 @@ class RemoteInstall:
         self._get_invalid_config(host_name).ljust(13) +
         self._get_installed(host_name).ljust(10) +
         self._get_abort_errors(host_name)
-      )
+        )
     app.print_verbose("")
 
   def _get_alive(self, host_name):
@@ -230,12 +267,3 @@ class RemoteInstall:
       return str(self.abort_error[host_name])
     else:
       return "?"
-
-  def _install_syco_on_remote_host(self, ssh):
-    '''Rsync syco to remote server, and install it
-
-    '''
-    app.print_verbose("Install syco on remote host")
-    ssh.rsync(app.SYCO_PATH, app.SYCO_PATH, "--exclude version.cfg")
-    ssh.ssh_exec(app.SYCO_PATH + "bin/syco.py install-syco")
-

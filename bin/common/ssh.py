@@ -32,12 +32,23 @@ import os
 from repr import repr
 import subprocess
 import sys
+import time
 
 import app
 from exception import SettingsError
 import general
 import expect
 import pexpect
+
+class SSHTerminatedException(Exception):
+  '''
+  Raised when an ssh session is abnormally terminated.
+
+  Can happen if
+  * the command executed on the other side is killed.
+  * the ssh session is killed.
+  * the remote server is rebooted.
+  '''
 
 class Ssh:
 
@@ -106,6 +117,18 @@ class Ssh:
     if (not self._is_sshkey_installed()):
       raise SettingsError("Failed to install cert on " + self.server)
 
+  def wait_until_alive(self):
+    '''Wait until the remote server becomes alive.'''
+    if (not self.is_alive()):
+      app.print_verbose("Wait for remote host " + self.server + " to become alive.", new_line=False)
+      while(not self.is_alive()):        
+        if (app.options.verbose >= 1):
+          sys.stdout.write(".")
+          sys.stdout.flush()
+        time.sleep(5)
+      app.print_verbose("\n", new_line=False)
+
+
   def is_alive(self):
     '''Is remote ssh server alive.'''
     return general.is_server_alive(self.server, self.port)
@@ -133,15 +156,22 @@ class Ssh:
 
     events["Verify the SYCO master password:"] = app.get_master_password() + "\n"
 
+
     keys = events.keys()
     value = events.values()
-
-    num_of_events = len(keys)    
-
+    
     # Timeout for ssh.expect
+    timeout_event = len(keys)
     keys.append(pexpect.TIMEOUT)
 
+    # The ssh session was terminated before the command had finished it's
+    # execution.
+    keys.append("Connection to .* closed by remote host")
+    terminate_event = len(keys)
+    keys.append("Terminated")    
+
     # When the ssh command are executed, and back to the command prompt.
+    pexpect_event = len(keys)
     keys.append("\[PEXPECT\]?")
 
     # When ssh.expect reaches the end of file. Probably never
@@ -167,20 +197,22 @@ class Ssh:
     app.print_verbose("", 2, new_line=False, enable_caption=True)
 
     index=0    
-    while (index < num_of_events+1):
+    while (index <= terminate_event):
 
       # Check for strings in keys in the output from the SSH command,
       # also uses print_verbose on all output from the result.
       index = ssh.expect(keys, timeout=3600)
       
-      if index >= 0 and index < num_of_events:
+      if 0 <= index and index < timeout_event:
         ssh.sendline(value[index])
-      elif index == num_of_events:
+      elif index == timeout_event:
         app.print_error("Catched a timeout from ssh.expect, lets try again.")
+      elif timeout_event < index and index <= terminate_event:
+        raise SSHTerminatedException()
 
     # Print new line when finding the PEXPECT prompt.
     if (app.options.verbose >= 2):
-      if index == num_of_events+1:
+      if index == pexpect_event:
         print ""
 
     # An extra line break for the looks.

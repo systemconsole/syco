@@ -3,7 +3,9 @@ TODO
 
 Version 1
 ---------
-* Handle the reboot that is performed by installKvmHost from remote-install.
+* Remote-install can handle installation of specific hosts from install.cfg,
+  instead of one or all.
+* Test that the remote-host installation works, by reinstalling fo-tp-vh03??
 
 Version 2
 ---------
@@ -56,6 +58,7 @@ Version 5
 * User can use syco with a console/shell behaviour. Much like mysql, virsh,
   asadmin console. The user can login to a remote host and run local commands.
 * Check this http://snorby.org/
+* See all todos in installMysql
 
 Hardening
 ---------

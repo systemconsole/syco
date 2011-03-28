@@ -298,7 +298,7 @@ def get_commands(host_name):
       if "command" in option:
         if (options.verbose >= 2):
           value += " -v"
-        commands.append([option, value])
+        commands.append(value)
 
   return sorted(commands)
 
