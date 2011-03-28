@@ -298,9 +298,13 @@ def get_commands(host_name):
       if "command" in option:
         if (options.verbose >= 2):
           value += " -v"
-        commands.append(value)
+        commands.append([option, value])
 
-  return sorted(commands)
+  ret_commands = []
+  for option, value in sorted(commands):
+    ret_commands.append(value)
+
+  return ret_commands
 
 def get_hosts():
   '''Get the hostname of all kvm hosts.'''
