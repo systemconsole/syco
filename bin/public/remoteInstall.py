@@ -21,12 +21,10 @@ import time
 
 import app
 import general
-import ssh
-from exception import SettingsError
-
-# Need to be after ssh, because ssh.py installs pexpect
 import pexpect
 import pxssh
+import ssh
+from exception import SettingsError
 
 def build_commands(commands):
   commands.add("remote-install", remote_install, "[hostname]", help="Connect to all servers, and run all commands defined in install.cfg.")
@@ -39,9 +37,16 @@ def remote_install(args):
   # so the installation can go on headless.
   app.init_all_passwords()
 
+  # Start installation timer.
+  t0= time.time()
+
   remote_host = args[1]
   obj = RemoteInstall()
   obj.run(remote_host)
+
+  # Print the time it took to install all servers.
+  t= time.time() - t0 # t is CPU seconds elapsed (floating point)
+  print "It took " + time.strftime('%X', time.gmtime(t)) + " to install all servers."
 
 def install_local(args):
   '''

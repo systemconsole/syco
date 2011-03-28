@@ -33,13 +33,13 @@ def vir_rm(args):
   general.remove_file("/etc/libvirt/qemu/autostart/" + server_name + ".xml")
   general.remove_file("/etc/libvirt/qemu/" + server_name + ".xml")
   general.remove_file("/opt/fareoffice/var/virtstorage/" + server_name + "*")
-  general.remove_file("/var/log/libvirt/qemu/" + server_name + ".log")
-  general.shell_exec("updatedb")
+  general.remove_file("/var/log/libvirt/qemu/" + server_name + ".log")  
 
   general.shell_exec("lvremove -f /dev/VolGroup00/" + server_name)
 
   app.print_verbose("Restart libvirtd");
   general.shell_exec("/etc/init.d/libvirtd restart")
+  general.shell_exec("updatedb")
 
 def vir_list(args):
   old_verbose = app.options.verbose
