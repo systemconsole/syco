@@ -7,7 +7,7 @@ Version 1
 
 Version 2
 ---------
-* installBind.
+* installBind
 * installRentalFront
 * installLDAP
 * installNagios
@@ -17,50 +17,35 @@ Version 2
 Version 3
 ---------
 * Create backup for all server (fo-tp-vcs, specially)
+  installBackup
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
-* Looks like the kvm host machines doesn't get any gateway after the installation.
-  /etc/sysconfig/network
 * Move install.cfg to private repo.
+* Remove fareoffice relations in the public scripts and documentation.
 
-Refactor
---------
+Version 3.2 (iptables)
+----------------------
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
-* Iptable rules on fo-tp-install should be synced in iptables-setup
-  They should also open up for tftp.
+* Iptable rules on fo-tp-install should be synced in iptables-setup  
 
 Version 4
 ---------
-* Check "gerrit" code review software and implement on vcs server.
 * Move all companies repos to git or create install-svn.
+* Is the ram option in install.cfg working? gf computer hasn't enough memory.
+* Add right licence to all files. Add licence file to root folder.
+* remote-install-ssh-keys (on all syco-servers)
+
+Monitor
+-------
+* Check this http://snorby.org/
+* Check cpu sensors (temp), IPMI??
 * Build report tool to check swap memory.
   A webserver should never ever have to swap, as swapping increases the latency
   of each request beyond a point that users consider "fast enough".
-* Check cpu sensors (temp), IPMI??
-* Is the ram option in install.cfg working? gf computer hasn't enough memory.
-* Add right licence to all files. Add licence file to root folder.
-* Add interactive shell functionality
-  http://docs.python.org/library/cmd.html
-  http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
-* Install ssh-keys on all syco-servers.
-
-Version 5
----------
-* Remove fareoffice relations in the public scripts.
-* configure installCA, merge with CA stuff in installOpenVpn?
-* Add reviewboard.com to vcs server???
-* Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html
-* installOpenvpn, has the client openvpn certs a unique common name?
-* installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
-  http://openvpn.net/index.php/open-source/documentation/howto.html#security
-* User can use syco with a console/shell behaviour. Much like mysql, virsh,
-  asadmin console. The user can login to a remote host and run local commands.
-* Check this http://snorby.org/
-* See all todos in installMysql
 
 Hardening
 ---------
-* Install clam
+* installClam
 * Read http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
 * Harden kickstart files according to
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/kickstart.template
@@ -79,6 +64,12 @@ Hardening
 
 Remote-install
 --------------
+* Looks like the kvm host machines doesn't get any gateway after the installation.
+  /etc/sysconfig/network
+* remote-install should log all output to file, one for each server/thread.
+  http://docs.python.org/library/logging.html#logging-to-multiple-destinations
+* Looks like remote-install are doing multiple installations to the same server
+  at the same time. Maybe starting multiple threads for each server.
 * syco remote-install, should loop and wait for all clients to become alive.
   Then run all commands on them.
 * The guests should use the repos from the cobbler server.
@@ -88,6 +79,21 @@ Remote-install
 * The remote-install deamon should check for changes in install.cfg.
 * Add all output from syco to a log file.
 * Add "syco remote-install" in kickstart for fo-tp-install
+
+Version 5
+---------
+* Add reviewboard.com to vcs server???
+* Check "gerrit" code review software and implement on vcs server.
+* Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html
+* configure installCA, merge with CA stuff in installOpenVpn?
+* installOpenvpn, has the client openvpn certs a unique common name?
+* installOpenvpn, harden openvpn, jailroot, ta.key, Unprivileged mode
+  http://openvpn.net/index.php/open-source/documentation/howto.html#security
+* See all todos in installMysql
+* User can use syco with a console/shell behaviour. Much like mysql, virsh,
+  asadmin console. The user can login to a remote host and run local commands.
+  http://docs.python.org/library/cmd.html
+  http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
 
 Other
 -----

@@ -85,7 +85,7 @@ class RemoteInstall:
   # All hosts that are alive.
   alive = {}
 
-  # All hosts valid config status
+  # All hosts config status
   invalid_config = {}
 
   # All hosts that has been installed.
@@ -107,7 +107,7 @@ class RemoteInstall:
       app.print_verbose(str(threading.activeCount()) + " threads are running.")
       
       for host_name in self.servers:        
-        if (not self._is_installed(host_name) and not self.has_abort_errors(host_name)):
+        if (not self._is_installation_in_progress(host_name) and not self.has_abort_errors(host_name)):
           self.installed[host_name] = "Progress"
           t = threading.Thread(target=self._install_host, args=[host_name])
           t.start()
@@ -131,8 +131,8 @@ class RemoteInstall:
 
     return (len(self.servers) == installed)
   
-  def _is_installed(self, host_name):
-    if (host_name in self.installed and self.installed[host_name] == "Yes"):
+  def _is_installation_in_progress(self, host_name):
+    if (host_name in self.installed and self.installed[host_name] != "No"):
       return True
     else:
       return False
@@ -225,11 +225,12 @@ class RemoteInstall:
     Print error messages in verbose mode.
 
     '''
-    for host_name in self.servers:
-      self.invalid_config[host_name] = "Yes"
+    for host_name in self.servers:      
       if (not app.config.has_option(host_name, "server")):
         self.invalid_config[host_name] = "No"
         app.print_verbose("In install.cfg, cant find ip for " + host_name)
+      else:
+        self.invalid_config[host_name] = "Yes"
 
   def _validate_alive(self, ssh_obj, host_name):
     if (ssh_obj.is_alive()):
