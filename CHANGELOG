@@ -3,6 +3,9 @@ TODO
 
 Version 1
 ---------
+* When installing glassfish servers, write function that wait for mysql-servers
+  to be installed.
+* Replace all QA to UAT.
 * Test that the remote-host installation works, by reinstalling fo-tp-vh03??
 
 Version 2
@@ -13,6 +16,9 @@ Version 2
 * installNagios
 * installHudson
 * installSonar
+* installPhp
+* installFareoffice
+* switchDataCenter
 
 Version 3
 ---------
@@ -68,6 +74,7 @@ Remote-install
   /etc/sysconfig/network
 * remote-install should log all output to file, one for each server/thread.
   http://docs.python.org/library/logging.html#logging-to-multiple-destinations
+  http://stackoverflow.com/questions/616645/how-do-i-duplicate-sys-stdout-to-a-log-file-in-python
 * Looks like remote-install are doing multiple installations to the same server
   at the same time. Maybe starting multiple threads for each server.
 * syco remote-install, should loop and wait for all clients to become alive.

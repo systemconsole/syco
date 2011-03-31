@@ -54,6 +54,10 @@ def install_kvmhost(args):
 
   # Start virsh
   general.shell_exec("service libvirtd start")
+  
+  # Looks like we need to wait for the libvirtd to start, otherwise
+  # the virsh nodeinfo below doesn't work.
+  time.sleep(1)
 
   # Set selinux
   general.shell_exec("setenforce 1")

@@ -20,6 +20,7 @@ class MysqlProperties:
   pool_name=""
   jdbc_name=""
   server=""
+  port=""
   user=""
   password=""
   database=""
@@ -37,6 +38,7 @@ class MysqlProperties:
     self.pool_name="mysql_" + name
     self.jdbc_name="jdbc/" + name
     self.server=server
+    self.port=3306
     self.user=user
     self.password_alias="mysql_" + name
     self.password=password

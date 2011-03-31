@@ -59,7 +59,7 @@ GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/79
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
 JDK_INSTALL_FILE = "jdk-6u24-linux-x64-rpm.bin"
-JDK_REPO_URL = "http://" + app.get_installation_server_ip() + "/cobbler/repo_mirror/java/" + JDK_INSTALL_FILE
+JDK_REPO_URL = "http://" + app.get_installation_server_ip() + "/cobbler/repo_mirror/" + JDK_INSTALL_FILE
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
