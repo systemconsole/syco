@@ -55,6 +55,7 @@ GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
 GLASSFISH_INSTALL_FILE = "glassfish.zip"
 GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/7950/artifact/bundles/" + GLASSFISH_INSTALL_FILE
+GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/8051/artifact/bundles/" + GLASSFISH_INSTALL_FILE
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
@@ -226,7 +227,7 @@ def _install_jdk():
       os.chmod(JDK_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
 
     if (os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.shell_run("./" + JDK_INSTALL_FILE,
+      general.shell_run("./" + JDK_INSTALL_FILE,      
       events={
         "ename: ": "A\r\n",
         "Press Enter to continue.....": "\r\n\r\n",
@@ -257,7 +258,7 @@ def _install_glassfish():
       general.shell_exec("mv " + GLASSFISH_PATH + "glassfish3/* " + GLASSFISH_PATH, user="glassfish")
     else:
       os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", "/tmp/install/" + GLASSFISH_VERSION + "-unix-answer")
+      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
       general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
 
     # Install the start script

@@ -44,7 +44,7 @@ SYCO_USR_PATH = os.path.abspath(SYCO_PATH + "/usr/")
 SYCO_ETC_PATH = SYCO_PATH + "etc/"
 
 # Files (rpm etc.) that should be installed by syco, are temporary stored here.
-INSTALL_DIR = "/tmp/install/"
+INSTALL_DIR = SYCO_PATH + "tmp/"
 
 # All passwords used by syco are stored in this enrypted file.
 PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"

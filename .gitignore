@@ -4,3 +4,4 @@ usr/
 *.pyc
 .DS_Store
 var/kickstart/generated
+tmp/

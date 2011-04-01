@@ -221,7 +221,7 @@ def _install_glassfish():
 
     # Set executeion permissions and run the installation.
     os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-    shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", "/tmp/install/" + GLASSFISH_VERSION + "-unix-answer")
+    shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
     general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
 
     # Install the start script

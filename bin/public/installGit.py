@@ -88,14 +88,14 @@ def install_git_server(args):
 
   # Commit README file to empty repo
   general.create_install_dir()
-  general.shell_exec("mkdir /tmp/install/project")
-  general.shell_exec("git init", cwd="/tmp/install/project")
-  general.shell_exec("touch README", cwd="/tmp/install/project")
-  general.shell_exec("git add README", cwd="/tmp/install/project")
-  general.shell_exec('git commit -m"Initialized repo"', cwd="/tmp/install/project")
-  general.shell_exec("git remote add origin file:///var/lib/git/project.git", cwd="/tmp/install/project")
-  general.shell_exec("git push origin master", cwd="/tmp/install/project")
-  general.shell_exec("rm -fr /tmp/install/project")
+  general.shell_exec("mkdir " + INSTALL_DIR + "project")
+  general.shell_exec("git init", cwd=INSTALL_DIR + "project")
+  general.shell_exec("touch README", cwd=INSTALL_DIR + "project")
+  general.shell_exec("git add README", cwd=INSTALL_DIR + "project")
+  general.shell_exec('git commit -m"Initialized repo"', cwd=INSTALL_DIR + "project")
+  general.shell_exec("git remote add origin file:///var/lib/git/project.git", cwd=INSTALL_DIR + "project")
+  general.shell_exec("git push origin master", cwd=INSTALL_DIR + "project")
+  general.shell_exec("rm -fr " + INSTALL_DIR + "project")
 
   # Deny user git to login on SSH
   general.shell_exec("usermod --shell /usr/bin/git-shell git")
