@@ -17,12 +17,24 @@ import socket, time
 import app, general, installCobbler
 
 def build_commands(commands):
-  commands.add("install-guests", install_guests, help="Install all KVM guest defined for this server in install.cfg.")
+  commands.add("install-guests", install_guests, "guestname", help="Install all KVM guest defined for this server in install.cfg.")
 
 def install_guests(args):
   '''
 
   '''
+  # Set what guests that should be installed.
+  guest_host_names = []
+  if (len(args) == 2):
+    guest_host_names.append(args[1])
+  else:
+    host_name=socket.gethostname()
+    guest_host_names += app.get_guests(host_name)
+
+  if (len(guest_host_names) <= 0):
+    app.print_error("No guests to install.")
+    return
+
   installCobbler.install_epel_repo()
   general.shell_exec("yum -y install koan")
 
@@ -31,30 +43,27 @@ def install_guests(args):
     app.print_error("installation server is not alive, will try again in 15 seconds.")
     time.sleep(15)
 
-  guests={}
-  installed={}
-  host_name=socket.gethostname()
-  for guest_name in app.get_guests(host_name):
+  # Start the installation.
+  guests=[]  
+  for guest_name in guest_host_names:
     if (_is_guest_installed(guest_name, options="")):
       app.print_verbose(guest_name + " already installed", 2)
     else:
-      guests[guest_name]=host_name
-
-  for guest_name, host_name in guests.items():
-    if (not _is_guest_installed(guest_name)):
-      _install_guest(host_name, guest_name)
+      _install_guest(guest_name)
+      guests.append(guest_name)
 
   # Wait for the installation process to finish,
   # And start the quests.
+  app.print_verbose("Wait until all servers are installed.")
   while(len(guests)):
     time.sleep(30)
 
-    for guest_name, host_name in guests.items():
+    for guest_name in guests:
       if (_start_guest(guest_name)):
-        del guests[guest_name]
+        guests.remove(guest_name)
 
-def _install_guest(host_name, guest_name):
-  app.print_verbose("Install " + guest_name + " on " + host_name)
+def _install_guest(guest_name):
+  app.print_verbose("Install " + guest_name)
 
   # Create the data lvm volumegroup
   # TODO: Do we need error=False result, err=general.shell_exec("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
