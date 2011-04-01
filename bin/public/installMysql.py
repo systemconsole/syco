@@ -185,6 +185,10 @@ def install_mysql_replication(args):
   primary master has been configured.
 
   '''
+  app.print_verbose("Install mysql replication version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("install-mysql-replication", SCRIPT_VERSION)
+  version_obj.check_executed()
+
   general.wait_for_server_to_start(app.get_mysql_primary_master(), "3306")
 
   repl_password=general.generate_password(20)
@@ -200,6 +204,8 @@ def install_mysql_replication(args):
     else:
       mysql_exec("CHANGE MASTER TO MASTER_HOST='" + app.get_mysql_primary_master() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
     mysql_exec("start slave;", True, ip)
+
+  version_obj.mark_executed()
 
 def test_mysql(args):
   '''

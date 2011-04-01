@@ -28,8 +28,13 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import app, general, net
+import app, general, net, version
 from installGlassfish31 import GLASSFISH_PATH
+
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("iptables-clear", iptables_clear, help="Clear all rules from iptables.")
@@ -74,6 +79,9 @@ def iptables_clear(args):
   iptables("-Z -t mangle")
 
 def iptables_setup(args):
+  version_obj = version.Version("iptables-setup", SCRIPT_VERSION)
+  version_obj.check_executed()
+
   iptables_clear(args)
   _deny_all()
   _create_chains()
@@ -98,6 +106,8 @@ def iptables_setup(args):
   _closing_chains()
   _setup_postrouting()
   _iptables_save()
+
+  version_obj.mark_executed()
 
 def iptables(args):
   general.shell_exec("/sbin/iptables " + args)

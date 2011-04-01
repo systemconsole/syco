@@ -3,7 +3,7 @@ TODO
 
 Version 1
 ---------
-* Replace all QA to UAT.
+
 * Test that the remote-host installation works, by reinstalling fo-tp-vh03??
 
 Version 2
@@ -17,6 +17,12 @@ Version 2
 * installPhp
 * installFareoffice
 * switchDataCenter
+
+Version 2.5
+-----------
+* Surrvelience service, an sms is sent when somehting is wrong. The on call guy
+  needs to report back to a system, that the error is notified. Otherwiese
+  a new sms is sent to the second on call guy. (LO?)
 
 Version 3
 ---------
