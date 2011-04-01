@@ -194,9 +194,9 @@ def get_mysql_fp_stable_password():
   '''A user password for the mysql service, used by Farepayment'''
   return _get_password("mysql", "fp_stable")
 
-def get_mysql_fp_qa_password():
+def get_mysql_fp_uat_password():
   '''A user password for the mysql service, used by Farepayment'''
-  return _get_password("mysql", "fp_qa")
+  return _get_password("mysql", "fp_uat")
 
 def get_mysql_fp_production_password():
   '''A user password for the mysql service, used by Farepayment'''
@@ -206,7 +206,7 @@ def init_mysql_passwords():
   get_mysql_root_password()
   get_mysql_fp_integration_password()
   get_mysql_fp_stable_password()
-  get_mysql_fp_qa_password()
+  get_mysql_fp_uat_password()
   get_mysql_fp_production_password()
 
 def init_all_passwords():
