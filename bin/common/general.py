@@ -135,7 +135,7 @@ def wait_for_server_to_start(server, port):
   Wait until a network port is opened.
 
   '''
-  app.print_verbose("\nWait until " + server + " on port " + port + " starts.", new_line=False)
+  app.print_verbose("\nWait until " + str(server) + " on port " + str(port) + " starts.", new_line=False)
   while(not is_server_alive(server, port)):
     app.print_verbose(".", new_line=False)
     time.sleep(5)
