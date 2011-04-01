@@ -107,8 +107,7 @@ class RemoteInstall:
   def _start_all_threads(self):
     while(not self._is_all_servers_installed()):
       self._print_install_stat()
-      app.print_verbose(str(threading.activeCount()) + " threads are running.")
-      
+            
       for host_name in self.servers:        
         if (not self._is_installation_in_progress(host_name) and not self.has_abort_errors(host_name)):
           self.installed[host_name] = "Progress"
@@ -255,7 +254,8 @@ class RemoteInstall:
 
     '''
     print("\n\n\n")
-    app.print_verbose(str(self._servers_left_to_install()) + " servers left to install.")
+    app.print_verbose(str(self._servers_left_to_install()) + " server(s) left to install.")
+    app.print_verbose(str(threading.activeCount()) + " thread(s) are running.")
     app.print_verbose("   " +
       "SERVER NAME".ljust(30) +
       "IP".ljust(15) +
