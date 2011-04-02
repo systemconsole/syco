@@ -15,19 +15,10 @@ __status__ = "Production"
 
 import subprocess, time
 
-import app
+import app, install
 
-def install_pexpect():
-  '''
-  Import the pexpect module, will be installed if not already done.
+install.package("pexpect")
 
-  '''
-  stdoutdata = subprocess.Popen("rpm -qa pexpect", shell=True, stdout=subprocess.PIPE).communicate()[0]
-  if "pexpect" not in stdoutdata:
-    subprocess.Popen("yum -y install pexpect", shell=True).wait()
-    time.sleep(1)
-
-install_pexpect()
 import pexpect
 import pxssh
 

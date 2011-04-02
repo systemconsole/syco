@@ -44,11 +44,10 @@ import sys
 import subprocess
 import time
 
+import install
+
 # Install Crypto.Cipher if not already installed.
-stdoutdata = subprocess.Popen("rpm -qa python-crypto", shell=True, stdout=subprocess.PIPE).communicate()[0]
-if "python-crypto" not in stdoutdata:
-  subprocess.Popen("yum -y install python-crypto", shell=True).wait()
-  time.sleep(1)
+install.package("python-crypto")
 
 from Crypto.Cipher import AES
 
