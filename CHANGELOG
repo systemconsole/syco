@@ -9,23 +9,33 @@ Version 2
 ---------
 * installBind
 * installRentalFront
-* installLDAP
 * installNagios
+* installLDAP
+
+Version 2.2
+-----------
 * installHudson
 * installSonar
+
+Version 2.3
+-----------
 * installPhp
 * installFareoffice
 * switchDataCenter
 
-Version 3
----------
-* Create backup for all server (fo-tp-vcs, specially)
-  installBackup
+Version 2.4
+-----------
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
 * Move install.cfg to private repo.
 * Remove fareoffice relations in the public scripts and documentation.
 
-Version 3.2 (iptables)
+Version 2.5
+-----------
+* installBackup
+  Create backup for all server (fo-tp-vcs, specially)
+
+
+Version 3 (iptables)
 ----------------------
 * Refactor iptable.py, add a rule chain that can be controlled from other scripts?
   Or is it good as it is, so the iptables script are not dependent on other script
