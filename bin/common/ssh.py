@@ -61,8 +61,8 @@ class Ssh:
 
   # ssh key path files. Will be stored in users home dir.
   ssh_key_dir = os.environ['HOME'] + "/.ssh"
-  ssh_private_key_file = ssh_key_dir + "/id_syco_rsa"
-  ssh_public_key_file = ssh_key_dir + "/id_syco_rsa.pub"
+  ssh_private_key_file = ssh_key_dir + "/id_rsa"
+  ssh_public_key_file = ssh_key_dir + "/id_rsa.pub"
 
   # Cache status of installed key.
   key_is_installed = False
