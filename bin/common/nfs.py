@@ -2,6 +2,8 @@
 '''
 Functions to handle NFS exports.
 
+Read more.
+http://www.crazysquirrel.com/computing/debian/servers/setting-up-nfs4.jspx
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -19,12 +21,13 @@ import iptables
 from iptables import iptables
 
 def add_export(path):
-  general.set_config_property("/etc/exports", "^" + path + ".*$", path + " *(rw)")
+  general.set_config_property("/etc/exports", "^" + path + ".*$", path + " *(rw,sync,insecure,root_squash,no_subtree_check,fsid=0)")
 
 def remove_export(path):
   general.set_config_property("/etc/exports", "")
 
 def restart_services():
+  general.shell_exec("exportfs -rv")
   general.shell_exec("service portmap restart")
   general.shell_exec("service nfs restart")
   general.shell_exec("service rpcsvcgssd restart")
