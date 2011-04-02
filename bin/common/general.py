@@ -19,6 +19,7 @@ import re
 import shutil
 import stat
 import string
+import inspect
 import subprocess
 import time
 import sys
@@ -158,7 +159,7 @@ def shell_exec(command, user="", cwd=None, events=None):
   if events is None:
       events = {}
 
-  events["Verify the SYCO master password:"] = app.get_master_password() + "\n"
+  events["Verify the SYCO master password:"] = app.get_master_password
 
   keys = events.keys()
   value = events.values()
@@ -186,7 +187,10 @@ def shell_exec(command, user="", cwd=None, events=None):
     stdout += out.before      
 
     if index >= 0 and index < num_of_events:
-      out.send(value[index])      
+      if (inspect.isfunction(value[index])):
+        out.send(str(value[index]())  + "\n")
+      else:
+        out.send(value[index])
     elif index == num_of_events:
       app.print_error("Catched a timeout from pexpect.expect, lets try again.")
 
