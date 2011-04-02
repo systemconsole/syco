@@ -21,6 +21,15 @@ don't like to backup, add that into a folder named NoBackup.
 # Will be ignored.
 /home/dali/NoBackup/very_large_unimportant_file.zip
 
+install-backup
+--------------
+The installation will first do all general configuration, lite rsnapshot.conf
+and crontab settings. After that it will configure all alive syco servers for
+backup, then it will wait until forever for the offline syco servers to become
+alive. This means that crontab will start backup all servers that are alive. But
+also that the offline servers will atomatically be configured for backup when
+they become alive.
+
 Configuration
 -------------
 
@@ -73,6 +82,7 @@ import ssh
 
 def build_commands(commands):
   commands.add("install-backup",   install_backup,   help="Install rsnapshot based backup server.")
+  commands.add("uninstall-backup", uninstall_backup, help="Uninstall rsnapshot based backup server.")
   commands.add("tar-backup", tar_backup, help="Tar the montly copy of the backup.")
 
 BACKUP_ROOT = "/opt/backup/rsnapshot/"
@@ -84,9 +94,9 @@ def install_backup(args):
 
   install.package("rsnapshot")
   _configure_rsnapshot()
-  _setup_backup_for_all_servers()
   _setup_cronjob()
-
+  _setup_backup_for_all_servers()
+  
 def _configure_rsnapshot():
   '''
   Do the general configuration of rsnapshot
@@ -128,11 +138,10 @@ def _setup_backup_for_all_servers():
       servers.insert(0, host_name)      
       app.print_error("Server " + host_name + " is not alive.")
 
-    print "SERVERS " + str(checked_servers) + " " + str(total_servers)
     if (checked_servers > total_servers):
       total_servers = len(servers)
       checked_servers = 0
-      time.sleep(30)
+      time.sleep(60)
 
 def _configure_backup_pathes(ip, host_name):
   app.print_verbose("Configure rsnapshot for " + host_name + " on " + ip)
@@ -163,6 +172,14 @@ def _get_backup_pathes(host_name):
 
 def _setup_cronjob():
   shutil.copyfile(app.SYCO_PATH + "/var/rsnapshot/crontab", "/etc/cron.d/rsnapshot")
+
+def uninstall_backup(args):
+  general.shell_exec("yum -y erase rsnapshot")
+  general.shell_exec("rm /etc/cron.d/rsnapshot")
+  general.shell_exec("rm /etc/rsnapshot.conf")
+  general.shell_exec("rm /etc/rsnapshot.conf.backup")
+  general.shell_exec("rm /etc/rsnapshot.conf.rpmsave")
+  general.shell_exec("rm /var/log/rsnapshot*")
 
 def tar_backup(args):
   '''

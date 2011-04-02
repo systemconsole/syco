@@ -33,7 +33,8 @@ Version 2.5
 -----------
 * installBackup
   Create backup for all server (fo-tp-vcs, specially)
-
+  Some "monitor" script that will validate that all servers has been backuped
+  and then email info to the sysop mail. Or report somewhere else.
 
 Version 3 (iptables)
 ----------------------
