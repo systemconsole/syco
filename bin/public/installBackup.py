@@ -62,6 +62,7 @@ __status__ = "Production"
 import datetime
 import os
 import shutil
+import time
 
 import app
 import general
@@ -71,7 +72,7 @@ import nfs
 import ssh
 
 def build_commands(commands):
-  commands.add("install-backup", install_backup, help="Install rsnapshot based backup server.")
+  commands.add("install-backup",   install_backup,   help="Install rsnapshot based backup server.")
   commands.add("tar-backup", tar_backup, help="Tar the montly copy of the backup.")
 
 BACKUP_ROOT = "/opt/backup/rsnapshot/"
@@ -112,19 +113,26 @@ def _configure_rsnapshot():
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*usr[/]local.*localhost.*", "")
 
 def _setup_backup_for_all_servers():
-  not_alive = []
-  for host_name in app.get_servers():
+  servers = app.get_servers()
+  total_servers = len(servers)
+  checked_servers = 0
+  while(len(servers)):
+    checked_servers += 1
+    host_name = servers.pop()
     ip = app.get_ip(host_name)
     remote_server = ssh.Ssh(ip, app.get_root_password())
     if (remote_server.is_alive()):
       remote_server.install_ssh_key()
       _configure_backup_pathes(ip, host_name)
     else:
-      not_alive.append(host_name + " on " + ip)
+      servers.insert(0, host_name)      
+      app.print_error("Server " + host_name + " is not alive.")
 
-  # Print all servers that are not alive.
-  for host_name in not_alive:
-    app.print_error("Server " + host_name + " is not alive.")
+    print "SERVERS " + str(checked_servers) + " " + str(total_servers)
+    if (checked_servers > total_servers):
+      total_servers = len(servers)
+      checked_servers = 0
+      time.sleep(30)
 
 def _configure_backup_pathes(ip, host_name):
   app.print_verbose("Configure rsnapshot for " + host_name + " on " + ip)
