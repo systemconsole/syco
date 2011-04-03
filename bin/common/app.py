@@ -35,10 +35,10 @@ parser = ''
 SYCO_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
 
 # Scripts that should be availble in public repos.
-SYCO_PUBLIC_PATH = os.path.abspath(SYCO_PATH + "/bin/public/")
+SYCO_PUBLIC_PATH = SYCO_PATH + "bin/public/"
 
 # Scripts that should only be available in private repos.
-SYCO_USR_PATH = os.path.abspath(SYCO_PATH + "/usr/")
+SYCO_USR_PATH = SYCO_PATH + "usr/"
 
 # Etc (config) files.
 SYCO_ETC_PATH = SYCO_PATH + "etc/"
@@ -60,9 +60,32 @@ BOLD = "\033[1m"
 RESET = "\033[0;0m"
 
 # Global accessible object containing all install.cfg options.
-config_file_name = SYCO_ETC_PATH + "install.cfg"
-config = ConfigParser.RawConfigParser()
-config.read(config_file_name)
+class SycoConfig(ConfigParser.RawConfigParser):
+
+  class SycoConfigException(Exception):
+    '''
+    Raised when their is an invalid number of install.cfg
+    '''
+    
+  def __init__(self):
+    #super(SycoConfig,self).__init__()
+    ConfigParser.RawConfigParser.__init__(self)
+
+    config_dir = []
+    if (os.access(SYCO_ETC_PATH + "install.cfg", os.F_OK)):
+      config_dir.append(SYCO_ETC_PATH + "install.cfg")
+    for dir in os.listdir(SYCO_USR_PATH):
+      #if (os.access(SYCO_USR_PATH + dir + "/etc/install.cfg", os.F_OK)):
+      config_dir.append(SYCO_USR_PATH + dir + "/etc/install.cfg")
+        
+    if (len(config_dir) == 0):
+      raise self.SycoConfigException("No install.cfg found.")
+    elif (len(config_dir) > 1):
+      raise self.SycoConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
+    else:      
+      self.read(config_file_name)
+
+config = SycoConfig()
 
 # Options set from commandline are stored here.
 class Options:

@@ -1,0 +1,494 @@
+[general]
+mysql.primary_master: fo-tp-mysql-primary
+mysql.secondary_master: fo-tp-mysql-secondary
+
+# The server that holds the cobbler service.
+installation_server: fo-tp-install
+
+# Gateway, firewall
+gateway: 10.100.0.1
+
+# DNS resolvers
+dns_resolvers: 10.100.0.4 8.8.8.8 8.8.2.2
+
+#
+# Check for network schema
+# https://redmine.fareoffice.com/projects/sysops/wiki/TelefonplanNetworkSchema
+#
+
+#
+# Hosts, PXE boot for fo-tp-vh01 - fo-tp-vh04
+#
+
+[fo-tp-vh01]
+server:10.100.100.201
+mac:D4:85:64:39:D0:E2
+command01: syco hardening
+command02: syco install-kvmhost
+command03: syco install-dhcp-server
+command04: syco install-guest fo-tp-install 10.100.100.200
+command05: syco uninstall-dhcp-server
+command06: syco install-ntp 10.100.100.200
+command07: syco install-guests
+command08: syco install-backup
+guest01: fo-tp-install
+guest02: fo-tp-system
+guest03: fo-tp-mail
+guest04: fo-tp-monitor
+guest05: fo-tp-vcs
+guest06: fo-tp-scan
+guest07: fo-tp-lts
+guest08: fo-tp-wts
+
+[fo-tp-vh02]
+server:10.100.100.202
+mac:D4:85:64:39:D0:AA
+command01: syco hardening
+command03: syco install-ntp 10.100.100.200
+command04: syco install-kvmhost
+command05: syco install-guests
+guest01: fo-tp-gf-rd-int
+guest02: fo-tp-gf-rd-stable
+guest03: fo-tp-gf-rd-uat
+guest04: fo-tp-gf-ser-int
+guest05: fo-tp-gf-ser-uat
+
+[fo-tp-vh03]
+server:10.100.100.203
+mac:D4:85:64:39:E0:22
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-kvmhost
+command04: syco install-guests
+guest01: fo-tp-mysql-primary
+guest02: fo-tp-mysql-secondary
+guest03: fp-tp-gf-rd-int
+guest04: fp-tp-gf-rd-stable
+guest05: fp-tp-gf-rd-uat
+
+#[fo-tp-vh04]
+# USED AS A SLASK COMPUTER RIGHT NOW, OR RATHER FO-TP-SVN,
+# Current ip 10.100.100.204
+#
+#server:10.100.100.204
+#mac:D4:85:64:39:E0:12
+#command01: syco hardening
+#command02: syco install-ntp 10.100.100.200
+#command04: syco install-kvmhost
+#command05: syco install-guests
+#guest01: fo-tp-php-ser-int
+#guest02: fo-tp-php-ser-uat1
+#guest03: fo-tp-php-ser-uat2
+#guest04: fo-tp-build
+#guest05: fo-tp-daliprod
+#guest06: fo-tp-dalitst
+#guest07: fo-tp-mahetst
+
+#[fo-tc-vh01]
+#server:10.100.XXX.204
+#mac:D4:85:64:39:E0:XX
+#command01: syco hardening
+#command02: syco install-ntp 10.100.100.200
+#command04: syco install-kvmhost
+#command05: syco install-guests
+#guest01: fo-tc-system
+
+#[fo-tc-system]
+#server: 10.100.xxx.6
+#ram:1024
+#cpu:1
+#disk_var:10
+#command01: syco hardening
+#command02: syco install-ntp 10.100.100.200
+#command03: syco install-vpn
+#command04: syco install-dns master
+#command05: syco install-ldap master
+#command07: syco iptables-setup
+
+#
+# Guests
+#
+[fo-tp-install]
+server:10.100.100.200
+ram:1024
+cpu:1
+disk_var: 50
+command01: syco hardening
+command02: syco install-ntp
+command03: syco install-cobbler
+command04: syco refresh-cobbler-repo
+#command05: syco remote-install
+
+[fo-tp-system]
+server: 10.100.100.6
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-vpn
+command04: syco install-dns
+command05: syco install-ldap
+command06: syco install-samba
+command07: syco iptables-setup
+
+[fo-tp-mail]
+server: 10.100.100.9
+ram:7168
+cpu:1
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-zimbra
+command04: syco iptables-setup
+
+[fo-tp-monitor]
+server: 10.100.100.10
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command02: syco install-nagios-server
+command03: syco install-munin-server
+
+[fo-tp-vcs]
+server: 10.100.100.11
+ram:1024
+cpu:1
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-git
+#command04: syco install-svn
+command05: syco setup-iptables
+backup01: /var/lib/git
+
+[fo-tp-scan]
+server: 10.100.100.12
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-lts]
+server: 10.100.100.20
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-wts]
+server: 10.100.100.21
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-gf-rd-int]
+server:10.100.100.110
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice integration
+command06: syco iptables-setup
+
+[fo-tp-gf-rd-stable]
+server:10.100.100.111
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice stable
+command06: syco iptables-setup
+
+[fo-tp-gf-rd-uat]
+server:10.100.100.112
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice uat
+command06: syco iptables-setup
+
+[fo-tp-gf-ser-int]
+server:10.100.100.113
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice ser-integration
+command06: syco iptables-setup
+
+[fo-tp-gf-ser-uat]
+server:10.100.100.114
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice ser-uat
+command06: syco iptables-setup
+
+[fp-tp-gf-rd-int]
+server:10.100.100.130
+ram:2048
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-farepayment integration
+command06: syco iptables-setup
+
+[fp-tp-gf-rd-stable]
+server:10.100.100.131
+ram:2048
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-farepayment stable
+command06: syco iptables-setup
+
+[fp-tp-gf-rd-uat]
+server:10.100.100.132
+ram:2048
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-farepayment uat
+command06: syco iptables-setup
+
+[fo-tp-mysql-primary]
+server: 10.100.100.140
+ram:4096
+cpu:2
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-mysql 1 3G
+command04: syco install-farepayment-db integration
+command05: syco install-farepayment-db stable
+command06: syco install-farepayment-db uat
+command07: syco install-fareoffice-db int
+command08: syco install-fareoffice-db uat
+command09: syco iptables-setup
+
+[fo-tp-mysql-secondary]
+server: 10.100.100.141
+ram:2048
+cpu:1
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+command03: syco install-mysql 2 1G
+command04: syco install-mysql-replication
+command05: syco iptables-setup
+
+[fo-tp-php-ser-int]
+server: 10.100.100.100
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-php-ser-uat]
+server: 10.100.100.102
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-build]
+server: 10.100.100.150
+ram:5120
+cpu:5
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-daliprod]
+server: 10.100.100.230
+ram:1024[general]
+mysql.primary_master: syco-mysql-primary
+mysql.secondary_master: syco-mysql-secondary
+
+# The server that holds the cobbler service.
+installation_server: syco-install
+
+# Gateway, firewall
+gateway: 192.168.0.1
+
+# DNS resolvers
+dns_resolvers: 192.168.0.2 8.8.8.8 8.8.2.2
+
+#
+# Hosts, PXE boot for syco-vh01 - syco-vh02
+#
+[syco-vh01]
+server:192.168.0.10
+mac:xx:xx:xx:xx:xx:xx
+command01: syco hardening
+command02: syco install-kvmhost
+command03: syco install-dhcp-server
+command04: syco install-guest syco-install 192.168.0.20
+command05: syco uninstall-dhcp-server
+command06: syco install-ntp 192.168.0.20
+command07: syco install-guests
+command08: syco install-backup
+guest01: syco-install
+guest02: syco-system
+guest03: syco-vcs
+guest04: syco-monitor
+
+[syco-vh02]
+server:192.168.0.11
+mac:xx:xx:xx:xx:xx:xx
+command01: syco hardening
+command03: syco install-ntp 192.168.0.20
+command04: syco install-kvmhost
+command05: syco install-guests
+guest01: syco-glassfish1
+guest02: syco-glassfish2
+guest03: syco-mysql-primary
+guest04: syco-mysql-secondary
+
+#
+# Guests
+#
+[syco-install]
+server:192.168.0.20
+ram:1024
+cpu:1
+disk_var: 50
+command01: syco hardening
+command02: syco install-ntp
+command03: syco install-cobbler
+command04: syco refresh-cobbler-repo
+command05: syco remote-install
+
+[syco-system]
+server: 192.168.0.2
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-vpn
+command04: syco install-dns
+command05: syco install-ldap
+command06: syco install-samba
+command07: syco iptables-setup
+
+[syco-monitor]
+server: 192.168.0.31
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command02: syco install-nagios-server
+command03: syco install-munin-server
+
+[syco-vcs]
+server: 192.168.0.32
+ram:1024
+cpu:1
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-git
+#command04: syco install-svn
+command05: syco setup-iptables
+backup01: /var/lib/git
+
+[syco-glassfish1]
+server:192.168.0.33
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command06: syco iptables-setup
+
+[syco-glassfish2]
+server:192.168.0.34
+ram:4096
+cpu:3
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-glassfish-3.1
+command04: syco install-httpd
+command05: syco install-fareoffice stable
+command06: syco iptables-setup
+
+[syco-mysql-primary]
+server: 192.168.0.35
+ram:4096
+cpu:2
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-mysql 1 3G
+command09: syco iptables-setup
+
+[syco-mysql-secondary]
+server: 192.168.0.36
+ram:2048
+cpu:1
+disk_var:100
+command01: syco hardening
+command02: syco install-ntp 192.168.0.20
+command03: syco install-mysql 2 1G
+command04: syco install-mysql-replication
+command05: syco iptables-setup
+cpu:1
+disk_var:250
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-dalitst]
+server: 10.100.100.231
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200
+
+[fo-tp-mahetst]
+server: 10.100.100.241
+ram:1024
+cpu:1
+disk_var:10
+command01: syco hardening
+command02: syco install-ntp 10.100.100.200

@@ -5,14 +5,20 @@ Version 1
 ---------
 * Test that the remote-host installation works, by reinstalling fo-tp-vh03?
 
-Version 2
+Version 1.1
 ---------
 * installBind
 * installRentalFront
-* installNagios
+
+Version 1.2
+-----------
 * installLDAP
 
-Version 2.2
+Version 1.3
+-----------
+* installNagios
+
+Version 2
 -----------
 * installHudson
 * installSonar
@@ -23,18 +29,20 @@ Version 2.3
 * installFareoffice
 * switchDataCenter
 
-Version 2.4
+Version 2.5
 -----------
 * Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
 * Move install.cfg to private repo.
 * Remove fareoffice relations in the public scripts and documentation.
 
-Version 2.5
------------
-* installBackup
-  Create backup for all server (fo-tp-vcs, specially)
-  Some "monitor" script that will validate that all servers has been backuped
+Version 2.6 (Backup)
+--------------------
+* Create backup for all syco servers.
+* Some "monitor" script that will validate that all servers has been backuped
   and then email info to the sysop mail. Or report somewhere else.
+* Setup of secondary backupserver, that mirrors primary backup server.
+* Setup backup of none syco servers.
+* Tune crontab, so it gets time to backup all servers in the choosen period.
 
 Version 3 (iptables)
 ----------------------
