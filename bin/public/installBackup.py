@@ -13,13 +13,13 @@ automatically.
 All data is stored in /opt/backup. That is also the place where you should
 mount your backup disk volume.
 
-By default /home and /etc will be backuped. If their is anything that you
+By default /etc will be backuped. If their is anything that you
 don't like to backup, add that into a folder named NoBackup.
 
 # Will be stored.
-/home/dali/important_file.txt
+/etc/important_file.txt
 # Will be ignored.
-/home/dali/NoBackup/very_large_unimportant_file.zip
+/etc/NoBackup/very_large_unimportant_file.zip
 
 install-backup
 --------------
@@ -117,8 +117,7 @@ def _configure_rsnapshot():
   general.set_config_property("/etc/rsnapshot.conf", ".*interval.*monthly.*", "interval\tmonthly\t12")
 
   general.set_config_property("/etc/rsnapshot.conf", ".*exclude.*NoBackup.*", "exclude\tNoBackup")
-
-  general.set_config_property("/etc/rsnapshot.conf", ".*backup.*home.*localhost.*", "")
+  
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*etc.*localhost.*", "")
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*usr[/]local.*localhost.*", "")
 
@@ -158,8 +157,7 @@ def _get_backup_pathes(host_name):
   '''Get all pathes that should be backuped.'''
   commands = []
 
-  # Always backup thease
-  commands.append("/home/")
+  # Always backup thease  
   commands.append("/etc/")
 
   # Backup urls from install.cfg

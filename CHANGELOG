@@ -9,6 +9,7 @@ Version 1.1
 ---------
 * installBind
 * installRentalFront
+* installRentalFront for fox
 
 Version 1.2
 -----------
@@ -29,12 +30,7 @@ Version 2.3
 * installFareoffice
 * switchDataCenter
 
-Version 2.5
------------
-* Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
-* Remove fareoffice relations in the public scripts and documentation.
-
-Version 2.6 (Backup)
+Version 2.4 (Backup)
 --------------------
 * Create backup for all syco servers.
 * Some "monitor" script that will validate that all servers has been backuped
@@ -42,6 +38,20 @@ Version 2.6 (Backup)
 * Setup of secondary backupserver, that mirrors primary backup server.
 * Setup backup of none syco servers.
 * Tune crontab, so it gets time to backup all servers in the choosen period.
+
+Version 2.5 (Production)
+------------------------
+* Install install-server in production.
+* install farepayment.
+* install rentalfront.
+
+
+
+
+Version 2.6
+-----------
+* Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
+* Remove fareoffice relations in the public scripts and documentation.
 
 Version 3 (iptables)
 ----------------------
@@ -63,6 +73,7 @@ Monitor
 * Build report tool to check swap memory.
   A webserver should never ever have to swap, as swapping increases the latency
   of each request beyond a point that users consider "fast enough".
+* Monitor cpu temp
 
 Hardening
 ---------
