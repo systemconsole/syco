@@ -83,7 +83,7 @@ class SycoConfig(ConfigParser.RawConfigParser):
     elif (len(config_dir) > 1):
       raise self.SycoConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
     else:      
-      self.read(config_file_name)
+      self.read(config_dir[0])
 
 config = SycoConfig()
 
