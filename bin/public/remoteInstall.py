@@ -27,8 +27,9 @@ import ssh
 from exception import SettingsError
 
 def build_commands(commands):
-  commands.add("remote-install", remote_install, "[hostname]", help="Connect to all servers, and run all commands defined in install.cfg.")
-  commands.add("install-local", install_local, "[hostname]", help="Run all commands defined in install.cfg.")
+  commands.add("remote-install",      remote_install,      "[hostname]", help="Connect to all servers, and run all commands defined in install.cfg.")
+  commands.add("install-local",       install_local,       "[hostname]", help="Run all commands defined in install.cfg.")
+  commands.add("remote-install-syco", remote_install_syco, "[hostname]", help="Install syco on a remote host.")
 
 def remote_install(args):
   '''
@@ -72,6 +73,18 @@ def install_local(args):
   else:
     app.print_error("No commands for this host.")
 
+def remote_install_syco(args):
+  '''
+  '''
+  # Ask the user for all passwords that might be used in the remote install
+  # so the installation can go on headless.
+  app.init_all_passwords()
+
+  remote_host = args[1]
+  obj = RemoteInstall()
+  obj.remote_install_syco(remote_host)
+
+
 class RemoteInstall:
   '''
   Run commands defined in install.cfg on remote hosts through SSH.
@@ -103,6 +116,28 @@ class RemoteInstall:
     self._validate_install_config()
     self._start_all_threads()
     self._wait_for_all_threads_to_finish()
+
+  def remote_install_syco(self, host_name):
+    '''
+    Execute the commands on the remote host.
+
+    Create one process for each remote host.
+
+    '''
+    try:
+      server = app.config.get(host_name, "server")
+      app.print_verbose("Install syco on " + host_name + " (" + server + ")", 2)
+
+      obj = ssh.Ssh(server, app.get_root_password())
+      self._validate_alive(obj, host_name)
+      obj.install_ssh_key()
+      self._install_syco_on_remote_host(obj)
+
+    except pexpect.EOF, e:
+      app.print_error(e, 2)
+
+    except SettingsError, e:
+      app.print_error(e, 2)
 
   def _start_all_threads(self):
     while(not self._is_all_servers_installed()):
