@@ -33,9 +33,9 @@ def install_dns(args):
   Apache installation
   
   '''
-  self.prop.init_properties(args[1])
-  version_obj=version.Version("installDns" + self.prop.environment, self.SCRIPT_VERSION)
-  version_obj.check_executed()
+ # self.prop.init_properties(args[1])
+ # version_obj=version.Version("installDns" + self.prop.environment, self.SCRIPT_VERSION)
+ # version_obj.check_executed()
 
   if os.path.exists('/etc/ssl/ca/private/ca.key'):
 
@@ -44,7 +44,7 @@ def install_dns(args):
   else:
 
     #making folders
-    #general.shell_exec("yum install bind bind-chroot bind-libs bind-utils caching-nameserver")
+    os.system("yum install bind bind-chroot bind-libs bind-utils caching-nameserver")
     os.chdir("/tmp/")
 
     #Setting upp dns key generating and the pasting in to file
@@ -59,19 +59,21 @@ def install_dns(args):
 	o.write("#named DNS generated from SYCO DO NOT EDIT")
 
         for i in range(N):
-            line=f.next().strip()
-            o.write (line+"\n")
-            n.write (line+"\n")
-            app.print_verbose(line)
+            #line=f.next().strip()
+            #o.write (line+"\n")
+            #n.write (line+"\n")
+            #app.print_verbose(line)
+            print i
         f.close()
         n.close()
         o.close()
   else:
+	os.chdir("/tmp")
         os.system("rndc-confgen > /var/named/chroot/etc/rndc_new.key")
         general.shell_exec("chown root:named rndc.key")
 
         N=5
-        f=open("/tmp/rndc_new.key")
+        f=open("/var/named/chroot/etc/rndc_new.key")
         n = open("/var/named/chroot/etc/named.conf","w") #open for append
         o = open("/var/named/chroot/etc/rndc.key","w")
         n.write("#named DNS generated from SYCO DO NT EDIT")
@@ -82,6 +84,7 @@ def install_dns(args):
             o.write (line+"\n")
             n.write (line+"\n")
             print line
+            i = i +1
         f.close()
         n.close()
         o.close()
