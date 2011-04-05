@@ -1,0 +1,12 @@
+$TTL 86400
+$RZONE$.in-addr.arpa.	IN	SOA	ns1.$NAMEZONE$. sysop.$NAMEZONE$. (
+12   ;   Serial
+			10800
+			900
+			604800
+			3600 )
+
+$RZONE$.in-addr.arpa.	IN	NS	ns1.$NAMEZONE$.
+
+$IPMASTER$.in-addr.arpa. IN PTR ns1.$NAMEZONE$.
+$IPSLAVE$.in-addr.arpa. IN PTR ns2.$NAMEZONE$.

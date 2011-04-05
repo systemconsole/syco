@@ -1,0 +1,11 @@
+$ttl 38400
+$NAMEZONE$.       IN      SOA     ns1.$NAMEZONE$. sysop.$NAMEZONE$. (
+18   ;   Serial
+                       10800           ; Refresh after 3 hours
+                       3600            ; Retry after 1 hour
+                       604800          ; Expire after 1 week
+                       86400 )         ; Minimum TTL of 1 day
+$NAMEZONE$.       IN      NS      ns1.$NAMEZONE$.
+$NAMEZONE$.       IN      NS      ns2.$NAMEZONE$.
+ns1.$NAMEZONE$.	IN	A	$IPMASTER$
+ns2.$NAMEZONE$.	IN	A	$IPSLAVE$
