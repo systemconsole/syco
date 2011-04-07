@@ -1,6 +1,6 @@
 $TTL 86400
 $RZONE$.in-addr.arpa.	IN	SOA	ns1.$NAMEZONE$. sysop.$NAMEZONE$. (
-12   ;   Serial
+16   ;   Serial
 			10800
 			900
 			604800

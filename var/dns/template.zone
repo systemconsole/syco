@@ -1,6 +1,6 @@
 $ttl 38400
 $NAMEZONE$.       IN      SOA     ns1.$NAMEZONE$. sysop.$NAMEZONE$. (
-18   ;   Serial
+20   ;   Serial
                        10800           ; Refresh after 3 hours
                        3600            ; Retry after 1 hour
                        604800          ; Expire after 1 week

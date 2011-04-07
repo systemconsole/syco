@@ -49,7 +49,7 @@ def install_dns(args):
 
     #Setting upp dns key generating and the pasting in to file
     #If the new key excists then now new key is genertaed
-
+  SYCO_PATH = app.SYCO_PATH
   if os.path.exists('/var/named/chroot/etc/rndc_new.key'):
         N=5
         f=open("/var/named/chroot/etc/rndc_new.key")
@@ -193,8 +193,8 @@ def install_dns(args):
 
   #fixing serial nummer on zone files
 
-  os.system("mv "+SYCO_PATH ++"var/dns/template.zone /tmp/template.zone")
-  o = open("/opt/fosh/var/dns/template.zone","w") #open for append
+  os.system("mv "+SYCO_PATH +"var/dns/template.zone /tmp/template.zone")
+  o = open(SYCO_PATH +"var/dns/template.zone","w") #open for append
   for line in open("/tmp/template.zone"):
     serial = p.findall (line)
     if len(serial) > 0:

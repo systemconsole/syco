@@ -1,4 +1,5 @@
 [general]
+domain: fareonline.net
 mysql.primary_master: fo-tp-mysql-primary
 mysql.secondary_master: fo-tp-mysql-secondary
 
