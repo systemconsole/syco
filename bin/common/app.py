@@ -329,7 +329,6 @@ def get_commands(host_name):
 
   return ret_commands
 
-
 def get_domain():
   '''Get the domain name where all syco servers live. '''
   return get_option("general", "domain")
