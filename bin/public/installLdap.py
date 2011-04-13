@@ -41,6 +41,7 @@ TODO: Setup kickstart to use LDAP
 TODO: ldap.pem should be copied to clients.
       /usr/sbin/cacertdir_rehash /etc/openldap/cacerts
       or run authconfig after.
+TODO: Remove all fareonline references.
 TODO: Update ldif files.
 TODO: SSSD or NSCD
 TODO: Setup password policy
@@ -120,6 +121,8 @@ def install_ldap_client(args):
   app.print_verbose("Install ldap server version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
+
+  general.wait_for_server_to_start(app.config.get_ldap_server_ip(), "389")
 
   # TODO: Copy cert
 

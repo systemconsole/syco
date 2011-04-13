@@ -72,3 +72,11 @@ class SycoConfig(ConfigParser.RawConfigParser):
 
   def get_admin_email(self):
     return self.get_option("general", "admin_email")
+
+  def get_ldap_server(self):
+    '''The hostname of the ldap server.'''
+    return self.get_option("general", "ldap_server")
+
+  def get_ldap_server_ip(self):    
+    return app.get_ip(self.get_ldap_server())
+
