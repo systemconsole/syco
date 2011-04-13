@@ -80,3 +80,8 @@ class SycoConfig(ConfigParser.RawConfigParser):
   def get_ldap_server_ip(self):    
     return app.get_ip(self.get_ldap_server())
 
+  def get_ldap_hostname(self):
+    return self.get_option("general", "ldap_hostname")
+
+  def get_ldap_dn(self):
+    return self.get_option("general", "ldap_dn")

@@ -38,7 +38,6 @@ http://www.linux.com/archive/feature/114074
 
 TODO: Setup kickstart to use LDAP
       http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
-TODO: Remove all fareonline references.
 TODO: Update ldif files.
 TODO: SSSD or NSCD
 TODO: Setup password policy
@@ -70,7 +69,8 @@ from iptables import iptables
 SCRIPT_VERSION = 1
 
 SLAPD_FN = "/etc/openldap/slapd.conf"
-LDAP_SERVER_HOST_NAME = "ldap.fareonline.net"
+LDAP_SERVER_HOST_NAME = app.config.get_ldap_hostname()
+LDAP_DN = app.config.get_ldap_dn()
 
 def build_commands(commands):
   commands.add("install-ldap-server", install_ldap_server, help="Install ldap server.")
@@ -137,7 +137,7 @@ def install_ldap_client(args):
 
   # Enable as a client
   shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache " +
-    "--ldapserver=" + LDAP_SERVER_HOST_NAME + " --ldapbasedn=dc=fareonline,dc=net " +
+    "--ldapserver=" + LDAP_SERVER_HOST_NAME + " --ldapbasedn=" + LDAP_DN + " "
     "--updateall")
 
   version_obj.mark_executed()
@@ -161,8 +161,8 @@ def uninstall_ldap(args):
   version_obj.mark_uninstalled()
 
 def _setup_slapd_config():
-  general.set_config_property(SLAPD_FN, ".*suffix.*", 'suffix "dc=fareonline,dc=net"')
-  general.set_config_property(SLAPD_FN, ".*rootdn.*Manager.*", 'rootdn "cn=Manager,dc=fareonline,dc=net"')
+  general.set_config_property(SLAPD_FN, ".*suffix.*", 'suffix "' + LDAP_DN + '"')
+  general.set_config_property(SLAPD_FN, ".*rootdn.*Manager.*", 'rootdn "cn=Manager,' + LDAP_DN + '"')
 
   # Not needed for local changes.
   # hash_password = shell_exec('slappasswd -c "%s" -s ' + password)
@@ -198,7 +198,7 @@ def _setup_password_policy():
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
   # Define the default policy
-  value = 'ppolicy_default "cn=default,cn=pwpolicies,dc=fareonline,dc=net"'
+  value = 'ppolicy_default "cn=default,cn=pwpolicies,' + LDAP_DN + '"'
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)  
 
 def _add_iptables_rules():
