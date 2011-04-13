@@ -1,0 +1,23 @@
+dn: uid=dali,ou=people,dc=fareonline,dc=net
+objectClass: person
+objectClass: posixAccount
+commonName: Daniel Lindh
+surname: Lindh
+uid: dali
+userPassword: {CRYPT}OoCt2vU3OWJn2
+loginShell: /bin/bash
+uidNumber: 2000
+gidNumber: 100
+homeDirectory: /home/dali
+
+dn: uid=mahe,ou=people,dc=fareonline,dc=net
+objectClass: person
+objectClass: posixAccount
+commonName: Mattias Hemmingsson
+surname: Hemmingsson
+uid: mahe
+userPassword: {CRYPT}OoCt2vU3OWJn2
+loginShell: /bin/bash
+uidNumber: 2001
+gidNumber: 100
+homeDirectory: /home/mahe
