@@ -53,7 +53,7 @@ PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
 # When a general username is required.
 SERVER_ADMIN_NAME = "syco"
 
-config = SycoConfig()
+config = config.SycoConfig()
 
 # Logs will be sent to this email from the servers.
 SERVER_ADMIN_EMAIL = config.get_admin_email()

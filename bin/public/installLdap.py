@@ -2,14 +2,17 @@
 '''
 Install LDAP client and server.
 
-Read more:
+LDAP Setup
 http://www.skills-1st.co.uk/papers/security-with-ldap-jan-2002/security-with-ldap.html
 http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html/Deployment_Guide/ch-ldap.html
 http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
 
+Password policy
+http://www.zytrax.com/books/ldap/ch6/ppolicy.html
+http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&apropos=0&sektion=5&manpath=OpenLDAP+2.3-Release&format=html
+
 # Enable sudo with LDAP
 http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
-
 
 # ENable ldap on clients
 http://directory.fedoraproject.org/wiki/Howto:PAM
@@ -33,14 +36,16 @@ http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administrati
 http://www.oreillynet.com/sysadmin/blog/2006/07/a_new_favorite_fedora_director.html
 http://www.linux.com/archive/feature/114074
 
-TODO: LDAP vs SSL vs TLS vs SASL vs KERBEROS vs Radius?
-TODO: Store hosts in ldap?
 TODO: Setup kickstart to use LDAP
       http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
-TODO: ldap.cert ska kopieras till klienterna
+TODO: ldap.pem should be copied to clients.
       /usr/sbin/cacertdir_rehash /etc/openldap/cacerts
-      eller köra authconfig efteråt.
+      or run authconfig after.
 TODO: Update ldif files.
+TODO: SSSD or NSCD
+TODO: Setup password policy
+TODO: LDAP vs SSL vs TLS vs SASL vs KERBEROS vs Radius?
+TODO: Store hosts in ldap?
 
 '''
 
@@ -83,15 +88,19 @@ def install_ldap_server(args):
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
+  # Get all passwords from user at the start of the script.
+  app.get_ca_password()
+
   # Setup ldap dns/hostname used by slapd  
   value="127.0.0.1 " + LDAP_SERVER_HOST_NAME
   general.set_config_property("/etc/hosts", value, value)
 
-  shell_exec("yum -y  install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap")
+  shell_exec("yum -y install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap openldap-servers-overlays.x86_64")
 
-  _setup_slapd_config()
-  _import_ldif_files():
+  _setup_slapd_config()  
+  #_setup_password_policy()
   _setup_tls()
+  _import_users()
 
   shell_exec("chown -R ldap /var/lib/ldap")
   shell_exec("/sbin/service ldap start")
@@ -127,7 +136,7 @@ def uninstall_ldap(args):
 
   '''
   app.print_verbose("Uninstall ldap client/server")
-  shell_exec("yum -y erase openldap openldap-servers")
+  shell_exec("yum -y erase openldap openldap-servers openldap-servers-overlays.x86_64")
   shell_exec("rm /etc/openldap/slapd.conf.rpmsave")
   shell_exec("rm -r /var/lib/ldap")
   shell_exec("rm -r /etc/openldap")
@@ -160,14 +169,25 @@ def _setup_slapd_config():
     f.write("  by * read\n")
     f.close()
 
-def _import_ldif_files():
+  # Setup LDAP backend database
   shell_exec("cp /etc/openldap/DB_CONFIG.example /var/lib/ldap/DB_CONFIG")
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/common.ldif")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/groups.ldif")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/users.ldif")
 
-  # TODO http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&apropos=0&sektion=5&manpath=OpenLDAP+2.3-Release&format=html
-  #shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/passwordpolicy.ldif")
+def _setup_password_policy():
+  app.print_verbose("Setup password policy.")
+  value = "moduleload /usr/lib64/openldap/ppolicy.la"
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+
+  value = "include /etc/openldap/schema/ppolicy.schema"
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+
+  # Invokes password policies for this DIT only
+  value = "overlay ppolicy"
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+
+  # Define the default policy
+  value = 'ppolicy_default "cn=default,cn=pwpolicies,dc=fareonline,dc=net"'
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)  
 
 def _add_iptables_rules():
   '''
@@ -182,12 +202,14 @@ def _add_iptables_rules():
   # LDAP non TLS and with TLS
   iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389  -j ACCEPT")
 
-  iptables("-I INPUT  -p ALL -j ldap")
+  iptables("-I INPUT  -p ALL -j syco_ldap")
+  iptables.iptables_save()
 
 def _remove_iptables_rules():
-  iptables("-D INPUT  -p ALL -j ldap")  
+  iptables("-D INPUT  -p ALL -j syco_ldap")
   iptables("-F syco_ldap")
   iptables("-X syco_ldap")
+  iptables.iptables_save()
 
 def _setup_tls():
   '''
@@ -215,13 +237,13 @@ def _setup_tls():
     cwd=certdir,
     events={
       re.compile('Enter pass phrase for ca.key:'): ca_pass_phrase + "\n",
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.get_state() + ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.get_locality() + ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.get_organization_name() + ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.get_organizational_unit_name() + "\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): config.get_organizational_unit_name() + "CA\n",
-      re.compile('Email Address \[\]\:'): config.get_admin_email() + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): app.config.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): app.config.get_state() + "\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): app.config.get_locality() + "\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): app.config.get_organization_name() + "\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): app.config.get_organizational_unit_name() + "\n",
+      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): app.config.get_organizational_unit_name() + "CA\n",
+      re.compile('Email Address \[\]\:'): app.config.get_admin_email() + "\n",
     }
   )
   
@@ -230,13 +252,13 @@ def _setup_tls():
   shell_run("openssl req -new -key ldap.key -out ldap.csr",
     cwd=certdir,
     events={
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.get_state() + ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.get_locality() + ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.get_organization_name() + ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.get_organizational_unit_name() + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): app.config.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): app.config.get_state() + ".\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): app.config.get_locality() + ".\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): app.config.get_organization_name() + ".\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): app.config.get_organizational_unit_name() + "\n",
       re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): LDAP_SERVER_HOST_NAME + "\n",
-      re.compile('Email Address \[\]\:'): config.get_admin_email() + "\n",
+      re.compile('Email Address \[\]\:'): app.config.get_admin_email() + "\n",
       re.compile('A challenge password \[\]\:'): "\n",
       re.compile('An optional company name \[\]\:'): "\n",
     }
@@ -258,7 +280,7 @@ def _setup_tls():
   value = "TLSCertificateFile /etc/openldap/cacerts/ldap.pem"
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
-  value = "TLSCertificateKeyFile /etc/openldap/tls/ldap.pem"
+  value = "TLSCertificateKeyFile /etc/openldap/cacerts/ldap.pem"
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
   value = "TLSCACertificateFile /etc/openldap/cacerts/ca.cert"
@@ -267,3 +289,7 @@ def _setup_tls():
   # http://www.openldap.org/doc/admin24/guide.html#Authentication Methods
   value = "security ssf=1 update_ssf=112 simple_bind=64"
   general.set_config_property(SLAPD_FN, ".*" + value +".*", value)
+
+def _import_users():
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/groups.ldif")
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/users.ldif")

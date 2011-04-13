@@ -105,7 +105,7 @@ def iptables_setup(args):
 
   _closing_chains()
   _setup_postrouting()
-  _iptables_save()
+  iptables_save()
 
   version_obj.mark_executed()
 
@@ -251,6 +251,6 @@ def _setup_postrouting():
   #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
   #iptables("-t nat -A POSTROUTING -o eth0 -j MASQUERADE")
 
-def _iptables_save():
+def iptables_save():
   app.print_verbose("Save current iptables rules to /etc/iptables.")
   general.shell_exec("/sbin/iptables-save > /etc/sysconfig/iptables")
