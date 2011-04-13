@@ -1,6 +1,5 @@
-dn: cn=users,ou=group,dc=fareonline,dc=net
-cn: users
-objectClass: posixGroup
-userPassword: {crypt}*
-gidNumber: 2001
-memberUid: dali
+#dn: cn=sycousers,ou=group,dc=syco,dc=net
+#cn: users
+#objectClass: posixGroup
+#userPassword: {crypt}*
+#gidNumber: 2001

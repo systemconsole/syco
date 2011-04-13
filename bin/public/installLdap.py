@@ -305,3 +305,12 @@ def _setup_tls():
 def _import_users():
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/groups.ldif")
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/users.ldif")
+
+  for dir in os.listdir(app.SYCO_USR_PATH):
+    filename = app.SYCO_USR_PATH + dir + "var/ldap/groups.ldif"
+    if (os.access(filename, os.F_OK)):
+      shell_exec("slapadd -l " + filename)
+
+    filename = app.SYCO_USR_PATH + dir + "var/ldap/users.ldif"
+    if (os.access(filename, os.F_OK)):
+      shell_exec("slapadd -l " + filename)
