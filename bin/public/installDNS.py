@@ -3,16 +3,8 @@
 
 import ConfigParser
 import os
-import time
-import stat
-import shutil
-import traceback
-import sys
 import app
 import general
-import version
-import datetime
-from datetime import date
 import re
 
 # The version of this module, used to prevent
@@ -26,8 +18,27 @@ def build_commands(commands):
   
   '''
   commands.add("install-dns",   install_dns,  help="Install DNS server.")
-  
 
+def copy_rndc():
+    #Copy rndc key to file
+    N=5
+    f=open("/var/named/chroot/etc/rndc_new.key")
+    n = open("/var/named/chroot/etc/named.conf","w") #open for append
+    o = open("/var/named/chroot/etc/rndc.key","w")
+    n.write("#named DNS generated from SYCO DO NOT EDIT\n")
+    o.write("#named DNS generated from SYCO DO NOT EDIT\n")
+    for i in range(N):
+        line=f.next().strip()
+        o.write (line+"\n")
+        n.write (line+"\n")
+        app.print_verbose(line)
+    f.close()
+    n.close()
+    o.close()
+
+
+
+ 
 def install_dns(args):
   '''
   Apache installation
@@ -50,46 +61,8 @@ def install_dns(args):
     #Setting upp dns key generating and the pasting in to file
     #If the new key excists then now new key is genertaed
   SYCO_PATH = app.SYCO_PATH
-  if os.path.exists('/var/named/chroot/etc/rndc_new.key'):
-        N=5
-        f=open("/var/named/chroot/etc/rndc_new.key")
-        n = open("/var/named/chroot/etc/named.conf","w") #open for append
-        o = open("/var/named/chroot/etc/rndc.key","w")
-        n.write("#named DNS generated from SYCO DO NOT EDIT")
-	o.write("#named DNS generated from SYCO DO NOT EDIT")
-
-        for i in range(N):
-            #line=f.next().strip()
-            #o.write (line+"\n")
-            #n.write (line+"\n")
-            #app.print_verbose(line)
-            print i
-        f.close()
-        n.close()
-        o.close()
-  else:
-	os.chdir("/tmp")
-        os.system("rndc-confgen > /var/named/chroot/etc/rndc_new.key")
-        general.shell_exec("chown root:named rndc.key")
-
-        N=5
-        f=open("/var/named/chroot/etc/rndc_new.key")
-        n = open("/var/named/chroot/etc/named.conf","w") #open for append
-        o = open("/var/named/chroot/etc/rndc.key","w")
-        n.write("#named DNS generated from SYCO DO NT EDIT")
-	o.write("#named DNS generated from SYCO DO NT EDIT")	
-
-        for i in range(N):
-            line=f.next().strip()
-            o.write (line+"\n")
-            n.write (line+"\n")
-            print line
-            i = i +1
-        f.close()
-        n.close()
-        o.close()
-
-
+  role  =str(args[1])
+  
 
   #time_ut =  int(time.time()*100)
   #serial = str(time_ut)
@@ -104,63 +77,121 @@ def install_dns(args):
   forward2 = config.get('config', 'forward2')
   ipmaster = config.get('config', 'ipmaster')
   ipslave = config.get('config', 'ipslave')
+  localnet = config.get('config', 'localnet')
   #role =  config.get('config','role')
   role  =str(args[1])
-  
-    #Setting upp named.con file for dns server
-  o = open("/var/named/chroot/etc/named.conf","a") #open for append
-  for line in open(SYCO_PATH + "var/dns/"+role+"-named.conf"):
-        line = line.replace("$IPSLAVE$",ipslave)
-        line = line.replace("$IPMASTER$",ipmaster)
-        line = line.replace("$RANGE$",dnsrange)
-        line = line.replace("$FORWARD1$",forward1)
-        line = line.replace("$FORWARD2$",forward2)
-        
-        o.write(line)
-  o.close()    
 
-    #Setting upp dns zone and recursiv file for config
-  #Regex to find serial
-  p = re.compile('[\s]*([\d]*)[\s]*[;][\s]*Serial' )
 
-   #get all arecord and putting them into the file
-  for zone in config.options('zone'):
+
+  #generting ore fetching key for dns servers
+  if os.path.exists('/var/named/chroot/etc/rndc_new.key'):
+    copy_rndc()
+  else:
+      if role =="master":
+	os.chdir("/tmp")
+        os.system("/usr/sbin/rndc-confgen > /var/named/chroot/etc/rndc_new.key")
+        general.shell_exec("chown root:named rndc.key")
+        copy_rndc()
+      else:
+          os.chdir("/var/named/chroot/etc")
+          os.system("scp root@"+ipmaster+":/var/named/chroot/etc/rndc_new.key ." )
+
+  def generate_zone(location):
+
+     if location == "internal":
+          o = open("/var/named/chroot/etc/named.conf","a") #open for append
+          o.write("view 'internt' {\n")
+          o.write("match-clients { "+localnet+"; };\n")
+          o.close()
+
+
+
+     else:
+          o = open("/var/named/chroot/etc/named.conf","a") #open for append
+          o.write("view 'external' {\n")
+          o.write("match-clients { any; };\n")
+          o.close()
+
+
+
+     for zone in config.options('zone'):
                 rzone = config.get('zone',zone)
                 #Create zone files for every zone in file
-                o = open("/var/named/chroot/var/named/data/" + zone + ".zone","w") #open for append
+                o = open("/var/named/chroot/var/named/data/" +location+"." + zone + ".zone","w") #open for append
                 for line in open(SYCO_PATH + "var/dns/template.zone"):
                     line = line.replace("$IPMASTER$",ipmaster)
                     line = line.replace("$IPSLAVE$",ipslave)
                     line = line.replace("$NAMEZONE$",zone)
-                    serial = p.findall (line)                    
+                    serial = p.findall (line)
                     if len(serial) > 0:
                         line = str(int(serial[0])+1)+"   ;   Serial\n"
                     o.write(line + "\n")
-               
+
 
                  #Wrinting out arecord to zone file
-                for option in config.options(zone+"_arecords"):
+                if location == "internal":
+                    
+                    #Getting internal ip addreses if they exsist
+                    try:
+                        config.options("internal_"+zone+"_arecords")
+                    except ConfigParser.NoSectionError:
+                        for option in config.options(zone+"_arecords"):
+                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get(zone+"_arecords",option)+" \n")
+                            print option+"."+ zone+"."+ "A"+ config.get(zone+"_arecords",option)+"."
+
+                        if zone == app.get_domain():
+                            servers = app.get_servers()
+                            for server in servers:
+                                o.write (server + "." + zone+ "."+ "     IN     A    "+app.get_ip(server) +" \n")
+                                print server + app.get_ip(server)
+
+                    else:
+                         for option in config.options("internal_"+zone+"_arecords"):
+                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get("internal_"+zone+"_arecords",option)+" \n")
+                            print option+"."+ zone+"."+ "A"+ config.get("internal_"+zone+"_arecords",option)+"."
+
+                         if zone == app.get_domain():
+                            servers = app.get_servers()
+                            for server in servers:
+                                o.write (server + "." + zone+ "."+ "     IN     A    "+app.get_ip(server) +" \n")
+                                print server + app.get_ip(server)
+
+                    #Getting internal cnames if they exsists
+                    try:
+                        config.options("internal_"+zone+"_cname")
+                    except ConfigParser.NoSectionError:
+                         for option in config.options(zone+"_cname"):
+                            o.write (option+ "     IN    CNAME   "+ config.get(zone+"_cname",option)+"\n")
+                            print option+"."+ zone+ "    IN    CNAME   "+ config.get(zone+"_cname",option)+"."+zone
+                    else:
+                          for option in config.options("internal_"+zone+"_cname"):
+                            o.write (option+ "     IN    CNAME   "+ config.get("internal_"+zone+"_cname",option)+"\n")
+                            print option+"."+ zone+ "    IN    CNAME   "+ config.get("internal_"+zone+"_cname",option)+"."+zone
+
+
+                else:
+                 for option in config.options(zone+"_arecords"):
                        o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get(zone+"_arecords",option)+" \n")
                        print option+"."+ zone+"."+ "A"+ config.get(zone+"_arecords",option)+"."
 
-                if zone == app.get_domain():
+                 if zone == app.get_domain():
                     servers = app.get_servers()
                     for server in servers:
                         o.write (server + "." + zone+ "."+ "     IN     A    "+app.get_ip(server) +" \n")
                         print server + app.get_ip(server)
-                    
-                for option in config.options(zone+"_cname"):
+
+                 for option in config.options(zone+"_cname"):
                        o.write (option+ "     IN    CNAME   "+ config.get(zone+"_cname",option)+"\n")
                        print option+"."+ zone+ "    IN    CNAME   "+ config.get(zone+"_cname",option)+"."+zone
 
-		o.close()                
+		 o.close()
 		#Creating recursiv zone file
-                o = open("/var/named/chroot/var/named/data/" + rzone + ".zone","w") #open for append
+                o = open("/var/named/chroot/var/named/data/" + location +"."+ rzone + ".zone","w") #open for append
                 for line in open(SYCO_PATH + "var/dns/recursiv-template.zone"):
                         line = line.replace("$IPMASTER$",ipmaster[::-1])
                         line = line.replace("$IPSLAVE$",ipslave[::-1])
-                        line = line.replace("$NAMEZONE$",zone)
-                        line = line.replace("$RZONE$",rzone)
+                        line = line.replace("$NAMEZONE$", zone)
+                        line = line.replace("$RZONE$" ,rzone)
                         serial = p.findall (line)
                         if len(serial) > 0:
                             line = str(int(serial[0])+1)+"   ;   Serial\n"
@@ -173,10 +204,58 @@ def install_dns(args):
                     line = line.replace("$IPMASTER$",ipmaster)
                     line = line.replace("$IPSLAVE$",ipslave)
                     line = line.replace("$NAMEZONE$",zone)
-                    line = line.replace("$RZONE$",rzone)
+                    line = line.replace("$RZONE$" ,rzone)
+                    line = line.replace("$LOCATION$" ,location)
                     o.write(line + "\n")
                 o.close()
 
+     if location == "internal":
+          o = open("/var/named/chroot/etc/named.conf","a") #open for append
+          o.write("}; \n")
+          o.close()
+     else:
+          o = open("/var/named/chroot/etc/named.conf","a") #open for append
+          o.write("};\n")
+          o.close()
+
+
+
+    #Setting upp named.con file for dns server
+
+
+
+
+
+
+  o = open("/var/named/chroot/etc/named.conf","a") #open for append
+  for line in open(SYCO_PATH + "var/dns/"+role+"-named.conf"):
+        line = line.replace("$IPSLAVE$",ipslave)
+        line = line.replace("$IPMASTER$",ipmaster)
+        line = line.replace("$RANGE$",dnsrange)
+        line = line.replace("$FORWARD1$",forward1)
+        line = line.replace("$FORWARD2$",forward2)
+        line = line.replace("$LOCALNET$",localnet)
+        line = line.replace("$DOMAIN$",app.get_domain())
+        o.write(line)
+  o.close()    
+
+    #Setting upp dns zone and recursiv file for config
+  #Regex to find serial
+  p = re.compile('[\s]*([\d]*)[\s]*[;][\s]*Serial' )
+
+   #get all arecord and putting them into the file
+
+ 
+
+
+
+   
+
+   #generation zone files IMPORTANT THAT INTERNAL IS FIRST
+  generate_zone("internal")
+  generate_zone("external")
+  
+  
 
                
 
