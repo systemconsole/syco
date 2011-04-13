@@ -38,9 +38,6 @@ http://www.linux.com/archive/feature/114074
 
 TODO: Setup kickstart to use LDAP
       http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
-TODO: ldap.pem should be copied to clients.
-      /usr/sbin/cacertdir_rehash /etc/openldap/cacerts
-      or run authconfig after.
 TODO: Remove all fareonline references.
 TODO: Update ldif files.
 TODO: SSSD or NSCD
@@ -122,9 +119,21 @@ def install_ldap_client(args):
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  general.wait_for_server_to_start(app.config.get_ldap_server_ip(), "389")
+  ip = app.config.get_ldap_server_ip()
 
-  # TODO: Copy cert
+  general.wait_for_server_to_start(ip, "389")
+
+  # Copy the TLS cert needed to login to the ldap-server.
+  #remote_server = ssh.Ssh(app.config.get_ldap_server_ip(), app.get_root_password())
+  #remote_server.scp("/etc/openldap/cacerts/ldap.pem", "/etc/openldap/cacerts/ldap.pem")
+  shell_run("scp root@" + ip + ":/etc/openldap/cacerts/ldap.pem /etc/openldap/cacerts/ldap.pem",
+    events={
+      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
+      "root@" + ip + "\'s password\:" : app.get_root_password() + "\n"
+    }
+  )
+
+  shell_exec("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
 
   # Enable as a client
   shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache " +
