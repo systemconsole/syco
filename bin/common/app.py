@@ -193,6 +193,10 @@ def get_user_password(username):
   '''The linux shell password for a specific user.'''
   return _get_password("linux", username)
 
+def get_ca_password():
+  '''The password used when creating CA certificates'''
+  return get_root_password()
+
 def get_svn_password():
   '''The svn password for user syscon_svn'''
   return _get_password("svn", "syscon")

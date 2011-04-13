@@ -39,7 +39,8 @@ TODO: Setup kickstart to use LDAP
       http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
 TODO: ldap.cert ska kopieras till klienterna
       /usr/sbin/cacertdir_rehash /etc/openldap/cacerts
-     eller köra authconfig efteråt.
+      eller köra authconfig efteråt.
+TODO: Update ldif files.
 
 '''
 
@@ -198,9 +199,8 @@ def _setup_tls():
   certdir = "/etc/openldap/tls"
   shell_exec("mkdir -p " + certdir)
   
-  # Create CA
-  # TODO
-  ca_pass_phrase = "asdfasdf"
+  # Create CA  
+  ca_pass_phrase = app.get_ca_password()
   shell_run("openssl genrsa -des3 -out ca.key 2048",
     cwd=certdir,
     events={
