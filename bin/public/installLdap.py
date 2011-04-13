@@ -67,6 +67,7 @@ from iptables import iptables
 SCRIPT_VERSION = 1
 
 SLAPD_FN = "/etc/openldap/slapd.conf"
+LDAP_SERVER_HOST_NAME = "ldap.fareonline.net"
 
 def build_commands(commands):
   commands.add("install-ldap-server", install_ldap_server, help="Install ldap server.")
@@ -83,7 +84,7 @@ def install_ldap_server(args):
   version_obj.check_executed()
 
   # Setup ldap dns/hostname used by slapd  
-  value="127.0.0.1 ldap.fareonline.net"
+  value="127.0.0.1 " + LDAP_SERVER_HOST_NAME
   general.set_config_property("/etc/hosts", value, value)
 
   shell_exec("yum -y  install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap")
@@ -115,7 +116,7 @@ def install_ldap_client(args):
 
   # Enable as a client
   shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache " +
-    "--ldapserver=ldap.fareonline.net --ldapbasedn=dc=fareonline,dc=net " +
+    "--ldapserver=" + LDAP_SERVER_HOST_NAME + " --ldapbasedn=dc=fareonline,dc=net " +
     "--updateall")
 
   version_obj.mark_executed()
@@ -209,18 +210,18 @@ def _setup_tls():
     }
   )
 
-  # TODO Enter better info?
+  # Create CA cert.
   shell_run("openssl req -new -x509 -days 365 -key ca.key -out ca.cert",
     cwd=certdir,
     events={
       re.compile('Enter pass phrase for ca.key:'): ca_pass_phrase + "\n",
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): ".\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): "System Console\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): "syco\n",
-      re.compile('Email Address \[\]\:'): app.SERVER_ADMIN_EMAIL + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.get_state() + ".\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.get_locality() + ".\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.get_organization_name() + ".\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.get_organizational_unit_name() + "\n",
+      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): config.get_organizational_unit_name() + "CA\n",
+      re.compile('Email Address \[\]\:'): config.get_admin_email() + "\n",
     }
   )
   
@@ -229,19 +230,19 @@ def _setup_tls():
   shell_run("openssl req -new -key ldap.key -out ldap.csr",
     cwd=certdir,
     events={
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): ".\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): "System Console\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): "ldap.fareonline.net\n",
-      re.compile('Email Address \[\]\:'): app.SERVER_ADMIN_EMAIL + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.get_state() + ".\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.get_locality() + ".\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.get_organization_name() + ".\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.get_organizational_unit_name() + "\n",
+      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): LDAP_SERVER_HOST_NAME + "\n",
+      re.compile('Email Address \[\]\:'): config.get_admin_email() + "\n",
       re.compile('A challenge password \[\]\:'): "\n",
       re.compile('An optional company name \[\]\:'): "\n",
     }
   )
   
-  # Sign cert  
+  # Sign ldap cert with CA.
   shell_run("openssl x509 -req -in ldap.csr -out ldap.cert -CA ca.cert -CAkey ca.key -CAcreateserial -days 365",
     cwd=certdir,
     events={
