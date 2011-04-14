@@ -4,16 +4,13 @@ TODO
 Version 1
 ---------
 * Test that the remote-host installation works, by reinstalling fo-tp-vh03?
+* Test ldap client/server on all servers.
 
 Version 1.1
 ---------
 * installBind
 * installRentalFront
 * installRentalFront for fox
-
-Version 1.2
------------
-* installLDAP
 
 Version 1.3
 -----------
@@ -127,6 +124,24 @@ Version 5
   asadmin console. The user can login to a remote host and run local commands.
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+
+LDAP
+----
+* Setup kickstart to use LDAP
+  http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
+* Enable sudo for LDAP users.
+  http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
+* SSSD or NSCD
+* Setup password policy
+* Two-factor auth with http://www.wikidsystems.com/ or something else.
+* Use SASL?
+* Use KERBEROS?
+* Use Radius?
+* Store hosts in ldap?
+* Backup the LDAP database. Primary the passwords need backup.
+* Install secondary "read-only" ldap server.
+* Read for more features
+  http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
 
 Other
 -----

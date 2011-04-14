@@ -2,22 +2,22 @@
 '''
 Install LDAP client and server.
 
-LDAP Setup
+# LDAP Setup
 http://www.skills-1st.co.uk/papers/security-with-ldap-jan-2002/security-with-ldap.html
 http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html/Deployment_Guide/ch-ldap.html
 http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
 
-Password policy
+# Password policy
 http://www.zytrax.com/books/ldap/ch6/ppolicy.html
 http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&apropos=0&sektion=5&manpath=OpenLDAP+2.3-Release&format=html
 
 # Enable sudo with LDAP
 http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
 
-# ENable ldap on clients
+# Enable ldap on clients
 http://directory.fedoraproject.org/wiki/Howto:PAM
 
-LDAP Read
+#LDAP Read
 http://www.linux.com/archive/feature/114074
 http://www.howtoforge.com/linux_ldap_authentication
 http://www.debuntu.org/ldap-server-and-linux-ldap-clients
@@ -28,21 +28,16 @@ http://www.wikidsystems.com/
 http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-factor-authentication-to-openldap-and-freeradius
 http://freeradius.org/
 
-Directory service
+# Redhat Directory service.
+I tried to used the centos directory service/389 directory service first. But
+it feelt to heavy and bloated. And impossible to find documentation about
+how to setup the PAM -> ldap. I did choose to use the less complicated openldap.
 http://wiki.centos.org/HowTos/DirectoryServerSetup
 http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/pdf/Installation_Guide/Red_Hat_Directory_Server-8.2-Installation_Guide-en-US.pdf
 http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administration_Guide/index.html
 http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administration_Guide/User_Account_Management.html
 http://www.oreillynet.com/sysadmin/blog/2006/07/a_new_favorite_fedora_director.html
 http://www.linux.com/archive/feature/114074
-
-TODO: Setup kickstart to use LDAP
-      http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
-TODO: Update ldif files.
-TODO: SSSD or NSCD
-TODO: Setup password policy
-TODO: LDAP vs SSL vs TLS vs SASL vs KERBEROS vs Radius?
-TODO: Store hosts in ldap?
 
 '''
 
