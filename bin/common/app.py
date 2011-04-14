@@ -13,16 +13,12 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import ConfigParser
 import os
 import re
 import socket
 import sys
 import time
 import subprocess
-
-import config
-import passwordStore
 
 #
 #  Contains global functions and settings.
@@ -53,25 +49,18 @@ PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
 # When a general username is required.
 SERVER_ADMIN_NAME = "syco"
 
-config = config.SycoConfig()
-
-# Logs will be sent to this email from the servers.
-SERVER_ADMIN_EMAIL = config.get_admin_email()
-
 # String codes affecting output to shell.
 BOLD = "\033[1m"
 RESET = "\033[0;0m"
 
-# Options set from commandline are stored here.
-class Options:
+# Need to be after all constants.
+import options
+options = options.Options()
 
-  # Set by -v and -q.
-  verbose = 1
+import config
+config = config.SycoConfig()
 
-  # Set by -f
-  force = 0
-
-options = Options()
+import passwordStore
 
 def print_error(message, verbose_level=1):
   '''

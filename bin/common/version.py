@@ -28,7 +28,9 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import ConfigParser, socket
+import ConfigParser
+import socket
+
 import app
 
 class VersionException(Exception):
@@ -53,7 +55,7 @@ class Version:
     Check if the command has been executed, raise Exception otherwise.
 
     '''    
-    if (app.options.force == 0 and self._is_executed(self.command, self.version)):
+    if (self.is_executed()):
       raise VersionException("Command " + str(self.command) + " version " + str(self.version) + " is already executed")
 
   def mark_executed(self):
@@ -72,18 +74,21 @@ class Version:
     '''
     self._set_version(0)
 
-  def _is_executed(self, command=command, version=version):
+  def is_executed(self):
     '''
     Check if a specific command/routine/script with a specific
     version has been executed on the current server.
 
-    '''
+    '''    
+    if (app.options.force != 0):
+      return False
+
     config = ConfigParser.RawConfigParser()
     config.read(self.config_file_name)
 
     if config.has_section(self.hostname):
-      if config.has_option(self.hostname, command):
-        if config.getint(self.hostname, command) >= version:
+      if config.has_option(self.hostname, self.command):
+        if config.getint(self.hostname, self.command) >= self.version:
           return True
     return False
 

@@ -69,7 +69,7 @@ def install_git_server(args):
   general.shell_exec("chown -R git:git /home/git")
 
   # Config git
-  general.shell_exec('git config --global user.email "' + app.SERVER_ADMIN_EMAIL + '"', user="git")
+  general.shell_exec('git config --global user.email "' + config.get_admin_email() + '"', user="git")
   general.shell_exec('git config --global user.name "' + app.SERVER_ADMIN_NAME + '"', user="git")
 
   # Setup repo folder
