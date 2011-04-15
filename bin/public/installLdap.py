@@ -178,7 +178,7 @@ def _setup_slapd_config():
 
   # Setup LDAP backend database
   shell_exec("cp /etc/openldap/DB_CONFIG.example /var/lib/ldap/DB_CONFIG")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/common.ldif")
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/common.ldif")
 
 def _setup_password_policy():
   app.print_verbose("Setup password policy.")
@@ -298,14 +298,14 @@ def _setup_tls():
   general.set_config_property(SLAPD_FN, ".*" + value +".*", value)
 
 def _import_users():
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/groups.ldif")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/users.ldif")
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/groups.ldif")
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/users.ldif")
 
   for dir in os.listdir(app.SYCO_USR_PATH):
-    filename = app.SYCO_USR_PATH + dir + "var/ldap/groups.ldif"
+    filename = app.SYCO_USR_PATH + dir + "var/ldap/ldif/groups.ldif"
     if (os.access(filename, os.F_OK)):
       shell_exec("slapadd -l " + filename)
 
-    filename = app.SYCO_USR_PATH + dir + "var/ldap/users.ldif"
+    filename = app.SYCO_USR_PATH + dir + "var/ldap/ldif/users.ldif"
     if (os.access(filename, os.F_OK)):
       shell_exec("slapadd -l " + filename)
