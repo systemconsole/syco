@@ -60,7 +60,6 @@ def delete_install_dir():
   '''
   app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
   shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
-  pass
 
 def create_install_dir():
   '''
@@ -71,7 +70,7 @@ def create_install_dir():
 
   '''
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    os.mkdir(app.INSTALL_DIR)
+    os.makedirs(app.INSTALL_DIR)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     os.chmod(app.INSTALL_DIR, stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
@@ -176,7 +175,7 @@ def shell_exec(command, user="", cwd=None, events=None):
   # Set current working directory
   if (cwd == None):
     cwd = os.getcwd()
-
+  
   out = expect.spawn("su", args, cwd=cwd)
 
   app.print_verbose("---- Result ----", 2)
