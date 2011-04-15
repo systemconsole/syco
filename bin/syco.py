@@ -40,7 +40,7 @@ command_dir = os.listdir(app.SYCO_PUBLIC_PATH)
 # Files only available in private user repos.
 if (os.access(app.SYCO_USR_PATH, os.F_OK)):
   for plugin in os.listdir(app.SYCO_USR_PATH):
-    plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
+    plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/bin/")
     sys.path.append(plugin_path)
     command_dir += os.listdir(plugin_path)
 

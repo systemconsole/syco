@@ -51,12 +51,13 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import re
+import os
 
 import app
 import general
 import version
 from general import shell_exec, shell_run
-from iptables import iptables
+from iptables import iptables, iptables_save
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -96,10 +97,11 @@ def install_ldap_server(args):
   _import_users()
 
   shell_exec("chown -R ldap /var/lib/ldap")
-  shell_exec("/sbin/service ldap start")
+  shell_exec("/etc/init.d/ldap start")
   shell_exec("chkconfig ldap on")  
 
   _add_iptables_rules()
+  iptables_save()
 
   install_ldap_client(args)
 
@@ -114,8 +116,10 @@ def install_ldap_client(args):
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  ip = app.config.get_ldap_server_ip()
+  _add_iptables_rules()
+  iptables_save()
 
+  ip = app.config.get_ldap_server_ip()
   general.wait_for_server_to_start(ip, "389")
 
   # Copy the TLS cert needed to login to the ldap-server.
@@ -143,14 +147,14 @@ def uninstall_ldap(args):
 
   '''
   app.print_verbose("Uninstall ldap client/server")
-  shell_exec("yum -y erase openldap openldap-servers openldap-servers-overlays.x86_64")
+  shell_exec("yum -y erase openldap-servers openldap-servers-overlays.x86_64")
   shell_exec("rm /etc/openldap/slapd.conf.rpmsave")
   shell_exec("rm -r /var/lib/ldap")
-  shell_exec("rm -r /etc/openldap")
   shell_exec("rm -r /etc/ldap.conf.rpmnew")
   shell_exec("rm -r /etc/ldap.conf.rpmsave")
 
   _remove_iptables_rules()
+  iptables_save()
 
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
@@ -210,13 +214,13 @@ def _add_iptables_rules():
   iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389  -j ACCEPT")
 
   iptables("-I INPUT  -p ALL -j syco_ldap")
-  iptables.iptables_save()
+  iptables("-I OUTPUT  -p ALL -j syco_ldap")
 
 def _remove_iptables_rules():
   iptables("-D INPUT  -p ALL -j syco_ldap")
+  iptables("-D INPUT  -p ALL -j syco_ldap")
   iptables("-F syco_ldap")
-  iptables("-X syco_ldap")
-  iptables.iptables_save()
+  iptables("-X syco_ldap")  
 
 def _setup_tls():
   '''
@@ -279,7 +283,7 @@ def _setup_tls():
     }
   )
 
-  shell_exec("cp /etc/openldap/tls/ca.cert /etc/openldap/cacerts")
+  shell_exec("cp /etc/openldap/tls/ca.cert /etc/openldap/cacerts/")
   shell_exec("cat /etc/openldap/tls/ldap.key > /etc/openldap/cacerts/ldap.pem")
   shell_exec("cat /etc/openldap/tls/ldap.cert >> /etc/openldap/cacerts/ldap.pem")
 
@@ -297,15 +301,15 @@ def _setup_tls():
   value = "security ssf=1 update_ssf=112 simple_bind=64"
   general.set_config_property(SLAPD_FN, ".*" + value +".*", value)
 
-def _import_users():
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/groups.ldif")
+def _import_users():  
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/users.ldif")
+  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/groups.ldif")
 
   for dir in os.listdir(app.SYCO_USR_PATH):
-    filename = app.SYCO_USR_PATH + dir + "var/ldap/ldif/groups.ldif"
+    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/users.ldif")
     if (os.access(filename, os.F_OK)):
       shell_exec("slapadd -l " + filename)
 
-    filename = app.SYCO_USR_PATH + dir + "var/ldap/ldif/users.ldif"
+    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/groups.ldif")
     if (os.access(filename, os.F_OK)):
       shell_exec("slapadd -l " + filename)
