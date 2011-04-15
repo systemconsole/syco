@@ -41,7 +41,7 @@ SYCO_USR_PATH = SYCO_PATH + "usr/"
 SYCO_ETC_PATH = SYCO_PATH + "etc/"
 
 # Files (rpm etc.) that should be installed by syco, are temporary stored here.
-INSTALL_DIR = SYCO_PATH + "tmp/"
+INSTALL_DIR = SYCO_PATH + "tmp/install/"
 
 # All passwords used by syco are stored in this enrypted file.
 PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
@@ -61,6 +61,10 @@ import config
 config = config.SycoConfig()
 
 import passwordStore
+import install
+
+# Required yum package.
+install.package("gnupg")
 
 def print_error(message, verbose_level=1):
   '''
