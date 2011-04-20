@@ -70,7 +70,9 @@ def install_dns(args):
 
     #Generating config file
   config = ConfigParser.SafeConfigParser()
-  
+  config_zone = ConfigParser.SafeConfigParser()
+
+
   config.read(SYCO_PATH + 'var/dns/zone.cfg')
   dnsrange = config.get('config', 'range')
   forward1 = config.get('config', 'forward1')
@@ -78,6 +80,7 @@ def install_dns(args):
   ipmaster = config.get('config', 'ipmaster')
   ipslave = config.get('config', 'ipslave')
   localnet = config.get('config', 'localnet')
+  data_center = config.get('config', 'data_center')
   #role =  config.get('config','role')
   role  =str(args[1])
 
@@ -116,6 +119,9 @@ def install_dns(args):
 
      for zone in config.options('zone'):
                 rzone = config.get('zone',zone)
+                config_zone.read(SYCO_PATH + 'var/dns/'+zone)
+                print zone
+                
                 #Create zone files for every zone in file
                 o = open("/var/named/chroot/var/named/data/" +location+"." + zone + ".zone","w") #open for append
                 for line in open(SYCO_PATH + "var/dns/template.zone"):
@@ -133,11 +139,11 @@ def install_dns(args):
                     
                     #Getting internal ip addreses if they exsist
                     try:
-                        config.options("internal_"+zone+"_arecords")
+                        config_zone.options("internal_"+zone+"_arecords")
                     except ConfigParser.NoSectionError:
-                        for option in config.options(zone+"_arecords"):
-                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get(zone+"_arecords",option)+" \n")
-                            print option+"."+ zone+"."+ "A"+ config.get(zone+"_arecords",option)+"."
+                        for option in config_zone.options(zone+"_arecords"):
+                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config_zone.get(zone+"_arecords",option)+" \n")
+                            print option+"."+ zone+"."+ "A"+ config_zone.get(zone+"_arecords",option)+"."
 
                         if zone == app.get_domain():
                             servers = app.get_servers()
@@ -146,9 +152,9 @@ def install_dns(args):
                                 print server + app.get_ip(server)
 
                     else:
-                         for option in config.options("internal_"+zone+"_arecords"):
-                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get("internal_"+zone+"_arecords",option)+" \n")
-                            print option+"."+ zone+"."+ "A"+ config.get("internal_"+zone+"_arecords",option)+"."
+                         for option in config_zone.options("internal_"+zone+"_arecords"):
+                            o.write (option + "." + zone+ "."+ "     IN     A    "+ config_zone.get("internal_"+zone+"_arecords",option)+" \n")
+                            print option+"."+ zone+"."+ "A"+ config_zone.get("internal_"+zone+"_arecords",option)+"."
 
                          if zone == app.get_domain():
                             servers = app.get_servers()
@@ -158,21 +164,25 @@ def install_dns(args):
 
                     #Getting internal cnames if they exsists
                     try:
-                        config.options("internal_"+zone+"_cname")
+                        config_zone.options("internal_"+zone+"_cname")
                     except ConfigParser.NoSectionError:
-                         for option in config.options(zone+"_cname"):
-                            o.write (option+ "     IN    CNAME   "+ config.get(zone+"_cname",option)+"\n")
-                            print option+"."+ zone+ "    IN    CNAME   "+ config.get(zone+"_cname",option)+"."+zone
+                         for option in config_zone.options(zone+"_cname"):
+                                out = str(option) +  "     IN    CNAME   "+ config_zone.get(zone+"_cname",option) + "\n"
+                                out2 =out.replace('$DATA_CENTER$',data_center)
+                                o.write(out2)
+                                print out2
                     else:
-                          for option in config.options("internal_"+zone+"_cname"):
-                            o.write (option+ "     IN    CNAME   "+ config.get("internal_"+zone+"_cname",option)+"\n")
-                            print option+"."+ zone+ "    IN    CNAME   "+ config.get("internal_"+zone+"_cname",option)+"."+zone
+                          for option in config_zone.options("internal_"+zone+"_cname"):
+                            out= str(option) + "     IN    CNAME   "+ str(config_zone.get("internal_"+zone+"_cname",option))+"\n"
+                            out2 = out.replace('$DATA_CENTER$',data_center)
+                            o.write(out2)
+                            print out2
 
 
                 else:
-                 for option in config.options(zone+"_arecords"):
-                       o.write (option + "." + zone+ "."+ "     IN     A    "+ config.get(zone+"_arecords",option)+" \n")
-                       print option+"."+ zone+"."+ "A"+ config.get(zone+"_arecords",option)+"."
+                 for option in config_zone.options(zone+"_arecords"):
+                       o.write (option + "." + zone+ "."+ "     IN     A    "+ config_zone.get(zone+"_arecords",option)+" \n")
+                       print option+"."+ zone+"."+ "A"+ config_zone.get(zone+"_arecords",option)+"."
 
                  if zone == app.get_domain():
                     servers = app.get_servers()
@@ -180,10 +190,11 @@ def install_dns(args):
                         o.write (server + "." + zone+ "."+ "     IN     A    "+app.get_ip(server) +" \n")
                         print server + app.get_ip(server)
 
-                 for option in config.options(zone+"_cname"):
-                       o.write (option+ "     IN    CNAME   "+ config.get(zone+"_cname",option)+"\n")
-                       print option+"."+ zone+ "    IN    CNAME   "+ config.get(zone+"_cname",option)+"."+zone
-
+                 for option in config_zone.options(zone+"_cname"):
+                        out= str(option)+ "     IN    CNAME   "+ str(config_zone.get(zone+"_cname",option))+"\n"
+                        out2 = out.replace('$DATA_CENTER$',data_center)
+                        o.write(out2)
+                        print out2
 		 o.close()
 		#Creating recursiv zone file
                 o = open("/var/named/chroot/var/named/data/" + location +"."+ rzone + ".zone","w") #open for append
