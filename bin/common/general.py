@@ -208,7 +208,7 @@ def shell_exec(command, user="", cwd=None, events=None):
 
   return stdout
 
-def shell_run(command, user="root", events={}):
+def shell_run(command, user="root", cwd=None, events={}):
   '''
   Execute a shell command using pexpect.run, and writing verbose affected output.
 
@@ -219,13 +219,18 @@ def shell_run(command, user="root", events={}):
   '''
   command = "su " + user + ' -c "' + command + '"'
 
-  if (user != ""):
-    user_password = app.get_user_password(user)
-    events["(?i)Password: "] = user_password + "\n"
+  # Need by Ubuntu when doing SU.
+  #if (user != ""):
+  #  user_password = app.get_user_password(user)
+  #  events["(?i)Password: "] = user_password + "\n"
+
+  # Set current working directory
+  if (cwd == None):
+    cwd = os.getcwd()
 
   app.print_verbose("Command: " + command)
   (stdout, exit_status) = pexpect.run(command,
-    cwd=os.getcwd(),
+    cwd=cwd,
     events=events,
     withexitstatus=True,
     timeout=10000

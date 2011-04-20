@@ -15,10 +15,20 @@ __status__ = "Production"
 
 import subprocess
 
-def package(name):
-  stdoutdata = subprocess.Popen("rpm -qa " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
-  if name not in stdoutdata:
-    subprocess.Popen("yum -y install " + name, shell=True).wait()
-    # TODO: Need this?
-    # time.sleep(1)
+import version
 
+# The version of this module, used to prevent
+# the same script version to be executed more then
+# once on the same host.
+SCRIPT_VERSION = 1
+
+def package(name):
+  version_obj = version.Version("rpm-" + name, SCRIPT_VERSION)
+  if (not version_obj.is_executed()):
+    stdoutdata = subprocess.Popen("rpm -qa " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
+    if name not in stdoutdata:
+      subprocess.Popen("yum -y install " + name, shell=True).wait()
+      # TODO: Need this?
+      # time.sleep(1)
+
+  version_obj.mark_executed()

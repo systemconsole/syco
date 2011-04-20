@@ -13,15 +13,12 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import ConfigParser
 import os
 import re
 import socket
 import sys
 import time
 import subprocess
-
-import passwordStore
 
 #
 #  Contains global functions and settings.
@@ -52,51 +49,18 @@ PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
 # When a general username is required.
 SERVER_ADMIN_NAME = "syco"
 
-# Logs will be sent to this email from the servers.
-SERVER_ADMIN_EMAIL = "syscon@cybercow.se"
-
 # String codes affecting output to shell.
 BOLD = "\033[1m"
 RESET = "\033[0;0m"
 
-# Global accessible object containing all install.cfg options.
-class SycoConfig(ConfigParser.RawConfigParser):
+# Need to be after all constants.
+import options
+options = options.Options()
 
-  class SycoConfigException(Exception):
-    '''
-    Raised when their is an invalid number of install.cfg
-    '''
-    
-  def __init__(self):
-    #super(SycoConfig,self).__init__()
-    ConfigParser.RawConfigParser.__init__(self)
+import config
+config = config.SycoConfig()
 
-    config_dir = []
-    if (os.access(SYCO_ETC_PATH + "install.cfg", os.F_OK)):
-      config_dir.append(SYCO_ETC_PATH + "install.cfg")
-    for dir in os.listdir(SYCO_USR_PATH):
-      #if (os.access(SYCO_USR_PATH + dir + "/etc/install.cfg", os.F_OK)):
-      config_dir.append(SYCO_USR_PATH + dir + "/etc/install.cfg")
-        
-    if (len(config_dir) == 0):
-      raise self.SycoConfigException("No install.cfg found.")
-    elif (len(config_dir) > 1):
-      raise self.SycoConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
-    else:      
-      self.read(config_dir[0])
-
-config = SycoConfig()
-
-# Options set from commandline are stored here.
-class Options:
-
-  # Set by -v and -q.
-  verbose = 1
-
-  # Set by -f
-  force = 0
-
-options = Options()
+import passwordStore
 
 def print_error(message, verbose_level=1):
   '''
@@ -193,6 +157,10 @@ def get_user_password(username):
   '''The linux shell password for a specific user.'''
   return _get_password("linux", username)
 
+def get_ca_password():
+  '''The password used when creating CA certificates'''
+  return get_root_password()
+
 def get_svn_password():
   '''The svn password for user syscon_svn'''
   return _get_password("svn", "syscon")
@@ -244,34 +212,21 @@ def init_all_passwords():
   get_user_password("glassfish")
   init_mysql_passwords()
 
-def get_option(section, option):
-  '''
-  Get an option from the install.cfg file.
-
-  '''
-  if (config.has_section(section)):
-    if (config.has_option(section, option)):
-      return config.get(section, option)
-    else:
-      raise Exception("Can't find option '" + option + "' in section '" + section + "' in install.cfg")
-  else:
-    raise Exception("Can't find section '" + section + "' in install.cfg")
-
 def get_mysql_primary_master():
   '''IP or hostname for primary mysql server.'''
-  return get_ip(get_option("general", "mysql.primary_master"))
+  return get_ip(config.get_option("general", "mysql.primary_master"))
 
 def get_mysql_secondary_master():
   '''IP or hostname for secondary mysql server.'''
-  return get_ip(get_option("general", "mysql.secondary_master"))
+  return get_ip(config.get_option("general", "mysql.secondary_master"))
 
 def get_gateway_server_ip():
   '''The ip of the network gateway.'''
-  return get_option("general", "gateway")
+  return config.get_option("general", "gateway")
 
 def get_installation_server():
   '''The hostname of the installation server.'''
-  return get_option("general", "installation_server")
+  return config.get_option("general", "installation_server")
 
 def get_installation_server_ip():
   '''The ip of the installation server.'''
@@ -279,7 +234,7 @@ def get_installation_server_ip():
 
 def get_dns_resolvers():
   '''ip list of dns resolvers that are configured on all servers.'''
-  return get_option("general", "dns_resolvers")
+  return config.get_option("general", "dns_resolvers")
 
 def get_first_dns_resolver():
   '''ip list of dns resolvers that are configured on all servers.'''
@@ -287,23 +242,23 @@ def get_first_dns_resolver():
 
 def get_ip(host_name):
   '''Get ip for a specific host, as it is defined in install.cfg'''
-  return get_option(host_name, "server")
+  return config.get_option(host_name, "server")
 
 def get_mac(host_name):
   '''Get network mac address for a specific host, as it is defined in install.cfg'''
-  return get_option(host_name, "mac")
+  return config.get_option(host_name, "mac")
 
 def get_ram(host_name):
   '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
-  return get_option(host_name, "ram")
+  return config.get_option(host_name, "ram")
 
 def get_cpu(host_name):
   '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
-  return get_option(host_name, "cpu")
+  return config.get_option(host_name, "cpu")
 
 def get_disk_var(host_name):
   '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
-  return get_option(host_name, "disk_var")
+  return config.get_option(host_name, "disk_var")
 
 def get_servers():
   '''A list of all servers that are defined in install.cfg.'''
@@ -331,7 +286,7 @@ def get_commands(host_name):
 
 def get_domain():
   '''Get the domain name where all syco servers live. '''
-  return get_option("general", "domain")
+  return config.get_option("general", "domain")
 
 
 

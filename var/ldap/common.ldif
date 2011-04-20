@@ -1,0 +1,17 @@
+dn: dc=fareonline,dc=net
+objectclass: dcObject
+objectclass: organization
+o: Fareoffice
+dc: fareonline
+
+dn: cn=Manager,dc=fareonline,dc=net
+objectclass: organizationalRole
+cn: Manager
+
+dn: ou=group,dc=fareonline,dc=net
+objectclass:organizationalunit
+ou: group
+
+dn: ou=people,dc=fareonline,dc=net
+objectclass:organizationalunit
+ou: people

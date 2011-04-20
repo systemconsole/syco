@@ -1,0 +1,12 @@
+#dn: uid=syco,ou=people,dc=syco,dc=net
+#objectClass: person
+#objectClass: posixAccount
+#commonName: Syco
+#surname: User
+#uid: sycouser
+#userPassword: {CRYPT}OoCt2vU3OWJn2
+#loginShell: /bin/bash
+#uidNumber: 2000
+#gidNumber: 100
+#homeDirectory: /home/syco
+

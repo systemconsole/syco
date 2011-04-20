@@ -89,9 +89,11 @@ def add_iptables_rules():
 
   iptables("-I INPUT  -p ALL -j nfs_export")
   iptables("-I OUTPUT -p ALL -j nfs_export")
+  iptables.iptables_save()
 
 def remove_iptables_rules():
   iptables("-D INPUT  -p ALL -j nfs_export")
   iptables("-D OUTPUT -p ALL -j nfs_export")
   iptables("-F nfs_export")
   iptables("-X nfs_export")
+  iptables.iptables_save()
