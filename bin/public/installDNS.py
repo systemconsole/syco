@@ -20,7 +20,13 @@ def build_commands(commands):
   commands.add("install-dns",   install_dns,  help="Install DNS server.")
 
 def copy_rndc():
-    #Copy rndc key to file
+    '''
+    Copy rndc copied the rndc key from the generated file inte to
+    named.conf file. The rndc key is used for connection between two servers
+
+    The generated rndc key files contains many commands but we only want the key
+    So for onlyt getting the key we only steel the first 5 rows
+    '''
     N=5
     f=open("/var/named/chroot/etc/rndc_new.key")
     n = open("/var/named/chroot/etc/named.conf","w") #open for append
@@ -41,34 +47,40 @@ def copy_rndc():
  
 def install_dns(args):
   '''
-  Apache installation
+  DNS Bind 9 Chrooted installation
+  This will install the dns server on the host chrooted.
+  This command is used only for Centos servers.
   
   '''
- # self.prop.init_properties(args[1])
- # version_obj=version.Version("installDns" + self.prop.environment, self.SCRIPT_VERSION)
- # version_obj.check_executed()
-
+ 
   if os.path.exists('/etc/ssl/ca/private/ca.key'):
+      '''
+      This is not loaded now
+      '''
 
     app.print_verbose("DNS Master is already installed")
 
   else:
 
-    #making folders
+    '''
+    Installinb server package needed for dns
+    '''
     os.system("yum install bind bind-chroot bind-libs bind-utils caching-nameserver")
     os.chdir("/tmp/")
 
-    #Setting upp dns key generating and the pasting in to file
-    #If the new key excists then now new key is genertaed
   SYCO_PATH = app.SYCO_PATH
+
+  '''
+  Getting argument from command line
+  master = setting upp master server
+  slave = setting upp slave server
+  '''
   role  =str(args[1])
-  
-
-  #time_ut =  int(time.time()*100)
-  #serial = str(time_ut)
-
-
-    #Generating config file
+  '''
+  Reading zone.cfg file conting
+  In zone.cfg is all config options neede for setting upp DNS Server
+  This file is readed and the the options are saved and used when generating new config files
+  '''
   config = ConfigParser.SafeConfigParser()
   config_zone = ConfigParser.SafeConfigParser()
 
@@ -86,7 +98,10 @@ def install_dns(args):
 
 
 
-  #generting ore fetching key for dns servers
+  '''
+  Depending if the server is an master then new rndc keys are genertaed if now old are done.
+  If the server is slave the keys have to bee fetch from the master server.
+  '''
   if os.path.exists('/var/named/chroot/etc/rndc_new.key'):
     copy_rndc()
   else:
@@ -99,22 +114,40 @@ def install_dns(args):
           os.chdir("/var/named/chroot/etc")
           os.system("scp root@"+ipmaster+":/var/named/chroot/etc/rndc_new.key ." )
 
+
+
+
+'''
+Zone Generting script
+This is tha master zone geration script.
+It will create zoned files with records from the zone file.
+1. first it will go trow the zone.cfg and locate any domains in that file.
+2. then it well read the file with the same name as the zone exempel.com
+3. The script will generat 2 zone files one for internal network and onw for external.
+The script will search in the zone file for any internal anteris if none is found then
+the external will be used both for internal network and external
+'''
   def generate_zone(location):
+
+'''
+Setting views right
+'''
 
      if location == "internal":
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
           o.write("view 'internt' {\n")
           o.write("match-clients { "+localnet+"; };\n")
           o.close()
-
-
-
      else:
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
           o.write("view 'external' {\n")
           o.write("match-clients { any; };\n")
           o.close()
 
+'''
+Getting records from zone files
+and creating zone file for records
+'''
 
 
      for zone in config.options('zone'):
@@ -122,7 +155,10 @@ def install_dns(args):
                 config_zone.read(SYCO_PATH + 'var/dns/'+zone)
                 print zone
                 
-                #Create zone files for every zone in file
+'''
+Crating zone file and setting right settings form zone.cfg file
+
+'''
                 o = open("/var/named/chroot/var/named/data/" +location+"." + zone + ".zone","w") #open for append
                 for line in open(SYCO_PATH + "var/dns/template.zone"):
                     line = line.replace("$IPMASTER$",ipmaster)
@@ -137,7 +173,10 @@ def install_dns(args):
                  #Wrinting out arecord to zone file
                 if location == "internal":
                     
-                    #Getting internal ip addreses if they exsist
+'''
+Getting internal network address if thy are any else go back to use external address
+Generating A record from domain file and adding them to zone file.
+'''
                     try:
                         config_zone.options("internal_"+zone+"_arecords")
                     except ConfigParser.NoSectionError:
@@ -155,6 +194,10 @@ def install_dns(args):
                          for option in config_zone.options("internal_"+zone+"_arecords"):
                             o.write (option + "." + zone+ "."+ "     IN     A    "+ config_zone.get("internal_"+zone+"_arecords",option)+" \n")
                             print option+"."+ zone+"."+ "A"+ config_zone.get("internal_"+zone+"_arecords",option)+"."
+'''
+If domain is the same as local domain
+Gett all ip from local servers and add them to records.
+'''
 
                          if zone == app.get_domain():
                             servers = app.get_servers()
@@ -162,7 +205,12 @@ def install_dns(args):
                                 o.write (server + "." + zone+ "."+ "     IN     A    "+app.get_ip(server) +" \n")
                                 print server + app.get_ip(server)
 
-                    #Getting internal cnames if they exsists
+'''
+Getting all Cnames from domain file
+If there exist any names for internal network then they are used for inernal viem
+Else external names are used.
+Cnames are the added to file
+'''
                     try:
                         config_zone.options("internal_"+zone+"_cname")
                     except ConfigParser.NoSectionError:
@@ -196,7 +244,9 @@ def install_dns(args):
                         o.write(out2)
                         print out2
 		 o.close()
-		#Creating recursiv zone file
+'''
+Creating zone revers file for recursive getting if domain names.
+'''
                 o = open("/var/named/chroot/var/named/data/" + location +"."+ rzone + ".zone","w") #open for append
                 for line in open(SYCO_PATH + "var/dns/recursiv-template.zone"):
                         line = line.replace("$IPMASTER$",ipmaster[::-1])
@@ -209,7 +259,10 @@ def install_dns(args):
                         o.write(line + "\n")
                 o.close()
 
-                #Adding the created zone files to the namd.con file
+'''
+Adding the new zreated zone files to named.com to be used
+'''
+
                 o = open("/var/named/chroot/etc/named.conf","a") #open for append
                 for line in open(SYCO_PATH + "var/dns/"+role+"-zone.conf"):
                     line = line.replace("$IPMASTER$",ipmaster)
@@ -219,7 +272,9 @@ def install_dns(args):
                     line = line.replace("$LOCATION$" ,location)
                     o.write(line + "\n")
                 o.close()
-
+'''
+Adding differin view to the config file
+'''
      if location == "internal":
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
           o.write("}; \n")
@@ -228,14 +283,9 @@ def install_dns(args):
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
           o.write("};\n")
           o.close()
-
-
-
-    #Setting upp named.con file for dns server
-
-
-
-
+'''
+Getting namd.conf tamplate and generting new file with right config.
+'''
 
 
   o = open("/var/named/chroot/etc/named.conf","a") #open for append
@@ -250,28 +300,22 @@ def install_dns(args):
         o.write(line)
   o.close()    
 
-    #Setting upp dns zone and recursiv file for config
-  #Regex to find serial
+ '''
+ Chnagin order if ip to match recusrsive lookup
+ '''
   p = re.compile('[\s]*([\d]*)[\s]*[;][\s]*Serial' )
 
-   #get all arecord and putting them into the file
-
- 
-
-
-
-   
-
-   #generation zone files IMPORTANT THAT INTERNAL IS FIRST
+'''
+Generating the zone files
+IMPORTAND that  internal is first
+'''
   generate_zone("internal")
   generate_zone("external")
   
-  
-
-               
-
-   #Fixing serial number on tenplates that are redu to use for next time
-  #On recursive look up
+'''
+Fixing upp so that serial number are working be adding one and add it to the tamplate used to generat
+zone files.
+'''
   os.system("mv "+ SYCO_PATH +"var/dns/recursiv-template.zone /tmp/recursiv-template.zone")
   o = open(SYCO_PATH +"var/dns/recursiv-template.zone","w") #open for append
   for line in open("/tmp/recursiv-template.zone"):
@@ -280,8 +324,6 @@ def install_dns(args):
         line = str(int(serial[0])+1)+"   ;   Serial\n"
     o.write(line)
   o.close()
-
-  #fixing serial nummer on zone files
 
   os.system("mv "+SYCO_PATH +"var/dns/template.zone /tmp/template.zone")
   o = open(SYCO_PATH +"var/dns/template.zone","w") #open for append
