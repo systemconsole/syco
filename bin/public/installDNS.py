@@ -42,8 +42,20 @@ def copy_rndc():
     n.close()
     o.close()
 
+'''
+Fixing upp so that serial number are working be adding one and add it to the tamplate used to generat
+zone files.
+'''
 
-
+def add_serial(name):
+  os.system("mv "+ SYCO_PATH +"var/dns/"+name+".zone /tmp/"+name+".zone")
+  o = open(SYCO_PATH +"var/dns/"+name+".zone","w") #open for append
+  for line in open("/tmp/"+name+".zone"):
+    serial = p.findall (line)
+    if len(serial) > 0:
+        line = str(int(serial[0])+1)+"   ;   Serial\n"
+    o.write(line)
+  o.close()
  
 def install_dns(args):
   '''
@@ -311,27 +323,17 @@ IMPORTAND that  internal is first
 '''
   generate_zone("internal")
   generate_zone("external")
-  
-'''
-Fixing upp so that serial number are working be adding one and add it to the tamplate used to generat
-zone files.
-'''
-  os.system("mv "+ SYCO_PATH +"var/dns/recursiv-template.zone /tmp/recursiv-template.zone")
-  o = open(SYCO_PATH +"var/dns/recursiv-template.zone","w") #open for append
-  for line in open("/tmp/recursiv-template.zone"):
-    serial = p.findall (line)
-    if len(serial) > 0:
-        line = str(int(serial[0])+1)+"   ;   Serial\n"
-    o.write(line)
-  o.close()
+ '''
+ Adding serial number to template
+ '''
 
-  os.system("mv "+SYCO_PATH +"var/dns/template.zone /tmp/template.zone")
-  o = open(SYCO_PATH +"var/dns/template.zone","w") #open for append
-  for line in open("/tmp/template.zone"):
-    serial = p.findall (line)
-    if len(serial) > 0:
-        line = str(int(serial[0])+1)+"   ;   Serial\n"
-    o.write(line)
-  o.close()
+  add_serial("recursiv-template")
+  add_serial("template")
+
+
+  
+  '''
+ Restaring DNS server for action to be loaded
+  '''
   general.shell_exec("/etc/init.d/named restart")
  
