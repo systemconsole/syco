@@ -1,0 +1,12 @@
+[elinonet.se_arecords]
+www:192.168.0.1
+mail:192.168.0.2
+voip:192.168.0.2
+
+[elinonet.se_cname]
+matte:www
+redmine:www
+webmail:www
+kalle:www
+mx1:mail
+alex:www 	
