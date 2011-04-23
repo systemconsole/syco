@@ -135,6 +135,13 @@ def install_ldap_client(args):
     }
   )
 
+  shell_run("scp root@" + ip + ":/etc/openldap/cacerts/ca.cert /etc/openldap/cacerts/ca.cert",
+    events={
+      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
+      "root@" + ip + "\'s password\:": app.get_root_password() + "\n"
+    }
+  )
+
   shell_exec("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
 
   # Enable as a client
@@ -220,11 +227,11 @@ def _add_iptables_rules():
   iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389  -j ACCEPT")
 
   iptables("-I INPUT  -p ALL -j syco_ldap")
-  iptables("-I OUTPUT  -p ALL -j syco_ldap")
+  iptables("-I OUTPUT -p ALL -j syco_ldap")
 
 def _remove_iptables_rules():
   iptables("-D INPUT  -p ALL -j syco_ldap")
-  iptables("-D INPUT  -p ALL -j syco_ldap")
+  iptables("-D OUTPUT -p ALL -j syco_ldap")
   iptables("-F syco_ldap")
   iptables("-X syco_ldap")  
 
@@ -327,17 +334,17 @@ def _install_web_page():
   # Install cgi-bin and html files
   shell_exec("cp -R " + app.SYCO_PATH + "var/ldap/html /var/www/ldap")
   shell_exec("chmod -R 555 /var/www/ldap")
-  shell_exec("chcon -R system_u:object_r:httpd_sys_content_t /var/www/ldap")
-  shell_exec("chcon -R system_u:object_r:httpd_sys_script_exec_t /var/www/ldap/cgi-bin")
+  shell_exec("chcon -R system_u:object_r:httpd_sys_content_t:s0 /var/www/ldap")
+  shell_exec("chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/ldap/cgi-bin")
 
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.py", "\$\{LDAP_DN\}", app.config.get_ldap_dn())
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.py", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_DN\}", app.config.get_ldap_dn())
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
 
   # Config apache
   shell_exec("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
   general.set_config_property("/etc/httpd/conf.d/010-ldap.conf", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
 
-  shell_exec("chcon system_u:object_r:httpd_config_t /etc/httpd/conf.d/010-ldap.conf")
+  shell_exec("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/010-ldap.conf")
   shell_exec("chown root:root /etc/httpd/conf.d/010-ldap.conf")
   shell_exec("chmod 644 /etc/httpd/conf.d/010-ldap.conf")
   shell_exec("/etc/init.d/httpd restart")
