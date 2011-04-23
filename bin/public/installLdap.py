@@ -17,7 +17,7 @@ http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
 # Enable ldap on clients
 http://directory.fedoraproject.org/wiki/Howto:PAM
 
-#LDAP Read
+# LDAP Read
 http://www.linux.com/archive/feature/114074
 http://www.howtoforge.com/linux_ldap_authentication
 http://www.debuntu.org/ldap-server-and-linux-ldap-clients
@@ -29,9 +29,10 @@ http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-f
 http://freeradius.org/
 
 # Redhat Directory service.
-I tried to used the centos directory service/389 directory service first. But
-it feelt to heavy and bloated. And impossible to find documentation about
-how to setup the PAM -> ldap. I did choose to use the less complicated openldap.
+#
+# I tried to used the centos directory service/389 directory service first. But
+# it feelt to heavy and bloated. And impossible to find documentation about
+# how to setup the PAM -> ldap. I did choose to use the less complicated openldap.
 http://wiki.centos.org/HowTos/DirectoryServerSetup
 http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/pdf/Installation_Guide/Red_Hat_Directory_Server-8.2-Installation_Guide-en-US.pdf
 http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administration_Guide/index.html
@@ -50,14 +51,16 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import re
 import os
+import re
 
 import app
 import general
+from general import shell_exec
+from general import shell_run
+from iptables import iptables
+from iptables import iptables_save
 import version
-from general import shell_exec, shell_run
-from iptables import iptables, iptables_save
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -86,7 +89,7 @@ def install_ldap_server(args):
   app.get_ca_password()
 
   # Setup ldap dns/hostname used by slapd  
-  value="127.0.0.1 " + LDAP_SERVER_HOST_NAME
+  value = "127.0.0.1 " + LDAP_SERVER_HOST_NAME
   general.set_config_property("/etc/hosts", value, value)
 
   shell_exec("yum -y install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap openldap-servers-overlays.x86_64")
@@ -104,6 +107,8 @@ def install_ldap_server(args):
   iptables_save()
 
   install_ldap_client(args)
+
+  _install_web_page()
 
   version_obj.mark_executed()
 
@@ -123,12 +128,10 @@ def install_ldap_client(args):
   general.wait_for_server_to_start(ip, "389")
 
   # Copy the TLS cert needed to login to the ldap-server.
-  #remote_server = ssh.Ssh(app.config.get_ldap_server_ip(), app.get_root_password())
-  #remote_server.scp("/etc/openldap/cacerts/ldap.pem", "/etc/openldap/cacerts/ldap.pem")
   shell_run("scp root@" + ip + ":/etc/openldap/cacerts/ldap.pem /etc/openldap/cacerts/ldap.pem",
     events={
       'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
-      "root@" + ip + "\'s password\:" : app.get_root_password() + "\n"
+      "root@" + ip + "\'s password\:": app.get_root_password() + "\n"
     }
   )
 
@@ -152,7 +155,9 @@ def uninstall_ldap(args):
   shell_exec("rm -r /var/lib/ldap")
   shell_exec("rm -r /etc/ldap.conf.rpmnew")
   shell_exec("rm -r /etc/ldap.conf.rpmsave")
-
+  shell_exec("rm /var/www/ldap")
+  shell_exec("rm /etc/httpd/conf.d/010-ldap.conf")
+  
   _remove_iptables_rules()
   iptables_save()
 
@@ -163,7 +168,8 @@ def _setup_slapd_config():
   general.set_config_property(SLAPD_FN, ".*suffix.*", 'suffix "' + LDAP_DN + '"')
   general.set_config_property(SLAPD_FN, ".*rootdn.*Manager.*", 'rootdn "cn=Manager,' + LDAP_DN + '"')
 
-  # Not needed for local changes.
+  # Not needed when all communication to ldap server is done on localhost
+  # from localhost.
   # hash_password = shell_exec('slappasswd -c "%s" -s ' + password)
   # general.set_config_property(SLAPD_FN, ".*rootpw.*[{]crypt[}].*", 'rootpw ' + hash_password)
 
@@ -210,7 +216,7 @@ def _add_iptables_rules():
 
   iptables("-N syco_ldap")
 
-  # LDAP non TLS and with TLS
+  # LDAP with none TLS and with TLS
   iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389  -j ACCEPT")
 
   iptables("-I INPUT  -p ALL -j syco_ldap")
@@ -299,7 +305,7 @@ def _setup_tls():
 
   # http://www.openldap.org/doc/admin24/guide.html#Authentication Methods
   value = "security ssf=1 update_ssf=112 simple_bind=64"
-  general.set_config_property(SLAPD_FN, ".*" + value +".*", value)
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
 def _import_users():  
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/users.ldif")
@@ -313,3 +319,25 @@ def _import_users():
     filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/groups.ldif")
     if (os.access(filename, os.F_OK)):
       shell_exec("slapadd -l " + filename)
+
+def _install_web_page():
+  # Used by the python cgi script that is installed.
+  shell_exec("yum -y install python-ldap")
+
+  # Install cgi-bin and html files
+  shell_exec("cp -R " + app.SYCO_PATH + "var/ldap/html /var/www/ldap")
+  shell_exec("chmod -R 555 /var/www/ldap")
+  shell_exec("chcon -R system_u:object_r:httpd_sys_content_t /var/www/ldap")
+  shell_exec("chcon -R system_u:object_r:httpd_sys_script_exec_t /var/www/ldap/cgi-bin")
+
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.py", "\$\{LDAP_DN\}", app.config.get_ldap_dn())
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.py", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
+
+  # Config apache
+  shell_exec("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
+  general.set_config_property("/etc/httpd/conf.d/010-ldap.conf", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
+
+  shell_exec("chcon system_u:object_r:httpd_config_t /etc/httpd/conf.d/010-ldap.conf")
+  shell_exec("chown root:root /etc/httpd/conf.d/010-ldap.conf")
+  shell_exec("chmod 644 /etc/httpd/conf.d/010-ldap.conf")
+  shell_exec("/etc/init.d/httpd restart")
