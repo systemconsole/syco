@@ -121,7 +121,7 @@ def install_glassfish(args):
     app.print_error(error_text)
     traceback.print_exc(file=sys.stdout)
 
-  #general.delete_install_dir()
+  general.delete_install_dir()
 
 def uninstall_glassfish(args):
   '''
@@ -255,10 +255,10 @@ def _install_glassfish():
     # Set executeion permissions and run the installation.
     if ".zip" in GLASSFISH_INSTALL_FILE:
       general.shell_exec("unzip " + GLASSFISH_INSTALL_FILE + " -d " + GLASSFISH_PATH, user="glassfish")
-      general.shell_exec("mv " + GLASSFISH_PATH + "glassfish3/* " + GLASSFISH_PATH, user="glassfish")
+      general.shell_exec("mv " + GLASSFISH_PATH + "glassfish3/* " + GLASSFISH_PATH + "glassfish3/.* " + GLASSFISH_PATH, user="glassfish")
     else:
       os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
+      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", app.INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
       general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
 
     # Install the start script
@@ -270,6 +270,9 @@ def _install_glassfish():
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
+      
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())
 
   if (not os.access(GLASSFISH_DOMAINS_PATH + "domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + GLASSFISH_PATH)

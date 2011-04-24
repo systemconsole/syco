@@ -47,7 +47,10 @@ GLASSFISH_VERSION = "glassfish-3.0.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
-GLASSFISH_INSTALL_FILE = "glassfish-3.0.1-unix.sh"
+#GLASSFISH_INSTALL_FILE = "glassfish-3.0.1-unix.sh"
+#GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
+
+GLASSFISH_INSTALL_FILE = "glassfish-3.0.1.zip"
 GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
@@ -113,7 +116,7 @@ def install_glassfish(args):
     app.print_error(error_text)
     traceback.print_exc(file=sys.stdout)
 
-  #general.delete_install_dir()
+  general.delete_install_dir()
 
 def uninstall_glassfish():
   '''
@@ -220,9 +223,13 @@ def _install_glassfish():
       os.chown(GLASSFISH_PATH, 150, 550)
 
     # Set executeion permissions and run the installation.
-    os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
-    shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
-    general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
+    if ".zip" in GLASSFISH_INSTALL_FILE:
+      general.shell_exec("unzip " + GLASSFISH_INSTALL_FILE + " -d " + GLASSFISH_PATH, user="glassfish")
+      general.shell_exec("mv " + GLASSFISH_PATH + "glassfishv3/* " + GLASSFISH_PATH + "glassfishv3/.* " + GLASSFISH_PATH, user="glassfish")
+    else:
+      os.chmod(GLASSFISH_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
+      shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION + "-unix-answer", app.INSTALL_DIR + GLASSFISH_VERSION + "-unix-answer")
+      general.shell_exec("./" + GLASSFISH_INSTALL_FILE + " -a " + GLASSFISH_VERSION + "-unix-answer -s", user="glassfish")
 
     # Install the start script
     if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
@@ -230,6 +237,9 @@ def _install_glassfish():
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
+
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())
 
   if (not os.access(GLASSFISH_DOMAINS_PATH + "domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + GLASSFISH_PATH)
@@ -362,13 +372,13 @@ def _install_google_guice(domain_name):
 
   '''
   os.chdir(app.INSTALL_DIR)
-  if (not os.access("guice-2.0.zip", os.F_OK)):
-    general.download_file("http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
-    general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
+  if (not os.access("guice-3.0.zip", os.F_OK)):
+    general.download_file("http://google-guice.googlecode.com/files/guice-3.0.zip", user="glassfish")
+    general.shell_exec("unzip -oq guice-3.0.zip", user="glassfish")
 
-  general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/guice-assistedinject-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
   '''
@@ -449,7 +459,7 @@ def _update_glassfish():
   general.shell_run(GLASSFISH_PATH + "bin/pkg refresh --full",
     user="glassfish",
     events={
-      re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
+      re.compile('Would you like to install this software now.*'): "y\r\n"
     }
   )
   general.shell_exec("chcon -f -t textrel_shlib_t " + GLASSFISH_PATH + "pkg/vendor-packages/OpenSSL/crypto.so")
@@ -460,7 +470,7 @@ def _update_glassfish():
   general.shell_run(GLASSFISH_PATH + "bin/pkg refresh --full",
     user="glassfish",
     events={
-      re.compile('Would you like to install this software now [(]y[/]n[)][:].*'): "y\r\n"
+      re.compile('Would you like to install this software now.*'): "y\r\n"
     }
   )
 

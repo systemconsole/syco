@@ -17,6 +17,20 @@ export GLASSFISH_PATH
 OWNER=glassfish;
 export OWNER
 
+wait_for_mysql_to_start() {
+  echo -n  "Wait for server $1 port 3306 to start."
+  while [ TRUE ]; do
+    if nc -w 3 $1 3306 <<< Ó &> /dev/null
+    then
+      echo "."
+      break
+    else
+      echo -n "."
+      sleep 10
+    fi
+  done
+}
+
 start() {
   echo -n "Starting Glassfish ($1): "
 
@@ -68,6 +82,9 @@ restart() {
 # See how we were called.
 case "$1" in
   start)
+    wait_for_mysql_to_start "${MYSQL_PRIMARY}"
+    wait_for_mysql_to_start "${MYSQL_SECONDARY}"
+
     start "domain1"
     start "domain2"
     ;;
@@ -76,6 +93,9 @@ case "$1" in
     stop "domain2"
     ;;
   reload|restart|force-reload)
+    wait_for_mysql_to_start "${MYSQL_PRIMARY}"
+    wait_for_mysql_to_start "${MYSQL_SECONDARY}"
+
     restart "domain1"
     restart "domain2"
     ;;

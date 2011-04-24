@@ -1,23 +1,16 @@
 TODO
 ====
 
-Version 1
----------
-* Test that the remote-host installation works, by reinstalling fo-tp-vh03?
-* Test ldap client/server on all servers.
+Version 0.2
+-----------
+* See syco-private step 1-6
+* Change version in app.py, set tag for version 0.2
 
-Version 1.1
+Version 0.3
 -----------
 * installBind
-* installRentalFront
 
-Version 1.2 (Production)
-------------------------
-* Install install-server in production. vh6, vh7.
-* install farepayment.
-* install rentalfront.
-
-Version 1.4 (Backup)
+Version 0.4 (Backup)
 --------------------
 * Create backup for all syco servers.
 * Some "monitor" script that will validate that all servers has been backuped
@@ -26,9 +19,7 @@ Version 1.4 (Backup)
 * Setup backup of none syco servers.
 * Tune crontab, so it gets time to backup all servers in the choosen period.
 
-
-
-Version 3.5
+Version 0.4
 -----------
 * installNagios
 
@@ -36,12 +27,6 @@ Version 3.6
 -----------
 * installHudson
 * installSonar
-
-Version 3.7
------------
-* installPhp
-* installFareoffice
-* switchDataCenter
 
 Version 3.8
 -----------
