@@ -145,7 +145,7 @@ def install_ldap_client(args):
   shell_exec("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
 
   # Enable as a client
-  shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache " +
+  shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache --enablemkhomedir --enablelocauthorize " +
     "--ldapserver=" + LDAP_SERVER_HOST_NAME + " --ldapbasedn=" + LDAP_DN + " "
     "--updateall")
 
