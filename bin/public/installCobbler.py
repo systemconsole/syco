@@ -135,6 +135,10 @@ def _setup_firewall():
   # NTP
   iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 123 -j ACCEPT")
 
+  # DHCP
+  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 67 -j ACCEPT")
+  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 68 -j ACCEPT")
+
   # HTTP/HTTPS
   iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT")
   iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT")

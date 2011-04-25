@@ -94,6 +94,9 @@ def iptables_setup(args):
   if (os.access("/etc/ntp", os.F_OK)):
     _setup_ntp_rules()
 
+  if (os.access("/usr/share/kvm", os.F_OK)):
+    _setup_dhcp_rules()
+
   if (os.access("/usr/bin/mysqld_safe", os.F_OK)):
     _setup_mysql_rules()
 
@@ -214,6 +217,16 @@ def _setup_ntp_rules():
   '''
   app.print_verbose("Setup NTP input/output rule.")
   iptables("-A INPUT  -p UDP --dport 123 -j allowed_udp")
+  iptables("-A OUTPUT -p UDP --dport 123 -j allowed_udp")
+
+def _setup_dhcp_rules():
+  '''
+  Allow DHCP requests.
+
+  Installation of KVM guests need to do dhcp requests.
+
+  '''
+  app.print_verbose("Setup NTP input/output rule.")
   iptables("-A OUTPUT -p UDP --dport 123 -j allowed_udp")
 
 def _setup_mysql_rules():

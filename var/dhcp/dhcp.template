@@ -24,7 +24,7 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
   range  10.100.0.10 10.100.0.100;
   
   # PXE Server
-  next-server 10.100.100.201;
+  next-server 10.100.100.200;
   filename "/pxelinux.0";
 }
 
