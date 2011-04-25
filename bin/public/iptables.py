@@ -96,6 +96,7 @@ def iptables_setup(args):
 
   if (os.access("/usr/share/kvm", os.F_OK)):
     _setup_dhcp_rules()
+    _setup_kvm_host_rules()
 
   if (os.access("/usr/bin/mysqld_safe", os.F_OK)):
     _setup_mysql_rules()
@@ -226,8 +227,16 @@ def _setup_dhcp_rules():
   Installation of KVM guests need to do dhcp requests.
 
   '''
-  app.print_verbose("Setup NTP input/output rule.")
+  app.print_verbose("Setup DHCP output rule.")
   iptables("-A OUTPUT -p UDP --dport 123 -j allowed_udp")
+
+def _setup_kvm_host_rules():
+  '''
+  Allow kvm guests to acces the network through the kvm host.
+
+  '''
+  app.print_verbose("Setup KVM forward rule.")
+  iptables("-I FORWARD -m physdev --physdev-is-bridged -j ACCEPT")
 
 def _setup_mysql_rules():
   app.print_verbose("Setup mysql input rule.")
