@@ -49,6 +49,11 @@ def install_kvmhost(args):
   # Install the kvm packages
   general.shell_exec("yum -qy install kvm.x86_64")
 
+  # Required in combination with a new kvm/cobbler/koan version.
+  # This is installed from epel, and feels like it shouldn't
+  # be required. Shouldn't everything be included in the kvm.x86_64
+  general.shell_exec("yum -qy install qemu.x86_64")
+
   # Provides the virt-install command for creating virtual machines.
   general.shell_exec("yum -qy install python-virtinst")
 
