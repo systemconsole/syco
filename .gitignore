@@ -5,3 +5,4 @@ usr/
 .DS_Store
 var/kickstart/generated
 tmp/
+/nbproject/private/
