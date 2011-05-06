@@ -47,20 +47,17 @@ GLASSFISH_VERSION = "glassfish-3.0.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
-#GLASSFISH_INSTALL_FILE = "glassfish-3.0.1-unix.sh"
-#GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
-
 GLASSFISH_INSTALL_FILE = "glassfish-3.0.1.zip"
 GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
-JDK_INSTALL_FILE = "jdk-6u24-linux-x64-rpm.bin"
-JDK_REPO_URL = "http://" + app.get_installation_server_ip() + "/cobbler/repo_mirror/" + JDK_INSTALL_FILE
+JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_25"
+JDK_INSTALL_FILE = "jdk-6u25-linux-x64-rpm.bin"
+JDK_REPO_URL = "http://download.oracle.com/otn-pub/java/jdk/6u25-b06/" + JDK_INSTALL_FILE
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-MYSQL_CONNECTOR_VERSION  = "mysql-connector-java-5.1.15"
+MYSQL_CONNECTOR_VERSION  = "mysql-connector-java-5.1.16"
 MYSQL_CONNECTOR_FILE     = MYSQL_CONNECTOR_VERSION + ".tar.gz"
 MYSQL_CONNECTOR_REPO_URL = "http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/" + MYSQL_CONNECTOR_FILE
 
@@ -70,7 +67,7 @@ def build_commands(commands):
 
   '''
   commands.add("install-" + GLASSFISH_VERSION, install_glassfish, help="Install " + GLASSFISH_VERSION + " on the current server.")
-  
+
 def install_glassfish(args):
   '''
   The main installation function the for the glassfish, dependencies and plugins.
@@ -108,8 +105,6 @@ def install_glassfish(args):
     # Restart to take effect
     general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " restart")
 
-    _update_glassfish()
-
     version_obj.mark_executed()
   except Exception, error_text:
     app.print_error("Failed to install glassfish")
@@ -121,7 +116,7 @@ def install_glassfish(args):
 def uninstall_glassfish():
   '''
   The main function the glassfish uninstallation.
-  
+
   This function is executed from installGlassfish31
 
   '''
@@ -372,13 +367,13 @@ def _install_google_guice(domain_name):
 
   '''
   os.chdir(app.INSTALL_DIR)
-  if (not os.access("guice-3.0.zip", os.F_OK)):
-    general.download_file("http://google-guice.googlecode.com/files/guice-3.0.zip", user="glassfish")
-    general.shell_exec("unzip -oq guice-3.0.zip", user="glassfish")
+  if (not os.access("guice-2.0.zip", os.F_OK)):
+    general.download_file("http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
+    general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
 
-  general.shell_exec("cp guice-3.0/guice-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-3.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-3.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
   '''
@@ -443,40 +438,6 @@ def _set_jvm_options(admin_port):
   #    * The information frame under Common Task page will not be rendered.
   #
   asadmin_exec("create-jvm-options -Dcom.sun.enterprise.tools.admingui.NO_NETWORK=true", admin_port)
-
-def _update_glassfish():
-  '''
-  Update the installed glassfish
-
-  More info
-  http://docs.sun.com/app/docs/doc/821-1751/ghapp?l=en&a=view
-
-  '''
-  # pkg refresh must be in a writeable dir.
-  os.chdir("/tmp")
-
-  general.shell_exec("yum -y install libidn")
-  general.shell_run(GLASSFISH_PATH + "bin/pkg refresh --full",
-    user="glassfish",
-    events={
-      re.compile('Would you like to install this software now.*'): "y\r\n"
-    }
-  )
-  general.shell_exec("chcon -f -t textrel_shlib_t " + GLASSFISH_PATH + "pkg/vendor-packages/OpenSSL/crypto.so")
-
-  # Need to run a second time, in the first run the pkg software might
-  # have been installed, and after that the chcon needs to be executed
-  # and after that the real pkg refresh needs to be executed
-  general.shell_run(GLASSFISH_PATH + "bin/pkg refresh --full",
-    user="glassfish",
-    events={
-      re.compile('Would you like to install this software now.*'): "y\r\n"
-    }
-  )
-
-  general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
-  general.shell_exec(GLASSFISH_PATH + "bin/pkg image-update", user="glassfish")
-  general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " start")
 
 def _set_iptables():
   pass
