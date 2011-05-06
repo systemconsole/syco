@@ -31,9 +31,6 @@ def install_nagios(args):
   
   '''
 
-  
-
-
   if os.path.exists('/etc/nagios/nagios_2.cfg'):
 
     app.print_verbose("Nagios server is already installed")
@@ -41,11 +38,11 @@ def install_nagios(args):
   else:
 
     #Nagios is not installed installing
-    #general.shell_exec("yum install nagios nagios-plugins nagios-plugins-all nagios-plugins-nrpe nagios-devel httpd -y")
+    general.shell_exec("yum install nagios nagios-plugins nagios-plugins-all nagios-plugins-nrpe nagios-devel httpd -y")
 
 
-    #Setting upp apache for nagios
-    #general.set_config_property("/etc/httpd/conf.d/nagios.conf", '^.allow from.*',  'allow from all')
+    #Setting upp apache for nagios FUNKAR EJ 100
+    #general.set_config_property("/etc/httpd/conf.d/nagios.conf", '^.*allow from.*',  'allow from all')
 
 
     #Setting upp nagios users
@@ -63,7 +60,8 @@ def install_nagios(args):
       #Generating config file
     config = ConfigParser.SafeConfigParser()
 
-    config.read('/opt/fosh/var/nagios/nagios.cfg')
+    config.read('/opt/syco/var/nagios/nagios.cfg')
+    general.shell_exec("mkdir /etc/nagios/fosh")
     #Server group list
     server_group =[]
 
@@ -91,10 +89,11 @@ def install_nagios(args):
     o.write( "define hostgroup{\n")
     o.write( "hostgroup_name   Servers \n")
     o.write( "alias    Servers\n")
+    o.write("members ")
     for option in server_group:
         print option
         
-        o.write( "members  " + option + ",")
+        o.write(  option + ",")
     o.write( "\n}\n")
     o.close()
 
@@ -106,4 +105,6 @@ def install_nagios(args):
 
 
     #Restaring services
+    general.shell_exec('/usr/sbin/nagios -v /etc/nagios/nagios.cfg')
+    general.shell_exec('/etc/init.d/nagios restart')
     general.shell_exec('/etc/init.d/httpd restart')
