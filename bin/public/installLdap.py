@@ -73,8 +73,8 @@ LDAP_DN = app.config.get_ldap_dn()
 
 def build_commands(commands):
   commands.add("install-ldap-server", install_ldap_server, help="Install ldap server.")
-  commands.add("install-ldap-client", install_ldap_client, help="Install ldap client.")  
-  commands.add("uninstall-ldap", uninstall_ldap, help="Uninstall ldap client/server.")  
+  commands.add("install-ldap-client", install_ldap_client, help="Install ldap client.")
+  commands.add("uninstall-ldap", uninstall_ldap, help="Uninstall ldap client/server.")
 
 def install_ldap_server(args):
   '''
@@ -88,20 +88,20 @@ def install_ldap_server(args):
   # Get all passwords from user at the start of the script.
   app.get_ca_password()
 
-  # Setup ldap dns/hostname used by slapd  
+  # Setup ldap dns/hostname used by slapd
   value = "127.0.0.1 " + LDAP_SERVER_HOST_NAME
   general.set_config_property("/etc/hosts", value, value)
 
   shell_exec("yum -y install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap openldap-servers-overlays.x86_64")
 
-  _setup_slapd_config()  
+  _setup_slapd_config()
   #_setup_password_policy()
   _setup_tls()
   _import_users()
 
   shell_exec("chown -R ldap /var/lib/ldap")
   shell_exec("/etc/init.d/ldap start")
-  shell_exec("chkconfig ldap on")  
+  shell_exec("chkconfig ldap on")
 
   _add_iptables_rules()
   iptables_save()
@@ -164,7 +164,7 @@ def uninstall_ldap(args):
   shell_exec("rm -r /etc/ldap.conf.rpmsave")
   shell_exec("rm /var/www/ldap")
   shell_exec("rm /etc/httpd/conf.d/010-ldap.conf")
-  
+
   _remove_iptables_rules()
   iptables_save()
 
@@ -211,14 +211,14 @@ def _setup_password_policy():
 
   # Define the default policy
   value = 'ppolicy_default "cn=default,cn=pwpolicies,' + LDAP_DN + '"'
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)  
+  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
 def _add_iptables_rules():
   '''
   Setup iptables for ldap.
 
   '''
-  app.print_verbose("Setup iptables for nfs")
+  app.print_verbose("Setup iptables for farepayment")
   _remove_iptables_rules()
 
   iptables("-N syco_ldap")
@@ -233,20 +233,20 @@ def _remove_iptables_rules():
   iptables("-D INPUT  -p ALL -j syco_ldap")
   iptables("-D OUTPUT -p ALL -j syco_ldap")
   iptables("-F syco_ldap")
-  iptables("-X syco_ldap")  
+  iptables("-X syco_ldap")
 
 def _setup_tls():
   '''
   Create TLS cert and setup slapd to use them.
-  
+
   '''
   app.print_verbose("Setup TLS")
-  
+
   # Create dir
   certdir = "/etc/openldap/tls"
   shell_exec("mkdir -p " + certdir)
-  
-  # Create CA  
+
+  # Create CA
   ca_pass_phrase = app.get_ca_password()
   shell_run("openssl genrsa -des3 -out ca.key 2048",
     cwd=certdir,
@@ -270,7 +270,7 @@ def _setup_tls():
       re.compile('Email Address \[\]\:'): app.config.get_admin_email() + "\n",
     }
   )
-  
+
   # Create ldap cert
   shell_exec("openssl genrsa -out ldap.key 1024", cwd=certdir)
   shell_run("openssl req -new -key ldap.key -out ldap.csr",
@@ -287,7 +287,7 @@ def _setup_tls():
       re.compile('An optional company name \[\]\:'): "\n",
     }
   )
-  
+
   # Sign ldap cert with CA.
   shell_run("openssl x509 -req -in ldap.csr -out ldap.cert -CA ca.cert -CAkey ca.key -CAcreateserial -days 365",
     cwd=certdir,
@@ -314,7 +314,7 @@ def _setup_tls():
   value = "security ssf=1 update_ssf=112 simple_bind=64"
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
 
-def _import_users():  
+def _import_users():
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/users.ldif")
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/groups.ldif")
 
