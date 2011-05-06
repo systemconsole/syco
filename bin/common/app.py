@@ -244,6 +244,14 @@ def get_first_dns_resolver():
   '''ip list of dns resolvers that are configured on all servers.'''
   return get_dns_resolvers().split(None, 1)[0]
 
+def get_cert_server():
+  '''The hostname of the cert server.'''
+  return config.get_option("general", "cert.server")
+
+def get_cert_server_ip():
+  '''The ip of the cert server.'''
+  return get_ip(get_cert_server())
+
 def get_ip(host_name):
   '''Get ip for a specific host, as it is defined in install.cfg'''
   return config.get_option(host_name, "server")
