@@ -154,7 +154,7 @@ def _install_mod_security():
     # TODO: See if their is any other dependencies to thease packages.
     general.shell_exec("yum -y erase httpd-devel apr-devel apr-util-devel "+
       "cpp gcc cyrus-sasl-devel db4-devel expat-devel glibc-devel " +
-      "glibc-headers kernel-headers libgomp openldap-devel pkgconfig pcre-devel " +
+      "glibc-headers kernel-headers openldap-devel pkgconfig pcre-devel " +
       "libxml2-devel zlib-devel")
 
   # Install mode-sec config files.
