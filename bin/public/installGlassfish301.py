@@ -372,7 +372,7 @@ def _install_google_guice(domain_name):
     general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
 
   general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-2.0/guice-assistedinject-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
   general.shell_exec("cp guice-2.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
