@@ -3,15 +3,17 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=root
 HOME=/
 
-# Hourly backup
-00  *   * * *   root    rsnapshot hourly
+# Need to trix a bit with the start hour, so not another rsnapshot will block the start
+# of another rsnapshot.
 
-# Dayliy
-30 1    * * *   root    rsnapshot daily
+# Hourly backup
+09 */2  * * *   root    rsnapshot hourly
+
+# Daily
+06 1    * * *   root    rsnapshot hourly; rsnapshot daily
 
 # Weekly
-00 2    * * 7   root    rsnapshot weekly
+03 2    * * 7   root    rsnapshot hourly; rsnapshot daily; rsnapshot weekly
 
 # Monthly
-00 3    1 * *   root    rsnapshot monthly
-00 4    1 * *   root    syco tar-backup
+00 3    1 * *   root    rsnapshot hourly; rsnapshot daily; rsnapshot weekly; rsnapshot monthly; syco tar-backup
