@@ -101,11 +101,11 @@ def install_glassfish(args):
 
     #_set_iptables()
     _install_software()
-    
+
     for domain_name, port_base in [["domain1", "6000"], ["domain2", "7000"]]:
       admin_port = str(int(port_base) + 48)
-      _create_domains(domain_name, port_base)      
-      _set_domain_passwords(domain_name, admin_port)      
+      _create_domains(domain_name, port_base)
+      _set_domain_passwords(domain_name, admin_port)
       _set_domain_configs(admin_port)
       _set_jvm_options(admin_port)
       _install_domains_plugins(domain_name)
@@ -154,7 +154,7 @@ def uninstall_glassfish(args):
     general.shell_exec("rpm -e sun-javadb-javadoc-10.5.3-0.2")
     general.shell_exec("rpm -e sun-javadb-common-10.5.3-0.2")
     general.shell_exec("rpm -e jdk-1.6.0_22-fcs")
-    
+
   if (os.access("/usr/java/jdk1.6.0_24", os.F_OK)):
     general.shell_exec("rpm -e sun-javadb-core-10.6.2-1.1.i386")
     general.shell_exec("rpm -e sun-javadb-client-10.6.2-1.1.i386")
@@ -163,7 +163,7 @@ def uninstall_glassfish(args):
     general.shell_exec("rpm -e sun-javadb-javadoc-10.6.2-1.1.i386")
     general.shell_exec("rpm -e sun-javadb-common-10.6.2-1.1.i386")
     general.shell_exec("rpm -e jdk-1.6.0_24-fcs")
-    general.shell_exec("rpm -e jdk-6u24-linux-amd64")    
+    general.shell_exec("rpm -e jdk-6u24-linux-amd64")
 
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.mark_uninstalled()
@@ -213,7 +213,7 @@ def _install_software():
     general.shell_exec("adduser -m -r --shell /bin/bash -u150 -g550 glassfish")
 
   _install_jdk()
-  _install_glassfish()  
+  _install_glassfish()
 
 def _install_jdk():
   '''
@@ -227,14 +227,14 @@ def _install_jdk():
       os.chmod(JDK_INSTALL_FILE, stat.S_IXUSR | stat.S_IRUSR)
 
     if (os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.shell_run("./" + JDK_INSTALL_FILE,      
+      general.shell_run("./" + JDK_INSTALL_FILE,
       events={
         "ename: ": "A\r\n",
         "Press Enter to continue.....": "\r\n\r\n",
         "timeout":"-1"
       })
     else:
-      raise Exception("Not able to download " + JDK_INSTALL_FILE)  
+      raise Exception("Not able to download " + JDK_INSTALL_FILE)
 
 def _install_glassfish():
   '''
@@ -270,7 +270,7 @@ def _install_glassfish():
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
-      
+
       general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
       general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())
 
@@ -447,6 +447,13 @@ def _set_jvm_options(admin_port):
   #    * The information frame under Common Task page will not be rendered.
   #
   asadmin_exec("create-jvm-options -Dcom.sun.enterprise.tools.admingui.NO_NETWORK=true", admin_port)
+
+  _set_java_temp_dir(admin_port)
+
+def _set_java_temp_dir(admin_port):
+  general.shell_exec("mkdir " + JAVA_TEMP_PATH)
+  general.shell_exec("chown glassfish:glassfishadm " + JAVA_TEMP_PATH)
+  asadmin_exec("create-jvm-options '-Djava.io.tmpdir=" + JAVA_TEMP_PATH + "'", admin_port)
 
 def _update_glassfish():
   '''
