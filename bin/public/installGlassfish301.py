@@ -47,6 +47,11 @@ GLASSFISH_VERSION = "glassfish-3.0.1"
 GLASSFISH_PATH = "/usr/local/" + GLASSFISH_VERSION + "/"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 
+# The directory where JAVA stores temporary files.
+# Default is /tmp, but the partion the dir is stored is set to "noexec", and
+# java requires to exeute code from the java dir.
+JAVA_TEMP_PATH = GLASSFISH_PATH + "tmp"
+
 GLASSFISH_INSTALL_FILE = "glassfish-3.0.1.zip"
 GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
 
@@ -439,5 +444,14 @@ def _set_jvm_options(admin_port):
   #
   asadmin_exec("create-jvm-options -Dcom.sun.enterprise.tools.admingui.NO_NETWORK=true", admin_port)
 
+  _set_java_temp_dir(admin_port)
+
+def _set_java_temp_dir(admin_port):
+  general.shell_exec("mkdir " + JAVA_TEMP_PATH)
+  general.shell_exec("chown glassfish:glassfishadm " + JAVA_TEMP_PATH)
+  asadmin_exec("create-jvm-options '-Djava.io.tmpdir=" + JAVA_TEMP_PATH + "'", admin_port)
+
 def _set_iptables():
   pass
+
+create-jvm-options '-Djava.io.tmpdir=/usr/local/glassfish-3.0.1/tmp'
