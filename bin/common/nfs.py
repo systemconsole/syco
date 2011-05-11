@@ -24,7 +24,7 @@ def add_export(path):
   general.set_config_property("/etc/exports", "^" + path + ".*$", path + " *(rw,sync,insecure,root_squash,no_subtree_check,fsid=0)")
 
 def remove_export(path):
-  general.set_config_property("/etc/exports", "")
+  general.set_config_property("/etc/exports", "^" + path + ".*$", "")
 
 def restart_services():
   general.shell_exec("exportfs -rv")
