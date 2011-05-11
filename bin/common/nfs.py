@@ -20,11 +20,28 @@ import general
 import iptables
 from iptables import iptables, iptables_save
 
-def add_export(path):
-  general.set_config_property("/etc/exports", "^" + path + ".*$", path + " *(rw,sync,insecure,root_squash,no_subtree_check,fsid=0)")
+def add_export(name, path):
+  '''
+  Add a folder for nfs export.
 
-def remove_export(path):
-  general.set_config_property("/etc/exports", "^" + path + ".*$", "")
+  Example
+  add_export("dvd", "/media/dvd")
+  Will create the export /exports/dvd
+
+  '''
+  general.shell_exec("mkdir -p /exports/" + name)
+  general.shell_exec("mount --bind " + path + " /exports/" + name)
+
+  general.set_config_property("/etc/exports", "^" + name + ".*$", "/" + name + " *(rw,sync,nohide)")
+
+  # Only needed once, but is dublicate here.
+  general.set_config_property("/etc/exports", "/exports *(ro,fsid=0)", "/exports *(ro,fsid=0)")
+
+  # TODO : Using thease mount parameters?
+  #general.set_config_property("/etc/exports", "^" + name + ".*$", name + " *(rw,sync,nohide,insecure,root_squash,no_subtree_check,fsid=0)")
+
+def remove_export(name):
+  general.set_config_property("/etc/exports", "^/" + name + ".*$", "")
 
 def restart_services():
   general.shell_exec("exportfs -rv")

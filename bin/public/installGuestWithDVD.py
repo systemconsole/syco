@@ -47,7 +47,7 @@ def install_guest(args):
   ip = args[2]
 
   app.print_verbose("Instal kvm guest " + hostname + " with ip " + ip )
-  
+
   # Is server already installed?
   result = general.shell_exec("virsh list --all")
   if (hostname in result):
@@ -72,9 +72,9 @@ def install_guest(args):
   general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
 
   # Export kickstart file
-  nfs.add_export(app.SYCO_PATH + 'var/kickstart/generated/')
-  nfs.add_export('/media/dvd/')
-  nfs.configure_with_static_ip()  
+  nfs.add_export("kickstart", pp.SYCO_PATH + "var/kickstart/generated/")
+  nfs.add_export("dvd", "/media/dvd/")
+  nfs.configure_with_static_ip()
   nfs.restart_services()
   nfs.add_iptables_rules()
 
@@ -87,12 +87,12 @@ def install_guest(args):
   local_ip = net.get_lan_ip()
   general.shell_exec("virt-install --connect qemu:///system --name " + hostname + " --ram 2048 --vcpus=2 " +
     "--disk path=/dev/VolGroup00/" + hostname + " " +
-    "--location nfs:" + local_ip + ":/media/dvd " +
+    "--location nfs:" + local_ip + ":/dvd " +
     "--vnc --noautoconsole --hvm --accelerate " +
     "--check-cpu " +
     "--os-type linux --os-variant=rhel5.4 " +
     "--network bridge:br1 " +
-    '-x "ks=nfs:' + local_ip + ':' + ks_path + '"')
+    '-x "ks=nfs:' + local_ip + ":/kickstart/" + hostname + ".ks" + '"')
 
   # Waiting for the installation process to complete, and halt the guest.
   while(True):
@@ -108,8 +108,7 @@ def install_guest(args):
 
   nfs.remove_iptables_rules()
   nfs.stop_services()
-  nfs.remove_export(app.SYCO_PATH + 'var/kickstart/generated/')
-  nfs.remove_export('/media/dvd/')
+  nfs.remove_export("kickstart")
+  nfs.remove_export('dvd')
 
   general.shell_exec("umount /media/dvd")
-  
