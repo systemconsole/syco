@@ -179,7 +179,7 @@ def shell_exec(command, user="", cwd=None, events=None, output=True):
 
   out = expect.spawn("su", args, cwd=cwd)
 
-  if (!output):
+  if (not output):
     out.disable_output()
 
   if (output):
