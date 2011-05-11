@@ -99,6 +99,7 @@ def install_guest(args):
   while(True):
     time.sleep(10)
     print ".",
+    sys.stdout.flush()
     result = general.shell_exec("virsh list", output=False)
     if (hostname not in result):
       print "Now installed"
