@@ -453,5 +453,3 @@ def _set_java_temp_dir(admin_port):
 
 def _set_iptables():
   pass
-
-create-jvm-options '-Djava.io.tmpdir=/usr/local/glassfish-3.0.1/tmp'
