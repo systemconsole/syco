@@ -141,7 +141,7 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
 
-def shell_exec(command, user="", cwd=None, events=None):
+def shell_exec(command, user="", cwd=None, events=None, output=True):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
 
@@ -152,7 +152,8 @@ def shell_exec(command, user="", cwd=None, events=None):
     args.append(user)
   args.append('-c ' + command)
 
-  app.print_verbose("Command: su " + user + " -c '" + command + "'")
+  if (output):
+    app.print_verbose("Command: su " + user + " -c '" + command + "'")
 
   # Setting default events
   if events is None:
@@ -175,15 +176,16 @@ def shell_exec(command, user="", cwd=None, events=None):
   # Set current working directory
   if (cwd == None):
     cwd = os.getcwd()
-  
+
   out = expect.spawn("su", args, cwd=cwd)
 
-  app.print_verbose("---- Result ----", 2)
+  if (output):
+    app.print_verbose("---- Result ----", 2)
   stdout = ""
   index = 0
   while (index < num_of_events+1):
     index = out.expect(keys, timeout=3600)
-    stdout += out.before      
+    stdout += out.before
 
     if index >= 0 and index < num_of_events:
       if (inspect.isfunction(value[index])):
@@ -193,14 +195,14 @@ def shell_exec(command, user="", cwd=None, events=None):
     elif index == num_of_events:
       app.print_error("Catched a timeout from pexpect.expect, lets try again.")
 
-  if (out.exitstatus):    
+  if (out.exitstatus):
     app.print_error("Invalid exitstatus %d" % out.exitstatus)
 
   if (out.signalstatus):
     app.print_error("Invalid signalstatus %d - %s" % out.signalstatus, out.status)
 
   # An extra line break for the looks.
-  if (stdout and app.options.verbose >= 2):
+  if (output and stdout and app.options.verbose >= 2):
     print("\n"),
 
   out.close()
