@@ -35,7 +35,7 @@ def add_export(name, path):
   general.set_config_property("/etc/exports", "^/exports/" + name + ".*$", "/exports/" + name + " *(rw,sync,nohide)")
 
   # Only needed once, but is dublicate here.
-  general.set_config_property("/etc/exports", r"/exports *(ro,fsid=0)", r"/exports *(ro,fsid=0)")
+  general.set_config_property("/etc/exports", "\/exports \*\(ro\,fsid\=0\)", "/exports *(ro,fsid=0)")
 
   # TODO : Using thease mount parameters?
   #general.set_config_property("/etc/exports", "^" + name + ".*$", name + " *(rw,sync,nohide,insecure,root_squash,no_subtree_check,fsid=0)")
