@@ -179,6 +179,9 @@ def shell_exec(command, user="", cwd=None, events=None, output=True):
 
   out = expect.spawn("su", args, cwd=cwd)
 
+  if (!output):
+    out.disable_output()
+
   if (output):
     app.print_verbose("---- Result ----", 2)
   stdout = ""

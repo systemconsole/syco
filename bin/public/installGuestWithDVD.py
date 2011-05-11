@@ -95,7 +95,7 @@ def install_guest(args):
     '-x "ks=nfs:' + local_ip + ":/exports/kickstart/" + hostname + ".ks" + '"')
 
   # Waiting for the installation process to complete, and halt the guest.
-  app.print_verbose("Wait for installation server to be installed.", new_line=False)
+  app.print_verbose("Wait for " + hostname + " server to be installed.", new_line=False)
   while(True):
     time.sleep(10)
     print ".",
