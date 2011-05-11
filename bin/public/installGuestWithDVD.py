@@ -31,6 +31,7 @@ import app
 import general
 import net
 import nfs
+import sys
 
 def build_commands(commands):
   commands.add("install-guest", install_guest, "hostname, ip", help="Install kvm guest from dvd, without cobbler (reguire dhcp).")
