@@ -72,7 +72,7 @@ def install_guest(args):
   general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
 
   # Export kickstart file
-  nfs.add_export("kickstart", pp.SYCO_PATH + "var/kickstart/generated/")
+  nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
   nfs.add_export("dvd", "/media/dvd/")
   nfs.configure_with_static_ip()
   nfs.restart_services()
