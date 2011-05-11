@@ -59,7 +59,7 @@ def uninstall_dhcp(args):
   general.shell_exec("chkconfig dhcpd off")
   general.shell_exec("rm /etc/dhcpd.conf")
   general.set_config_property("/etc/sysconfig/dhcpd", ".*DHCPDARGS.*", "DHCPDARGS=")
-  general.shell_exec("yum uninstall dhcp")
+  general.shell_exec("yum -y erase dhcp")
 
   version_obj = version.Version("InstallDHCPServer", SCRIPT_VERSION)
   version_obj.mark_uninstalled()

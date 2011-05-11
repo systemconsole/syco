@@ -18,7 +18,7 @@ __status__ = "Production"
 import app
 import general
 import iptables
-from iptables import iptables
+from iptables import iptables, iptables_save
 
 def add_export(path):
   general.set_config_property("/etc/exports", "^" + path + ".*$", path + " *(rw,sync,insecure,root_squash,no_subtree_check,fsid=0)")
@@ -89,11 +89,11 @@ def add_iptables_rules():
 
   iptables("-I INPUT  -p ALL -j nfs_export")
   iptables("-I OUTPUT -p ALL -j nfs_export")
-  iptables.iptables_save()
+  iptables_save()
 
 def remove_iptables_rules():
   iptables("-D INPUT  -p ALL -j nfs_export")
   iptables("-D OUTPUT -p ALL -j nfs_export")
   iptables("-F nfs_export")
   iptables("-X nfs_export")
-  iptables.iptables_save()
+  iptables_save()
