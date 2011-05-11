@@ -87,12 +87,12 @@ def install_guest(args):
   local_ip = net.get_lan_ip()
   general.shell_exec("virt-install --connect qemu:///system --name " + hostname + " --ram 2048 --vcpus=2 " +
     "--disk path=/dev/VolGroup00/" + hostname + " " +
-    "--location nfs:" + local_ip + ":/dvd " +
+    "--location nfs:" + local_ip + ":/exports/dvd " +
     "--vnc --noautoconsole --hvm --accelerate " +
     "--check-cpu " +
     "--os-type linux --os-variant=rhel5.4 " +
     "--network bridge:br1 " +
-    '-x "ks=nfs:' + local_ip + ":/kickstart/" + hostname + ".ks" + '"')
+    '-x "ks=nfs:' + local_ip + ":/exports/kickstart/" + hostname + ".ks" + '"')
 
   # Waiting for the installation process to complete, and halt the guest.
   while(True):
