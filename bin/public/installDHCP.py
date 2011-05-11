@@ -20,6 +20,7 @@ __status__ = "Production"
 
 import os
 import shutil
+import net
 
 import app
 import general
@@ -40,6 +41,13 @@ def install_dhcp(args):
 
   '''
   app.print_verbose("Install DHCP-Server version: %d" % SCRIPT_VERSION)
+
+
+
+  shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp3.conf", "/etc/dhcpd.conf")
+  general.set_config_property("/etc/dhcpd.conf", "\$\{IP\}", net.get_ip_class_c(net.get_lan_ip()))
+
+  return
   version_obj = version.Version("InstallDHCPServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
