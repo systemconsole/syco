@@ -35,7 +35,6 @@ def install_guests(args):
     app.print_error("No guests to install.")
     return
 
-  installCobbler.install_epel_repo()
   general.shell_exec("yum -y install koan")
 
   # Wait to install guests until installation sterver is alive.
@@ -44,7 +43,7 @@ def install_guests(args):
     time.sleep(15)
 
   # Start the installation.
-  guests=[]  
+  guests=[]
   for guest_name in guest_host_names:
     if (_is_guest_installed(guest_name, options="")):
       app.print_verbose(guest_name + " already installed", 2)

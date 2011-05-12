@@ -22,6 +22,7 @@ import app
 import general
 import iptables
 import version
+import install
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -42,7 +43,6 @@ def install_cobbler(args):
   version_obj = version.Version("installCobbler", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  install_epel_repo()
   _setup_firewall()
   _install_cobbler()
   _modify_coppler_settings()
@@ -85,12 +85,12 @@ def refresh_repo(args):
   '''
   downloads = {}
   downloads['jdk-6u24-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u24-linux-x64-rpm.bin'
-  
+
   for dst, src in downloads.items():
     general.shell_exec("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
 
   while(True):
-    num_of_processes = subprocess.Popen("ps aux | grep wget", stdout=subprocess.PIPE, shell=True).communicate()[0].count("\n")    
+    num_of_processes = subprocess.Popen("ps aux | grep wget", stdout=subprocess.PIPE, shell=True).communicate()[0].count("\n")
     if num_of_processes <=2:
       break
     app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
@@ -98,20 +98,6 @@ def refresh_repo(args):
 
   general.shell_exec("cobbler reposync")
   general.shell_exec("cobbler sync")
-
-def install_epel_repo():
-  '''
-  Setup EPEL repository.
-
-  Need the EPEL repos for cobbler and koan
-  http://ridingthecloud.com/installing-epel-repository-centos-rhel/
-  http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
-
-  '''
-  result = general.shell_exec("rpm -q epel-release-5-4.noarch")
-  if "package epel-release-5-4.noarch is not installed" in result:
-    general.shell_exec("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm")
-    app.print_verbose("(Don't mind the Header V3 DSA warning)")
 
 def _setup_firewall():
   '''
