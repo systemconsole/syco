@@ -69,8 +69,9 @@ def install_guest(args):
   general.set_config_property(ks_path, "\$\{HOSTNAME\}", hostname)
   general.set_config_property(ks_path, "\$\{IP\}", ip)
   general.set_config_property(ks_path, "\$\{GATEWAY\}", app.get_gateway_server_ip())
-  general.set_config_property(ks_path, "\$\{NAMESERVER\}", app.get_first_dns_resolver())
+  general.set_config_property(ks_path, "\$\{NAMESERVER\}", app.config.get_first_dns_resolver())
   general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
+  general.set_config_property(ks_path, "\$\{EXTERNAL_NAMESERVER\}", app.config.get_external_dns_resolver())
 
   # Export kickstart file
   nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")

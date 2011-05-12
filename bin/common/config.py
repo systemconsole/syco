@@ -25,7 +25,7 @@ class SycoConfig(ConfigParser.RawConfigParser):
     Raised when their is an invalid number of install.cfg
     '''
 
-  def __init__(self):    
+  def __init__(self):
     ConfigParser.RawConfigParser.__init__(self)
 
     config_dir = []
@@ -77,7 +77,7 @@ class SycoConfig(ConfigParser.RawConfigParser):
     '''The hostname of the ldap server.'''
     return self.get_option("general", "ldap.server")
 
-  def get_ldap_server_ip(self):    
+  def get_ldap_server_ip(self):
     return app.get_ip(self.get_ldap_server())
 
   def get_ldap_hostname(self):
@@ -85,3 +85,21 @@ class SycoConfig(ConfigParser.RawConfigParser):
 
   def get_ldap_dn(self):
     return self.get_option("general", "ldap.dn")
+
+  def get_internal_dns_resolvers():
+    '''ip list of dns resolvers inside the syco net that are configured on all servers.'''
+    dns_resolver = config.get_option("general", "dns.internal_resolvers")
+
+  def get_external_dns_resolver():
+    '''ip of external dns resolver that are configured on all servers.'''
+    dns_resolver = config.get_option("general", "dns.external_resolver").split(None, 1)[0]
+
+  def get_dns_resolvers():
+    '''ip list of all dns resolvers that are configured on all servers.'''
+    dns_resolver = get_internal_dns_resolvers() + " " + get_external_dns_resolvers()
+
+  def get_first_dns_resolver():
+    '''ip of primary dns-resolver.'''
+    return get_dns_resolvers().split(None, 1)[0]
+
+app.config.get_first_dns_resolver()

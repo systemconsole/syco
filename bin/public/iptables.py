@@ -182,11 +182,11 @@ def _setup_ssh_rules():
 
 def _setup_dns_resolver_rules():
   '''
-  Allow this server to communicate with an dns resolver.
+  Allow this server to communicate with all syco approved dns resolvers.
 
   '''
   inet_ip=net.get_lan_ip()
-  for resolver_ip in app.get_dns_resolvers().split(" "):
+  for resolver_ip in app.config.get_dns_resolvers().split(" "):
     iptables("-A OUTPUT -p udp -s " + inet_ip + " --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
     iptables("-A INPUT  -p udp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT")
     iptables("-A OUTPUT -p tcp -s " + inet_ip + "  --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")

@@ -79,5 +79,6 @@ device-mapper-multipath
 
 
 %post
+echo "\nnameserver ${EXTERNAL_NAMESERVER}" >> /etc/resolv.conf
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
 yum install -y python26 git
