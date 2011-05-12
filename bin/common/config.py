@@ -86,20 +86,18 @@ class SycoConfig(ConfigParser.RawConfigParser):
   def get_ldap_dn(self):
     return self.get_option("general", "ldap.dn")
 
-  def get_internal_dns_resolvers():
+  def get_internal_dns_resolvers(self):
     '''ip list of dns resolvers inside the syco net that are configured on all servers.'''
-    dns_resolver = config.get_option("general", "dns.internal_resolvers")
+    return self.get_option("general", "dns.internal_resolvers")
 
-  def get_external_dns_resolver():
+  def get_external_dns_resolver(self):
     '''ip of external dns resolver that are configured on all servers.'''
-    dns_resolver = config.get_option("general", "dns.external_resolver").split(None, 1)[0]
+    return self.get_option("general", "dns.external_resolver").split(None, 1)[0]
 
-  def get_dns_resolvers():
+  def get_dns_resolvers(self):
     '''ip list of all dns resolvers that are configured on all servers.'''
-    dns_resolver = get_internal_dns_resolvers() + " " + get_external_dns_resolvers()
+    return str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
 
-  def get_first_dns_resolver():
+  def get_first_dns_resolver(self):
     '''ip of primary dns-resolver.'''
-    return get_dns_resolvers().split(None, 1)[0]
-
-app.config.get_first_dns_resolver()
+    return self.get_dns_resolvers().split(None, 1)[0]
