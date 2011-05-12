@@ -60,7 +60,6 @@ options = options.Options()
 import config
 config = config.SycoConfig()
 
-import passwordStore
 import install
 
 # Syco uses packages from the EPEL repo.
@@ -68,6 +67,8 @@ install.epel_repo()
 
 # Required yum package.
 install.package("gnupg")
+
+import passwordStore
 
 def print_error(message, verbose_level=1):
   '''

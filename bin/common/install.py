@@ -31,11 +31,11 @@ def package(name):
       # TODO: Need this?
       # time.sleep(1)
 
-  stdoutdata = subprocess.Popen("rpm -qa " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
-  if name not in stdoutdata:
-    print "Failed to install " + name
-  else
-    version_obj.mark_executed()
+    stdoutdata = subprocess.Popen("rpm -qa " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
+    if name not in stdoutdata:
+      print "Failed to install " + name
+    else:
+      version_obj.mark_executed()
 
 def epel_repo():
   '''
@@ -47,12 +47,12 @@ def epel_repo():
   '''
   version_obj = version.Version("repo-epel", SCRIPT_VERSION)
   if (not version_obj.is_executed()):
-    result = subprocess.Popen("rpm -q epel-release-5-4.noarch", shell=True, stdout=subprocess.PIPE).communicate()[0]
-    if "package epel-release-5-4.noarch is not installed" in result:
+    stdoutdata = subprocess.Popen("rpm -q epel-release-5-4.noarch", shell=True, stdout=subprocess.PIPE).communicate()[0]
+    if "package epel-release-5-4.noarch is not installed" in stdoutdata:
       subprocess.Popen("rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm", shell=True, stdout=subprocess.PIPE).communicate()
 
-  stdoutdata = subprocess.Popen("rpm -q epel-release-5-4.noarch", shell=True, stdout=subprocess.PIPE).communicate()[0]
-  if name not in stdoutdata:
-    print "Failed to install epel repo."
-  else
-    version_obj.mark_executed()
+    stdoutdata = subprocess.Popen("rpm -q epel-release-5-4.noarch", shell=True, stdout=subprocess.PIPE).communicate()[0]
+    if "epel-release-5-4" not in stdoutdata:
+      print "Failed to install epel repo."
+    else:
+      version_obj.mark_executed()
