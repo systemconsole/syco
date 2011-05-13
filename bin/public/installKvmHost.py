@@ -46,6 +46,8 @@ def install_kvmhost(args):
     _abort_kvm_host_installation()
     return
 
+  _create_kvm_snapshot_partition()
+
   # Install the kvm packages
   general.shell_exec("yum -qy install kvm.x86_64")
 
@@ -59,7 +61,7 @@ def install_kvmhost(args):
 
   # Start virsh
   general.shell_exec("service libvirtd start")
-  
+
   # Looks like we need to wait for the libvirtd to start, otherwise
   # the virsh nodeinfo below doesn't work.
   time.sleep(1)
@@ -138,6 +140,26 @@ ONBOOT=yes""")
   # Wait for the reboot to be executed, so the script
   # doesn't proceed to next command in install.cfg
   time.sleep(1000)
+
+def _create_kvm_snapshot_partition():
+  '''
+  Create a partion that will be used by kvm/qemu to store guest snapshots.
+
+  Memory snapshots when rebooting and such.
+
+  TODO: Size should be equal to RAM.
+  '''
+  result = general.shell_exec("lvdisplay -v /dev/VolGroup00/qemu")
+  if ("/dev/VolGroup00/qemu" not in result):
+    general.shell_exec("lvcreate -n qemu -L 100G VolGroup00")
+    general.shell_exec("mke2fs -j /dev/VolGroup00/qemu")
+    general.shell_exec("mkdir /var/lib/libvirt/qemu")
+    general.shell_exec("mount /dev/VolGroup00/qemu /var/lib/libvirt/qemu")
+    general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 qemu/")
+
+    # Automount the new partion when rebooting.
+    value = "/dev/VolGroup00/qemu    /var/lib/libvirt/qemu   ext3    defaults        1 2"
+    general.set_config_property("/etc/fstab", value, value)
 
 def _get_config_value(file_name, config_name):
   '''

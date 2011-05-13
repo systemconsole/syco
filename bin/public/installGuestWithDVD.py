@@ -107,7 +107,6 @@ def install_guest(args):
       print "Now installed"
       break
 
-
   # Autostart guests.
   general.shell_exec("virsh autostart " + hostname)
   general.shell_exec("virsh start " + hostname)
