@@ -22,9 +22,9 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
   option domain-name-servers 10.100.0.4, 84.246.88.10, 84.246.88.20;
   option domain-name "fareonline.net";
   range  10.100.0.10 10.100.0.100;
-  
+
   # PXE Server
-  next-server 10.100.100.200;
+  next-server $next_server;
   filename "/pxelinux.0";
 }
 
@@ -52,11 +52,11 @@ group {
         option routers $iface.gateway;
         #end if
         filename "$iface.filename";
-        ## Cobbler defaults to $next_server, but some users 
+        ## Cobbler defaults to $next_server, but some users
         ## may like to use $iface.system.server for proxied setups
         next-server $next_server;
         ## next-server $iface.next_server;
-    }   
+    }
         #end for
 }
 #end for

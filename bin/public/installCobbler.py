@@ -241,7 +241,7 @@ def _remove_all_systems():
 def _host_add(host_name, ip):
   mac = app.get_mac(host_name)
   general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
-                     "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+                     "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
                      "--mac=" + mac)
 
@@ -252,7 +252,7 @@ def _guest_add(host_name, ip):
   cpu = app.get_cpu(host_name)
 
   general.shell_exec("cobbler system add --profile=centos5.5-vm_guest "
-                     "--static=1 --gateway=10.100.0.1 --subnet=255.255.0.0 " +
+                     "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +

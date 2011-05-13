@@ -107,13 +107,13 @@ TYPE=Ethernet
 IPV6INIT=no
 USERCTL=no
 BRIDGE=br1
-BOOTPROTO=dhcp""" % hwaddr)
+BOOTPROTO=none""" % hwaddr)
 
   # Setup /etc/sysconfig/network-scripts/ifcfg-br1
   _store_file("/etc/sysconfig/network-scripts/ifcfg-br1",
 """DEVICE=br1
 TYPE=Bridge
-BOOTPROTO=dhcp
+BOOTPROTO=none
 ONBOOT=yes""")
 
 #      This might be an option for the bridge
