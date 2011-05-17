@@ -20,7 +20,7 @@ auth  --useshadow  --enablemd5
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
 # disable usb as per NSA 2.2.2.2.3:
-bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=hda --md5pass="$default_password_crypted" 
+bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=$boot_device --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
@@ -71,9 +71,9 @@ install
 #
 # See installCobbler.py when changing disk usage.
 #
-clearpart --all --drives=hda --initlabel
-part /boot --fstype ext3 --size=100 --ondisk=hda
-part pv.2 --size=0 --grow --ondisk=hda
+clearpart --all --drives=$boot_device --initlabel
+part /boot --fstype ext3 --size=100 --ondisk=$boot_device
+part pv.2 --size=0 --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=4096
 logvol /        --fstype ext3 --name=root   --vgname=VolGroup00 --size=4096

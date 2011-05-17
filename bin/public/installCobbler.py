@@ -203,12 +203,15 @@ def _remove_all_systems():
 
 def _host_add(host_name, ip):
   mac = app.get_mac(host_name)
+  boot_device = app.get_boot_device(host_name, "cciss/c0d0")
   general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
                      "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     "--mac=" + mac)
+                     "--mac=" + mac +
+                     "--ksmeta=\"boot_device=" + str(boot_device) + "\"")
 
 def _guest_add(host_name, ip):
+  boot_device = app.get_boot_device(host_name, "hda")
   disk_var = app.get_disk_var(host_name)
   disk_var = int(disk_var) * 1024
   ram = app.get_ram(host_name)
@@ -219,4 +222,4 @@ def _guest_add(host_name, ip):
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     "--ksmeta=\"disk_var=" + str(disk_var) + "\"")
+                     '--ksmeta="disk_var=' + str(disk_var) + '", boot_device="' + str(boot_device) + '"')

@@ -268,6 +268,14 @@ def get_disk_var(host_name):
   '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
   return config.get_option(host_name, "disk_var")
 
+def get_boot_device(host_name, default_device):
+  '''Get the device name on which the installation will be performed.'''
+  if (config.has_option(host_name, "boot_device")):
+    device = config.get_option(host_name, "boot_device")
+  else:
+    device = default_device
+  return device
+
 def get_servers():
   '''A list of all servers that are defined in install.cfg.'''
   servers = config.sections()

@@ -20,7 +20,7 @@ auth  --useshadow  --enablemd5
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
 # disable usb as per NSA 2.2.2.2.3:
-bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=cciss/c0d0 --md5pass="$default_password_crypted" 
+bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=$boot_device --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
@@ -68,9 +68,9 @@ timezone --utc Europe/Stockholm
 install
 
 # Partioning
-clearpart --all --drives=cciss/c0d0 --initlabel
-part /boot --fstype ext3 --size=100 --ondisk=cciss/c0d0
-part pv.2 --size=0 --grow --ondisk=cciss/c0d0
+clearpart --all --drives=$boot_device --initlabel
+part /boot --fstype ext3 --size=100 --ondisk=$boot_device
+part pv.2 --size=0 --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=32768
 logvol /        --fstype ext3 --name=root   --vgname=VolGroup00 --size=4096
