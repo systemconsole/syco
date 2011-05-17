@@ -36,10 +36,18 @@ import app, general, version, iptables
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
-  commands.add("install-ntp", install_ntp, "[ntp-server-ip]", help="Install ntp server on the current server. Optional ntp-server-ip")
+  commands.add("install-ntp-server", install_ntp_server, help="Install ntp server on the current server.")
+  commands.add("install-ntp-client", install_ntp_client, help="Install ntp client on the current server.")
   commands.add("uninstall-ntp", uninstall_ntp, help="Uninstall ntp server on the current server.")
 
-def install_ntp(args):
+def install_ntp_server(args):
+  install_ntp()
+
+def install_ntp_client(args):
+  ip = app.config.get_ntp_server_ip()
+  install_ntp(ip)
+  
+def install_ntp(ntp_server_ip = False):
   '''
   Install and configure the ntp-server on the local host.
 
@@ -47,12 +55,6 @@ def install_ntp(args):
   app.print_verbose("Install NTP version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
   version_obj.check_executed()
-
-  # Get ntp-server-ip from command line.
-  ntp_server_ip=False
-  if (len(args)==2):
-    ntp_server_ip=str(args[1])
-    app.print_verbose("Using customized ntp-server-ip: " + ntp_server_ip)
 
   # Install the NTP packages.
   if (not os.access("/etc/ntp.conf", os.F_OK)):

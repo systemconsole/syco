@@ -86,6 +86,13 @@ class SycoConfig(ConfigParser.RawConfigParser):
   def get_ldap_dn(self):
     return self.get_option("general", "ldap.dn")
 
+  def get_ntp_server(self):
+    '''The hostname of the ntp server.'''
+    return self.get_option("general", "ntp.server")
+
+  def get_ntp_server_ip(self):
+    return app.get_ip(self.get_ntp_server())
+
   def get_internal_dns_resolvers(self):
     '''ip list of dns resolvers inside the syco net that are configured on all servers.'''
     return self.get_option("general", "dns.internal_resolvers")
