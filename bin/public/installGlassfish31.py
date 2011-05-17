@@ -35,6 +35,7 @@ import time
 import app
 import general
 import version
+import iptables
 
 import installGlassfish301
 
@@ -99,8 +100,10 @@ def install_glassfish(args):
     general.set_config_property("/etc/profile", 'export JDK_HOME=/usr/java/latest', 'export JDK_HOME=/usr/java/latest')
     general.set_config_property("/etc/profile", 'export PATH=$PATH:/usr/java/latest/bin', 'export PATH=$PATH:/usr/java/latest/bin')
 
-    #_set_iptables()
     _install_software()
+
+    iptables.add_glassfish_chain()
+    iptables.save()
 
     for domain_name, port_base in [["domain1", "6000"], ["domain2", "7000"]]:
       admin_port = str(int(port_base) + 48)
@@ -164,6 +167,9 @@ def uninstall_glassfish(args):
     general.shell_exec("rpm -e sun-javadb-common-10.6.2-1.1.i386")
     general.shell_exec("rpm -e jdk-1.6.0_24-fcs")
     general.shell_exec("rpm -e jdk-6u24-linux-amd64")
+
+  iptables.del_glassfish_chain()
+  iptables.save()
 
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.mark_uninstalled()
@@ -488,81 +494,7 @@ def _update_glassfish():
   general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
   general.shell_exec(GLASSFISH_PATH + "bin/pkg image-update", user="glassfish")
   general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " start")
-
-def _set_iptables():
-  pass
-#  #
-#  # Setup all iptable rules
-#  #
-#  4848 Administration Console
-#  8080 HTTP
-#  8081 HTTPS
-#  8686 Pure JMX clients
-#  3700 IIOP
-#  3820 IIOP/SSL
-#  3920 IIOP/SSL with mutual authentication
-#
-#  # ATTENTION: flush/delete all existing rules
-#  iptables -F
-#
-#  ################################################################
-#  # set the default policy for each of the pre-defined chains
-#  ################################################################
-#  iptables -P INPUT ACCEPT
-#  iptables -P OUTPUT ACCEPT
-#  iptables -P FORWARD DROP
-#
-#  # allow establishment of connections initialised by my outgoing packets
-#  iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-#
-#  # accept anything on localhost
-#  iptables -A INPUT -i lo -j ACCEPT
-#
-#  ################################################################
-#  #individual ports tcp
-#  ################################################################
-#  iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 8181 -j ACCEPT
-#  iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-#  #uncomment next line to enable AdminGUI on port 4848:
-#  iptables -A INPUT -p tcp --dport 4848 -j ACCEPT
-#
-#  ################################################################
-#  #slow the amount of ssh connections by the same ip address:
-#  #wait 60 seconds if 3 times failed to connect
-#  ################################################################
-#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --set -j ACCEPT
-#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j DROP
-#
-#  #drop everything else
-#  iptables -A INPUT -j DROP
-#
-#  ################################################################
-#  #Redirection Rules
-#  ################################################################
-#  #1. redirection rules (allowing forwarding from localhost)
-#  iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
-#  iptables -t nat -A OUTPUT -o lo -p tcp --dport 443 -j REDIRECT --to-port 8181
-#
-#  #2. redirection http
-#  iptables -t nat -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 8080
-#
-#  #3. redirection https
-#  iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 8181
-#
-#
-#  ################################################################
-#  #save the rules somewhere and make sure
-#  #our rules get loaded if the ubuntu server is restarted
-#  ################################################################
-#  iptables-save > /etc/my-iptables.rules
-#  iptables-restore < /etc/my-iptables.rules
-#
-#  #List Rules to see what we have now
-#  iptables -L
-
+  
 #
 # Questions?
 #* Ska vi kora fo och fp pa samma server cluster?

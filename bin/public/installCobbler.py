@@ -43,8 +43,11 @@ def install_cobbler(args):
   version_obj = version.Version("installCobbler", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  _setup_firewall()
   _install_cobbler()
+
+  iptables.add_cobbler_chain()
+  iptables.save()
+
   _modify_coppler_settings()
   _import_repos()
   _refresh_all_profiles()
@@ -98,46 +101,6 @@ def refresh_repo(args):
 
   general.shell_exec("cobbler reposync")
   general.shell_exec("cobbler sync")
-
-def _setup_firewall():
-  '''
-  Setup iptables rules
-
-  TODO: Move to iptables.py ??
-
-  '''
-
-  # Create input chain
-  iptables.iptables("-D INPUT -j Fareoffice-Input")
-  iptables.iptables("-F Fareoffice-Input")
-  iptables.iptables("-X Fareoffice-Input")
-  iptables.iptables("-N Fareoffice-Input")
-  iptables.iptables("-I INPUT 1 -j Fareoffice-Input")
-
-  # TFTP - TCP/UDP
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 69 -j ACCEPT")
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 69 -j ACCEPT")
-
-  # NTP
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 123 -j ACCEPT")
-
-  # DHCP
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 67 -j ACCEPT")
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 68 -j ACCEPT")
-
-  # HTTP/HTTPS
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT")
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT")
-
-  # Syslog for cobbler
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m udp -p udp --dport 25150 -j ACCEPT")
-
-  # Koan XMLRPC ports
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 25151 -j ACCEPT")
-  iptables.iptables("-A Fareoffice-Input -m state --state NEW -m tcp -p tcp --dport 25152 -j ACCEPT")
-
-  general.shell_exec("service iptables save")
-  #iptables.iptables(" --list")
 
 def _install_cobbler():
   #

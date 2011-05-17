@@ -127,10 +127,8 @@ ONBOOT=yes""")
 #      NETMASK=255.255.0.0
 #      ONBOOT=yes
 
-  general.shell_exec("service iptables start")
-  general.shell_exec("iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT")
-  general.shell_exec("service iptables save")
-  general.shell_exec("service network restart")
+  iptables.add_kvm_chain()
+  iptables.save()
 
   version_obj.mark_executed()
 

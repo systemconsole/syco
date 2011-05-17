@@ -38,6 +38,7 @@ import os
 import app
 import general
 import version
+import iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -74,6 +75,8 @@ def install_httpd(args):
   _update_modsec_rules()
   _enable_se_linux()
 
+  iptables.add_httpd_chain()
+  iptables.save()
   set_file_permissions()
   general.shell_exec("/etc/init.d/httpd start")
 
@@ -92,7 +95,7 @@ def uninstall_httpd(args):
   Uninstal apache httpd.
 
   '''
-  if os.path.exists('/etc/httpd/conf/httpd.conf'):
+  if (os.path.exists('/etc/init.d/httpd')):
     # Apache httpd
     general.shell_exec("yum -y erase httpd apr apr-util postgresql-libs mod_ssl distcache")
 
@@ -100,6 +103,9 @@ def uninstall_httpd(args):
     general.shell_exec("rm -rf /etc/httpd/")
     general.shell_exec("rm -rf /var/www/html")
     general.shell_exec("rm -r /usr/lib64/httpd/modules/mod_security2.so")
+
+  iptables.del_httpd_chain()
+  iptables.save()
 
   version_obj = version.Version("Installhttpd", SCRIPT_VERSION)
   version_obj.mark_uninstalled()

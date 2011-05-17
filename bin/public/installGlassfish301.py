@@ -34,6 +34,7 @@ import traceback
 import app
 import general
 import version
+import iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -96,8 +97,10 @@ def install_glassfish(args):
     general.set_config_property("/etc/profile", 'export JDK_HOME=/usr/java/latest', 'export JDK_HOME=/usr/java/latest')
     general.set_config_property("/etc/profile", 'export PATH=$PATH:/usr/java/latest/bin', 'export PATH=$PATH:/usr/java/latest/bin')
 
-    #_set_iptables()
     _install_software()
+
+    iptables.add_glassfish_chain()
+    iptables.save()
 
     for domain_name, port_base in [["domain1", "6000"], ["domain2", "7000"]]:
       admin_port = str(int(port_base) + 48)
@@ -450,6 +453,3 @@ def _set_java_temp_dir(admin_port):
   general.shell_exec("mkdir " + JAVA_TEMP_PATH)
   general.shell_exec("chown glassfish:glassfishadm " + JAVA_TEMP_PATH)
   asadmin_exec("create-jvm-options '-Djava.io.tmpdir=" + JAVA_TEMP_PATH + "'", admin_port)
-
-def _set_iptables():
-  pass

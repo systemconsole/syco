@@ -76,7 +76,6 @@ import time
 import app
 import general
 import install
-import iptables
 import nfs
 import ssh
 

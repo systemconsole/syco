@@ -28,7 +28,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import app, general, version
+import app, general, version, iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -59,6 +59,9 @@ def install_ntp(args):
     general.shell_exec("yum -y install ntp")
 
   general.shell_exec("chkconfig ntpd on")
+
+  iptables.add_ntp_chain()
+  iptables.save()
 
   # Set ntp-server configs
   #
@@ -107,6 +110,9 @@ def uninstall_ntp(args):
   if (os.access("/etc/ntp.conf", os.F_OK)):
     general.shell_exec("service ntpd stop")
   general.shell_exec("yum -y remove ntp ")
+
+  iptables.del_ntp_chain()
+  iptables.save()
 
   version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
   version_obj.mark_uninstalled()

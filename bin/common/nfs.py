@@ -18,7 +18,6 @@ __status__ = "Production"
 import app
 import general
 import iptables
-from iptables import iptables, iptables_save
 
 def add_export(name, path):
   '''
@@ -82,35 +81,9 @@ def add_iptables_rules():
   Open iptables for NFS just during the installation.
 
   '''
-  app.print_verbose("Setup iptables for nfs")
-  remove_iptables_rules()
-
-  iptables("-N nfs_export")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32803 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32769 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 892 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 875 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 662 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2020 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2049 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 111 -j ACCEPT")
-
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 32803 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 32769 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 892 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 875 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 662 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 2020 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 2049 -j ACCEPT")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 111 -j ACCEPT")
-
-  iptables("-I INPUT  -p ALL -j nfs_export")
-  iptables("-I OUTPUT -p ALL -j nfs_export")
-  iptables_save()
+  iptables.add_nfs_chain()
+  iptables.save()
 
 def remove_iptables_rules():
-  iptables("-D INPUT  -p ALL -j nfs_export")
-  iptables("-D OUTPUT -p ALL -j nfs_export")
-  iptables("-F nfs_export")
-  iptables("-X nfs_export")
-  iptables_save()
+  iptables.del_nfs_chain()
+  iptables.save()

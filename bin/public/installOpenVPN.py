@@ -69,20 +69,9 @@ def install_openvpn_server(args):
   # To be able to route trafic to internal network
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
   general.shell_exec("echo 1 > /proc/sys/net/ipv4/ip_forward")
-  iptables.iptables("-t nat -A POSTROUTING -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
-  iptables.iptables("-I INPUT 1 -m state --state NEW -m tcp -p tcp --dport 1194 -j ACCEPT")
 
-  # Don't get this to work
-  #iptables -I INPUT 2 -p tcp -m state --state NEW -m multiport --dports 80,443,8080,8181,4848 -j ACCEPT
-
-  # Ports to allow to use on the network.
-  iptables.iptables("-I INPUT -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
-  iptables.iptables("-I FORWARD -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j ACCEPT")
-
-  # To protect the network.
-  iptables.iptables("-A FORWARD -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
-  iptables.iptables('-A FORWARD -i eth0 -o tun0 -m state --state "ESTABLISHED,RELATED" -j ACCEPT')
-  general.shell_exec("service iptables save")
+  iptables.add_openvpn_chain()
+  iptables.save()
 
   general.shell_exec("/etc/init.d/openvpn restart")
   general.shell_exec("chkconfig openvpn on")

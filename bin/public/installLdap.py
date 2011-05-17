@@ -58,8 +58,7 @@ import app
 import general
 from general import shell_exec
 from general import shell_run
-from iptables import iptables
-from iptables import iptables_save
+import iptables
 import version
 
 # The version of this module, used to prevent
@@ -103,8 +102,8 @@ def install_ldap_server(args):
   shell_exec("/etc/init.d/ldap start")
   shell_exec("chkconfig ldap on")
 
-  _add_iptables_rules()
-  iptables_save()
+  iptables.add_ldap_chain()
+  iptables.save()
 
   install_ldap_client(args)
 
@@ -121,8 +120,8 @@ def install_ldap_client(args):
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  _add_iptables_rules()
-  iptables_save()
+  iptables.add_ldap_chain()
+  iptables.save()
 
   ip = app.config.get_ldap_server_ip()
   general.wait_for_server_to_start(ip, "389")
@@ -165,8 +164,8 @@ def uninstall_ldap(args):
   shell_exec("rm /var/www/ldap")
   shell_exec("rm /etc/httpd/conf.d/010-ldap.conf")
 
-  _remove_iptables_rules()
-  iptables_save()
+  iptables.del_ldap_chain()
+  iptables.save()
 
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
@@ -212,28 +211,6 @@ def _setup_password_policy():
   # Define the default policy
   value = 'ppolicy_default "cn=default,cn=pwpolicies,' + LDAP_DN + '"'
   general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
-
-def _add_iptables_rules():
-  '''
-  Setup iptables for ldap.
-
-  '''
-  app.print_verbose("Setup iptables for farepayment")
-  _remove_iptables_rules()
-
-  iptables("-N syco_ldap")
-
-  # LDAP with none TLS and with TLS
-  iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389  -j ACCEPT")
-
-  iptables("-I INPUT  -p ALL -j syco_ldap")
-  iptables("-I OUTPUT -p ALL -j syco_ldap")
-
-def _remove_iptables_rules():
-  iptables("-D INPUT  -p ALL -j syco_ldap")
-  iptables("-D OUTPUT -p ALL -j syco_ldap")
-  iptables("-F syco_ldap")
-  iptables("-X syco_ldap")
 
 def _setup_tls():
   '''
