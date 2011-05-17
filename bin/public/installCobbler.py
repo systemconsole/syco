@@ -30,9 +30,9 @@ import install
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
-  commands.add("install-cobbler", install_cobbler, help="Install cobbler on the current server.")
+  commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
   commands.add("install-cobbler-config", setup_all_systems, help="Refresh install.cfg settings to cobbler.")
-  commands.add("refresh-cobbler-repo", refresh_repo, help="Refresh all repos on the cobbler server.")
+  commands.add("install-cobbler-repo",   refresh_repo, help="Refresh all repos on the cobbler server.")
 
 def install_cobbler(args):
   '''
@@ -99,7 +99,7 @@ def refresh_repo(args):
     app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
     time.sleep(10)
 
-  general.shell_exec("cobbler reposync")
+  general.shell_exec("cobbler reposync --tries=3 --no-fail")
   general.shell_exec("cobbler sync")
 
 def _install_cobbler():
@@ -144,7 +144,8 @@ def _modify_coppler_settings():
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
 
   # Config crontab to update repo automagically
-  general.set_config_property("/etc/crontab", "01 \* \* \* \* root cobbler reposync \-\-tries\=3 \-\-no\-fail", "01 * * * * root cobbler reposync --tries=3 --no-fail")
+  value="01 4 * * * syco install-cobbler-repo"
+  general.set_config_property("/etc/crontab", value, value)
 
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + app.get_installation_server() + ":80")
@@ -207,7 +208,7 @@ def _host_add(host_name, ip):
   general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
                      "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     "--mac=" + mac +
+                     "--mac=" + mac + " " +
                      "--ksmeta=\"boot_device=" + str(boot_device) + "\"")
 
 def _guest_add(host_name, ip):
@@ -222,4 +223,4 @@ def _guest_add(host_name, ip):
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     '--ksmeta="disk_var=' + str(disk_var) + '", boot_device="' + str(boot_device) + '"')
+                     '--ksmeta="disk_var=' + str(disk_var) + ', boot_device=' + str(boot_device) + '"')
