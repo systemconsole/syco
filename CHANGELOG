@@ -37,9 +37,9 @@ Version 3.8
 
 Version 3.9 (iptables)
 ----------------------
-* Refactor iptable.py, add a rule chain that can be controlled from other scripts?
-  Or is it good as it is, so the iptables script are not dependent on other script
-* Iptable rules on fo-tp-install should be synced in iptables-setup  
+# Refactor iptable.py, add a rule chain that can be controlled from other scripts?
+# Iptable rules on fo-tp-install should be synced in iptables-setup.
+* Are all iptables rules tested and moved to iptables-setup.
 
 Version 4
 ---------
@@ -47,6 +47,10 @@ Version 4
 * Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
+* Move all host dependent functions from app.py to it's own host/device class.
+  That will be instansiated from config.py.
+  config.getHost("fo-tp-install").get_mac()
+  config.getHost("fo-tp-install").get_ip()
 
 Monitor
 -------
