@@ -1,4 +1,4 @@
-etc/passwordstore
+etc/passwordstore*
 etc/version.cfg
 usr/
 *.pyc
