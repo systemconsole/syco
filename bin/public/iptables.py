@@ -394,6 +394,8 @@ def add_ldap_chain():
 
   if (not os.path.exists('/etc/init.d/ldap')):
     iptables("-A syco_input  -p tcp -j ldap")
+
+  # TODO: Should only be able to contact the syco ldap server.
   iptables("-A syco_output -p tcp -j ldap")
 
   # LDAP with none TLS and with TLS
