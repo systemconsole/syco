@@ -185,7 +185,6 @@ def _refresh_all_profiles():
     '--distro=centos5.5-x86_64 --virt-type=qemu ' +
     '--virt-ram=1024 --virt-cpus=1 ' +
     '--repos="centos5-updates-x86_64" ' +
-    '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/guest.ks ' +
     '--virt-bridge=br1'
   )
@@ -195,7 +194,6 @@ def _refresh_all_profiles():
     'cobbler profile add --name=centos5.5-vm_host ' +
     '--distro=centos5.5-x86_64 ' +
     '--repos="centos5-updates-x86_64" ' +
-    '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/host.ks'
   )
 
@@ -215,6 +213,7 @@ def _host_add(host_name, ip):
                      "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
                      "--mac=" + mac + " " +
+                     '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
                      "--ksmeta=\"boot_device=" + str(boot_device) + "\"")
 
 def _guest_add(host_name, ip):
@@ -229,4 +228,5 @@ def _guest_add(host_name, ip):
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
+                     '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
                      '--ksmeta="disk_var=' + str(disk_var) + ', boot_device=' + str(boot_device) + '"')
