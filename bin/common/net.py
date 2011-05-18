@@ -40,7 +40,7 @@ def get_lan_ip():
   Get one of the external ips on the computer.
 
   Prioritize ips from interface in the following orders
-  "eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"
+  "bond0", eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"
 
   '''
   global lan_ip
@@ -51,7 +51,7 @@ def get_lan_ip():
       pass
 
     if lan_ip == "" or (lan_ip.startswith("127.") and os.name != "nt"):
-      interfaces = ["eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
+      interfaces = ["br1", "bond0", "eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
 
       for ifname in interfaces:
         try:

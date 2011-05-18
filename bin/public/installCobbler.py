@@ -114,6 +114,7 @@ def _install_cobbler():
   # To get cobbler and kvm work correct.
   general.shell_exec("yum -y install qspice-libs yum-utils cobbler koan httpd dhcp")
   general.shell_exec("chkconfig httpd on")
+  general.shell_exec("chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
   general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect true')
@@ -209,12 +210,26 @@ def _remove_all_systems():
 def _host_add(host_name, ip):
   mac = app.get_mac(host_name)
   boot_device = app.get_boot_device(host_name, "cciss/c0d0")
-  general.shell_exec("cobbler system add --profile=centos5.5-vm_host " +
-                     "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
-                     "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     "--mac=" + mac + " " +
-                     '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
-                     "--ksmeta=\"boot_device=" + str(boot_device) + "\"")
+
+  general.shell_exec(
+    "cobbler system add --profile=centos5.5-vm_host " +
+    "--name=" + host_name + " --hostname=" + host_name + " " +
+    '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
+    "--ksmeta=\"boot_device=" + str(boot_device) + "\""
+  )
+
+  # TODO: Configure on install.cfg what devices that should be bonded.
+  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+    "--interface=eth0 --bonding=slave --bonding-master=bond0")
+
+  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+    "--interface=eth1 --bonding=slave --bonding-master=bond0")
+
+  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+    '--interface=bond0 --bonding=master --bonding-opts="miimon=100 mode=1"')
+
+  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+    "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 ")
 
 def _guest_add(host_name, ip):
   boot_device = app.get_boot_device(host_name, "hda")
@@ -228,5 +243,5 @@ def _guest_add(host_name, ip):
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
+                     '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
                      '--ksmeta="disk_var=' + str(disk_var) + ', boot_device=' + str(boot_device) + '"')
