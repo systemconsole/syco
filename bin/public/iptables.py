@@ -387,18 +387,17 @@ def del_nfs_chain():
   iptables("-X nfs_export")
 
 def add_ldap_chain():
-  if (not os.path.exists('/etc/init.d/ldap')):
-    return
-
   app.print_verbose("Add iptables chain for nfs")
   del_ldap_chain()
 
   iptables("-N ldap")
-  iptables("-A syco_input  -p tcp -j ldap")
+
+  if (not os.path.exists('/etc/init.d/ldap')):
+    iptables("-A syco_input  -p tcp -j ldap")
   iptables("-A syco_output -p tcp -j ldap")
 
   # LDAP with none TLS and with TLS
-  iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389 -j allowed_tcp")
+  iptables("-A ldap -m state --state NEW -p tcp --dport 389 -j allowed_tcp")
 
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
