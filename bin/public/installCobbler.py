@@ -244,4 +244,4 @@ def _guest_add(host_name, ip):
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
                      '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
-                     '--ksmeta="disk_var=' + str(disk_var) + ', boot_device=' + str(boot_device) + '"')
+                     '--ksmeta="disk_var=' + str(disk_var) + ' boot_device=' + str(boot_device) + '"')
