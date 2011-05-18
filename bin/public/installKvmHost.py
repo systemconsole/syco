@@ -23,7 +23,7 @@ __status__ = "Production"
 
 import os, re, time
 import app, general, version
-
+import net, iptables
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
@@ -97,35 +97,28 @@ def install_kvmhost(args):
   # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/sect-Virtualization-Network_Configuration-Bridged_networking_with_libvirt.html
 
   # Install network bridge
-  general.shell_exec("yum install bridge-utils")
+  general.shell_exec("yum -y install bridge-utils")
 
   # Setup /etc/sysconfig/network-scripts/ifcfg-eth1
   hwaddr = _get_config_value("/etc/sysconfig/network-scripts/ifcfg-eth1", "HWADDR")
-  _store_file("/etc/sysconfig/network-scripts/ifcfg-eth1",
-"""DEVICE=eth1
-HWADDR=%s
-ONBOOT=yes
-TYPE=Ethernet
-IPV6INIT=no
-USERCTL=no
-BRIDGE=br1
-BOOTPROTO=none""" % hwaddr)
+  _store_file("/etc/sysconfig/network-scripts/ifcfg-bond0",
+    'DEVICE=bond0' + "\n" +
+    'BONDING_OPTS="miimon=100 mode=1"' + "\n" +
+    'ONPARENT=yes' + "\n" +
+    'BOOTPROTO=none' + "\n" +
+    'BRIDGE=br1')
 
   # Setup /etc/sysconfig/network-scripts/ifcfg-br1
   _store_file("/etc/sysconfig/network-scripts/ifcfg-br1",
-"""DEVICE=br1
-TYPE=Bridge
-BOOTPROTO=none
-ONBOOT=yes""")
-
-#      This might be an option for the bridge
-#      DEVICE=br1
-#      TYPE=Bridge
-#      BOOTPROTO=none
-#      GATEWAY=10.100.0.1
-#      IPADDR=10.100.100.211
-#      NETMASK=255.255.0.0
-#      ONBOOT=yes
+    "DEVICE=br1" + "\n" +
+    "TYPE=Bridge" + "\n" +
+    "BOOTPROTO=static" + "\n" +
+    "ONBOOT=yes" + "\n" +
+    "IPADDR=" + net.get_lan_ip() + "\n" +
+    "NETMASK=255.255.0.0" + "\n" +
+    "GATEWAY=" + app.get_gateway_server_ip() + "\n" +
+    "DNS1=" + app.config.get_first_dns_resolver() + "\n" +
+    "DNS2=8.8.8.8")
 
   iptables.add_kvm_chain()
   iptables.save()

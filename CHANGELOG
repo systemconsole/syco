@@ -9,6 +9,11 @@ Version 0.2
 Version 0.3
 -----------
 * installBind
+* iptables-setup
+  http://lonesysadmin.net/2007/10/29/how-to-install-a-tftp-server-on-red-hat-enterprise-linux/
+  # /etc/sysconfig/iptables-config
+  # Add IPTABLES_MODULES="ip_conntrack_tftp"
+
 
 Version 0.4 (Backup)
 --------------------
@@ -93,7 +98,7 @@ Remote-install
 * syco remote-install, should loop and wait for all clients to become alive.
   Then run all commands on them.
 * The guests should use the repos from the cobbler server.
-* The guest should be locally "firewalled" to not be able to reach out to 
+* The guest should be locally "firewalled" to not be able to reach out to
   anything more then they need.
 * Run "remote-install-deamon" on cobbler server.
 * The remote-install deamon should check for changes in install.cfg.
@@ -132,7 +137,7 @@ LDAP
 * Install secondary "read-only" ldap server.
 * Read for more features
   http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
-* nfs mount fo-tp-file?   
+* nfs mount fo-tp-file?
 * vpn create sync with ldap users.
 
 Other
