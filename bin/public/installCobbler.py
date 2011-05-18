@@ -180,18 +180,24 @@ def _import_repos():
 def _refresh_all_profiles():
   # Setup installation profiles and systems
   general.shell_exec("cobbler profile remove --name=centos5.5-vm_guest")
-  general.shell_exec("""cobbler profile add --name=centos5.5-vm_guest \
-      --distro=centos5.5-x86_64 --virt-type=qemu \
-      --virt-ram=1024 --virt-cpus=1 \
-      --repos="centos5-updates-x86_64" \
-      --kickstart=/var/lib/cobbler/kickstarts/guest.ks \
-      --virt-bridge=br1""")
+  general.shell_exec(
+    'cobbler profile add --name=centos5.5-vm_guest ' +
+    '--distro=centos5.5-x86_64 --virt-type=qemu ' +
+    '--virt-ram=1024 --virt-cpus=1 ' +
+    '--repos="centos5-updates-x86_64" ' +
+    '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
+    '--kickstart=/var/lib/cobbler/kickstarts/guest.ks ' +
+    '--virt-bridge=br1'
+  )
 
   general.shell_exec("cobbler profile remove --name=centos5.5-vm_host")
-  general.shell_exec("""cobbler profile add --name=centos5.5-vm_host \
-    --distro=centos5.5-x86_64 \
-    --repos="centos5-updates-x86_64" \
-    --kickstart=/var/lib/cobbler/kickstarts/host.ks""")
+  general.shell_exec(
+    'cobbler profile add --name=centos5.5-vm_host ' +
+    '--distro=centos5.5-x86_64 ' +
+    '--repos="centos5-updates-x86_64" ' +
+    '--name-servers="' + app.config.get_dns_resolvers(", ") + '" ' +
+    '--kickstart=/var/lib/cobbler/kickstarts/host.ks'
+  )
 
 def _cobbler_sync():
   general.shell_exec("cobbler sync")

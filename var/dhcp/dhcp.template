@@ -19,7 +19,7 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
   option subnet-mask 255.255.0.0;
   option broadcast-address 10.100.255.255;
   option routers 10.100.0.1;
-  option domain-name-servers 10.100.0.4, 84.246.88.10, 84.246.88.20;
+  option domain-name-servers 10.100.0.4, 8.8.8.8, 8.8.4.4;
   option domain-name "fareonline.net";
   range  10.100.0.10 10.100.0.100;
 

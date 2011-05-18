@@ -101,9 +101,13 @@ class SycoConfig(ConfigParser.RawConfigParser):
     '''ip of external dns resolver that are configured on all servers.'''
     return self.get_option("general", "dns.external_resolver").split(None, 1)[0]
 
-  def get_dns_resolvers(self):
+  def get_dns_resolvers(self, limiter=" "):
     '''ip list of all dns resolvers that are configured on all servers.'''
-    return str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
+    resolvers = str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
+
+    if (limiter != " "):
+      resolvers = resolvers.replace(' ', limiter)
+    return resolvers
 
   def get_first_dns_resolver(self):
     '''ip of primary dns-resolver.'''
