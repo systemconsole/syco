@@ -254,8 +254,11 @@ def _setup_installation_server_rules():
 
   '''
   app.print_verbose("Setup http access to installation server.")
-  ip=app.get_installation_server_ip()
-  iptables("-A syco_output -p tcp -d " + ip + " -m multiport --dports 80,443 -j allowed_tcp")
+  #ip=app.get_installation_server_ip()
+  #iptables("-A syco_output -p tcp -d " + ip + " -m multiport --dports 80,443 -j allowed_tcp")
+
+  # Need to have this, until all repos are on the installation server.
+  iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
 
 def add_ntp_chain():
   '''
@@ -295,8 +298,8 @@ def add_kvm_chain():
   iptables("-A kvm -m physdev --physdev-is-bridged -j ACCEPT")
 
   # DHCP / TODO: Needed??
-  # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allow_udp")
-  # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allow_udp")
+  # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
+  # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
 def del_kvm_chain():
   app.print_verbose("Delete iptables chain for kvm")
@@ -358,23 +361,23 @@ def add_nfs_chain():
   iptables("-A syco_input  -p ALL -j nfs_export")
   iptables("-A syco_output -p ALL -j nfs_export")
 
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32803 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32769 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 892 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 875 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 662 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2020 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2049 -j allow_tcp")
-  iptables("-A nfs_export -m state --state NEW -p tcp --dport 111 -j allow_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32803 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 32769 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 892 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 875 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 662 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2020 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 2049 -j allowed_tcp")
+  iptables("-A nfs_export -m state --state NEW -p tcp --dport 111 -j allowed_tcp")
 
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 32803 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 32769 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 892 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 875 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 662 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 2020 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 2049 -j allow_udp")
-  iptables("-A nfs_export -m state --state NEW -p udp --dport 111 -j allow_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 32803 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 32769 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 892 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 875 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 662 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 2020 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 2049 -j allowed_udp")
+  iptables("-A nfs_export -m state --state NEW -p udp --dport 111 -j allowed_udp")
 
 def del_nfs_chain():
   app.print_verbose("Delete iptables chain for nfs")
@@ -395,7 +398,7 @@ def add_ldap_chain():
   iptables("-A syco_output -p tcp -j ldap")
 
   # LDAP with none TLS and with TLS
-  iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389 -j allow_tcp")
+  iptables("-A syco_ldap -m state --state NEW -p tcp --dport 389 -j allowed_tcp")
 
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
@@ -413,28 +416,29 @@ def add_cobbler_chain():
 
   iptables("-N cobbler")
   iptables("-A syco_input -p ALL -j cobbler")
+  iptables("-A syco_output -p ALL -j cobbler")
 
   # TFTP - TCP/UDP
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 69 -j allow_tcp")
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 69 -j allow_udp")
+  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
+  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 69 -j allowed_udp")
 
   # NTP
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 123 -j allow_udp")
+  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 123 -j allowed_udp")
 
   # DHCP TODO: In/Out
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 67 -j allow_udp")
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 68 -j allow_udp")
+  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
+  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
   # HTTP/HTTPS
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 80 -j allow_tcp")
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 443 -j allow_tcp")
+  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 80 -j allowed_tcp")
+  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 443 -j allowed_tcp")
 
   # Syslog for cobbler
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 25150 -j allow_udp")
+  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 25150 -j allowed_udp")
 
   # Koan XMLRPC ports
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25151 -j allow_tcp")
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25152 -j allow_tcp")
+  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25151 -j allowed_tcp")
+  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25152 -j allowed_tcp")
 
 def del_cobbler_chain():
   app.print_verbose("Delete iptables chain for cobbler")
@@ -490,11 +494,11 @@ def add_openvpn_chain():
   iptables("-A syco_nat_postrouting -p ALL -j openvpn_postrouting")
 
   iptables.iptables("-t nat -A syco_postrouting -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
-  iptables.iptables("-A syco_input -m state --state NEW -m tcp -p tcp --dport 1194 -j allow_tcp")
+  iptables.iptables("-A syco_input -m state --state NEW -m tcp -p tcp --dport 1194 -j allowed_tcp")
 
   # Ports to allow to use on the network.
-  iptables.iptables("-A syco_input   -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allow_tcp")
-  iptables.iptables("-A syco_forward -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allow_tcp")
+  iptables.iptables("-A syco_input   -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
+  iptables.iptables("-A syco_forward -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
 
   # To protect the network.
   iptables.iptables("-A syco_forward -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
