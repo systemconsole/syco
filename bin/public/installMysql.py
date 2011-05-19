@@ -63,6 +63,7 @@ __status__ = "Production"
 
 import fileinput, shutil, os
 import app, general, version
+import iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -83,7 +84,7 @@ def install_mysql(args):
   app.print_verbose("Install mysql version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
   version_obj.check_executed()
-  
+
   if (len(args) != 3):
     raise Exception("syco install-mysql [server-id] [innodb-buffer-pool-size]")
 
@@ -99,6 +100,10 @@ def install_mysql(args):
     general.shell_exec("chkconfig mysqld on ")
     if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
       raise Exception("Couldn't install mysql-server")
+
+  # Configure iptables
+  iptables.add_mysql_chain()
+  iptables.save()
 
   # Disable mysql history logging
   if (os.access("/root/.mysql_history", os.F_OK)):
