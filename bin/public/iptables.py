@@ -312,12 +312,12 @@ def add_mysql_chain():
     return
 
   app.print_verbose("Add iptables chain for mysql")
-  iptables("-N mysql_import")
+  iptables("-N mysql_input")
   iptables("-N mysql_output")
-  iptables("-A syco_input  -p ALL -j mysql_import")
-  iptables("-A syco_output  -p ALL -j mysql_output")
+  iptables("-A syco_input  -p ALL -j mysql_input")
+  iptables("-A syco_output -p ALL -j mysql_output")
 
-  iptables("-A mysql_import -p TCP -m multiport --dports 3306 -j allowed_tcp")
+  iptables("-A mysql_input -p TCP -m multiport --dports 3306 -j allowed_tcp")
 
   # Required for replication.
   iptables("-A mysql_output -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed_tcp")
@@ -325,22 +325,26 @@ def add_mysql_chain():
 
 def del_mysql_chain():
   app.print_verbose("Delete iptables chain for mysql")
-  iptables("-D syco_input  -p ALL -j mysql_import")
-  iptables("-F mysql_import")
-  iptables("-X mysql_import")
+  iptables("-D syco_input  -p ALL -j mysql_input")
+  iptables("-F mysql_input")
+  iptables("-X mysql_input")
+
+  iptables("-D syco_output -p ALL -j mysql_output")
+  iptables("-F mysql_output")
+  iptables("-X mysql_output")
 
 def add_httpd_chain():
   if (not os.path.exists('/etc/init.d/httpd')):
     return
 
   app.print_verbose("Add iptables chain for httpd")
-  iptables("-N httpd_import")
+  iptables("-N httpd_input")
   iptables("-N httpd_output")
-  iptables("-A syco_input  -p ALL -j httpd_import")
+  iptables("-A syco_input  -p ALL -j httpd_input")
   iptables("-A syco_output  -p ALL -j httpd_output")
 
   app.print_verbose("Setup httpd input rule.")
-  iptables("-A httpd_import -p TCP -m multiport --dports 80,443 -j allowed_tcp")
+  iptables("-A httpd_input -p TCP -m multiport --dports 80,443 -j allowed_tcp")
 
   # We assume this is an application server that requires connection to the
   # syco mysql server.
@@ -349,9 +353,13 @@ def add_httpd_chain():
 
 def del_httpd_chain():
   app.print_verbose("Delete iptables chain for httpd")
-  iptables("-D syco_input  -p ALL -j httpd_import")
-  iptables("-F httpd_import")
-  iptables("-X httpd_import")
+  iptables("-D syco_input  -p ALL -j httpd_input")
+  iptables("-F httpd_input")
+  iptables("-X httpd_input")
+
+  iptables("-D syco_output  -p ALL -j httpd_output")
+  iptables("-F httpd_output")
+  iptables("-X httpd_output")
 
 def add_nfs_chain():
   del_nfs_chain()
