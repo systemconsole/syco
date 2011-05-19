@@ -146,7 +146,7 @@ def _create_kvm_snapshot_partition():
     general.shell_exec("mke2fs -j /dev/VolGroup00/qemu")
     general.shell_exec("mkdir /var/lib/libvirt/qemu")
     general.shell_exec("mount /dev/VolGroup00/qemu /var/lib/libvirt/qemu")
-    general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 qemu/")
+    general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 /var/lib/libvirt/qemu")
 
     # Automount the new partion when rebooting.
     value = "/dev/VolGroup00/qemu    /var/lib/libvirt/qemu   ext3    defaults        1 2"
