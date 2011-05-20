@@ -46,8 +46,6 @@ def install_kvmhost(args):
     _abort_kvm_host_installation()
     return
 
-  _create_kvm_snapshot_partition()
-
   # Install the kvm packages
   general.shell_exec("yum -qy install kvm.x86_64")
 
@@ -58,6 +56,9 @@ def install_kvmhost(args):
 
   # Provides the virt-install command for creating virtual machines.
   general.shell_exec("yum -qy install python-virtinst")
+
+  # Before libvirtd starts, create a snapshot partion for qemu.
+  _create_kvm_snapshot_partition()
 
   # Start virsh
   general.shell_exec("service libvirtd start")
@@ -144,7 +145,7 @@ def _create_kvm_snapshot_partition():
   if ("/dev/VolGroup00/qemu" not in result):
     general.shell_exec("lvcreate -n qemu -L 100G VolGroup00")
     general.shell_exec("mke2fs -j /dev/VolGroup00/qemu")
-    general.shell_exec("mkdir /var/lib/libvirt/qemu")
+    general.shell_exec("mkdir -p /var/lib/libvirt/qemu")
     general.shell_exec("mount /dev/VolGroup00/qemu /var/lib/libvirt/qemu")
     general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 /var/lib/libvirt/qemu")
 
