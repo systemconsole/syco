@@ -45,6 +45,9 @@ Version 3.9 (iptables)
 # Refactor iptable.py, add a rule chain that can be controlled from other scripts?
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
 * Are all iptables rules tested and moved to iptables-setup.
+* Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp. 
+  This will optimize all rules by "50%".
+* Don't try to delete chains, when they don't exist. To remove the error message from iptables.
 
 Version 4
 ---------
@@ -119,6 +122,10 @@ Version 5
   asadmin console. The user can login to a remote host and run local commands.
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+
+STABILITY
+---------
+* install-mysql-replication should wait until users are installed on primary database.
 
 LDAP
 ----
