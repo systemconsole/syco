@@ -180,10 +180,6 @@ def _setup_general_rules():
   iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
   iptables("-A FORWARD -p tcp -j bad_tcp_packets")
 
-  app.print_verbose("Standard icmp_packets from anywhere.")
-  iptables("-A INPUT  -p ICMP -j icmp_packets")
-  iptables("-A OUTPUT -p ICMP -j icmp_packets")
-
   app.print_verbose("From Localhost interface to Localhost IP's.")
   iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
   iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT")
@@ -192,6 +188,12 @@ def _setup_general_rules():
   iptables("-A OUTPUT  -p ALL -j syco_output")
   iptables("-A FORWARD -p ALL -j syco_forward")
   iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
+
+  # ICMP is checked after all syco rules, we don't expect to get
+  # as many ICMP as syco rules. This is a small optimization.
+  app.print_verbose("Standard icmp_packets from anywhere.")
+  iptables("-A INPUT  -p ICMP -j icmp_packets")
+  iptables("-A OUTPUT -p ICMP -j icmp_packets")
 
   app.print_verbose("Allow all established and related packets incoming from anywhere.")
   iptables("-A INPUT -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
