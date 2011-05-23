@@ -27,7 +27,7 @@ import install
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 def build_commands(commands):
   commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
@@ -42,6 +42,9 @@ def install_cobbler(args):
   app.print_verbose("Install cobbler version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("installCobbler", SCRIPT_VERSION)
   version_obj.check_executed()
+
+  # Initialize password.
+  app.get_root_password_hash()
 
   _install_cobbler()
 
@@ -142,7 +145,10 @@ def _modify_coppler_settings():
 
   shutil.copyfile(app.SYCO_PATH + "/var/kickstart/host.ks", "/var/lib/cobbler/kickstarts/host.ks")
   shutil.copyfile(app.SYCO_PATH + "/var/kickstart/guest.ks", "/var/lib/cobbler/kickstarts/guest.ks")
+
+  # Configure DHCP
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
+  general.shell_exec("/etc/init.d/dhcpd restart")
 
   # Config crontab to update repo automagically
   value="01 4 * * * syco install-cobbler-repo"
@@ -152,6 +158,7 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + app.get_installation_server() + ":80")
 
   general.shell_exec("/etc/init.d/httpd restart")
+  
   # TODO: Do we need no_return=True
   # general.shell_exec("/etc/init.d/cobblerd restart", no_return=True)
   general.shell_exec("/etc/init.d/cobblerd restart")
@@ -164,36 +171,36 @@ def _modify_coppler_settings():
   general.shell_exec("cobbler check")
 
 def _import_repos():
-  if (os.access("/var/www/cobbler/ks_mirror/centos5.5-x86_64", os.F_OK)):
-    app.print_verbose("Centos5.5-x86_64 already imported")
+  if (os.access("/var/www/cobbler/ks_mirror/centos5.6-x86_64", os.F_OK)):
+    app.print_verbose("Centos5.6-x86_64 already imported")
   else:
-    general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/os/x86_64/ --name=centos5.5 --arch=x86_64")
+    general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.6/os/x86_64/ --name=centos5.6 --arch=x86_64")
 
   if (os.access("/var/www/cobbler/repo_mirror/centos5-updates-x86_64", os.F_OK)):
     app.print_verbose("Centos5-updates-x86_64 repo already imported")
   else:
-    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.5/updates/x86_64/")
+    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.6/updates/x86_64/")
     general.shell_exec("cobbler reposync")
 
-  general.shell_exec("cobbler distro remove --name centos5.5-xen-x86_64")
-  general.shell_exec("cobbler profile remove --name centos5.5-x86_64")
+  general.shell_exec("cobbler distro remove --name centos5.6-xen-x86_64")
+  general.shell_exec("cobbler profile remove --name centos6-x86_64")
 
 def _refresh_all_profiles():
   # Setup installation profiles and systems
-  general.shell_exec("cobbler profile remove --name=centos5.5-vm_guest")
+  general.shell_exec("cobbler profile remove --name=centos5.6-vm_guest")
   general.shell_exec(
-    'cobbler profile add --name=centos5.5-vm_guest ' +
-    '--distro=centos5.5-x86_64 --virt-type=qemu ' +
+    'cobbler profile add --name=centos5.6-vm_guest ' +
+    '--distro=centos5.6-x86_64 --virt-type=qemu ' +
     '--virt-ram=1024 --virt-cpus=1 ' +
     '--repos="centos5-updates-x86_64" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/guest.ks ' +
     '--virt-bridge=br1'
   )
 
-  general.shell_exec("cobbler profile remove --name=centos5.5-vm_host")
+  general.shell_exec("cobbler profile remove --name=centos5.6-vm_host")
   general.shell_exec(
-    'cobbler profile add --name=centos5.5-vm_host ' +
-    '--distro=centos5.5-x86_64 ' +
+    'cobbler profile add --name=centos5.6-vm_host ' +
+    '--distro=centos5.6-x86_64 ' +
     '--repos="centos5-updates-x86_64" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/host.ks'
   )
@@ -212,7 +219,7 @@ def _host_add(host_name, ip):
   boot_device = app.get_boot_device(host_name, "cciss/c0d0")
 
   general.shell_exec(
-    "cobbler system add --profile=centos5.5-vm_host " +
+    "cobbler system add --profile=centos5.6-vm_host " +
     "--name=" + host_name + " --hostname=" + host_name + " " +
     '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
     "--ksmeta=\"boot_device=" + str(boot_device) + "\""
@@ -238,7 +245,7 @@ def _guest_add(host_name, ip):
   ram = app.get_ram(host_name)
   cpu = app.get_cpu(host_name)
 
-  general.shell_exec("cobbler system add --profile=centos5.5-vm_guest "
+  general.shell_exec("cobbler system add --profile=centos5.6-vm_guest "
                      "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +

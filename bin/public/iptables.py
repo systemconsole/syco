@@ -427,7 +427,10 @@ def add_cobbler_chain():
 
   iptables("-N cobbler")
   iptables("-A syco_input -p ALL -j cobbler")
-  iptables("-A syco_output -p ALL -j cobbler")
+  iptables("-A syco_input -p ALL -j cobbler")
+
+  iptables("-N cobbler_output")
+  iptables("-A syco_output -p ALL -j cobbler_output")
 
   # TFTP - TCP/UDP
   iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
@@ -451,12 +454,19 @@ def add_cobbler_chain():
   iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25151 -j allowed_tcp")
   iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25152 -j allowed_tcp")
 
+  # RSYNC
+  iptables("-A cobbler_output -m state --state NEW -m tcp -p tcp --dport 873 -j allowed_tcp")
+
 def del_cobbler_chain():
   app.print_verbose("Delete iptables chain for cobbler")
   iptables("-D syco_input  -p ALL -j cobbler")
   iptables("-D syco_output -p ALL -j cobbler")
   iptables("-F cobbler")
   iptables("-X cobbler")
+
+  iptables("-D syco_input -p ALL -j cobbler_output")
+  iptables("-F cobbler_output")
+  iptables("-X cobbler_output")
 
 def add_glassfish_chain():
   if (
