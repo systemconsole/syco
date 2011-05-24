@@ -213,10 +213,10 @@ def _install_software():
     # Add a new group for glassfish administration.
     # This can be used for all users that should be able to
     # adminitrate glassfish.
-    general.shell_exec("groupadd glassfishadm -g 550")
+    general.shell_exec("groupadd glassfishadm -g 200")
 
     # Give glassfish it's own user.
-    general.shell_exec("adduser -m -r --shell /bin/bash -u150 -g550 glassfish")
+    general.shell_exec("adduser -m -r --shell /bin/bash -u200 -g200 glassfish")
 
   _install_jdk()
   _install_glassfish()
@@ -256,7 +256,7 @@ def _install_glassfish():
     if (not os.access(GLASSFISH_PATH, os.F_OK)):
       os.mkdir(GLASSFISH_PATH)
       os.chmod(GLASSFISH_PATH, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
-      os.chown(GLASSFISH_PATH, 150, 550)
+      os.chown(GLASSFISH_PATH, 200, 200)
 
     # Set executeion permissions and run the installation.
     if ".zip" in GLASSFISH_INSTALL_FILE:
@@ -494,7 +494,7 @@ def _update_glassfish():
   general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
   general.shell_exec(GLASSFISH_PATH + "bin/pkg image-update", user="glassfish")
   general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " start")
-  
+
 #
 # Questions?
 #* Ska vi kora fo och fp pa samma server cluster?
