@@ -185,28 +185,32 @@ def get_mysql_root_password():
   '''The root password for the mysql service.'''
   return _get_password("mysql", "root")
 
-def get_mysql_fp_integration_password():
-  '''A user password for the mysql service, used by Farepayment'''
-  return _get_password("mysql", "fp_integration")
+def get_mysql_password(env):
+  '''A user password for the mysql service.'''
+  return _get_password("mysql", env)
 
-def get_mysql_fp_stable_password():
-  '''A user password for the mysql service, used by Farepayment'''
-  return _get_password("mysql", "fp_stable")
+def get_mysql_integration_password():
+  '''A user password for the mysql service.'''
+  return _get_password("mysql", "integration")
 
-def get_mysql_fp_uat_password():
-  '''A user password for the mysql service, used by Farepayment'''
-  return _get_password("mysql", "fp_uat")
+def get_mysql_stable_password():
+  '''A user password for the mysql service.'''
+  return _get_password("mysql", "stable")
 
-def get_mysql_fp_production_password():
-  '''A user password for the mysql service, used by Farepayment'''
-  return _get_password("mysql", "fp_production")
+def get_mysql_uat_password():
+  '''A user password for the mysql service.'''
+  return _get_password("mysql", "uat")
+
+def get_mysql_production_password():
+  '''A user password for the mysql service.'''
+  return _get_password("mysql", "production")
 
 def init_mysql_passwords():
   get_mysql_root_password()
-  get_mysql_fp_integration_password()
-  get_mysql_fp_stable_password()
-  get_mysql_fp_uat_password()
-  get_mysql_fp_production_password()
+  get_mysql_integration_password()
+  get_mysql_stable_password()
+  get_mysql_uat_password()
+  get_mysql_production_password()
 
 def init_all_passwords():
   '''
