@@ -41,7 +41,7 @@ SYCO_USR_PATH = SYCO_PATH + "usr/"
 SYCO_ETC_PATH = SYCO_PATH + "etc/"
 
 # Files (rpm etc.) that should be installed by syco, are temporary stored here.
-INSTALL_DIR = SYCO_PATH + "tmp/install/"
+INSTALL_DIR = SYCO_PATH + "installtemp/"
 
 # All passwords used by syco are stored in this enrypted file.
 PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"

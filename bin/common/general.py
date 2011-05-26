@@ -69,6 +69,7 @@ def create_install_dir():
   be installed.
 
   '''
+  app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     os.makedirs(app.INSTALL_DIR)
 

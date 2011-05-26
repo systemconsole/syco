@@ -53,7 +53,6 @@ GLASSFISH_DOMAINS_PATH = GLASSFISH_PATH + "glassfish/domains/"
 # java requires to exeute code from the java dir.
 JAVA_TEMP_PATH = GLASSFISH_PATH + "tmp"
 
-
 GLASSFISH_INSTALL_FILE = "glassfish-3.0.1.zip"
 GLASSFISH_REPO_URL="http://download.java.net/glassfish/3.0.1/release/" + GLASSFISH_INSTALL_FILE
 
@@ -80,9 +79,13 @@ def install_glassfish(args):
   The main installation function the for the glassfish, dependencies and plugins.
 
   '''
-  app.print_verbose("Install glassfish3 version: %d" % SCRIPT_VERSION)
+  app.print_verbose("Install " + GLASSFISH_VERSION + " script version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.check_executed()
+
+  # Ask user for passwords
+  app.get_glassfish_master_password()
+  app.get_glassfish_admin_password()
 
   try:
 
@@ -180,10 +183,10 @@ def _install_software():
     # Add a new group for glassfish administration.
     # This can be used for all users that should be able to
     # adminitrate glassfish.
-    general.shell_exec("groupadd glassfishadm -g 200")
+    general.shell_exec("/usr/sbin/groupadd glassfishadm -g 200")
 
     # Give glassfish it's own user.
-    general.shell_exec("adduser -m -r --shell /bin/bash -u200 -g200 glassfish")
+    general.shell_exec("/usr/sbin/adduser -m -r --shell /bin/bash -u200 -g200 glassfish")
 
   _install_jdk()
   _install_glassfish()
@@ -228,6 +231,7 @@ def _install_glassfish():
 
     # Set executeion permissions and run the installation.
     if ".zip" in GLASSFISH_INSTALL_FILE:
+      general.shell_exec("yum -qy install unzip")
       general.shell_exec("unzip " + GLASSFISH_INSTALL_FILE + " -d " + GLASSFISH_PATH, user="glassfish")
       general.shell_exec("mv " + GLASSFISH_PATH + "glassfishv3/* " + GLASSFISH_PATH + "glassfishv3/.* " + GLASSFISH_PATH, user="glassfish")
     else:
@@ -237,6 +241,9 @@ def _install_glassfish():
 
     # Install the start script
     if (not os.access("/etc/init.d/" + GLASSFISH_VERSION, os.F_OK)):
+      # The start script has a dependency on nc
+      general.shell_exec("yum -y install nc")
+
       shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION, "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
@@ -258,7 +265,6 @@ def _install_eclipselink():
   http://blogs.sun.com/GlassFishPersistence/entry/updating_eclipselink_bundles_in_glassfish
 
   '''
-  general.create_install_dir()
   os.chdir(app.INSTALL_DIR)
   if (not os.access("eclipselink-plugins-2.1.2.v20101206-r8635.zip", os.F_OK)):
     general.download_file("http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
@@ -309,9 +315,9 @@ def _set_domain_passwords(domain_name, admin_port):
   # Create new cert for https
   # TODO move the fareoffice info to install.cfg
   os.chdir(GLASSFISH_DOMAINS_PATH + domain_name + "/config/")
-  general.shell_exec("keytool -delete -alias s1as -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
-  general.shell_exec('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass ' + app.get_glassfish_master_password() + ' -keystore keystore.jks -storepass ' + app.get_glassfish_master_password(), user="glassfish")
-  general.shell_exec("keytool -list -keystore keystore.jks -storepass " + app.get_glassfish_master_password(), user="glassfish")
+  general.shell_exec("keytool -delete -alias s1as -keystore keystore.jks -storepass \"" + app.get_glassfish_master_password() + "\"", user="glassfish")
+  general.shell_exec('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass \"' + app.get_glassfish_master_password() + '\" -keystore keystore.jks -storepass \"' + app.get_glassfish_master_password() + "\"", user="glassfish")
+  general.shell_exec("keytool -list -keystore keystore.jks -storepass \"" + app.get_glassfish_master_password() + "\"", user="glassfish")
 
   asadmin_exec("start-domain " + domain_name)
 
