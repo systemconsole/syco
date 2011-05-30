@@ -116,8 +116,8 @@ def _install_cobbler():
 
   # To get cobbler and kvm work correct.
   general.shell_exec("yum -y install qspice-libs yum-utils cobbler koan httpd dhcp")
-  general.shell_exec("chkconfig httpd on")
-  general.shell_exec("chkconfig dhcpd on")
+  general.shell_exec("/sbin/chkconfig httpd on")
+  general.shell_exec("/sbin/chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
   general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect true')
@@ -158,7 +158,7 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + app.get_installation_server() + ":80")
 
   general.shell_exec("/etc/init.d/httpd restart")
-  
+
   # TODO: Do we need no_return=True
   # general.shell_exec("/etc/init.d/cobblerd restart", no_return=True)
   general.shell_exec("/etc/init.d/cobblerd restart")

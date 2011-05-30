@@ -212,9 +212,9 @@ def _disable_ip6_support():
 
 def _disable_service(name):
   '''Disable autostartup of a service and stop the service'''
-  process = subprocess.Popen('chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen('/sbin/chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
   if (process.communicate()[0][:-1] == name):
-    subprocess.call(["chkconfig", name,  "off"])
+    subprocess.call(["/sbin/chkconfig", name,  "off"])
     app.print_verbose("   chkconfig " + name + " off")
 
   process=subprocess.Popen('service ' + name + ' status', shell=True, stdout=subprocess.PIPE)

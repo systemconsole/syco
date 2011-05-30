@@ -138,7 +138,7 @@ def uninstall_glassfish():
     os.chdir("/tmp")
     general.shell_exec("/etc/init.d/" + GLASSFISH_VERSION + " stop")
     general.shell_exec("rm -rf " + GLASSFISH_PATH)
-    general.shell_exec("chkconfig --del " + GLASSFISH_VERSION)
+    general.shell_exec("/sbin/chkconfig --del " + GLASSFISH_VERSION)
     general.shell_exec("rm " + "/etc/init.d/" + GLASSFISH_VERSION)
 
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
@@ -246,8 +246,8 @@ def _install_glassfish():
 
       shutil.copy(app.SYCO_PATH + "var/glassfish/" + GLASSFISH_VERSION, "/etc/init.d/" + GLASSFISH_VERSION)
       general.shell_exec("chmod 0755 " + "/etc/init.d/" + GLASSFISH_VERSION)
-      general.shell_exec("chkconfig --add " + GLASSFISH_VERSION)
-      general.shell_exec("chkconfig --level 3 " + GLASSFISH_VERSION + " on")
+      general.shell_exec("/sbin/chkconfig --add " + GLASSFISH_VERSION)
+      general.shell_exec("/sbin/chkconfig --level 3 " + GLASSFISH_VERSION + " on")
 
       general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
       general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())

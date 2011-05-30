@@ -74,7 +74,7 @@ def install_openvpn_server(args):
   iptables.save()
 
   general.shell_exec("/etc/init.d/openvpn restart")
-  general.shell_exec("chkconfig openvpn on")
+  general.shell_exec("/sbin/chkconfig openvpn on")
 
   build_client_certs(args)
 

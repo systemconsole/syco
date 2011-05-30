@@ -46,7 +46,7 @@ def install_ntp_server(args):
 def install_ntp_client(args):
   ip = app.config.get_ntp_server_ip()
   install_ntp(ip)
-  
+
 def install_ntp(ntp_server_ip = False):
   '''
   Install and configure the ntp-server on the local host.
@@ -60,7 +60,7 @@ def install_ntp(ntp_server_ip = False):
   if (not os.access("/etc/ntp.conf", os.F_OK)):
     general.shell_exec("yum -y install ntp")
 
-  general.shell_exec("chkconfig ntpd on")
+  general.shell_exec("/sbin/chkconfig ntpd on")
 
   iptables.add_ntp_chain()
   iptables.save()

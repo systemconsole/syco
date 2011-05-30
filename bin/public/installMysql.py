@@ -97,7 +97,7 @@ def install_mysql(args):
   # Install the mysql-server packages.
   if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):
     general.shell_exec("yum -y install mysql-server")
-    general.shell_exec("chkconfig mysqld on ")
+    general.shell_exec("/sbin/chkconfig mysqld on ")
     if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
       raise Exception("Couldn't install mysql-server")
 

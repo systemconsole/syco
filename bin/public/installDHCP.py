@@ -45,7 +45,7 @@ def install_dhcp(args):
   version_obj.check_executed()
 
   general.shell_exec("yum -y install dhcp")
-  general.shell_exec("chkconfig dhcpd on")
+  general.shell_exec("/sbin/chkconfig dhcpd on")
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp3.conf", "/etc/dhcpd.conf")
   general.set_config_property("/etc/dhcpd.conf", "\$\{IP\}", net.get_ip_class_c(net.get_lan_ip()))
   general.set_config_property("/etc/sysconfig/dhcpd", ".*DHCPDARGS.*", "DHCPDARGS=eth0")
@@ -58,7 +58,7 @@ def uninstall_dhcp(args):
 
   '''
   general.shell_exec("service dhcpd stop")
-  general.shell_exec("chkconfig dhcpd off")
+  general.shell_exec("/sbin/chkconfig dhcpd off")
   general.shell_exec("rm /etc/dhcpd.conf")
   general.set_config_property("/etc/sysconfig/dhcpd", ".*DHCPDARGS.*", "DHCPDARGS=")
   general.shell_exec("yum -y erase dhcp")

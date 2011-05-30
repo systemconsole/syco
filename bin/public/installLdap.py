@@ -100,7 +100,7 @@ def install_ldap_server(args):
 
   shell_exec("chown -R ldap /var/lib/ldap")
   shell_exec("/etc/init.d/ldap start")
-  shell_exec("chkconfig ldap on")
+  shell_exec("/sbin/chkconfig ldap on")
 
   iptables.add_ldap_chain()
   iptables.save()

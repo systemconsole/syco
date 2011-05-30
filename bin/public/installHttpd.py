@@ -121,7 +121,7 @@ def _install_httpd():
   # Install yum packages for apache httpd
   if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
     general.shell_exec("yum -y install httpd mod_ssl")
-    general.shell_exec("chkconfig httpd on")
+    general.shell_exec("/sbin/chkconfig httpd on")
 
   # Copy config files
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf/httpd.conf /etc/httpd/conf/")
