@@ -45,13 +45,13 @@ import iptables
 # once on the same host.
 SCRIPT_VERSION = 1
 
-MODSEC_INSTALL_FILE = "modsecurity-apache_2.5.13"
+MODSEC_INSTALL_FILE = "modsecurity-apache_2.6.0"
 MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
 MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
 MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
 
-MODSEC_RULES_FILE = "modsecurity-crs_2.1.2"
+MODSEC_RULES_FILE = "modsecurity-crs_2.2.0"
 
 def build_commands(commands):
   '''
@@ -82,14 +82,6 @@ def install_httpd(args):
 
   version_obj.mark_executed()
 
-def set_file_permissions():
-  general.shell_exec("chmod 644 /etc/httpd/conf.d/*")
-  general.shell_exec("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/*")
-
-  general.shell_exec("chown -R root:root /etc/httpd/modsecurity.d")
-  general.shell_exec("chmod 755 /etc/httpd/modsecurity.d")
-  general.shell_exec("chcon -R system_u:object_r:httpd_config_t:s0 /etc/httpd/modsecurity.d")
-
 def uninstall_httpd(args):
   '''
   Uninstal apache httpd.
@@ -109,7 +101,22 @@ def uninstall_httpd(args):
 
   version_obj = version.Version("Installhttpd", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
-  
+
+def set_file_permissions():
+  '''
+  Set file permissions on all httpd dependent folders.
+
+  This function can be called from application installation script, to set all
+  permissions after the applications apache conf files have been installed.
+
+  '''
+  general.shell_exec("chmod 644 /etc/httpd/conf.d/*")
+  general.shell_exec("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/*")
+
+  general.shell_exec("chown -R root:root /etc/httpd/modsecurity.d")
+  general.shell_exec("chmod 755 /etc/httpd/modsecurity.d")
+  general.shell_exec("chcon -R system_u:object_r:httpd_config_t:s0 /etc/httpd/modsecurity.d")
+
 def _install_httpd():
   # Install yum packages for apache httpd
   if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
@@ -120,7 +127,6 @@ def _install_httpd():
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf/httpd.conf /etc/httpd/conf/")
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/001-common.conf /etc/httpd/conf.d/")
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/002-ssl.conf /etc/httpd/conf.d/ssl.conf")
-  general.shell_exec("mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/002-ssl.conf")
 
   # Secure httpd.conf
   general.set_config_property("/etc/httpd/conf/httpd.conf", '^ServerAdmin.*', 'ServerAdmin ' + app.config.get_admin_email())
@@ -134,7 +140,11 @@ def _install_httpd():
 
 def _install_mod_security():
   if (not os.access("/usr/lib64/httpd/modules/mod_security2.so", os.F_OK)):
-    general.shell_exec("yum -y install httpd-devel apr apr-util pcre libxml2 make gcc pcre-devel libxml2-devel")
+    # Needed for running modsec.
+    general.shell_exec("yum -y install pkgconfig libxml2 libxml2-devel curl lua")
+
+    # Needed for compiling modsec
+    general.shell_exec("yum -y install httpd-devel apr apr-util pcre make gcc pcre-devel curl-devel lua-devel")
 
     # Downloading and verify the pgp key for modsec.
     general.download_file(MODSEC_REPO_URL)
@@ -149,7 +159,7 @@ def _install_mod_security():
     # Compile and install modsec
     os.chdir(app.INSTALL_DIR)
     general.shell_exec("tar zxf " + MODSEC_INSTALL_FILE + ".tar.gz")
-    os.chdir(app.INSTALL_DIR + MODSEC_INSTALL_FILE + "/apache2")
+    os.chdir(app.INSTALL_DIR + MODSEC_INSTALL_FILE)
     general.shell_exec("./configure")
     general.shell_exec("make")
     general.shell_exec("make install")
@@ -160,8 +170,9 @@ def _install_mod_security():
     # TODO: See if their is any other dependencies to thease packages.
     general.shell_exec("yum -y erase httpd-devel apr-devel apr-util-devel "+
       "cpp gcc cyrus-sasl-devel db4-devel expat-devel glibc-devel " +
-      "glibc-headers kernel-headers openldap-devel pkgconfig pcre-devel " +
-      "libxml2-devel zlib-devel")
+      "glibc-headers kernel-headers openldap-devel pcre-devel " +
+      "zlib-devel" +
+      "curl-devel lua-devel e2fsprogs-devel keyutils-libs-devel krb5-devel libidn-devel libselinux-devel libsepol-devel openssl-devel")
 
   # Install mode-sec config files.
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
@@ -171,7 +182,7 @@ def _update_modsec_rules():
   general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz.asc/download", MODSEC_RULES_FILE + ".tar.gz.asc")
 
   os.chdir(app.INSTALL_DIR)
-  general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 4EF28948")
+  general.shell_exec("gpg --keyserver keyserver.ubuntu.com --recv-keys 9624FCD2")
   signature = general.shell_exec("gpg " + MODSEC_RULES_FILE + ".tar.gz.asc")
   if (r'Good signature from "Ryan Barnett (OWASP Core Rule Set Project Leader) <rbarnett@trustwave.com>"' not in signature):
     raise Exception("Invalid signature.")
