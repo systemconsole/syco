@@ -69,8 +69,8 @@ def create_install_dir():
   be installed.
 
   '''
-  app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
+    app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
     os.makedirs(app.INSTALL_DIR)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
@@ -100,7 +100,7 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
       cmd += " --user=" + remote_user
 
     if (remote_password):
-      cmd += " --password=" + remote_password
+      cmd += " --password=\"" + remote_password + "\""
 
     shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
