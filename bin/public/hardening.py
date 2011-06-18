@@ -7,6 +7,11 @@ http://www.linuxforums.org/forum/red-hat-fedora-linux/166631-redhat-centos-harde
 http://www.nsa.gov/ia/_files/factshe...phlet-i731.pdf
 http://wiki.centos.org/HowTos/OS_Protection
 
+CHANGELOG:
+
+Version 2
+- Forward all mail to root to admin_email in install.cfg
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -24,7 +29,7 @@ import app, general, version
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 def build_commands(commands):
   commands.add("hardening", hardening, help="Harden the computer by removeing unnessary services add security fixes etc.")
@@ -49,6 +54,7 @@ def hardening(args):
   _clear_login_screen()
   _yum_update()
   _disable_ip6_support()
+  _forward_root_mail()
 
   version_obj.mark_executed()
 
@@ -206,15 +212,20 @@ def _disable_ip6_support():
   general.set_config_property("/etc/sysconfig/network", "^NETWORKING_IPV6=.*$","NETWORKING_IPV6=no")
   general.shell_exec("service network restart")
 
+def _forward_root_mail():
+  app.print_verbose("Forward all root email to " + app.config.get_admin_email())
+  general.set_config_property("/etc/aliases", ".*root[:].*", "root:		" + app.config.get_admin_email())
+  general.shell_exec("/usr/bin/newaliases")
+
 #
 # Helper functions
 #
 
 def _disable_service(name):
   '''Disable autostartup of a service and stop the service'''
-  process = subprocess.Popen('/sbin/chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen('chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
   if (process.communicate()[0][:-1] == name):
-    subprocess.call(["/sbin/chkconfig", name,  "off"])
+    subprocess.call(["chkconfig", name,  "off"])
     app.print_verbose("   chkconfig " + name + " off")
 
   process=subprocess.Popen('service ' + name + ' status', shell=True, stdout=subprocess.PIPE)
