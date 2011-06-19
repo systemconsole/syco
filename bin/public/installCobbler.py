@@ -51,8 +51,7 @@ def install_cobbler(args):
   iptables.add_cobbler_chain()
   iptables.save()
 
-  _modify_coppler_settings()
-  _import_repos()
+  _modify_coppler_settings()  
   _refresh_all_profiles()
   setup_all_systems(args)
   _cobbler_sync
@@ -63,6 +62,7 @@ def setup_all_systems(args):
   Update cobbler with all settings in install.cfg.
 
   '''
+  _import_repos()
   _refresh_all_profiles()
   _remove_all_systems()
   for host_name in app.get_servers():
@@ -91,6 +91,8 @@ def refresh_repo(args):
   '''
   downloads = {}
   downloads['jdk-6u24-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u24-linux-x64-rpm.bin'
+  downloads['jdk-6u25-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u25-linux-x64-rpm.bin'
+  downloads['jdk-6u26-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u26-linux-x64-rpm.bin'
 
   for dst, src in downloads.items():
     general.shell_exec("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
