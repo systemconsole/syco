@@ -35,7 +35,7 @@ Version 3.6
 
 Version 3.8
 -----------
-* Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
+# Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
 * Remove fareoffice relations in the public scripts and documentation.
 * Upgrade scripts to centos 5.6
   http://lists.centos.org/pipermail/centos-announce/2011-April/017282.html
