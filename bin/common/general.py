@@ -58,8 +58,10 @@ def delete_install_dir():
   Delete the folder where installation files are stored during installation.
 
   '''
-  app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
-  shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
+  if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
+    app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
+    shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
+    os.chdir("/tmp")
 
 def create_install_dir():
   '''
@@ -69,18 +71,18 @@ def create_install_dir():
   be installed.
 
   '''
+  import atexit
+
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
     os.makedirs(app.INSTALL_DIR)
+    atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     os.chmod(app.INSTALL_DIR, stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
-
-  import atexit
-  atexit.register(delete_install_dir)
 
 def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
   '''
@@ -278,6 +280,10 @@ def set_config_property(file_name, search_exp, replace_exp):
     w = open(file_name, 'w')
     w.write(replace_exp)
     w.close()
+
+def set_config_property2(file_name, replace_exp):
+  search_exp = r".*" + re.escape(replace_exp) + r".*"
+  set_config_property(file_name, search_exp, replace_exp)
 
 if __name__ == "__main__":
   command = 'echo "moo"'

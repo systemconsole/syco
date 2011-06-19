@@ -25,6 +25,7 @@ __status__ = "Production"
 
 import subprocess
 import app, general, version
+from socket import gethostname
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -55,6 +56,9 @@ def hardening(args):
   _yum_update()
   _disable_ip6_support()
   _forward_root_mail()
+  configure_resolv_conf()
+  configure_localhost()
+  restart_network()
 
   version_obj.mark_executed()
 
@@ -210,12 +214,27 @@ def _disable_ip6_support():
   general.set_config_property("/etc/modprobe.conf", "^alias ipv6 off$","alias ipv6 off")
   general.set_config_property("/etc/modprobe.conf", "^alias net-pf-10 off$","alias net-pf-10 off")
   general.set_config_property("/etc/sysconfig/network", "^NETWORKING_IPV6=.*$","NETWORKING_IPV6=no")
-  general.shell_exec("service network restart")
 
 def _forward_root_mail():
   app.print_verbose("Forward all root email to " + app.config.get_admin_email())
   general.set_config_property("/etc/aliases", ".*root[:].*", "root:		" + app.config.get_admin_email())
   general.shell_exec("/usr/bin/newaliases")
+
+def configure_resolv_conf():
+  app.print_verbose("Configure /etc/resolv.conf")
+  general.set_config_property("/etc/resolv.conf", "domain.*", "domain " + app.config.get_resolv_domain())
+  general.set_config_property("/etc/resolv.conf", "search.*", "search " + app.config.get_resolv_search())
+
+def configure_localhost():
+  app.print_verbose("Configure /etc/hosts")
+  localhost =  "127.0.0.1"
+  localhost += " " + gethostname() + "." + app.config.get_resolv_domain()
+  localhost += " localhost.localdomain localhost " + gethostname()
+
+  general.set_config_property("/etc/hosts", "127.0.0.1.*", localhost)
+
+def restart_network():
+  general.shell_exec("service network restart")
 
 #
 # Helper functions

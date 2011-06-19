@@ -55,6 +55,15 @@ class SycoConfig(ConfigParser.RawConfigParser):
     else:
       raise Exception("Can't find section '" + section + "' in install.cfg")
 
+  def get_resolv_domain(self):
+    return self.get_option("general", "resolv.domain")
+
+  def get_resolv_search(self):
+    return self.get_option("general", "resolv.search")
+
+  def get_mail_relay_domain_name(self):
+    return self.get_option("general", "mail_relay.domain_name")
+
   def get_country_name(self):
     return self.get_option("general", "country_name")
 

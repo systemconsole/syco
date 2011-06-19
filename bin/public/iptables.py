@@ -115,6 +115,7 @@ def iptables_setup(args):
   _create_chains()
   _setup_general_rules()
   _setup_ssh_rules()
+  _setup_mail_rules()
   _setup_dns_resolver_rules()
   _setup_gpg_rules()
   _setup_installation_server_rules()
@@ -128,6 +129,7 @@ def iptables_setup(args):
   add_ntp_chain()
   add_openvpn_chain()
   add_mysql_chain()
+  add_mail_relay_chain()
 
   save()
   version_obj.mark_executed()
@@ -226,6 +228,14 @@ def _setup_ssh_rules():
 #  ################################################################
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --set -j ACCEPT
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j DROP
+
+def _setup_mail_rules():
+  '''
+  Can SMTP from this computer.
+
+  '''
+  app.print_verbose("Setup mail OUTPUT rule.")
+  iptables("-A syco_output -p tcp -m multiport --dports 25 -j allowed_tcp")
 
 def _setup_dns_resolver_rules():
   '''
@@ -397,7 +407,7 @@ def del_nfs_chain():
   iptables("-X nfs_export")
 
 def add_ldap_chain():
-  app.print_verbose("Add iptables chain for nfs")
+  app.print_verbose("Add iptables chain for ldap")
   del_ldap_chain()
 
   iptables("-N ldap")
@@ -425,34 +435,33 @@ def add_cobbler_chain():
   app.print_verbose("Add iptables chain for cobbler")
   del_cobbler_chain()
 
-  iptables("-N cobbler")
-  iptables("-A syco_input -p ALL -j cobbler")
-  iptables("-A syco_input -p ALL -j cobbler")
+  iptables("-N cobbler_input")
+  iptables("-A syco_input -p ALL -j cobbler_input")
 
   iptables("-N cobbler_output")
   iptables("-A syco_output -p ALL -j cobbler_output")
 
   # TFTP - TCP/UDP
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 69 -j allowed_udp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 69 -j allowed_udp")
 
   # NTP
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 123 -j allowed_udp")
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 123 -j allowed_udp")
 
   # DHCP TODO: In/Out
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
   # HTTP/HTTPS
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 80 -j allowed_tcp")
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 443 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 80 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 443 -j allowed_tcp")
 
   # Syslog for cobbler
-  iptables("-A cobbler -m state --state NEW -m udp -p udp --dport 25150 -j allowed_udp")
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 25150 -j allowed_udp")
 
   # Koan XMLRPC ports
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25151 -j allowed_tcp")
-  iptables("-A cobbler -m state --state NEW -m tcp -p tcp --dport 25152 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 25151 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 25152 -j allowed_tcp")
 
   # RSYNC
   iptables("-A cobbler_output -m state --state NEW -m tcp -p tcp --dport 873 -j allowed_tcp")
@@ -531,3 +540,20 @@ def del_openvpn_chain():
   iptables("-D syco_output -p ALL -j openvpn")
   iptables("-F openvpn")
   iptables("-X openvpn")
+
+def add_mail_relay_chain():
+  app.print_verbose("Add iptables chain for mail relay")
+  del_mail_relay_chain()
+
+  if (os.path.exists('/etc/mail/syco_mail_relay_server')):
+    iptables("-N mail_relay")
+    iptables("-A syco_input -p tcp -j mail_relay")
+
+    # mail_relay with none TLS and with TLS
+    iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
+
+def del_mail_relay_chain():
+  app.print_verbose("Delete iptables chain for mail_relay")
+  iptables("-D syco_input -p tcp -j mail_relay")
+  iptables("-F mail_relay")
+  iptables("-X mail_relay")
