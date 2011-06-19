@@ -156,6 +156,8 @@ def _rebuild_sendmail_config():
   general.shell_exec("yum -y remove sendmail-cf")
 
 def _test_mail():
+  app.print_verbose("Send testmail for " + gethostname())
+
   email = app.config.get_admin_email()
 
   msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n"
