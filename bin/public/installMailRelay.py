@@ -22,13 +22,16 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
+import smtplib
+from socket import gethostname
 
 import app
 import general
+from general import set_config_property
+from general import set_config_property2
 import hardening
 import iptables
 import version
-from general import set_config_property, set_config_property2
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -41,8 +44,8 @@ def build_commands(commands):
   commands.add("uninstall-mail-relay", uninstall_mail, help="Uninstall mail-relay server on the current server.")
 
 def install_mail_server(args):
-  app.print_verbose("Install mail-relay version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("Install-mail-relay", SCRIPT_VERSION)
+  app.print_verbose("Install mail-relay-server version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("Install-mail-relay-server", SCRIPT_VERSION)
   version_obj.check_executed()
 
   # Tell iptables that this server is configured as a mail-relay server.
@@ -69,7 +72,11 @@ def install_mail_server(args):
 
   version_obj.mark_executed()
 
-def install_mail_client(args):
+def install_mail_client(args):  
+  app.print_verbose("Install mail-relay-server version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("Install-mail-relay-client", SCRIPT_VERSION)
+  version_obj.check_executed()
+
   file = "/etc/mail/sendmail.mc"
   domain = app.config.get_mail_relay_domain_name()
 
@@ -124,6 +131,9 @@ def install_mail_client(args):
 
   _rebuild_sendmail_config()
 
+  _test_mail()
+  version_obj.mark_executed()
+
 def uninstall_mail(args):
   '''
   Uninstall mail
@@ -144,3 +154,13 @@ def _rebuild_sendmail_config():
   general.shell_exec('make')
   general.shell_exec('service sendmail restart')
   general.shell_exec("yum -y remove sendmail-cf")
+
+def _test_mail():
+  email = app.config.get_admin_email()
+
+  msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n"
+       % (email, email, "Mail relay client installed on " + gethostname()))
+  
+  server = smtplib.SMTP('localhost')
+  server.sendmail(email, email, msg)
+  server.quit()
