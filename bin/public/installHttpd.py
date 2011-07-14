@@ -117,6 +117,10 @@ def set_file_permissions():
   general.shell_exec("chmod 755 /etc/httpd/modsecurity.d")
   general.shell_exec("chcon -R system_u:object_r:httpd_config_t:s0 /etc/httpd/modsecurity.d")
 
+  general.shell_exec("find /var/www/html/ -type f -exec chmod 644 {} \;")
+  general.shell_exec("find /var/www/html/ -type d -exec chmod 755 {} \;")
+  general.shell_exec("restorecon /var/www/html/")
+
 def _install_httpd():
   # Install yum packages for apache httpd
   if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
