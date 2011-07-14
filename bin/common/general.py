@@ -281,6 +281,7 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.write(replace_exp)
     w.close()
 
+# TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):
   search_exp = r".*" + re.escape(replace_exp) + r".*"
   set_config_property(file_name, search_exp, replace_exp)
