@@ -278,7 +278,7 @@ def set_config_property(file_name, search_exp, replace_exp):
       os.remove(file_name + ".bak")
   else:
     w = open(file_name, 'w')
-    w.write(replace_exp)
+    w.write(replace_exp + "\n")
     w.close()
 
 # TODO: Set a good name.
