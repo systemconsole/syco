@@ -93,16 +93,7 @@ class Ssh:
     if (self._is_sshkey_installed()):
       return
 
-    if (not os.access(self.ssh_key_dir, os.W_OK)):
-      os.makedirs(self.ssh_key_dir)
-
-    # Create ssh keys on on localhost.
-    if (not os.access(self.ssh_private_key_file, os.R_OK)):
-      subprocess.Popen('ssh-keygen -t rsa -f ' + self.ssh_private_key_file + ' -N ""', shell=True).communicate()
-
-    # Get the public key.
-    f = open(os.path.normpath(self.ssh_public_key_file))
-    idRsaPub = f.readline().strip()
+    self._generate_ssh_keys()
 
     # Install key on remote host.
     self.ssh_exec(
@@ -110,18 +101,32 @@ class Ssh:
                   "chmod 700 .ssh;" +
                   "touch .ssh/authorized_keys;" +
                   "chmod 640 .ssh/authorized_keys;" +
-                  "echo '" + idRsaPub + "' >> .ssh/authorized_keys"
+                  "echo '" + self._get_public_key() + "' >> .ssh/authorized_keys"
                   )
 
     # Raise exception if the installation of the cert failed.
     if (not self._is_sshkey_installed()):
       raise SettingsError("Failed to install cert on " + self.server)
 
+  def _generate_ssh_keys(self):
+    if (not os.access(self.ssh_key_dir, os.W_OK)):
+      os.makedirs(self.ssh_key_dir)
+
+    # Create ssh keys on on localhost.
+    if (not os.access(self.ssh_private_key_file, os.R_OK)):
+      subprocess.Popen('ssh-keygen -t rsa -f ' + self.ssh_private_key_file + ' -N ""', shell=True).communicate()
+
+  def _get_public_key(self):
+
+    # Get the public key.
+    f = open(os.path.normpath(self.ssh_public_key_file))
+    return f.readline().strip()
+
   def wait_until_alive(self):
     '''Wait until the remote server becomes alive.'''
     if (not self.is_alive()):
       app.print_verbose("Wait for remote host " + self.server + " to become alive.", new_line=False)
-      while(not self.is_alive()):        
+      while(not self.is_alive()):
         if (app.options.verbose >= 1):
           sys.stdout.write(".")
           sys.stdout.flush()
@@ -146,7 +151,7 @@ class Ssh:
     except pexpect.TIMEOUT, e:
       app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command + str(e))
       self.ssh_exec(command, events)
-  
+
   def _ssh_exec(self, command, events=None):
     app.print_verbose("SSH Command on " + self.server + ": " + command)
 
@@ -159,7 +164,7 @@ class Ssh:
 
     keys = events.keys()
     value = events.values()
-    
+
     # Timeout for ssh.expect
     timeout_event = len(keys)
     keys.append(pexpect.TIMEOUT)
@@ -168,7 +173,7 @@ class Ssh:
     # execution.
     keys.append("Connection to .* closed by remote host")
     terminate_event = len(keys)
-    keys.append("Terminated")    
+    keys.append("Terminated")
 
     # When the ssh command are executed, and back to the command prompt.
     pexpect_event = len(keys)
@@ -184,8 +189,8 @@ class Ssh:
     ssh.disable_output()
     ssh.login(self.server, username=self.user, password=self.password)
     ssh.enable_output()
-    
-    app.print_verbose("---- SSH Result - Start ----", 2)    
+
+    app.print_verbose("---- SSH Result - Start ----", 2)
 
     ssh.sendline(command)
 
@@ -193,13 +198,13 @@ class Ssh:
     # the output commes. This is for the executed command.
     app.print_verbose("", 2, new_line=False, enable_caption=True)
 
-    index=0    
+    index=0
     while (index <= terminate_event):
 
       # Check for strings in keys in the output from the SSH command,
       # also uses print_verbose on all output from the result.
       index = ssh.expect(keys, timeout=3600)
-      
+
       if 0 <= index and index < timeout_event:
         ssh.sendline(value[index])
       elif index == timeout_event:
@@ -213,7 +218,7 @@ class Ssh:
         print ""
 
     # An extra line break for the looks.
-    if (app.options.verbose >= 2):      
+    if (app.options.verbose >= 2):
       app.print_verbose("---- SSH Result - End-------\n", 2)
 
     # Disable verbose output for SSH logout process.
@@ -264,7 +269,7 @@ class Ssh:
                          stderr=subprocess.PIPE
                          )
 
-    p.communicate()    
+    p.communicate()
 
     if (p.returncode > 0):
       self.key_is_installed = False
