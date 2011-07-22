@@ -30,6 +30,7 @@ __version__ = "1.0.1"
 __status__ = "Production"
 
 import os
+import sys
 
 import app
 import general
@@ -131,6 +132,8 @@ def iptables_setup(args):
   add_mysql_chain()
   add_mail_relay_chain()
 
+  _execute_private_repo_rules()
+
   save()
   version_obj.mark_executed()
 
@@ -145,13 +148,13 @@ def _create_chains():
   iptables("-N bad_tcp_packets")
   iptables("-A bad_tcp_packets -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j REJECT --reject-with tcp-reset")
   iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOG --log-prefix 'IPT: New not syn:'")
-  iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j DROP")
+  iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOGDROP")
 
   app.print_verbose("Create allowed tcp chain.")
   iptables("-N allowed_tcp")
   iptables("-A allowed_tcp -p TCP --syn -j ACCEPT")
   iptables("-A allowed_tcp -p TCP -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A allowed_tcp -p TCP -j DROP")
+  iptables("-A allowed_tcp -p TCP -j LOGDROP")
 
   app.print_verbose("Create allowed udp chain.")
   iptables("-N allowed_udp")
@@ -159,9 +162,9 @@ def _create_chains():
   # TODO: Possible to restrict more?
   #iptables("-A allowed_udp -p UDP --syn -j ACCEPT")
   #iptables("-A allowed_udp -p UDP -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A allowed_udp -p UDP -j DROP")
+  iptables("-A allowed_udp -p UDP -j LOGDROP")
 
-  app.print_verbose("Create ICMP rules.")
+  app.print_verbose("Create ICMP chain.")
   iptables("-N icmp_packets")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-request -j ACCEPT")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-reply -j ACCEPT")
@@ -169,6 +172,13 @@ def _create_chains():
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type source-quench -j ACCEPT")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type time-exceeded -j ACCEPT")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type parameter-problem -j ACCEPT")
+
+  # All drops are going through LOGDROP so it's easy to turn on logging
+  # when debugging is needed.
+  app.print_verbose("Create LOGDROP chain.")
+  iptables("-N LOGDROP")
+  #iptables("-A LOGDROP -j LOG --log-prefix 'IPT-LOGDROP:'")
+  iptables("-A LOGDROP -j DROP")
 
   app.print_verbose("Create syco input, output, forward chain")
   iptables("-N syco_input")
@@ -207,6 +217,10 @@ def _setup_general_rules():
   iptables("-A OUTPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: OUTPUT packet died: '")
   iptables("-A FORWARD -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: FORWARD packet died: '")
 
+  iptables("-A INPUT -j LOGDROP")
+  iptables("-A OUTPUT -j LOGDROP")
+  iptables("-A FORWARD -j LOGDROP")
+
   # TODO: Do anything about this?
   #app.print_verbose("Enable simple IP Forwarding and Network Address Translation.")
   #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
@@ -227,7 +241,7 @@ def _setup_ssh_rules():
 #  #wait 60 seconds if 3 times failed to connect
 #  ################################################################
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --set -j ACCEPT
-#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j DROP
+#  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j LOGDROP
 
 def _setup_mail_rules():
   '''
@@ -557,3 +571,40 @@ def del_mail_relay_chain():
   iptables("-D syco_input -p tcp -j mail_relay")
   iptables("-F mail_relay")
   iptables("-X mail_relay")
+
+def _execute_private_repo_rules():
+  '''
+  Execute the function iptables_setup in all sub projects.
+
+  The function is only executed if it's exist.
+
+  Sub projects are stored in /xxx/syco/usr/xxx/bin
+
+  '''
+
+  if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+    for plugin in os.listdir(app.SYCO_USR_PATH):
+      plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
+
+      for obj in _get_modules(plugin_path):
+        obj()
+
+def _get_modules(commands_path):
+  '''
+  Return a list of objects representing all available syco modules in specified folder.
+
+  '''
+  modules=[]
+  for module in os.listdir(commands_path):
+    if (module == '__init__.py' or module[-3:] != '.py'):
+        continue
+    module = module[:-3]
+
+    try:
+      obj = getattr(sys.modules[module], "iptables_setup")
+      modules.append(obj)
+    except AttributeError, e:
+      pass
+
+  return modules
+
