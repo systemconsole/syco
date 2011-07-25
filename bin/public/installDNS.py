@@ -2,38 +2,31 @@
 '''
 Install DNS server.
 
-This server will be installed with the chrooted bind dns server.
-The script mwill read DNS config files from syco/var/dns
-and generate dns enteries for server in config files.
+This server will be installed with a chrooted bind dns server. The script will
+read DNS config files from syco/var/dns and generate dns enteries for the
+server in config files.
 
-# Will be stored.
-/etc/important_file.txt
-# Will be ignored.
-/etc/NoBackup/very_large_unimportant_file.zip
+$syco install-dns master
+Will install the master bind server. The server will be setup so that the slave
+server are allowd to connect to the master server and transfer DNS records from
+it.
 
-install-dns
---------------
-MASTER
-The installation will install the master BIND dns server from configfiles.
-The master dns server will be sett upp so that the slave DNS server are allowd to connect to
-the Master DNS and transfer DNS record from the master
-
-SLAVE
-The installation of the slave DNS server will installe the slave dns server from configfiles.
-The slave DNS server will conenct to the master dns server and retrive changes to the DNS records.
+$syco install-dns slave
+Will install the slave bind server. The slave DNS server will conenct to the
+master bind server and retrive changes to the DNS records.
 
 SERIAL
-So that that both dns server now witch is the newest dns record all changes to the DNS have to be
-updaed with an serial number. Then the script is run the serial number will update is self and the templates used to
-generate the config files.
-To reset the serial number sett the serial number to 0 in the master-template.zone and the slave-template.zone
-
+Used by both master and slave server to track the newest dns records. All
+changes to the DNS have to be updated with an serial number. When the script is
+executed, the serial number will update itself and the templates used to
+generate the config files. To reset the serial number set the serial number to 0
+in the master-template.zone and the slave-template.zone
 
 RDNC KEY
-So that the slave is allowed to connect to the master DNS server and retrive the the new DNS update they master and the slave has to have the same key.
-Theis key in generated the first time the master dns server is installed.
-The slave server the used ssh to retrive the key from the master server.
-
+Used to allow the slave server to connect to the master server and retrive new
+DNS records. The master and the slave server need to have the same rdnc key.
+The key is generated the first time the master dns server is installed. The
+slave server uses ssh to retrive the key from the master server.
 
 Configuration
 -------------
@@ -41,29 +34,29 @@ Configuration
 In the file zone.cfg the main config options is inserted
 
 [config]
-range:10.100.100.0/24 <-- Range of server network
-localnet:192.168/16 <-- Range oh the client network alloed to to recursive reqest
-forward1:8.8.8.8 <-- DNS forwarder 1
-forward2:4.4.4.4 <-- DNS forwarder 2
-ipmaster:10.100.100.10 <-- IP of master DNS
-ipslave:10.100.100.241 <-- IP of slave DNS
+range:10.100.100.0/24  ; Range of server network
+localnet:192.168/16    ; Range oh the client network alloed to to recursive reqest
+forward1:8.8.8.8       ; DNS forwarder 1
+forward2:4.4.4.4       ; DNS forwarder 2
+ipmaster:10.100.100.10 ; IP of master DNS
+ipslave:10.100.100.241 ; IP of slave DNS
 
-#Choose witch location to be active
-#in you cnames set $DATA_CENTER$ and it will be changed
+# The active data center
+# in you cnames set $DATA_CENTER$ and it will be changed
 data_center:nsg
 
-#Zone to be used
-#Create an file called exempel.org in this folder that contains dns records
+# Zone to be used
+# Create a file called exempel.org in the folder that contains dns records.
 [zone]
 fareonline.net:100.100.10
 farepayment.com:192.168.0.0
 
 ZONE Config
-----------------
-To edit zones to the dns name create oen file with teh same name as the dns name.
+-----------
+
+To edit zones to the dns name create one file with the same name as the dns name.
 For exempel fareonline.net create the file called fareonline.net.
 In that file the create two blocks
-
 
 [fareonline.net_arecords]
 www:178.78.197.210
@@ -74,12 +67,13 @@ webb:www
 The first one is for A records and the second one is for cnames.
 The script will generate dns files from the enteries.
 
-
 INTERNAL VIEW
------------------
-The DNS server support differt views so that the same dns name van be pinted to differt ip dependning if you are qesting the DNS server from you local network
-ore the internet.
-As defult all entories will be the same if you not specifi in the zone file the differt name.
+-------------
+
+The DNS server support differt views so that the same dns name van be pointed
+to differt ips dependning on if you are connecting to the DNS server from you
+local network or the internet. As defult all entries will be the same if you not
+specify in the zone file the differt name.
 
 To add internal ip to be used add in you configfile for you dns name
 
@@ -89,25 +83,26 @@ www:10.100.0.4
 [internal_fareonline.net_cname]
 mail:fo-tp-mail
 
-The script will then generate this config to be used for internal view and the other will to be used for external view.
-
+The script will then generate this config to be used for internal view and the
+other will to be used for external view.
 
 PRIMARY DATACENTER
-----------------
-The DNS server support changing primary datacenter wen generating the files.
+------------------
+
+The DNS server support changing primary datacenter when generating the files.
 By in the configfile setting
 
 data_center:nsg the datacenter named nsg will be used.
 
-1. Sett upp an a record to both locations
+1. Setup an a record to both locations
 nsg-server.fareonline.net:10.100.0.1
 tc-server.fareonline.net:99.100.100.1
 
-2. Set upp an cname to the a record
+2. Setup a cname to the a record
 server:nsg-server
 
-3. Set upp for auto changing datacenter
-chnage the cname record above to
+3. Setup for auto changing datacenter
+change the cname record above to
 server:$DATA_CENTER$-server
 
 READING
