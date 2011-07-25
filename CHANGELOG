@@ -45,9 +45,11 @@ Version 3.9 (iptables)
 # Refactor iptable.py, add a rule chain that can be controlled from other scripts?
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
 * Are all iptables rules tested and moved to iptables-setup.
-* Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp. 
+* Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp.
   This will optimize all rules by "50%".
 * Don't try to delete chains, when they don't exist. To remove the error message from iptables.
+* Iptables are blocking on ip numbers. If a domain name is used, it will cache
+  the ip-number. We need to do something about this.
 
 Version 4
 ---------
