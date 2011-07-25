@@ -9,20 +9,6 @@ Version 0.2
 Version 0.3
 -----------
 * installBind
-* iptables-setup
-  http://lonesysadmin.net/2007/10/29/how-to-install-a-tftp-server-on-red-hat-enterprise-linux/
-  # /etc/sysconfig/iptables-config
-  # Add IPTABLES_MODULES="ip_conntrack_tftp"
-
-
-Version 0.4 (Backup)
---------------------
-* Create backup for all syco servers.
-* Some "monitor" script that will validate that all servers has been backuped
-  and then email info to the sysop mail. Or report somewhere else.
-* Setup of secondary backupserver, that mirrors primary backup server.
-* Setup backup of none syco servers.
-* Tune crontab, so it gets time to backup all servers in the choosen period.
 
 Version 0.4
 -----------
@@ -50,6 +36,10 @@ Version 3.9 (iptables)
 * Don't try to delete chains, when they don't exist. To remove the error message from iptables.
 * Iptables are blocking on ip numbers. If a domain name is used, it will cache
   the ip-number. We need to do something about this.
+* iptables-setup
+  http://lonesysadmin.net/2007/10/29/how-to-install-a-tftp-server-on-red-hat-enterprise-linux/
+  # /etc/sysconfig/iptables-config
+  # Add IPTABLES_MODULES="ip_conntrack_tftp"
 
 Version 4
 ---------
