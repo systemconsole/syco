@@ -101,7 +101,8 @@ class Ssh:
                   "chmod 700 .ssh;" +
                   "touch .ssh/authorized_keys;" +
                   "chmod 640 .ssh/authorized_keys;" +
-                  "echo '" + self._get_public_key() + "' >> .ssh/authorized_keys"
+                  "echo '" + self._get_public_key() + "' >> .ssh/authorized_keys; " +
+                  "restorecon -R -v .ssh"
                   )
 
     # Raise exception if the installation of the cert failed.
@@ -246,6 +247,10 @@ class Ssh:
 
     '''
     self.install_ssh_key()
+
+    # Remote install rsync
+    self.ssh_exec("yum -y install rsync")
+
     general.shell_exec(
                        'rsync --delete -az -e "ssh ' + self.ssh_options + " -p" + self.port + " -i " + self.ssh_private_key_file + '" ' +
                        extra + " " +

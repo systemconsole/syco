@@ -82,7 +82,7 @@ import ssh
 def build_commands(commands):
   commands.add("install-backup",   install_backup,   help="Install rsnapshot based backup server.")
   commands.add("uninstall-backup", uninstall_backup, help="Uninstall rsnapshot based backup server.")
-  commands.add("tar-backup", tar_backup, help="Tar the montly copy of the backup.")
+  commands.add("tar-backup", tar_backup, help="Tar the monthly copy of the backup.")
 
 BACKUP_ROOT = "/opt/backup/rsnapshot/"
 
@@ -95,7 +95,7 @@ def install_backup(args):
   _configure_rsnapshot()
   _setup_cronjob()
   _setup_backup_for_all_servers()
-  
+
 def _configure_rsnapshot():
   '''
   Do the general configuration of rsnapshot
@@ -116,7 +116,7 @@ def _configure_rsnapshot():
   general.set_config_property("/etc/rsnapshot.conf", ".*interval.*monthly.*", "interval\tmonthly\t12")
 
   general.set_config_property("/etc/rsnapshot.conf", ".*exclude.*NoBackup.*", "exclude\tNoBackup")
-  
+
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*etc.*localhost.*", "")
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*usr[/]local.*localhost.*", "")
 
@@ -133,7 +133,7 @@ def _setup_backup_for_all_servers():
       remote_server.install_ssh_key()
       _configure_backup_pathes(ip, host_name)
     else:
-      servers.insert(0, host_name)      
+      servers.insert(0, host_name)
       app.print_error("Server " + host_name + " is not alive.")
 
     if (checked_servers > total_servers):
@@ -156,7 +156,7 @@ def _get_backup_pathes(host_name):
   '''Get all pathes that should be backuped.'''
   commands = []
 
-  # Always backup thease  
+  # Always backup thease
   commands.append("/etc/")
 
   # Backup urls from install.cfg
@@ -180,7 +180,7 @@ def uninstall_backup(args):
 
 def tar_backup(args):
   '''
-  Compress the montly backup for long term storage.
+  Compress the monthly backup for long term storage.
 
   It's also good with a zip backup, if one of the files on the harddrive
   get bad sectors it will otherwise be lost in all rsnapshots backups.
@@ -188,7 +188,7 @@ def tar_backup(args):
 
   '''
   YMD = str(datetime.date.today())
-  
+
   LONGTERM_BACKUP_ROOT = BACKUP_ROOT + "longterm/" + YMD + "/"
   if (not os.access(LONGTERM_BACKUP_ROOT, os.F_OK)):
     general.shell_exec("mkdir -p " + LONGTERM_BACKUP_ROOT)
@@ -196,7 +196,7 @@ def tar_backup(args):
   app.print_verbose("Make a compressed backup of all folder in " + BACKUP_ROOT + "monthly.0/")
   for host_name in os.listdir(BACKUP_ROOT + "monthly.0/"):
     for folder in os.listdir(BACKUP_ROOT + "monthly.0/" + host_name):
-      
+
       backup_name = LONGTERM_BACKUP_ROOT + host_name + "-" + folder + ".tar.gz "
       general.shell_exec(
         "tar zcf " + backup_name + " " + folder, cwd=str(BACKUP_ROOT + "monthly.0/" + host_name)

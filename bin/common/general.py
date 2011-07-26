@@ -201,10 +201,10 @@ def shell_exec(command, user="", cwd=None, events=None, output=True):
     elif index == num_of_events:
       app.print_error("Catched a timeout from pexpect.expect, lets try again.")
 
-  if (out.exitstatus):
+  if (out.exitstatus and output):
     app.print_error("Invalid exitstatus %d" % out.exitstatus)
 
-  if (out.signalstatus):
+  if (out.signalstatus and output):
     app.print_error("Invalid signalstatus %d - %s" % out.signalstatus, out.status)
 
   # An extra line break for the looks.

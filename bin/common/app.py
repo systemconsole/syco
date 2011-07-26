@@ -66,7 +66,7 @@ import install
 install.epel_repo()
 
 # Required yum package.
-install.package("gnupg")
+install.package("gnupg2")
 
 import passwordStore
 

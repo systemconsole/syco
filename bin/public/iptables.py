@@ -48,12 +48,12 @@ def build_commands(commands):
   commands.add("iptables-clear", iptables_clear, help="Clear all iptables rules.")
   commands.add("iptables-setup", iptables_setup, help="Setup an iptable firewall, customized for installed services.")
 
-def iptables(args):
+def iptables(args, output = True):
   '''
   Execute the iptables shell command.
 
   '''
-  general.shell_exec("/sbin/iptables " + args)
+  general.shell_exec("/sbin/iptables " + args, output=output)
 
 def iptables_clear(args):
   '''
@@ -144,6 +144,13 @@ def _drop_all():
   iptables("-P OUTPUT DROP")
 
 def _create_chains():
+  # All drops are going through LOGDROP so it's easy to turn on logging
+  # when debugging is needed.
+  app.print_verbose("Create LOGDROP chain.")
+  iptables("-N LOGDROP")
+  #iptables("-A LOGDROP -j LOG --log-prefix 'IPT-LOGDROP:'")
+  iptables("-A LOGDROP -j DROP")
+
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
   iptables("-A bad_tcp_packets -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j REJECT --reject-with tcp-reset")
@@ -172,13 +179,6 @@ def _create_chains():
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type source-quench -j ACCEPT")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type time-exceeded -j ACCEPT")
   iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type parameter-problem -j ACCEPT")
-
-  # All drops are going through LOGDROP so it's easy to turn on logging
-  # when debugging is needed.
-  app.print_verbose("Create LOGDROP chain.")
-  iptables("-N LOGDROP")
-  #iptables("-A LOGDROP -j LOG --log-prefix 'IPT-LOGDROP:'")
-  iptables("-A LOGDROP -j DROP")
 
   app.print_verbose("Create syco input, output, forward chain")
   iptables("-N syco_input")
@@ -306,10 +306,10 @@ def add_ntp_chain():
 
 def del_ntp_chain():
   app.print_verbose("Delete iptables chain for ntp")
-  iptables("-D syco_input  -p UDP -j ntp")
-  iptables("-D syco_output -p UDP -j ntp")
-  iptables("-F ntp")
-  iptables("-X ntp")
+  iptables("-D syco_input  -p UDP -j ntp", False)
+  iptables("-D syco_output -p UDP -j ntp", False)
+  iptables("-F ntp", False)
+  iptables("-X ntp", False)
 
 def add_kvm_chain():
   if (not os.path.exists('/etc/init.d/libvirtd')):
@@ -329,9 +329,9 @@ def add_kvm_chain():
 
 def del_kvm_chain():
   app.print_verbose("Delete iptables chain for kvm")
-  iptables("-D syco_forward  -p ALL -j kvm")
-  iptables("-F kvm")
-  iptables("-X kvm")
+  iptables("-D syco_forward  -p ALL -j kvm", False)
+  iptables("-F kvm", False)
+  iptables("-X kvm", False)
 
 def add_mysql_chain():
   if (not os.path.exists('/etc/init.d/mysqld')):
@@ -351,13 +351,13 @@ def add_mysql_chain():
 
 def del_mysql_chain():
   app.print_verbose("Delete iptables chain for mysql")
-  iptables("-D syco_input  -p ALL -j mysql_input")
-  iptables("-F mysql_input")
-  iptables("-X mysql_input")
+  iptables("-D syco_input  -p ALL -j mysql_input", False)
+  iptables("-F mysql_input", False)
+  iptables("-X mysql_input", False)
 
-  iptables("-D syco_output -p ALL -j mysql_output")
-  iptables("-F mysql_output")
-  iptables("-X mysql_output")
+  iptables("-D syco_output -p ALL -j mysql_output", False)
+  iptables("-F mysql_output", False)
+  iptables("-X mysql_output", False)
 
 def add_httpd_chain():
   if (not os.path.exists('/etc/init.d/httpd')):
@@ -379,13 +379,13 @@ def add_httpd_chain():
 
 def del_httpd_chain():
   app.print_verbose("Delete iptables chain for httpd")
-  iptables("-D syco_input  -p ALL -j httpd_input")
-  iptables("-F httpd_input")
-  iptables("-X httpd_input")
+  iptables("-D syco_input  -p ALL -j httpd_input", False)
+  iptables("-F httpd_input", False)
+  iptables("-X httpd_input", False)
 
-  iptables("-D syco_output  -p ALL -j httpd_output")
-  iptables("-F httpd_output")
-  iptables("-X httpd_output")
+  iptables("-D syco_output  -p ALL -j httpd_output", False)
+  iptables("-F httpd_output", False)
+  iptables("-X httpd_output", False)
 
 def add_nfs_chain():
   del_nfs_chain()
@@ -415,10 +415,10 @@ def add_nfs_chain():
 
 def del_nfs_chain():
   app.print_verbose("Delete iptables chain for nfs")
-  iptables("-D syco_input  -p ALL -j nfs_export")
-  iptables("-D syco_output -p ALL -j nfs_export")
-  iptables("-F nfs_export")
-  iptables("-X nfs_export")
+  iptables("-D syco_input  -p ALL -j nfs_export", False)
+  iptables("-D syco_output -p ALL -j nfs_export", False)
+  iptables("-F nfs_export", False)
+  iptables("-X nfs_export", False)
 
 def add_ldap_chain():
   app.print_verbose("Add iptables chain for ldap")
@@ -437,10 +437,10 @@ def add_ldap_chain():
 
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
-  iptables("-D syco_input  -p tcp -j ldap")
-  iptables("-D syco_output -p tcp -j ldap")
-  iptables("-F ldap")
-  iptables("-X ldap")
+  iptables("-D syco_input  -p tcp -j ldap", False)
+  iptables("-D syco_output -p tcp -j ldap", False)
+  iptables("-F ldap", False)
+  iptables("-X ldap", False)
 
 def add_cobbler_chain():
   if (not os.path.exists('/etc/init.d/cobblerd')):
@@ -482,14 +482,14 @@ def add_cobbler_chain():
 
 def del_cobbler_chain():
   app.print_verbose("Delete iptables chain for cobbler")
-  iptables("-D syco_input  -p ALL -j cobbler")
-  iptables("-D syco_output -p ALL -j cobbler")
-  iptables("-F cobbler")
-  iptables("-X cobbler")
+  iptables("-D syco_input  -p ALL -j cobbler", False)
+  iptables("-D syco_output -p ALL -j cobbler", False)
+  iptables("-F cobbler", False)
+  iptables("-X cobbler", False)
 
-  iptables("-D syco_input -p ALL -j cobbler_output")
-  iptables("-F cobbler_output")
-  iptables("-X cobbler_output")
+  iptables("-D syco_input -p ALL -j cobbler_output", False)
+  iptables("-F cobbler_output", False)
+  iptables("-X cobbler_output", False)
 
 def add_glassfish_chain():
   if (
@@ -516,12 +516,12 @@ def add_glassfish_chain():
 
 def del_glassfish_chain():
   app.print_verbose("Delete iptables chain for glassfish")
-  iptables("-D syco_input  -p ALL -j glassfish_input")
-  iptables("-D syco_output -p ALL -j glassfish_output")
-  iptables("-F glassfish_input")
-  iptables("-X glassfish_input")
-  iptables("-F glassfish_output")
-  iptables("-X glassfish_output")
+  iptables("-D syco_input  -p ALL -j glassfish_input", False)
+  iptables("-D syco_output -p ALL -j glassfish_output", False)
+  iptables("-F glassfish_input", False)
+  iptables("-X glassfish_input", False)
+  iptables("-F glassfish_output", False)
+  iptables("-X glassfish_output", False)
 
 def add_openvpn_chain():
   if (not os.path.exists('/etc/init.d/openvpn')):
@@ -550,10 +550,10 @@ def add_openvpn_chain():
 
 def del_openvpn_chain():
   app.print_verbose("Delete iptables chain for openvpn")
-  iptables("-D syco_input  -p ALL -j openvpn")
-  iptables("-D syco_output -p ALL -j openvpn")
-  iptables("-F openvpn")
-  iptables("-X openvpn")
+  iptables("-D syco_input  -p ALL -j openvpn", False)
+  iptables("-D syco_output -p ALL -j openvpn", False)
+  iptables("-F openvpn", False)
+  iptables("-X openvpn", False)
 
 def add_mail_relay_chain():
   app.print_verbose("Add iptables chain for mail relay")
@@ -568,9 +568,9 @@ def add_mail_relay_chain():
 
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")
-  iptables("-D syco_input -p tcp -j mail_relay")
-  iptables("-F mail_relay")
-  iptables("-X mail_relay")
+  iptables("-D syco_input -p tcp -j mail_relay", False)
+  iptables("-F mail_relay", False)
+  iptables("-X mail_relay", False)
 
 def _execute_private_repo_rules():
   '''
