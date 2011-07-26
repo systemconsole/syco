@@ -192,8 +192,7 @@ def _hardening():
   #general.set_config_property("/etc/ssh/sshd_config", "^[#]*PermitRootLogin.*$", "PermitRootLogin no")
 
   app.print_verbose("   Store passwords sha512 instead of md5")
-  install.package("fprintd-pam")
-  general.shell_exec("authconfig --passalgo=sha512 --update")
+  general.shell_exec("authconfig --passalgo=sha512 --update --disablefingerprint")
 
   app.print_verbose("   Help kernel to prevent certain kinds of attacks")
   general.set_config_property("/etc/sysctl.conf", "^net.ipv4.icmp_ignore_bogus_error_messages=.*$","net.ipv4.icmp_ignore_bogus_error_messages=1")
