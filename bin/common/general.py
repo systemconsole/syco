@@ -47,10 +47,11 @@ def grep(file_name, pattern):
   Return true if regexp pattern is included in the file.
 
   '''
-  prog = re.compile(pattern)
-  for line in open(file_name):
-    if prog.search(line):
-      return True
+  if (os.access(file_name, os.R_OK)):
+    prog = re.compile(pattern)
+    for line in open(file_name):
+      if prog.search(line):
+        return True
   return False
 
 def delete_install_dir():
