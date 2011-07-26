@@ -106,7 +106,7 @@ $SNIPPET('func_install_if_enabled')
 
 %post
 $SNIPPET('log_ks_post')
-# Start yum configuration 
+# Start yum configuration
 $yum_config_stanza
 # End yum configuration
 $SNIPPET('post_install_kernel_options')
@@ -121,4 +121,4 @@ $SNIPPET('post_anamon')
 # Start final steps
 $kickstart_done
 # End final steps
-rpm -Uhv http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm

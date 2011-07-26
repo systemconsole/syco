@@ -85,6 +85,7 @@ Hardening
 * Mask password that are written to the stdout.
 * Add epel repo to fo-tp-install
   repo --name=lepel       --baseurl=http://10.0.0.1:81/yum-repos/epel/i386
+  rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
 
 Remote-install
 --------------
