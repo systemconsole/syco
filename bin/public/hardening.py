@@ -24,7 +24,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import subprocess
-import app, general, version
+import app, general, version, install
 from socket import gethostname
 
 # The version of this module, used to prevent
@@ -192,6 +192,7 @@ def _hardening():
   #general.set_config_property("/etc/ssh/sshd_config", "^[#]*PermitRootLogin.*$", "PermitRootLogin no")
 
   app.print_verbose("   Store passwords sha512 instead of md5")
+  install.package("fprintd-pam")
   general.shell_exec("authconfig --passalgo=sha512 --update")
 
   app.print_verbose("   Help kernel to prevent certain kinds of attacks")
