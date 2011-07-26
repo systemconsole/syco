@@ -22,7 +22,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os, re, time
-import app, general, version
+import app, general, version, install
 import net, iptables
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -47,15 +47,11 @@ def install_kvmhost(args):
     return
 
   # Install the kvm packages
-  general.shell_exec("yum -qy install kvm.x86_64")
-
-  # Required in combination with a new kvm/cobbler/koan version.
-  # This is installed from epel, and feels like it shouldn't
-  # be required. Shouldn't everything be included in the kvm.x86_64
-  general.shell_exec("yum -qy install qemu.x86_64")
+  install.package("qemu-kvm.x86_64")
+  install.package("libvirt.x86_64")
 
   # Provides the virt-install command for creating virtual machines.
-  general.shell_exec("yum -qy install python-virtinst")
+  install.package("python-virtinst")
 
   # Before libvirtd starts, create a snapshot partion for qemu.
   _create_kvm_snapshot_partition()
@@ -141,17 +137,28 @@ def _create_kvm_snapshot_partition():
 
   TODO: Size should be equal to RAM.
   '''
-  result = general.shell_exec("lvdisplay -v /dev/VolGroup00/qemu")
-  if ("/dev/VolGroup00/qemu" not in result):
-    general.shell_exec("lvcreate -n qemu -L 100G VolGroup00")
-    general.shell_exec("mke2fs -j /dev/VolGroup00/qemu")
+  volgroup = _get_volgroup_name()
+  devicename = "/dev/" + volgroup + "/qemu"
+  result = general.shell_exec("lvdisplay -v " + devicename, output = False)
+  if (devicename not in result):
+    general.shell_exec("lvcreate -n qemu -L 100G " + volgroup)
+    general.shell_exec("mke2fs -j " + devicename)
     general.shell_exec("mkdir -p /var/lib/libvirt/qemu")
-    general.shell_exec("mount /dev/VolGroup00/qemu /var/lib/libvirt/qemu")
+    general.shell_exec("mount " + devicename + " /var/lib/libvirt/qemu")
     general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 /var/lib/libvirt/qemu")
 
     # Automount the new partion when rebooting.
-    value = "/dev/VolGroup00/qemu    /var/lib/libvirt/qemu   ext3    defaults        1 2"
+    value = devicename + "    /var/lib/libvirt/qemu   ext3    defaults        1 2"
     general.set_config_property("/etc/fstab", value, value)
+
+def _get_volgroup_name():
+  result = general.shell_exec("vgdisplay --activevolumegroups -c")
+  volgroup = result.split(':', 1)[0].strip()
+
+  if (not volgroup):
+    raise Exception("Can't find any volgroup name")
+
+  return volgroup
 
 def _get_config_value(file_name, config_name):
   '''

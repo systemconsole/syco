@@ -3,8 +3,8 @@ h1. Setup KVM host
 h2. Prerequisite
 
 * Setup centos
-** Set swap partion size to 
-   (0.5 * RAM) + (overcommit ratio * RAM) = Recommended swap size      
+** Set swap partion size to
+   (0.5 * RAM) + (overcommit ratio * RAM) = Recommended swap size
 
 h2. Install KVM host
 
@@ -15,10 +15,10 @@ h1. Setup KVM guest
 # Create the data lvm volumegroup
 lvcreate -n fo-tp-install -L 100G VolGroup00
 
-mke2fs -j /dev/vg_data/VolData
+mkfs.ext4 -j /dev/vg_data/VolData
 mkdir -p /opt/fareoffice/var/virtstorage
 mount /dev/vg_data/VolData /opt
-echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
+echo "/dev/vg_data/VolData  /opt  ext4  defaults  1 2" >> /etc/fstab
 
 # Create guest image
 qemu-img create -f raw /opt/fareoffice/var/virtstorage/fo-tp-install.img 100G
@@ -36,7 +36,7 @@ virt-install --connect qemu:///system -n fo-tp-install -r 2048 --vcpus=2 \
         --vnc --noautoconsole --hvm --accelerate \
         --check-cpu \
         --os-type linux --os-variant=rhel5.4 \
-        --network=bridge:br1                 
+        --network=bridge:br1
 
 # Autostart guests.
 virsh autostart fo-tp-install

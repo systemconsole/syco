@@ -3,9 +3,9 @@ h1. Create fo-tp-svn
 # Create the data lvm volumegroup
 vgcreate vg_data /dev/hdd
 lvcreate -n VolData -L 50G vg_data
-mke2fs -j /dev/vg_data/VolData
+mkfs.ext4 -j /dev/vg_data/VolData
 mount /dev/vg_data/VolData /opt
-echo "/dev/vg_data/VolData  /opt  ext3  defaults  1 2" >> /etc/fstab
+echo "/dev/vg_data/VolData  /opt  ext4  defaults  1 2" >> /etc/fstab
 
 #RPM packages
 yum install subversion httpd mod_dav_svn

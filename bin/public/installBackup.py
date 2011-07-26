@@ -52,10 +52,10 @@ It might delete the backup volume if we run the script when we shouldn't =)
 # Create the backup volume on fo-tp-vh01
 vgcreate vg_backup /dev/cciss/c0d1
 lvcreate -n VolBackup -l 100%FREE vg_backup
-mke2fs -j /dev/vg_backup/VolBackup
+mkfs.ext4 -j /dev/vg_backup/VolBackup
 mkdir /opt/backup
 mount /dev/vg_backup/VolBackup /opt/backup
-echo "/dev/vg_backup/VolBackup  /opt/backup  ext3  defaults  1 2" >> /etc/fstab
+echo "/dev/vg_backup/VolBackup  /opt/backup  ext4  defaults  1 2" >> /etc/fstab
 
 '''
 
