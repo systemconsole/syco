@@ -135,6 +135,16 @@ LDAP
 * SSSD or NSCD
 * Setup password policy
 * Two-factor auth with http://www.wikidsystems.com/ or something else.
+* Two-factor SSH with YubiKey on CentOS 5.6
+  http://www.grennan.com/?p=170
+  http://code.google.com/p/yubico-pam/wiki/ReadMe
+
+  Buy?
+  https://store.yubico.com/
+  http://nordicedge.com/yubikey?_kk=yubikey&_kt=719e84e7-3154-4db0-ae0d-824db7f359fc&gclid=CLiZvv6Y6qoCFUcYzQodDUgIOw
+  http://www.yubico.com/fedora-uses-yubikey-for-strong-two-factor-authentication-
+
+  http://www.yubico.com/radius
 * Use SASL?
 * Use KERBEROS?
 * Use Radius?
