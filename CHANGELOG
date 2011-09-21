@@ -122,6 +122,7 @@ Version 5
   asadmin console. The user can login to a remote host and run local commands.
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+* Test ZFS?
 
 STABILITY
 ---------
