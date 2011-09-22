@@ -77,6 +77,8 @@ Hardening
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/post/
 * Harden according to, or later version.
   http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf
+* http://www.sans.org/score/checklists/linuxchecklist.pdf
+* http://serverfault.com/questions/89923/what-tool-or-scripts-do-you-use-to-audit-a-linux-box
 * Harden, remove/disable these services
   hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm
 * Add user used by syco, so it don't need to use root. Then prevent root ssh login.
