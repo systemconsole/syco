@@ -541,8 +541,8 @@ def add_openvpn_chain():
   iptables.iptables("-A syco_input -m state --state NEW -m tcp -p tcp --dport 1194 -j allowed_tcp")
 
   # Ports to allow to use on the network.
-  iptables.iptables("-A syco_input   -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
-  iptables.iptables("-A syco_forward -p tcp -m state --state NEW -m multiport --dports 22,34,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
+  iptables.iptables("-A syco_input   -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
+  iptables.iptables("-A syco_forward -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
 
   # To protect the network.
   iptables.iptables("-A syco_forward -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
