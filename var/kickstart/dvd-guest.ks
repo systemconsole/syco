@@ -63,7 +63,7 @@ volgroup VolGroup00 pv.2
 
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=4096
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
-logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=32768
+logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=${DISK_VAR}
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
 logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev

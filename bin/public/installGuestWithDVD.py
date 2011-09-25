@@ -47,7 +47,7 @@ def install_guest(args):
   hostname = args[1]
   ip = args[2]
 
-  app.print_verbose("Instal kvm guest " + hostname + " with ip " + ip )
+  app.print_verbose("Install kvm guest " + hostname + " with ip " + ip )
 
   # Is server already installed?
   result = general.shell_exec("virsh list --all")
@@ -63,6 +63,11 @@ def install_guest(args):
     general.shell_exec("mount -o ro /dev/dvd /media/dvd")
 
   # Create kickstart for the installation
+  disk_var_gb = app.get_disk_var(hostname)
+  # Extra disk defined in dvd-guest.ks
+  disk_var_gb = str(int(disk_var_gb) + 15)
+  disk_var_mb = str(int(disk_var_gb) * 1024)
+
   general.shell_exec("mkdir -p " + app.SYCO_PATH + "var/kickstart/generated")
   ks_path = app.SYCO_PATH + "var/kickstart/generated/" + hostname + ".ks"
   general.shell_exec("cp " + app.SYCO_PATH + "var/kickstart/dvd-guest.ks " + ks_path)
@@ -72,6 +77,7 @@ def install_guest(args):
   general.set_config_property(ks_path, "\$\{NAMESERVER\}", app.config.get_first_dns_resolver())
   general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
   general.set_config_property(ks_path, "\$\{EXTERNAL_NAMESERVER\}", app.config.get_external_dns_resolver())
+  general.set_config_property(ks_path, "\$\{DISK_VAR\}", disk_var_mb)  
 
   # Export kickstart file
   nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
@@ -80,19 +86,23 @@ def install_guest(args):
   nfs.restart_services()
   nfs.add_iptables_rules()
 
-  # Create the data lvm volumegroup
+  # Create the data lvm volumegroup  
   result = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + hostname)
   if ("/dev/VolGroup00/" + hostname not in result):
-    general.shell_exec("lvcreate -n " + hostname + " -L 100G VolGroup00")
+    general.shell_exec("lvcreate -n " + hostname + " -L " + disk_var_gb + "G VolGroup00")
 
   # Create the KVM image
   local_ip = net.get_lan_ip()
-  general.shell_exec("virt-install --connect qemu:///system --name " + hostname + " --ram 2048 --vcpus=2 " +
+
+  ram = str(app.get_ram(hostname))
+  cpu = str(app.get_cpu(hostname))
+
+  general.shell_exec("virt-install --connect qemu:///system --name " + hostname + " --ram " + ram + " --vcpus=" + cpu + " " +
     "--disk path=/dev/VolGroup00/" + hostname + " " +
     "--location nfs:" + local_ip + ":/exports/dvd " +
     "--vnc --noautoconsole --hvm --accelerate " +
     "--check-cpu " +
-    "--os-type linux --os-variant=rhel5.4 " +
+    "--os-type linux --os-variant=rhel6 " +
     "--network bridge:br1 " +
     '-x "ks=nfs:' + local_ip + ":/exports/kickstart/" + hostname + ".ks" + '"')
 

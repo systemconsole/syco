@@ -173,36 +173,36 @@ def _modify_coppler_settings():
   general.shell_exec("cobbler check")
 
 def _import_repos():
-  if (os.access("/var/www/cobbler/ks_mirror/centos5.6-x86_64", os.F_OK)):
-    app.print_verbose("Centos5.6-x86_64 already imported")
+  if (os.access("/var/www/cobbler/ks_mirror/centos-x86_64", os.F_OK)):
+    app.print_verbose("Centos-x86_64 already imported")
   else:
-    general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.6/os/x86_64/ --name=centos5.6 --arch=x86_64")
+    general.shell_exec("cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/os/x86_64/ --name=centos --arch=x86_64")
 
-  if (os.access("/var/www/cobbler/repo_mirror/centos5-updates-x86_64", os.F_OK)):
-    app.print_verbose("Centos5-updates-x86_64 repo already imported")
+  if (os.access("/var/www/cobbler/repo_mirror/centos-updates-x86_64", os.F_OK)):
+    app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
-    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos5-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/5.6/updates/x86_64/")
+    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
     general.shell_exec("cobbler reposync")
 
-  general.shell_exec("cobbler distro remove --name centos5.6-xen-x86_64")
-  general.shell_exec("cobbler profile remove --name centos6-x86_64")
+  general.shell_exec("cobbler distro remove --name centos-xen-x86_64")
+  general.shell_exec("cobbler profile remove --name centos-x86_64")
 
 def _refresh_all_profiles():
   # Setup installation profiles and systems
-  general.shell_exec("cobbler profile remove --name=centos5.6-vm_guest")
+  general.shell_exec("cobbler profile remove --name=centos-vm_guest")
   general.shell_exec(
-    'cobbler profile add --name=centos5.6-vm_guest ' +
-    '--distro=centos5.6-x86_64 --virt-type=qemu ' +
+    'cobbler profile add --name=centos-vm_guest ' +
+    '--distro=centos-x86_64 --virt-type=qemu ' +
     '--virt-ram=1024 --virt-cpus=1 ' +
     '--repos="centos5-updates-x86_64" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/guest.ks ' +
     '--virt-bridge=br1'
   )
 
-  general.shell_exec("cobbler profile remove --name=centos5.6-vm_host")
+  general.shell_exec("cobbler profile remove --name=centos-vm_host")
   general.shell_exec(
-    'cobbler profile add --name=centos5.6-vm_host ' +
-    '--distro=centos5.6-x86_64 ' +
+    'cobbler profile add --name=centos-vm_host ' +
+    '--distro=centos-x86_64 ' +
     '--repos="centos5-updates-x86_64" ' +
     '--kickstart=/var/lib/cobbler/kickstarts/host.ks'
   )
@@ -221,7 +221,7 @@ def _host_add(host_name, ip):
   boot_device = app.get_boot_device(host_name, "cciss/c0d0")
 
   general.shell_exec(
-    "cobbler system add --profile=centos5.6-vm_host " +
+    "cobbler system add --profile=centos-vm_host " +
     "--name=" + host_name + " --hostname=" + host_name + " " +
     '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
     "--ksmeta=\"boot_device=" + str(boot_device) + "\""
@@ -247,7 +247,7 @@ def _guest_add(host_name, ip):
   ram = app.get_ram(host_name)
   cpu = app.get_cpu(host_name)
 
-  general.shell_exec("cobbler system add --profile=centos5.6-vm_guest "
+  general.shell_exec("cobbler system add --profile=centos-vm_guest "
                      "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +

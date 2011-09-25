@@ -146,6 +146,7 @@ def _create_kvm_snapshot_partition():
     general.shell_exec("mkdir -p /var/lib/libvirt/qemu")
     general.shell_exec("mount " + devicename + " /var/lib/libvirt/qemu")
     general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 /var/lib/libvirt/qemu")
+    general.shell_exec("chown qemu:qemu /var/lib/libvirt/qemu")
 
     # Automount the new partion when rebooting.
     value = devicename + "    /var/lib/libvirt/qemu   ext4    defaults        1 2"
