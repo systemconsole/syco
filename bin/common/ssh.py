@@ -249,7 +249,7 @@ class Ssh:
     self.install_ssh_key()
 
     # Remote install rsync
-    self.ssh_exec("yum -y install rsync")
+    self.ssh_exec('[[ "$(rpm -q rsync)" == *installed ]] && ( yum -y install rsync; exit 0)')
 
     general.shell_exec(
                        'rsync --delete -az -e "ssh ' + self.ssh_options + " -p" + self.port + " -i " + self.ssh_private_key_file + '" ' +
