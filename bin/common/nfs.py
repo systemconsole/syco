@@ -4,6 +4,8 @@ Functions to handle NFS exports.
 
 Read more.
 http://www.crazysquirrel.com/computing/debian/servers/setting-up-nfs4.jspx
+http://aaronwalrath.wordpress.com/2011/03/18/configure-nfs-server-v3-and-v4-on-scientific-linux-6-and-red-hat-enterprise-linux-rhel-6/
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -44,13 +46,16 @@ def remove_export(name):
 
 def restart_services():
   general.shell_exec("exportfs -rv")
-  general.shell_exec("service portmap restart")
+  general.shell_exec("setsebool -P nfs_export_all_rw 1")
   general.shell_exec("service nfs restart")
+  general.shell_exec("service rpcbind restart")
+  general.shell_exec("service nfslock restart")
   general.shell_exec("service rpcsvcgssd restart")
 
 def stop_services():
   general.shell_exec("service nfs stop")
-  general.shell_exec("service portmap stop")
+  general.shell_exec("service rpcbind stop")
+  general.shell_exec("service nfslock stop")
 
 def configure_with_static_ip():
   '''
