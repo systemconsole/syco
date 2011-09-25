@@ -63,7 +63,7 @@ JDK_REPO_URL = "http://download.oracle.com/otn-pub/java/jdk/6u25-b06/" + JDK_INS
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-MYSQL_CONNECTOR_VERSION  = "mysql-connector-java-5.1.16"
+MYSQL_CONNECTOR_VERSION  = "mysql-connector-java-5.1.17"
 MYSQL_CONNECTOR_FILE     = MYSQL_CONNECTOR_VERSION + ".tar.gz"
 MYSQL_CONNECTOR_REPO_URL = "http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/" + MYSQL_CONNECTOR_FILE
 
@@ -266,25 +266,25 @@ def _install_eclipselink():
 
   '''
   os.chdir(app.INSTALL_DIR)
-  if (not os.access("eclipselink-plugins-2.1.2.v20101206-r8635.zip", os.F_OK)):
-    general.download_file("http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip", user="glassfish")
-    general.download_file("http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.1.2/eclipselink-plugins-2.1.2.v20101206-r8635.zip&type=sha1",
+  if (not os.access("eclipselink-plugins-2.3.0.v20110604-r9504.zip", os.F_OK)):
+    general.download_file("http://ftp.ing.umu.se/mirror/eclipse/rt/eclipselink/releases/2.3.0/eclipselink-plugins-2.3.0.v20110604-r9504.zip", user="glassfish")
+    general.download_file("http://www.eclipse.org/downloads/sums.php?file=/rt/eclipselink/releases/2.3.0/eclipselink-plugins-2.3.0.v20110604-r9504.zip&type=sha1",
       "eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1",
       user="glassfish"
     )
-    sha1sum = general.shell_exec("sha1sum --check eclipselink-plugins-2.1.2.v20101206-r8635.zip.sha1", user="glassfish")
-    if (r"eclipselink-plugins-2.1.2.v20101206-r8635.zip: OK" not in sha1sum):
+    sha1sum = general.shell_exec("sha1sum --check eclipselink-plugins-2.3.0.v20110604-r9504.zip.sha1", user="glassfish")
+    if (r"eclipselink-plugins-2.3.0.v20110604-r9504.zip: OK" not in sha1sum):
       raise Exception("Invalid checksum for eclipselink")
 
-  general.shell_exec("unzip -oq eclipselink-plugins-2.1.2.v20101206-r8635.zip")
+  general.shell_exec("unzip -oq eclipselink-plugins-2.3.0.v20110604-r9504.zip")
 
-  general.shell_exec("cp org.eclipse.persistence.antlr_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.antlr.jar", user="glassfish")
-  general.shell_exec("cp org.eclipse.persistence.jpa_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.jpa.jar", user="glassfish")
-  general.shell_exec("cp org.eclipse.persistence.asm_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.asm.jar", user="glassfish")
-  general.shell_exec("cp org.eclipse.persistence.jpa.modelgen_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.jpa.modelgen.jar", user="glassfish")
-  general.shell_exec("cp org.eclipse.persistence.core_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.core.jar", user="glassfish")
-  general.shell_exec("cp org.eclipse.persistence.oracle_2.1.2.v20101206-r8635.jar " + GLASSFISH_PATH + "glassfish/modules/org.eclipse.persistence.oracle.jar", user="glassfish")
-  general.shell_exec("cp javax.persistence_2.0.1.v201006031150.jar " + GLASSFISH_PATH + "glassfish/modules/javax.persistence.jar", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.antlr_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.jpa_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.asm_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.jpa.modelgen_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.core_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp org.eclipse.persistence.oracle_2.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
+  general.shell_exec("cp javax.persistence_2.0.3.* " + GLASSFISH_PATH + "glassfish/modules/", user="glassfish")
 
 def _create_domains(domain_name, port_base):
   '''
@@ -382,13 +382,14 @@ def _install_google_guice(domain_name):
 
   '''
   os.chdir(app.INSTALL_DIR)
-  if (not os.access("guice-2.0.zip", os.F_OK)):
-    general.download_file("http://google-guice.googlecode.com/files/guice-2.0.zip", user="glassfish")
-    general.shell_exec("unzip -oq guice-2.0.zip", user="glassfish")
+  if (not os.access("guice-3.0.zip", os.F_OK)):
+    general.download_file("http://google-guice.googlecode.com/files/guice-3.0.zip", user="glassfish")
+    general.shell_exec("unzip -oq guice-3.0.zip", user="glassfish")
 
-  general.shell_exec("cp guice-2.0/guice-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/guice-assistedinject-2.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
-  general.shell_exec("cp guice-2.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/guice-assistedinject-3.0.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/aopalliance.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
+  general.shell_exec("cp guice-3.0/javax.inject.jar " + GLASSFISH_DOMAINS_PATH + domain_name + "/lib/ext/", user="glassfish")
 
 def _set_jvm_options(admin_port):
   '''
