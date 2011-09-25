@@ -87,6 +87,23 @@ Hardening
   repo --name=lepel       --baseurl=http://10.0.0.1:81/yum-repos/epel/i386
   rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
 
+Log-server
+---------
+
+http://wiki.rsyslog.com/index.php/Rsyslog_on_CentOS_success_story
+http://loganalyzer.adiscon.com/
+http://www.linuxjournal.com/content/centralized-logging-web-interface
+http://www.howtoforge.com/building-a-central-loghost-on-centos-and-rhel-5-with-rsyslog
+http://aaronwalrath.wordpress.com/2010/09/02/set-up-rsyslog-and-loganalyzer-on-centos-linux-5-5-for-centralized-logging/
+http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch05_:_Troubleshooting_Linux_with_syslog
+http://www.syslog.org/wiki/Main/LogAnalyzers
+http://serverfault.com/questions/239401/splunk-is-fantastically-expensive-what-are-the-alternatives
+http://serverfault.com/questions/62687/alternatives-to-splunk
+http://stackoverflow.com/questions/183977/what-commercial-and-open-source-competitors-are-there-to-splunk/
+http://www.syslog.org/wiki/Main/LogAnalyzers
+
+Bra att logga till både rsyslog och syslogd-ng?
+
 Remote-install
 --------------
 * install-guests "virsh list" just print a .
