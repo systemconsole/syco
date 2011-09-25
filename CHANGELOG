@@ -13,6 +13,7 @@ Version 0.25
 Version 0.3
 -----------
 * installBind
+* Test bind installation with https://www.ultratools.com
 
 Version 0.4
 -----------
@@ -76,6 +77,8 @@ Hardening
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/post/
 * Harden according to, or later version.
   http://www.nsa.gov/ia/_files/os/redhat/rhel5-guide-i731.pdf
+* http://www.sans.org/score/checklists/linuxchecklist.pdf
+* http://serverfault.com/questions/89923/what-tool-or-scripts-do-you-use-to-audit-a-linux-box
 * Harden, remove/disable these services
   hplip,isdn,kudzu,xfs,nfs,xinetd,rhnsd,kdump,readahead_later,messagebus,haldaemon,apm
 * Add user used by syco, so it don't need to use root. Then prevent root ssh login.
@@ -138,6 +141,7 @@ Version 5
   asadmin console. The user can login to a remote host and run local commands.
   http://docs.python.org/library/cmd.html
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
+* Test ZFS?
 
 STABILITY
 ---------
@@ -152,6 +156,19 @@ LDAP
 * SSSD or NSCD
 * Setup password policy
 * Two-factor auth with http://www.wikidsystems.com/ or something else.
+* Two-factor SSH with YubiKey on CentOS 5.6
+  http://www.grennan.com/?p=170
+  http://code.google.com/p/yubico-pam/wiki/ReadMe
+
+  Buy?
+  https://store.yubico.com/
+  http://nordicedge.com/yubikey?_kk=yubikey&_kt=719e84e7-3154-4db0-ae0d-824db7f359fc&gclid=CLiZvv6Y6qoCFUcYzQodDUgIOw
+  http://www.yubico.com/fedora-uses-yubikey-for-strong-two-factor-authentication-
+
+  http://www.yubico.com/radius
+* two-factor - http://www.rcdevs.com/demos/#
+* Port-knocking 
+  http://ubuntuforums.org/showthread.php?t=812573
 * Use SASL?
 * Use KERBEROS?
 * Use Radius?
