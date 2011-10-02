@@ -25,6 +25,10 @@ config.load(test_path)
 
 class TestGeneralConfig(unittest.TestCase):
 
+    def test_config(self):
+       self.assertEqual(config.get_servers(), ['syco-mysql-primary', 'syco-mysql-secondary', 'syco-install', 'syco-ldap', 'syco-vh01', 'syco-ntp'])
+       self.assertEqual(config.get_hosts(), ['syco-vh01'])
+
     def test_general(self):
         general = config.general
 

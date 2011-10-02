@@ -39,6 +39,21 @@ class Config(object):
                                              self.etc_path, self.usr_path)
     return self.hosts[hostname]
 
+  def get_servers(self):
+    '''A list of all servers that are defined in install.cfg.'''
+    servers = self.general.sections()
+    servers.remove("general")
+    return servers
+
+  def get_hosts(self):
+    '''Get the hostname of all kvm hosts.'''
+    hosts = []
+
+    for hostname in self.get_servers():
+      if self.host(hostname).is_host():
+        hosts.append(hostname)
+    return sorted(hosts)
+
   class SycoConfig(ConfigParser.RawConfigParser):
 
     def __init__(self, etc_path, usr_path = None):
@@ -311,3 +326,9 @@ def load(etc_path, usr_path = None):
 def host(hostname):
   global config
   return config.host(hostname)
+
+def get_servers():
+  return config.get_servers()
+
+def get_hosts():
+  return config.get_hosts()

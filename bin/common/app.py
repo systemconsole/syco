@@ -26,8 +26,10 @@ from constant import *
 import options
 options = options.Options()
 
-from common.config import GeneralConfig
-config = GeneralConfig(SYCO_ETC_PATH, SYCO_USR_PATH)
+import config
+config.load(SYCO_ETC_PATH, SYCO_USR_PATH)
+
+
 
 import install
 
@@ -195,60 +197,38 @@ def init_all_passwords():
 
 def get_mysql_primary_master():
   '''IP or hostname for primary mysql server.'''
-  return config.get_mysql_primary_master_ip()
+  return config.general.get_mysql_primary_master_ip()
 
 def get_mysql_secondary_master():
   '''IP or hostname for secondary mysql server.'''
-  return config.get_mysql_secondary_master_ip()
+  return config.general.get_mysql_secondary_master_ip()
 
 def get_gateway_server_ip():
   '''The ip of the network gateway.'''
-  return config.get_back_gateway_ip()
+  return config.general.get_back_gateway_ip()
 
 def get_installation_server():
   '''The hostname of the installation server.'''
-  return config.get_installation_server()
+  return config.general.get_installation_server()
 
 def get_installation_server_ip():
   '''The ip of the installation server.'''
-  return config.get_installation_server_ip()
+  return config.general.get_installation_server_ip()
 
 def get_cert_server():
   '''The hostname of the cert server.'''
-  return config.get_cert_server()
+  return config.general.get_cert_server()
 
 def get_cert_server_ip():
   '''The ip of the cert server.'''
-  return config.get_cert_server_ip()
+  return config.general.get_cert_server_ip()
 
 def get_servers():
   '''A list of all servers that are defined in install.cfg.'''
-  servers = config.sections()
-  servers.remove("general")
-  return servers
-
-def get_domain():
-  '''Get the domain name where all syco servers live. '''
-  return config.get_option("general", "domain")
+  return config.get_servers()
 
 def get_hosts():
-  '''Get the hostname of all kvm hosts.'''
-  hosts = []
-
-  for host_name in get_servers():
-    if is_host(host_name):
-      hosts.append(host_name)
-  return sorted(hosts)
-
-def host(host_name):
-  '''
-  Retrive a host object.
-
-  Example:
-  app.host("ldap-server").get_cpu()
-
-  '''
-  return HostConfig(host_name, SYCO_ETC_PATH, SYCO_USR_PATH)
+  return config.get_hosts()
 
 if (__name__ == "__main__"):
   print_error("This is a error.")
