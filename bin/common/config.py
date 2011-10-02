@@ -16,108 +16,282 @@ __status__ = "Production"
 import ConfigParser
 import os
 
-import app
+class Config(object):
+  etc_path = None
+  usr_path = None
+  hosts = {}
 
-class SycoConfig(ConfigParser.RawConfigParser):
+  def __init__(self, etc_path, usr_path):
+    self.etc_path = etc_path
+    self.usr_path = usr_path
+    self.general = self.GeneralConfig(etc_path, usr_path)
 
-  class SycoConfigException(Exception):
+  def host(self, hostname):
+    if hostname not in self.hosts:
+      self.hosts[hostname] = self.HostConfig(hostname,
+                                             self.etc_path, self.usr_path)
+    return self.hosts[hostname]
+
+  class ConfigException(Exception):
     '''
     Raised when their is an invalid number of install.cfg
-    '''
-
-  def __init__(self):
-    ConfigParser.RawConfigParser.__init__(self)
-
-    config_dir = []
-    if (os.access(app.SYCO_ETC_PATH + "install.cfg", os.F_OK)):
-      config_dir.append(app.SYCO_ETC_PATH + "install.cfg")
-    for dir in os.listdir(app.SYCO_USR_PATH):
-      if (os.access(app.SYCO_USR_PATH + dir + "/etc/install.cfg", os.F_OK)):
-        config_dir.append(app.SYCO_USR_PATH + dir + "/etc/install.cfg")
-
-    if (len(config_dir) == 0):
-      raise self.SycoConfigException("No install.cfg found.")
-    elif (len(config_dir) > 1):
-      raise self.SycoConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
-    else:
-      self.read(config_dir[0])
-
-  def get_option(self, section, option):
-    '''
-    Get an option from the install.cfg file.
 
     '''
-    if (self.has_section(section)):
-      if (self.has_option(section, option)):
-        return self.get(section, option)
+    pass
+
+  class SycoConfig(ConfigParser.RawConfigParser):
+
+    def __init__(self, etc_path, usr_path):
+      ConfigParser.RawConfigParser.__init__(self)
+
+      self.load_config_file(etc_path, usr_path)
+
+    def load_config_file(self, etc_path, usr_path):
+      file_name = etc_path + "install.cfg"
+
+      config_dir = []
+      if (os.access(file_name, os.F_OK)):
+        config_dir.append(file_name)
+      for dir in os.listdir(usr_path):
+        if (os.access(usr_path + dir + "/etc/install.cfg", os.F_OK)):
+          config_dir.append(usr_path + dir + "/etc/install.cfg")
+
+      if (len(config_dir) == 0):
+        raise Config.ConfigException("No install.cfg found.")
+      elif (len(config_dir) > 1):
+        raise Config.ConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
       else:
-        raise Exception("Can't find option '" + option + "' in section '" + section + "' in install.cfg")
-    else:
-      raise Exception("Can't find section '" + section + "' in install.cfg")
+        self.read(config_dir[0])
 
-  def get_resolv_domain(self):
-    return self.get_option("general", "resolv.domain")
+    def get_option(self, section, option, default_value = None):
+      '''
+      Get an option from the install.cfg file.
 
-  def get_resolv_search(self):
-    return self.get_option("general", "resolv.search")
+      '''
+      if (self.has_section(section)):
+        if (self.has_option(section, option)):
+          return self.get(section, option)
+        else:
+          errmsg = "Can't find option '" + option + "' in section '" + section + "' in install.cfg"
+      else:
+        errmsg = "Can't find section '" + section + "' in install.cfg"
 
-  def get_mail_relay_domain_name(self):
-    return self.get_option("general", "mail_relay.domain_name")
+      if (default_value):
+        return default_value
+      else:
+        raise Config.ConfigException(errmsg)
 
-  def get_country_name(self):
-    return self.get_option("general", "country_name")
+  class GeneralConfig(SycoConfig):
+    '''
+    Access functions for the [general] part in the install.cfg.
 
-  def get_state(self):
-    return self.get_option("general", "state")
+    '''
+    etc_path = None
+    usr_path = None
 
-  def get_locality(self):
-    return self.get_option("general", "locality")
+    def __init__(self, etc_path, usr_path):
+      Config.SycoConfig.__init__(self, etc_path, usr_path)
+      self.etc_path = etc_path
+      self.usr_path = usr_path
 
-  def get_organization_name(self):
-    return self.get_option("general", "organization_name")
+    def get_option(self, option, default_value = None):
+      return Config.SycoConfig.get_option(self, "general", option, default_value)
 
-  def get_organizational_unit_name(self):
-    return self.get_option("general", "organizational_unit_name")
+    def host(self, hostname):
+      return Config.HostConfig(hostname, self.etc_path, self.usr_path)
 
-  def get_admin_email(self):
-    return self.get_option("general", "admin_email")
+    def get_installation_server(self):
+      '''The hostname of the installation server.'''
+      return self.get_option("installation_server")
 
-  def get_ldap_server(self):
-    '''The hostname of the ldap server.'''
-    return self.get_option("general", "ldap.server")
+    def get_installation_server_ip(self):
+      '''The ip of the installation server.'''
+      return self.host(self.get_installation_server()).get_back_ip()
 
-  def get_ldap_server_ip(self):
-    return app.get_ip(self.get_ldap_server())
+    def get_front_gateway_ip(self):
+      '''The ip of the network gateway.'''
+      return self.get_option("front.gateway")
 
-  def get_ldap_hostname(self):
-    return self.get_option("general", "ldap.hostname")
+    def get_back_gateway_ip(self):
+      '''The ip of the network gateway.'''
+      return self.get_option("back.gateway")
 
-  def get_ldap_dn(self):
-    return self.get_option("general", "ldap.dn")
+    def get_front_netmask(self):
+      '''The netmask of the front network.'''
+      return self.get_option("front.netmask")
 
-  def get_ntp_server(self):
-    '''The hostname of the ntp server.'''
-    return self.get_option("general", "ntp.server")
+    def get_back_netmask(self):
+      '''The netmask of the back network.'''
+      return self.get_option("back.netmask")
 
-  def get_ntp_server_ip(self):
-    return app.get_ip(self.get_ntp_server())
+    def get_external_dns_resolver(self):
+      '''ip of external dns resolver that are configured on all servers. todo get_front_dns_resolver_ip'''
+      return self.get_option("front.resolver")
 
-  def get_internal_dns_resolvers(self):
-    '''ip list of dns resolvers inside the syco net that are configured on all servers.'''
-    return self.get_option("general", "dns.internal_resolvers")
+    def get_internal_dns_resolvers(self):
+      '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
+      return self.get_option("back.resolver")
 
-  def get_external_dns_resolver(self):
-    '''ip of external dns resolver that are configured on all servers.'''
-    return self.get_option("general", "dns.external_resolver").split(None, 1)[0]
+    def get_dns_resolvers(self, limiter=" "):
+      '''
+      ip list of all dns resolvers that are configured on all servers.
 
-  def get_dns_resolvers(self, limiter=" "):
-    '''ip list of all dns resolvers that are configured on all servers.'''
-    resolvers = str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
+      TODO: Remove?
+      '''
+      resolvers = str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
 
-    if (limiter != " "):
-      resolvers = resolvers.replace(' ', limiter)
-    return resolvers
+      if (limiter != " "):
+        resolvers = resolvers.replace(' ', limiter)
+      return resolvers
 
-  def get_first_dns_resolver(self):
-    '''ip of primary dns-resolver.'''
-    return self.get_dns_resolvers().split(None, 1)[0]
+    def get_first_dns_resolver(self):
+      '''ip of primary dns-resolver. TODO remove use get_front/get_back_resolver'''
+      return self.get_dns_resolvers().split(None, 1)[0]
+
+    def get_resolv_domain(self):
+      return self.get_option("resolv.domain")
+
+    def get_resolv_search(self):
+      return self.get_option("resolv.search")
+
+    def get_ldap_server(self):
+      '''The hostname of the ldap server.'''
+      return self.get_option("ldap.server")
+
+    def get_ldap_server_ip(self):
+      return self.host(self.get_ldap_server()).get_back_ip()
+
+    def get_ldap_hostname(self):
+      return self.get_option("ldap.hostname")
+
+    def get_ldap_dn(self):
+      return self.get_option("ldap.dn")
+
+    def get_ntp_server(self):
+      '''The hostname of the ntp server.'''
+      return self.get_option("ntp.server")
+
+    def get_ntp_server_ip(self):
+      return self.host(self.get_ntp_server()).get_back_ip()
+
+    def get_mail_relay_domain_name(self):
+      return self.get_option("mail_relay.domain_name")
+
+    def get_cert_server(self):
+      '''The hostname of the cert server.'''
+      return self.get_option("cert.server")
+
+    def get_cert_server_ip(self):
+      '''The ip of the cert server.'''
+      return self.host(self.get_cert_server()).get_back_ip()
+
+    def get_mysql_primary_master(self):
+      return self.get_option("mysql.primary_master")
+
+    def get_mysql_primary_master_ip(self):
+      '''IP or hostname for primary mysql server.'''
+      return self.host(self.get_mysql_primary_master()).get_back_ip()
+
+    def get_mysql_secondary_master(self):
+      return self.get_option("mysql.secondary_master")
+
+    def get_mysql_secondary_master_ip(self):
+      '''IP or hostname for primary mysql server.'''
+      return self.host(self.get_mysql_secondary_master()).get_back_ip()
+
+    def get_country_name(self):
+      return self.get_option("country_name")
+
+    def get_state(self):
+      return self.get_option("state")
+
+    def get_locality(self):
+      return self.get_option("locality")
+
+    def get_organization_name(self):
+      return self.get_option("organization_name")
+
+    def get_organizational_unit_name(self):
+      return self.get_option("organizational_unit_name")
+
+    def get_admin_email(self):
+      return self.get_option("admin_email")
+
+  class HostConfig(SycoConfig):
+    '''
+    Access functions for the hosts in the install.cfg.
+
+    '''
+
+    hostname = None
+
+    def __init__(self, hostname, etc_path, usr_path):
+      Config.SycoConfig.__init__(self, etc_path, usr_path)
+      self.hostname = hostname
+
+    def get_option(self, option, default_value = None):
+      return Config.SycoConfig.get_option(self, self.hostname, option, default_value)
+
+    def get_front_ip(self):
+      '''Get ip for a specific host, as it is defined in install.cfg'''
+      return self.get_option("front.ip")
+
+    def get_back_ip(self):
+      '''Get ip for a specific host, as it is defined in install.cfg'''
+      return self.get_option("back.ip")
+
+    def get_mac(self):
+      '''Get network mac address for a specific host, as it is defined in install.cfg'''
+      return self.get_option("mac")
+
+    def get_ram(self):
+      '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
+      return self.get_option("ram")
+
+    def get_cpu(self):
+      '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
+      return self.get_option("cpu")
+
+    def get_disk_var(self):
+      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return self.get_option("disk_var")
+
+    def get_boot_device(self, default_device = None):
+      '''Get the device name on which the installation will be performed.'''
+      return self.get_option("boot_device", default_device)
+
+    def is_host(self):
+      if (self.has_section(self.hostname)):
+        for option, value in self.items(self.hostname):
+          if ("guest" in option):
+            return True
+      return False
+
+    def get_commands(self, verbose = False):
+      '''Get all commands that should be executed on a host'''
+      commands = []
+
+      if (self.has_section(self.hostname)):
+        for option, value in self.items(self.hostname):
+          option = option.lower()
+          if "command" in option:
+            if (verbose):
+              value += " -v"
+            commands.append([option, value])
+
+      ret_commands = []
+      for option, value in sorted(commands):
+        ret_commands.append(value)
+
+      return ret_commands
+
+    def get_guests(self):
+      '''Get the hostname of all guests that should be installed on the kvm host name.'''
+      guests = []
+
+      if (self.has_section(self.hostname)):
+        for option, value in self.items(self.hostname):
+          if ("guest" in option):
+            guests.append(value)
+
+      return sorted(guests)

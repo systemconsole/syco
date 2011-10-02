@@ -20,45 +20,14 @@ import sys
 import time
 import subprocess
 
-#
-#  Contains global functions and settings.
-#
-
-# The version of the syco script
-version = "0.1"
-parser = ''
-
-# SYCO root folder.
-SYCO_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
-
-# Scripts that should be availble in public repos.
-SYCO_PUBLIC_PATH = SYCO_PATH + "bin/public/"
-
-# Scripts that should only be available in private repos.
-SYCO_USR_PATH = SYCO_PATH + "usr/"
-
-# Etc (config) files.
-SYCO_ETC_PATH = SYCO_PATH + "etc/"
-
-# Files (rpm etc.) that should be installed by syco, are temporary stored here.
-INSTALL_DIR = SYCO_PATH + "installtemp/"
-
-# All passwords used by syco are stored in this enrypted file.
-PASSWORD_STORE_PATH = SYCO_PATH + "etc/passwordstore"
-
-# When a general username is required.
-SERVER_ADMIN_NAME = "syco"
-
-# String codes affecting output to shell.
-BOLD = "\033[1m"
-RESET = "\033[0;0m"
+from constant import *
 
 # Need to be after all constants.
 import options
 options = options.Options()
 
-import config
-config = config.SycoConfig()
+from common.config import GeneralConfig
+config = GeneralConfig(SYCO_ETC_PATH, SYCO_USR_PATH)
 
 import install
 
@@ -226,59 +195,31 @@ def init_all_passwords():
 
 def get_mysql_primary_master():
   '''IP or hostname for primary mysql server.'''
-  return get_ip(config.get_option("general", "mysql.primary_master"))
+  return config.get_mysql_primary_master_ip()
 
 def get_mysql_secondary_master():
   '''IP or hostname for secondary mysql server.'''
-  return get_ip(config.get_option("general", "mysql.secondary_master"))
+  return config.get_mysql_secondary_master_ip()
 
 def get_gateway_server_ip():
   '''The ip of the network gateway.'''
-  return config.get_option("general", "gateway")
+  return config.get_back_gateway_ip()
 
 def get_installation_server():
   '''The hostname of the installation server.'''
-  return config.get_option("general", "installation_server")
+  return config.get_installation_server()
 
 def get_installation_server_ip():
   '''The ip of the installation server.'''
-  return get_ip(get_installation_server())
+  return config.get_installation_server_ip()
 
 def get_cert_server():
   '''The hostname of the cert server.'''
-  return config.get_option("general", "cert.server")
+  return config.get_cert_server()
 
 def get_cert_server_ip():
   '''The ip of the cert server.'''
-  return get_ip(get_cert_server())
-
-def get_ip(host_name):
-  '''Get ip for a specific host, as it is defined in install.cfg'''
-  return config.get_option(host_name, "server")
-
-def get_mac(host_name):
-  '''Get network mac address for a specific host, as it is defined in install.cfg'''
-  return config.get_option(host_name, "mac")
-
-def get_ram(host_name):
-  '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
-  return config.get_option(host_name, "ram")
-
-def get_cpu(host_name):
-  '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
-  return config.get_option(host_name, "cpu")
-
-def get_disk_var(host_name):
-  '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
-  return config.get_option(host_name, "disk_var")
-
-def get_boot_device(host_name, default_device):
-  '''Get the device name on which the installation will be performed.'''
-  if (config.has_option(host_name, "boot_device")):
-    device = config.get_option(host_name, "boot_device")
-  else:
-    device = default_device
-  return device
+  return config.get_cert_server_ip()
 
 def get_servers():
   '''A list of all servers that are defined in install.cfg.'''
@@ -286,29 +227,9 @@ def get_servers():
   servers.remove("general")
   return servers
 
-def get_commands(host_name):
-  '''Get all commands that should be executed on a host'''
-  commands = []
-
-  if (config.has_section(host_name)):
-    for option, value in config.items(host_name):
-      option = option.lower()
-      if "command" in option:
-        if (options.verbose >= 2):
-          value += " -v"
-        commands.append([option, value])
-
-  ret_commands = []
-  for option, value in sorted(commands):
-    ret_commands.append(value)
-
-  return ret_commands
-
 def get_domain():
   '''Get the domain name where all syco servers live. '''
   return config.get_option("general", "domain")
-
-
 
 def get_hosts():
   '''Get the hostname of all kvm hosts.'''
@@ -319,24 +240,15 @@ def get_hosts():
       hosts.append(host_name)
   return sorted(hosts)
 
-def is_host(host_name):
-  if (config.has_section(host_name)):
-    for option, value in config.items(host_name):
-      if ("guest" in option):
-        return True
-  return False
+def host(host_name):
+  '''
+  Retrive a host object.
 
-def get_guests(host_name):
-  '''Get the hostname of all guests that should be installed on the kvm host name.'''
-  guests = []
+  Example:
+  app.host("ldap-server").get_cpu()
 
-  if (config.has_section(host_name)):
-    for option, value in config.items(host_name):
-      if ("guest" in option):
-        guests.append(value)
-
-  return sorted(guests)
-
+  '''
+  return HostConfig(host_name, SYCO_ETC_PATH, SYCO_USR_PATH)
 
 if (__name__ == "__main__"):
   print_error("This is a error.")
