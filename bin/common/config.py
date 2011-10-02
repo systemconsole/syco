@@ -16,12 +16,19 @@ __status__ = "Production"
 import ConfigParser
 import os
 
+class ConfigException(Exception):
+  '''
+  Raised when their is an invalid number of install.cfg
+
+  '''
+  pass
+
 class Config(object):
   etc_path = None
   usr_path = None
   hosts = {}
 
-  def __init__(self, etc_path, usr_path):
+  def __init__(self, etc_path, usr_path = None):
     self.etc_path = etc_path
     self.usr_path = usr_path
     self.general = self.GeneralConfig(etc_path, usr_path)
@@ -32,16 +39,9 @@ class Config(object):
                                              self.etc_path, self.usr_path)
     return self.hosts[hostname]
 
-  class ConfigException(Exception):
-    '''
-    Raised when their is an invalid number of install.cfg
-
-    '''
-    pass
-
   class SycoConfig(ConfigParser.RawConfigParser):
 
-    def __init__(self, etc_path, usr_path):
+    def __init__(self, etc_path, usr_path = None):
       ConfigParser.RawConfigParser.__init__(self)
 
       self.load_config_file(etc_path, usr_path)
@@ -52,14 +52,16 @@ class Config(object):
       config_dir = []
       if (os.access(file_name, os.F_OK)):
         config_dir.append(file_name)
-      for dir in os.listdir(usr_path):
-        if (os.access(usr_path + dir + "/etc/install.cfg", os.F_OK)):
-          config_dir.append(usr_path + dir + "/etc/install.cfg")
+
+      if (usr_path):
+        for dir in os.listdir(usr_path):
+          if (os.access(usr_path + dir + "/etc/install.cfg", os.F_OK)):
+            config_dir.append(usr_path + dir + "/etc/install.cfg")
 
       if (len(config_dir) == 0):
-        raise Config.ConfigException("No install.cfg found.")
+        raise ConfigException("No install.cfg found.")
       elif (len(config_dir) > 1):
-        raise Config.ConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
+        raise ConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
       else:
         self.read(config_dir[0])
 
@@ -79,7 +81,7 @@ class Config(object):
       if (default_value):
         return default_value
       else:
-        raise Config.ConfigException(errmsg)
+        raise ConfigException(errmsg)
 
   class GeneralConfig(SycoConfig):
     '''
@@ -295,3 +297,17 @@ class Config(object):
             guests.append(value)
 
       return sorted(guests)
+
+#
+# Setup module members
+#
+config = None
+general = None
+def load(etc_path, usr_path = None):
+  global config, general
+  config = Config(etc_path, usr_path)
+  general = config.general
+
+def host(hostname):
+  global config
+  return config.host(hostname)

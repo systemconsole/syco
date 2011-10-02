@@ -14,21 +14,19 @@ __version__ = "1.0.0"
 __status__ = "Test"
 
 import unittest
-from constant import *
-from config import Config
+import os
+
+import config
+
+# Initialize config module.
+test_path = os.path.realpath(__file__)
+test_path = os.path.split(test_path)[0] + "/"
+config.load(test_path)
 
 class TestGeneralConfig(unittest.TestCase):
-    conf = None
-
-    def get_path(self):
-        test_path = os.path.realpath(__file__)
-        return os.path.split(test_path)[0] + "/"
-
-    def setUp(self):
-        self.conf = Config(self.get_path(), ".")
 
     def test_general(self):
-        general = self.conf.general
+        general = config.general
 
         self.assertEqual(general.get_installation_server(), "syco-install")
         self.assertEqual(general.get_installation_server_ip(), "10.0.1.200")
@@ -61,31 +59,31 @@ class TestGeneralConfig(unittest.TestCase):
         self.assertEqual(general.get_admin_email(), "syco@cybercow.se")
 
     def test_host_vh01_install(self):
-        host = self.conf.host("syco-vh01")
+        host = config.host("syco-vh01")
 
         self.assertEqual(host.get_front_ip(), "10.0.0.201")
         self.assertEqual(host.get_back_ip(), "10.0.1.201")
         self.assertEqual(host.get_mac(), "xx:xx:xx:xx:xx:xx")
-        self.assertRaises(Config.ConfigException, host.get_ram)
-        self.assertRaises(Config.ConfigException, host.get_cpu)
-        self.assertRaises(Config.ConfigException, host.get_disk_var)
-        self.assertRaises(Config.ConfigException, host.get_boot_device)
+        self.assertRaises(config.ConfigException, host.get_ram)
+        self.assertRaises(config.ConfigException, host.get_cpu)
+        self.assertRaises(config.ConfigException, host.get_disk_var)
+        self.assertRaises(config.ConfigException, host.get_boot_device)
         self.assertEqual(host.get_boot_device("hda"), "hda")
         self.assertEqual(host.is_host(), True)
         self.assertEqual(host.get_commands(), ['syco iptables-setup', 'syco hardening'])
         self.assertEqual(host.get_guests(), ['syco-install', 'syco-ntp'])
 
     def test_host_syco_install(self):
-        host = self.conf.host("syco-install")
+        host = config.host("syco-install")
 
         self.assertEqual(host.get_front_ip(), "10.0.0.200")
         self.assertEqual(host.get_back_ip(), "10.0.1.200")
-        self.assertRaises(Config.ConfigException, host.get_mac)
+        self.assertRaises(config.ConfigException, host.get_mac)
         self.assertEqual(host.get_ram(), "1024")
         self.assertEqual(host.get_cpu(), "1")
         self.assertEqual(host.get_disk_var(), "40")
 
-        self.assertRaises(Config.ConfigException, host.get_boot_device)
+        self.assertRaises(config.ConfigException, host.get_boot_device)
         self.assertEqual(host.get_boot_device("hda"), "hda")
         self.assertEqual(host.is_host(), False)
         self.assertEqual(host.get_commands(), ['syco iptables-setup', 'syco hardening'])
