@@ -61,6 +61,8 @@ def configure_with_static_ip():
   '''
   http://www.cyberciti.biz/faq/centos-fedora-rhel-iptables-open-nfs-server-ports/
 
+  @TODO: Should be named configure_with_static_ports.
+
   '''
   app.print_verbose("Configure nfs static server ports.")
   # TCP port rpc.lockd should listen on.

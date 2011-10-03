@@ -282,6 +282,10 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.write(replace_exp + "\n")
     w.close()
 
+def set_config_property_batch(file_name, key_value_dict):
+  for key, value in key_value_dict:
+    set_config_property(file_name, "\$\{" + key + "\}", value)
+
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):
   search_exp = r".*" + re.escape(replace_exp) + r".*"
