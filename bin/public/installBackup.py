@@ -74,6 +74,7 @@ import shutil
 import time
 
 import app
+import config
 import general
 import install
 import nfs
@@ -121,13 +122,13 @@ def _configure_rsnapshot():
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*usr[/]local.*localhost.*", "")
 
 def _setup_backup_for_all_servers():
-  servers = app.get_servers()
+  servers = config.get_servers()
   total_servers = len(servers)
   checked_servers = 0
   while(len(servers)):
     checked_servers += 1
     host_name = servers.pop()
-    ip = app.get_ip(host_name)
+    ip = app.get_back_ip(host_name)
     remote_server = ssh.Ssh(ip, app.get_root_password())
     if (remote_server.is_alive()):
       remote_server.install_ssh_key()
@@ -147,25 +148,10 @@ def _configure_backup_pathes(ip, host_name):
   # Add Caption
   general.set_config_property("/etc/rsnapshot.conf", "# " + host_name, "\n# " + host_name)
 
-  for url in _get_backup_pathes(host_name):
+  for url in config.host(host_name).get_backup_pathes():
     url = "root@" + ip + ":" + url
     new_row = "backup\t\t" + url + "\t\t" + host_name + "/"
     general.set_config_property("/etc/rsnapshot.conf", new_row, new_row)
-
-def _get_backup_pathes(host_name):
-  '''Get all pathes that should be backuped.'''
-  commands = []
-
-  # Always backup thease
-  commands.append("/etc/")
-
-  # Backup urls from install.cfg
-  if (app.config.has_section(host_name)):
-    for option, value in app.config.items(host_name):
-      if "backup" in option:
-        commands.append(value)
-
-  return commands
 
 def _setup_cronjob():
   shutil.copyfile(app.SYCO_PATH + "/var/rsnapshot/crontab", "/etc/cron.d/rsnapshot")

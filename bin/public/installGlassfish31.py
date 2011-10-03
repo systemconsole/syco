@@ -33,6 +33,7 @@ import traceback
 import time
 
 import app
+import config
 import general
 import version
 import iptables
@@ -61,7 +62,7 @@ GLASSFISH_REPO_URL="http://hudson.glassfish.org/job/gf-trunk-build-continuous/80
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_24"
 JDK_INSTALL_FILE = "jdk-6u24-linux-x64-rpm.bin"
-JDK_REPO_URL = "http://" + app.get_installation_server_ip() + "/cobbler/repo_mirror/" + JDK_INSTALL_FILE
+JDK_REPO_URL = "http://" + config.general.get_installation_server_ip() + "/cobbler/repo_mirror/" + JDK_INSTALL_FILE
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
@@ -277,8 +278,8 @@ def _install_glassfish():
       general.shell_exec("/sbin/chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("/sbin/chkconfig --level 3 " + GLASSFISH_VERSION + " on")
 
-      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
-      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", config.general.get_mysql_primary_master_ip())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", config.general.get_mysql_secondary_master_ip())
 
   if (not os.access(GLASSFISH_DOMAINS_PATH + "domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + GLASSFISH_PATH)

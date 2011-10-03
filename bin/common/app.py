@@ -195,41 +195,6 @@ def init_all_passwords():
   get_user_password("glassfish")
   init_mysql_passwords()
 
-def get_mysql_primary_master():
-  '''IP or hostname for primary mysql server.'''
-  return config.general.get_mysql_primary_master_ip()
-
-def get_mysql_secondary_master():
-  '''IP or hostname for secondary mysql server.'''
-  return config.general.get_mysql_secondary_master_ip()
-
-def get_gateway_server_ip():
-  '''The ip of the network gateway.'''
-  return config.general.get_back_gateway_ip()
-
-def get_installation_server():
-  '''The hostname of the installation server.'''
-  return config.general.get_installation_server()
-
-def get_installation_server_ip():
-  '''The ip of the installation server.'''
-  return config.general.get_installation_server_ip()
-
-def get_cert_server():
-  '''The hostname of the cert server.'''
-  return config.general.get_cert_server()
-
-def get_cert_server_ip():
-  '''The ip of the cert server.'''
-  return config.general.get_cert_server_ip()
-
-def get_servers():
-  '''A list of all servers that are defined in install.cfg.'''
-  return config.get_servers()
-
-def get_hosts():
-  return config.get_hosts()
-
 if (__name__ == "__main__"):
   print_error("This is a error.")
   print_verbose("This is some text")

@@ -14,7 +14,10 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import socket, time
-import app, general, installCobbler
+import app
+import config
+import general
+import installCobbler
 
 def build_commands(commands):
   commands.add("install-guests", install_guests, "guestname", help="Install all KVM guest defined for this server in install.cfg.")
@@ -74,7 +77,7 @@ def _install_guest(guest_name):
     vol_group_size=disk_var_size+disk_used_by_other_log_vol+extra_not_used_space
     general.shell_exec("lvcreate -n " + guest_name + " -L " + str(vol_group_size) + "G VolGroup00")
 
-  general.shell_exec("koan --server=" + app.get_installation_server_ip() + " --virt --system=" + guest_name)
+  general.shell_exec("koan --server=" + config.general.get_installation_server_ip() + " --virt --system=" + guest_name)
   general.shell_exec("virsh autostart " + guest_name)
 
 def _start_guest(guest_name):
@@ -100,4 +103,4 @@ def _is_guest_installed(guest_name, options="--all"):
     return False
 
 def is_installation_server_alive():
-  return general.is_server_alive(app.get_installation_server_ip(), 22)
+  return general.is_server_alive(config.general.get_installation_server_ip(), 22)

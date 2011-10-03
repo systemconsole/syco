@@ -33,6 +33,7 @@ import os
 import sys
 
 import app
+import config
 import general
 import installGlassfish301
 import installGlassfish31
@@ -258,7 +259,7 @@ def _setup_dns_resolver_rules():
   '''
   app.print_verbose("Setup DNS resolver INPUT/OUTPUT rule.")
   inet_ip = net.get_lan_ip()
-  for resolver_ip in app.config.get_dns_resolvers().split(" "):
+  for resolver_ip in config.general.get_dns_resolvers().split(" "):
     iptables("-A syco_output -p udp -s " + inet_ip + " --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_udp")
     iptables("-A syco_input  -p udp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_udp")
     iptables("-A syco_output -p tcp -s " + inet_ip + "  --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_tcp")
@@ -280,7 +281,7 @@ def _setup_installation_server_rules():
 
   '''
   app.print_verbose("Setup http access to installation server.")
-  #ip=app.get_installation_server_ip()
+  #ip=config.general.get_installation_server_ip()
   #iptables("-A syco_output -p tcp -d " + ip + " -m multiport --dports 80,443 -j allowed_tcp")
 
   # Need to have this, until all repos are on the installation server.
@@ -346,8 +347,8 @@ def add_mysql_chain():
   iptables("-A mysql_input -p TCP -m multiport --dports 3306 -j allowed_tcp")
 
   # Required for replication.
-  iptables("-A mysql_output -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed_tcp")
-  iptables("-A mysql_output -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed_tcp")
+  iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
+  iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 def del_mysql_chain():
   app.print_verbose("Delete iptables chain for mysql")
@@ -374,8 +375,8 @@ def add_httpd_chain():
 
   # We assume this is an application server that requires connection to the
   # syco mysql server.
-  iptables("-A httpd_output -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed_tcp")
-  iptables("-A httpd_output -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed_tcp")
+  iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
+  iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 def del_httpd_chain():
   app.print_verbose("Delete iptables chain for httpd")
@@ -511,8 +512,8 @@ def add_glassfish_chain():
   glassfish_ports = "6048,6080,6081,7048,7080,7081"
   iptables("-A glassfish_input -p TCP -m multiport --dports " + glassfish_ports + " -j allowed_tcp")
 
-  iptables("-A glassfish_output -p TCP -m multiport -d " + app.get_mysql_primary_master()   + " --dports 3306 -j allowed_tcp")
-  iptables("-A glassfish_output -p TCP -m multiport -d " + app.get_mysql_secondary_master() + " --dports 3306 -j allowed_tcp")
+  iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
+  iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 def del_glassfish_chain():
   app.print_verbose("Delete iptables chain for glassfish")

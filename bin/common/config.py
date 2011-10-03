@@ -141,9 +141,13 @@ class Config(object):
       '''The netmask of the back network.'''
       return self.get_option("back.netmask")
 
-    def get_external_dns_resolver(self):
-      '''ip of external dns resolver that are configured on all servers. todo get_front_dns_resolver_ip'''
+    def get_front_resolver_ip(self):
+      '''ip of external dns resolver that are configured on all servers.'''
       return self.get_option("front.resolver")
+
+    def get_external_dns_resolver(self):
+      '''todo get_front_dns_resolver_ip'''
+      return self.get_front_resolver_ip()
 
     def get_internal_dns_resolvers(self):
       '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
@@ -308,10 +312,25 @@ class Config(object):
 
       if (self.has_section(self.hostname)):
         for option, value in self.items(self.hostname):
-          if ("guest" in option):
+          if "guest" in option:
             guests.append(value)
 
       return sorted(guests)
+
+    def get_backup_pathes(self):
+      '''Get all pathes that should be backuped.'''
+      path = []
+
+      # Always backup thease
+      path.append("/etc/")
+
+      # Backup urls from install.cfg
+      if (self.has_section(self.hostname)):
+        for option, value in self.items(self.hostname):
+          if "backup" in option:
+            path.append(value)
+
+      return path
 
 #
 # Setup module members

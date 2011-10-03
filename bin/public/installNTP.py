@@ -44,7 +44,7 @@ def install_ntp_server(args):
   install_ntp()
 
 def install_ntp_client(args):
-  ip = app.config.get_ntp_server_ip()
+  ip = config.general.get_ntp_server_ip()
   install_ntp(ip)
 
 def install_ntp(ntp_server_ip = False):

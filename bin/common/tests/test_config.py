@@ -76,6 +76,8 @@ class TestGeneralConfig(unittest.TestCase):
         self.assertEqual(host.is_host(), True)
         self.assertEqual(host.get_commands(), ['syco iptables-setup', 'syco hardening'])
         self.assertEqual(host.get_guests(), ['syco-install', 'syco-ntp'])
+        self.assertEqual(host.get_backup_pathes(), ['/etc/', '/tmp/'])
+
 
     def test_host_syco_install(self):
         host = config.host("syco-install")
@@ -92,6 +94,7 @@ class TestGeneralConfig(unittest.TestCase):
         self.assertEqual(host.is_host(), False)
         self.assertEqual(host.get_commands(), ['syco iptables-setup', 'syco hardening'])
         self.assertEqual(host.get_guests(), [])
+        self.assertEqual(host.get_backup_pathes(), ['/etc/'])
 
 if __name__ == '__main__':
     unittest.main()

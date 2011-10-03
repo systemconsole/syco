@@ -133,7 +133,7 @@ def _install_httpd():
   general.shell_exec("cp " + app.SYCO_PATH + "var/httpd/conf.d/002-ssl.conf /etc/httpd/conf.d/ssl.conf")
 
   # Secure httpd.conf
-  general.set_config_property("/etc/httpd/conf/httpd.conf", '^ServerAdmin.*', 'ServerAdmin ' + app.config.get_admin_email())
+  general.set_config_property("/etc/httpd/conf/httpd.conf", '^ServerAdmin.*', 'ServerAdmin ' + config.general.get_admin_email())
 
   # Remove not used files.
   general.shell_exec("rm -f /etc/httpd/conf.d/proxy_ajp.conf")

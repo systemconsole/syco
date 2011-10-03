@@ -112,10 +112,9 @@ def install_kvmhost(args):
     "BOOTPROTO=static" + "\n" +
     "ONBOOT=yes" + "\n" +
     "IPADDR=" + net.get_lan_ip() + "\n" +
-    "NETMASK=255.255.0.0" + "\n" +
-    "GATEWAY=" + app.get_gateway_server_ip() + "\n" +
-    "DNS1=" + app.config.get_first_dns_resolver() + "\n" +
-    "DNS2=8.8.8.8")
+    "NETMASK=" + config.general.get_front_netmask + "\n" +
+    "GATEWAY=" + config.general.get_front_gateway_ip() + "\n" +
+    "DNS1=" + config.general.get_front_resolver_ip() + "\n")
 
   iptables.add_kvm_chain()
   iptables.save()

@@ -26,6 +26,7 @@ import smtplib
 from socket import gethostname
 
 import app
+import config
 import general
 from general import set_config_property
 from general import set_config_property2
@@ -72,16 +73,16 @@ def install_mail_server(args):
 
   version_obj.mark_executed()
 
-def install_mail_client(args):  
+def install_mail_client(args):
   app.print_verbose("Install mail-relay-server version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("Install-mail-relay-client", SCRIPT_VERSION)
   version_obj.check_executed()
 
   file = "/etc/mail/sendmail.mc"
-  domain = app.config.get_mail_relay_domain_name()
+  domain = config.general.get_mail_relay_domain_name()
 
   app.print_verbose("Configure /etc/mail/*")
-  
+
   # Set the mail-relay server.
   set_config_property(file,
     ".*define\(\`SMART_HOST\'\, \`.*\'\)dnl",
@@ -158,11 +159,11 @@ def _rebuild_sendmail_config():
 def _test_mail():
   app.print_verbose("Send testmail for " + gethostname())
 
-  email = app.config.get_admin_email()
+  email = config.general.get_admin_email()
 
   msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n"
        % (email, email, "Mail relay client installed on " + gethostname()))
-  
+
   server = smtplib.SMTP('localhost')
   server.sendmail(email, email, msg)
   server.quit()

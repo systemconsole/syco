@@ -19,6 +19,7 @@ import time
 import subprocess
 
 import app
+import config
 import general
 import iptables
 import version
@@ -51,7 +52,7 @@ def install_cobbler(args):
   iptables.add_cobbler_chain()
   iptables.save()
 
-  _modify_coppler_settings()  
+  _modify_coppler_settings()
   _refresh_all_profiles()
   setup_all_systems(args)
   _cobbler_sync
@@ -66,7 +67,7 @@ def setup_all_systems(args):
   _refresh_all_profiles()
   _remove_all_systems()
   for host_name in app.get_servers():
-    ip = app.get_ip(host_name)
+    ip = app.get_back_ip(host_name)
 
     # IS KVM host?
     if (len(app.get_guests(host_name))):
@@ -136,8 +137,8 @@ def _install_cobbler():
 
 def _modify_coppler_settings():
   app.print_verbose("Update cobbler config files")
-  general.set_config_property("/etc/cobbler/settings", '^server:.*', "server: " + app.get_installation_server_ip())
-  general.set_config_property("/etc/cobbler/settings", '^next_server:.*', "next_server: " + app.get_installation_server_ip())
+  general.set_config_property("/etc/cobbler/settings", '^server:.*', "server: " + config.general.get_installation_server_ip())
+  general.set_config_property("/etc/cobbler/settings", '^next_server:.*', "next_server: " + config.general.get_installation_server_ip())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_bridge:.*', "default_virt_bridge: br1")
   general.set_config_property("/etc/cobbler/settings", '^default_password_crypted:.*', "default_password_crypted: " + app.get_root_password_hash())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*', "default_virt_type: qemu")
@@ -157,7 +158,7 @@ def _modify_coppler_settings():
   general.set_config_property("/etc/crontab", value, value)
 
   # Set apache servername
-  general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + app.get_installation_server() + ":80")
+  general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")
 
   general.shell_exec("/etc/init.d/httpd restart")
 
@@ -223,7 +224,7 @@ def _host_add(host_name, ip):
   general.shell_exec(
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + host_name + " --hostname=" + host_name + " " +
-    '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
+    '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
     "--ksmeta=\"boot_device=" + str(boot_device) + "\""
   )
 
@@ -238,7 +239,7 @@ def _host_add(host_name, ip):
     '--interface=bond0 --bonding=master --bonding-opts="miimon=100 mode=1"')
 
   general.shell_exec("cobbler system edit --name=" + host_name + " " +
-    "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 ")
+    "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + config.general.get_back_gateway_ip() + " --subnet=" + config.general.get_back_netmask())
 
 def _guest_add(host_name, ip):
   boot_device = app.get_boot_device(host_name, "hda")
@@ -248,9 +249,10 @@ def _guest_add(host_name, ip):
   cpu = app.get_cpu(host_name)
 
   general.shell_exec("cobbler system add --profile=centos-vm_guest "
-                     "--static=1 --gateway=" + app.get_gateway_server_ip() + " --subnet=255.255.0.0 " +
+                     "--static=1 --gateway=" + config.general.get_back_gateway_ip() + " " +
+                     "--subnet=" + config.general.get_back_netmask() + " " +
                      "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
                      "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
-                     '--name-servers="' + app.config.get_dns_resolvers() + '" ' +
+                     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
                      '--ksmeta="disk_var=' + str(disk_var) + ' boot_device=' + str(boot_device) + '"')

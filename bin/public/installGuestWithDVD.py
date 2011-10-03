@@ -73,11 +73,11 @@ def install_guest(args):
   general.shell_exec("cp " + app.SYCO_PATH + "var/kickstart/dvd-guest.ks " + ks_path)
   general.set_config_property(ks_path, "\$\{HOSTNAME\}", hostname)
   general.set_config_property(ks_path, "\$\{IP\}", ip)
-  general.set_config_property(ks_path, "\$\{GATEWAY\}", app.get_gateway_server_ip())
-  general.set_config_property(ks_path, "\$\{NAMESERVER\}", app.config.get_first_dns_resolver())
+  general.set_config_property(ks_path, "\$\{GATEWAY\}", config.general.get_front_gateway_ip())
+  general.set_config_property(ks_path, "\$\{NAMESERVER\}", config.general.get_first_dns_resolver())
   general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
-  general.set_config_property(ks_path, "\$\{EXTERNAL_NAMESERVER\}", app.config.get_external_dns_resolver())
-  general.set_config_property(ks_path, "\$\{DISK_VAR\}", disk_var_mb)  
+  general.set_config_property(ks_path, "\$\{EXTERNAL_NAMESERVER\}", config.general.get_external_dns_resolver())
+  general.set_config_property(ks_path, "\$\{DISK_VAR\}", disk_var_mb)
 
   # Export kickstart file
   nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
@@ -86,7 +86,7 @@ def install_guest(args):
   nfs.restart_services()
   nfs.add_iptables_rules()
 
-  # Create the data lvm volumegroup  
+  # Create the data lvm volumegroup
   result = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + hostname)
   if ("/dev/VolGroup00/" + hostname not in result):
     general.shell_exec("lvcreate -n " + hostname + " -L " + disk_var_gb + "G VolGroup00")

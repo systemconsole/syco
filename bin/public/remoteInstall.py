@@ -20,6 +20,7 @@ import threading
 import time
 
 import app
+import config
 import general
 import pexpect
 import pxssh
@@ -65,8 +66,8 @@ def install_local(args):
   if host_name == "":
     host_name = socket.gethostname()
   app.print_verbose("Install all commands defined in install.cfg for host " + host_name + ".")
-  
-  commands = app.get_commands(host_name)
+
+  commands = app.get_commands(host_name, app.options.verbose >= 2)
   if len(commands) > 0:
     for command in commands:
       general.shell_exec(command)
@@ -125,7 +126,7 @@ class RemoteInstall:
 
     '''
     try:
-      server = app.config.get(host_name, "server")
+      server = config.host[host_name].get_back_ip()
       app.print_verbose("Install syco on " + host_name + " (" + server + ")", 2)
 
       obj = ssh.Ssh(server, app.get_root_password())
@@ -142,19 +143,19 @@ class RemoteInstall:
   def _start_all_threads(self):
     while(not self._is_all_servers_installed()):
       self._print_install_stat()
-            
-      for host_name in self.servers:        
+
+      for host_name in self.servers:
         if (not self._is_installation_in_progress(host_name) and not self.has_abort_errors(host_name)):
           self.installed[host_name] = "Progress"
           t = threading.Thread(target=self._install_host, args=[host_name])
           t.start()
 
       # End script if all threads are done, otherwise sleep for 30
-      for i in range(30):        
-        time.sleep(1)        
+      for i in range(30):
+        time.sleep(1)
         if(self._is_all_servers_installed()):
           return
-    
+
     # Wait for all threads to finish
   def _wait_for_all_threads_to_finish(self):
     for t in threading.enumerate():
@@ -174,7 +175,7 @@ class RemoteInstall:
 
   def _servers_left_to_install(self):
     return len(self.servers) - self._installed_servers()
-  
+
   def _is_installation_in_progress(self, host_name):
     if (host_name in self.installed and self.installed[host_name] != "No"):
       return True
@@ -192,7 +193,7 @@ class RemoteInstall:
 
     '''
     try:
-      server = app.config.get(host_name, "server")
+      server = config.host[host_name].get_back_ip()
       app.print_verbose("Try to install " + host_name + " (" + server + ")", 2)
 
       obj = ssh.Ssh(server, app.get_root_password())
@@ -202,7 +203,7 @@ class RemoteInstall:
       app.print_verbose("========================================================================================")
 
       obj.install_ssh_key()
-      self._install_syco_on_remote_host(obj)      
+      self._install_syco_on_remote_host(obj)
       self._execute_commands(obj, host_name)
 
     except pexpect.EOF, e:
@@ -229,7 +230,7 @@ class RemoteInstall:
     ssh.ssh_exec(app.SYCO_PATH + "bin/syco.py install-syco")
 
   def _execute_commands(self, obj, host_name):
-    commands = app.get_commands(host_name)
+    commands = app.get_commands(host_name, app.options.verbose >= 2)
 
     while(len(commands) != 0):
       try:
@@ -238,13 +239,13 @@ class RemoteInstall:
       except ssh.SSHTerminatedException, e:
         app.print_error("SSHTerminatedException on host " + host_name + " with command " + commands[0])
         obj.wait_until_alive()
-        
+
       except pexpect.EOF, e:
         app.print_error("pexpect.EOF on host " + host_name + " with command " + commands[0])
 
       except pxssh.ExceptionPxssh, e:
         app.print_error("pxssh.ExceptionPxssh on host " + host_name + " with command " + commands[0] + ", might be because the remote host rebooted.")
-      
+
     self.installed[host_name] = "Yes"
     app.print_verbose("")
 
@@ -258,10 +259,10 @@ class RemoteInstall:
       if (app.is_host(host_name)):
         self.servers += app.get_guests(host_name)
     else:
-      self.servers = app.get_servers()
+      self.servers = config.get_servers()
 
     sorted(self.servers)
-    
+
   def _validate_install_config(self):
     '''
     Validate all host options in install.cfg.
@@ -269,8 +270,8 @@ class RemoteInstall:
     Print error messages in verbose mode.
 
     '''
-    for host_name in self.servers:      
-      if (not app.config.has_option(host_name, "server")):
+    for host_name in self.servers:
+      if (not config.host[host_name].get_back_ip()):
         self.invalid_config[host_name] = "No"
         app.print_verbose("In install.cfg, cant find ip for " + host_name)
       else:
@@ -310,13 +311,13 @@ class RemoteInstall:
     for host_name in self.servers:
       app.print_verbose("   " +
         host_name.ljust(30) +
-        app.get_ip(host_name).ljust(15) +
+        app.get_back_ip(host_name).ljust(15) +
         self._get_alive(host_name).ljust(6) +
         self._get_invalid_config(host_name).ljust(13) +
         self._get_installed(host_name).ljust(10) +
         self._get_abort_errors(host_name)
         )
-    print("\n\n\n")    
+    print("\n\n\n")
 
   def _get_alive(self, host_name):
     if (host_name in self.alive):

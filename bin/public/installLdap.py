@@ -55,6 +55,7 @@ import os
 import re
 
 import app
+import config
 import general
 from general import shell_exec
 from general import shell_run
@@ -67,8 +68,8 @@ import version
 SCRIPT_VERSION = 1
 
 SLAPD_FN = "/etc/openldap/slapd.conf"
-LDAP_SERVER_HOST_NAME = app.config.get_ldap_hostname()
-LDAP_DN = app.config.get_ldap_dn()
+LDAP_SERVER_HOST_NAME = config.general.get_ldap_hostname()
+LDAP_DN = config.general.get_ldap_dn()
 
 def build_commands(commands):
   commands.add("install-ldap-server", install_ldap_server, help="Install ldap server.")
@@ -123,7 +124,7 @@ def install_ldap_client(args):
   iptables.add_ldap_chain()
   iptables.save()
 
-  ip = app.config.get_ldap_server_ip()
+  ip = config.general.get_ldap_server_ip()
   general.wait_for_server_to_start(ip, "389")
 
   # Copy the TLS cert needed to login to the ldap-server.
@@ -238,13 +239,13 @@ def _setup_tls():
     cwd=certdir,
     events={
       re.compile('Enter pass phrase for ca.key:'): ca_pass_phrase + "\n",
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): app.config.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): app.config.get_state() + "\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): app.config.get_locality() + "\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): app.config.get_organization_name() + "\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): app.config.get_organizational_unit_name() + "\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): app.config.get_organizational_unit_name() + "CA\n",
-      re.compile('Email Address \[\]\:'): app.config.get_admin_email() + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.general.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.general.get_state() + "\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.general.get_locality() + "\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.general.get_organization_name() + "\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.general.get_organizational_unit_name() + "\n",
+      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): config.general.get_organizational_unit_name() + "CA\n",
+      re.compile('Email Address \[\]\:'): config.general.get_admin_email() + "\n",
     }
   )
 
@@ -253,13 +254,13 @@ def _setup_tls():
   shell_run("openssl req -new -key ldap.key -out ldap.csr",
     cwd=certdir,
     events={
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): app.config.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): app.config.get_state() + ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): app.config.get_locality() + ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): app.config.get_organization_name() + ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): app.config.get_organizational_unit_name() + "\n",
+      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.general.get_country_name() + "\n",
+      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.general.get_state() + ".\n",
+      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.general.get_locality() + ".\n",
+      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.general.get_organization_name() + ".\n",
+      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.general.get_organizational_unit_name() + "\n",
       re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): LDAP_SERVER_HOST_NAME + "\n",
-      re.compile('Email Address \[\]\:'): app.config.get_admin_email() + "\n",
+      re.compile('Email Address \[\]\:'): config.general.get_admin_email() + "\n",
       re.compile('A challenge password \[\]\:'): "\n",
       re.compile('An optional company name \[\]\:'): "\n",
     }
@@ -314,12 +315,12 @@ def _install_web_page():
   shell_exec("chcon -R system_u:object_r:httpd_sys_content_t:s0 /var/www/ldap")
   shell_exec("chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/ldap/cgi-bin")
 
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_DN\}", app.config.get_ldap_dn())
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_DN\}", config.general.get_ldap_dn())
+  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_\HOSTNAME}", config.general.get_ldap_hostname())
 
   # Config apache
   shell_exec("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
-  general.set_config_property("/etc/httpd/conf.d/010-ldap.conf", "\$\{LDAP_\HOSTNAME}", app.config.get_ldap_hostname())
+  general.set_config_property("/etc/httpd/conf.d/010-ldap.conf", "\$\{LDAP_\HOSTNAME}", config.general.get_ldap_hostname())
 
   shell_exec("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/010-ldap.conf")
   shell_exec("chown root:root /etc/httpd/conf.d/010-ldap.conf")

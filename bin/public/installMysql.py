@@ -152,8 +152,8 @@ def install_mysql(args):
   mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
     "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
     "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-    "'root'@'" + app.get_mysql_primary_master()   + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-    "'root'@'" + app.get_mysql_secondary_master() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
+    "'root'@'" + config.general.get_mysql_primary_master_ip()   + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+    "'root'@'" + config.general.get_mysql_secondary_master_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
     "WITH GRANT OPTION "
   )
 
@@ -194,20 +194,20 @@ def install_mysql_replication(args):
   version_obj = version.Version("install-mysql-replication", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  general.wait_for_server_to_start(app.get_mysql_primary_master(), "3306")
+  general.wait_for_server_to_start(config.general.get_mysql_primary_master_ip(), "3306")
 
   repl_password=general.generate_password(20)
 
-  for ip in [app.get_mysql_primary_master(), app.get_mysql_secondary_master()]:
+  for ip in [config.general.get_mysql_primary_master_ip(), config.general.get_mysql_secondary_master_ip()]:
     mysql_exec("stop slave;", True, ip)
     mysql_exec("delete from mysql.user where User = 'repl';", True, ip)
     mysql_exec("flush privileges;", True, ip)
-    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + app.get_mysql_primary_master() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
-    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + app.get_mysql_secondary_master() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
-    if (ip==app.get_mysql_primary_master()):
-      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + app.get_mysql_secondary_master() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + config.general.get_mysql_primary_master_ip() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
+    mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + config.general.get_mysql_secondary_master_ip() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
+    if (ip==config.general.get_mysql_primary_master_ip()):
+      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + config.general.get_mysql_secondary_master_ip() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
     else:
-      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + app.get_mysql_primary_master() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+      mysql_exec("CHANGE MASTER TO MASTER_HOST='" + config.general.get_mysql_primary_master_ip() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
     mysql_exec("start slave;", True, ip)
 
   version_obj.mark_executed()

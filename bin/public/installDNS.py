@@ -121,9 +121,11 @@ __email__ = "syco@cybercow.se"
 
 import ConfigParser
 import os
-import app
-import general
 import re
+
+import app
+import config
+import general
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -132,8 +134,8 @@ script_version = 1
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the fosh.py shell script. 
-  
+  Defines the commands that can be executed through the fosh.py shell script.
+
   '''
   commands.add("install-dns",   install_dns,  help="Install DNS server use command 'install-dns master/slave' ")
 
@@ -176,15 +178,15 @@ def _add_serial(name):
         line = str(int(serial[0])+1)+"   ;   Serial\n"
     o.write(line)
   o.close()
- 
+
 def install_dns(args):
   '''
   DNS Bind 9 Chrooted installation
   This will install the dns server on the host chrooted.
   This command is used only for Centos servers.
-  
+
   '''
- 
+
   if os.path.exists('/opt/syco/lock/dns'):
     '''
     If dns server is locked from this script
@@ -229,7 +231,7 @@ def install_dns(args):
   role  =str(args[1])
   if (role != "master" or role != "slave"):
     raise Exception("You can only enter master or slave, you entered " + role)
-  
+
   '''
   Depending if the server is an master then new rndc keys are genertaed if now old are done.
   If the server is slave the keys have to bee fetch from the master server.
@@ -245,7 +247,7 @@ def install_dns(args):
       else:
           os.chdir("/var/named/chroot/etc")
           os.system("scp root@" + ipmaster + ":/var/named/chroot/etc/rndc_new.key ." )
-         
+
 
 
   def _generate_zone(location):
@@ -272,7 +274,7 @@ def install_dns(args):
                 rzone = config.get('zone',zone)
                 config_zone.read(app.SYCO_PATH + 'var/dns/'+zone)
                 print zone
-                
+
                 '''
                 Crating zone file and setting right settings form zone.cfg file
 
@@ -287,11 +289,11 @@ def install_dns(args):
                     if len(serial) > 0:
                         line = str(int(serial[0]) + 1) + "   ;   Serial\n"
                     o.write(line + "\n")
-                    
+
 
                  #Wrinting out arecord to zone file
                 if location == "internal":
-                    
+
                     '''
                     Getting internal network address if thy are any else go back to use external address
                     Generating A record from domain file and adding them to zone file.
@@ -303,11 +305,11 @@ def install_dns(args):
                             o.write (option + "." + zone + "."+ "     IN     A    " + config_zone.get(zone + "_arecords",option) + " \n")
                             print option + "." + zone+"." + "A" + config_zone.get(zone + "_arecords",option)+"."
 
-                        if zone == app.get_domain():
-                            servers = app.get_servers()
+                        if zone == config.general.get_resolv_domain():
+                            servers = config.get_servers()
                             for server in servers:
-                                o.write (server + "." + zone + "." + "     IN     A    " + app.get_ip(server) + " \n")
-                                print server + app.get_ip(server)
+                                o.write (server + "." + zone + "." + "     IN     A    " + app.get_back_ip(server) + " \n")
+                                print server + app.get_back_ip(server)
 
                     else:
                          for option in config_zone.options("internal_" + zone + "_arecords"):
@@ -318,11 +320,11 @@ def install_dns(args):
                             Gett all ip from local servers and add them to records.
                             '''
 
-                         if zone == app.get_domain():
-                            servers = app.get_servers()
+                         if zone == config.general.get_resolv_domain():
+                            servers = config.get_servers()
                             for server in servers:
-                                o.write (server + "." + zone + "."+ "     IN     A    " + app.get_ip(server) + " \n")
-                                print server + app.get_ip(server)
+                                o.write (server + "." + zone + "."+ "     IN     A    " + app.get_back_ip(server) + " \n")
+                                print server + app.get_back_ip(server)
 
                     '''
                     Getting all Cnames from domain file
@@ -411,14 +413,14 @@ def install_dns(args):
      line = line.replace("$FORWARD1$",forward1)
      line = line.replace("$FORWARD2$",forward2)
      line = line.replace("$LOCALNET$",localnet)
-     line = line.replace("$DOMAIN$",app.get_domain())
+     line = line.replace("$DOMAIN$",config.general.get_resolv_domain())
      o.write(line)
   o.close()
   '''
   Chnagin order if ip to match recusrsive lookup
   '''
-     
- 
+
+
   '''
   Generating the zone files
   IMPORTAND that  internal is first
@@ -433,9 +435,9 @@ def install_dns(args):
   _add_serial("template")
 
 
-  
+
   '''
   Restaring DNS server for action to be loaded
   '''
   general.shell_exec("/etc/init.d/named restart")
- 
+

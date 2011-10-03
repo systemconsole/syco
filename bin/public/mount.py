@@ -17,6 +17,7 @@ import os
 import pwd
 
 import app
+import config
 from general import shell_exec
 from general import shell_run
 import ssh
@@ -48,12 +49,12 @@ def mount_syco(args):
   # What servers to install
   remote_host = []
   if args[1] == "":
-    remote_host = app.get_servers()
-  else:    
+    remote_host = config.get_servers()
+  else:
     remote_host.append(args[1])
 
   for host_name in remote_host:
-    ip = app.get_ip(host_name)
+    ip = app.get_back_ip(host_name)
     app.print_verbose("Mount ~/mount/" + host_name + " from " + ip)
     obj = ssh.Ssh(ip, app.get_root_password())
     if (obj.is_alive()):
@@ -83,8 +84,8 @@ def umount_syco(args):
 
   user_name = pwd.getpwuid(os.getuid()).pw_name
 
-  for host_name in app.get_servers():
-    ip = app.get_ip(host_name)
+  for host_name in config.get_servers():
+    ip = app.get_back_ip(host_name)
     mount_dir = os.environ['HOME'] + "/mount/" + host_name
 
     if os.access(mount_dir, os.W_OK):

@@ -32,6 +32,7 @@ import sys
 import traceback
 
 import app
+import config
 import general
 import version
 import iptables
@@ -249,8 +250,8 @@ def _install_glassfish():
       general.shell_exec("/sbin/chkconfig --add " + GLASSFISH_VERSION)
       general.shell_exec("/sbin/chkconfig --level 3 " + GLASSFISH_VERSION + " on")
 
-      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", app.get_mysql_primary_master ())
-      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", app.get_mysql_secondary_master())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_PRIMARY\}", config.general.get_mysql_primary_master_ip())
+      general.set_config_property("/etc/init.d/" + GLASSFISH_VERSION, "\$\{MYSQL_SECONDARY\}", config.general.get_mysql_secondary_master_ip())
 
   if (not os.access(GLASSFISH_DOMAINS_PATH + "domain1/config/domain.xml", os.F_OK)):
     raise Exception("Failed to install " + GLASSFISH_PATH)

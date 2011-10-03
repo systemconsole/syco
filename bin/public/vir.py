@@ -33,7 +33,7 @@ def vir_rm(args):
   general.remove_file("/etc/libvirt/qemu/autostart/" + server_name + ".xml")
   general.remove_file("/etc/libvirt/qemu/" + server_name + ".xml")
   general.remove_file("/opt/fareoffice/var/virtstorage/" + server_name + "*")
-  general.remove_file("/var/log/libvirt/qemu/" + server_name + ".log")  
+  general.remove_file("/var/log/libvirt/qemu/" + server_name + ".log")
 
   general.shell_exec("lvremove -f /dev/VolGroup00/" + server_name)
 
@@ -45,8 +45,8 @@ def vir_list(args):
   old_verbose = app.options.verbose
   app.options.verbose = 2
   try:
-    for host_name in app.get_hosts():
-      server = app.config.get(host_name, "server")     
+    for host_name in config.get_hosts():
+      server = config.host(host_name).get_back_ip()
 
       obj = ssh.Ssh(server, app.get_root_password())
 
@@ -58,5 +58,5 @@ def vir_list(args):
         app.print_verbose("   Not online.")
   except SettingsError, e:
     app.print_error(e, 2)
-    
+
   app.options.verbose = old_verbose
