@@ -9,6 +9,12 @@ Version 0.2
 Version 0.25
 ------------
 * Upgrade scripts to centos 6
+* Setup console
+  http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
+* Setup dhcp device
+  vi /etc/sysconfig/dhcpd
+* Setup ip in kickstart, front and back.
+* Make it possible to install from the admin-net. gateways and such.
 
 Version 0.3
 -----------
@@ -23,6 +29,7 @@ Version 3.6
 -----------
 * installHudson
 * installSonar
+
 
 Version 3.8
 -----------
@@ -168,7 +175,7 @@ LDAP
 
   http://www.yubico.com/radius
 * two-factor - http://www.rcdevs.com/demos/#
-* Port-knocking 
+* Port-knocking
   http://ubuntuforums.org/showthread.php?t=812573
 * Use SASL?
 * Use KERBEROS?
