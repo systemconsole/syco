@@ -183,6 +183,7 @@ def _import_repos():
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
     general.shell_exec("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
+    general.shell_exec("cobbler repo add --arch=x86_64 --name=EPEL-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
     general.shell_exec("cobbler reposync")
 
   general.shell_exec("cobbler distro remove --name centos-xen-x86_64")
