@@ -37,6 +37,7 @@ Version 3.9 (iptables)
 ----------------------
 # Refactor iptable.py, add a rule chain that can be controlled from other scripts?
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
+* http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
 * Are all iptables rules tested and moved to iptables-setup.
 * Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp.
   This will optimize all rules by "50%".
@@ -183,6 +184,9 @@ LDAP
 Other
 -----
 * Check articles http://articles.slicehost.com/sitemap
+* Any good info here ? http://crunchtools.com/articles/
+* Add to git server
+  https://bitbucket.org/sdorra/scm-manager/wiki/Home
 
 On Call (Linux Ocean?)
 ----------------------
