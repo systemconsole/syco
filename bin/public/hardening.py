@@ -191,7 +191,7 @@ def _hardening():
 
   app.print_verbose("   Disable usb drives.")
   general.set_config_property("/etc/modprobe.d/syco.conf", "^blacklist usb-storage$", "blacklist usb-storage")
-  general.shell_exec("system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
+  general.shell_exec("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
   # todo:
   #app.print_verbose("   Disallow Root Ssh Login (Must Su To Root)")
@@ -248,16 +248,16 @@ def restart_network():
 
 def _disable_service(name):
   '''Disable autostartup of a service and stop the service'''
-  process = subprocess.Popen('chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name, shell=True, stdout=subprocess.PIPE)
+  cmd = 'chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name
+  process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
   if (process.communicate()[0][:-1] == name):
     subprocess.call(["chkconfig", name,  "off"])
     app.print_verbose("   chkconfig " + name + " off")
 
-  process=subprocess.Popen('service ' + name + ' status', shell=True, stdout=subprocess.PIPE)
+  cmd = 'service ' + name + ' status'
+  process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
   result=process.communicate()[0][:-1]
-  if ("stopped" not in result and
-      "not running" not in result
-      ):
+  if ("stopped" not in result and "not running" not in result):
     subprocess.call(["/sbin/service", name, "stop"])
     app.print_verbose("   service " + name + " stop")
 
