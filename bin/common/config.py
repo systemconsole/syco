@@ -85,18 +85,19 @@ class Config(object):
       Get an option from the install.cfg file.
 
       '''
+      value = None
+
       if (self.has_section(section)):
         if (self.has_option(section, option)):
-          return self.get(section, option)
-        else:
-          errmsg = "Can't find option '" + option + "' in section '" + section + "' in install.cfg"
-      else:
-        errmsg = "Can't find section '" + section + "' in install.cfg"
+          value = str(self.get(section, option))
+          if value.lower() != "none":
+            return value
 
       if (default_value):
         return default_value
       else:
-        raise ConfigException(errmsg)
+        raise ConfigException(
+          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
 
   class GeneralConfig(SycoConfig):
     '''
@@ -257,13 +258,17 @@ class Config(object):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       return self.get_option("front.ip")
 
+    def get_front_mac(self):
+      '''Get network mac address for a specific host, as it is defined in install.cfg'''
+      return self.get_option("front.mac")
+
     def get_back_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.ip")
 
-    def get_mac(self):
+    def get_back_mac(self):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
-      return self.get_option("mac")
+      return self.get_option("back.mac")
 
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''

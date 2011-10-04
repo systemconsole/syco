@@ -8,15 +8,25 @@ Version 0.2
 
 Version 0.25
 ------------
-* Upgrade scripts to centos 6
+# Upgrade scripts to centos 6
+* Setup ip in kickstart, front and back.
+* Setup bond and bridge installation in kvm host
+* Test installGuestWithDVD.
+* Test installation of install server
+* Make it possible to install from the admin-net. gateways and such.
+* Is the ram option in install.cfg working? gf computer hasn't enough memory.
+* Move all host dependent functions from app.py to it's own host/device class.
+  That will be instansiated from config.py.
+  config.getHost("fo-tp-install").get_mac()
+  config.getHost("fo-tp-install").get_ip()
+
+* Refactoring of password and passwordStore
+* Use properties instead of geters in config
+
 * Setup console
   http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
 * Setup dhcp device
   vi /etc/sysconfig/dhcpd
-* Setup ip in kickstart, front and back.
-* Make it possible to install from the admin-net. gateways and such.
-* Refactoring of password and passwordStore
-* Use properties instead of geters in config
 
 Version 0.3
 -----------
@@ -61,13 +71,8 @@ Version 3.9 (iptables)
 Version 4
 ---------
 * Move all companies repos to git or create install-svn.
-* Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
-* Move all host dependent functions from app.py to it's own host/device class.
-  That will be instansiated from config.py.
-  config.getHost("fo-tp-install").get_mac()
-  config.getHost("fo-tp-install").get_ip()
 
 Monitor
 -------
