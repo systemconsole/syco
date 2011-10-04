@@ -254,6 +254,12 @@ class Config(object):
     def get_option(self, option, default_value = None):
       return Config.SycoConfig.get_option(self, self.hostname, option, default_value)
 
+    def get_type(self):
+      '''Get ip for a specific host, as it is defined in install.cfg'''
+      hosttype = self.get_option("type").lower()
+      if hosttype in ['host', 'guest']:
+        return hosttype
+
     def get_front_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       return self.get_option("front.ip")
@@ -287,6 +293,9 @@ class Config(object):
       return self.get_option("boot_device", default_device)
 
     def is_host(self):
+      return self.get_type() == "host"
+
+    def has_guests(self):
       if (self.has_section(self.hostname)):
         for option, value in self.items(self.hostname):
           if ("guest" in option):
