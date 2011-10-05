@@ -150,17 +150,20 @@ class Config(object):
       '''todo get_front_dns_resolver_ip'''
       return self.get_front_resolver_ip()
 
+    def get_back_resolver_ip(self):
+      '''ip of internal dns resolver that are configured on all servers.'''
+      return self.get_option("back.resolver")
+
     def get_internal_dns_resolvers(self):
       '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
-      return self.get_option("back.resolver")
+      return self.get_back_resolver_ip()
 
     def get_dns_resolvers(self, limiter=" "):
       '''
-      ip list of all dns resolvers that are configured on all servers.
+      Ip list of all dns resolvers that are configured on all servers.
 
-      TODO: Remove?
       '''
-      resolvers = str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
+      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
