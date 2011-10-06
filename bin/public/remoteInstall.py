@@ -126,7 +126,7 @@ class RemoteInstall:
 
     '''
     try:
-      server = config.host[host_name].get_back_ip()
+      server = config.host(host_name).get_back_ip()
       app.print_verbose("Install syco on " + host_name + " (" + server + ")", 2)
 
       obj = ssh.Ssh(server, app.get_root_password())
