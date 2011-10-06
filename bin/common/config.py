@@ -90,7 +90,9 @@ class Config(object):
       if (self.has_section(section)):
         if (self.has_option(section, option)):
           value = str(self.get(section, option))
-          if value.lower() != "none":
+          if value.lower() == "none":
+            return None
+          else:
             return value
 
       if (default_value):
