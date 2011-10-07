@@ -9,8 +9,8 @@ Version 0.2
 Version 0.25
 ------------
 # Upgrade scripts to centos 6
+# Setup bond and bridge installation in kvm host
 * Setup ip in kickstart, front and back.
-* Setup bond and bridge installation in kvm host
 * Test installGuestWithDVD.
 * Test installation of install server
 * Make it possible to install from the admin-net. gateways and such.
@@ -19,9 +19,15 @@ Version 0.25
   That will be instansiated from config.py.
   config.getHost("fo-tp-install").get_mac()
   config.getHost("fo-tp-install").get_ip()
+* Replace all host_name with hostname.
 
 * Refactoring of password and passwordStore
 * Use properties instead of geters in config
+
+* Add paravirtualized drivers on host/guest
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/#id3302819
+
+* Add --cpuset=auto thingy to cobbler installed guests, to get the right NUMA.
 
 * Setup console
   http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
@@ -82,6 +88,7 @@ Monitor
   A webserver should never ever have to swap, as swapping increases the latency
   of each request beyond a point that users consider "fast enough".
 * Monitor cpu temp
+* Check that no swap exists on the kvm hosts.
 
 Hardening
 ---------
@@ -144,6 +151,7 @@ Remote-install
 
 Version 5
 ---------
+* Anything that is useful http://www.lesswatts.org/?
 * Add reviewboard.com to vcs server???
 * Check "gerrit" code review software and implement on vcs server.
 * Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html

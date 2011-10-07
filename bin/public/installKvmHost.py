@@ -3,12 +3,17 @@
 Install the server to act as a KVM host.
 
 Read more:
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/
 http://www.linuxjournal.com/article/9764
-http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
+http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/
+http://www.linux-kvm.org
 http://wiki.centos.org/HowTos/KVM
 http://www.howtoforge.com/virtualization-with-kvm-on-a-fedora-11-server
-http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html-single/Virtualization/
-http://www.cyberciti.biz/faq/centos-rhel-linux-kvm-virtulization-tutorial/
+http://www.redhat.com/promo/rhelonrhev/?intcmp=70160000000IUtyAAG
+
+Use iSCSI
+http://berrange.com/posts/2010/05/05/provisioning-kvm-virtual-machines-on-iscsi-the-hard-way-part-1-of-2/
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/#sect-Virtualization-Storage_Pools-Creating-iSCSI
 
 '''
 
@@ -21,10 +26,18 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, re, time
-import app, general, version, install
-import net, iptables
+import os
+import re
+import time
+
+import app
+import config
+import general
+import version
 import install
+import net
+import iptables
+
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
@@ -45,11 +58,15 @@ def install_kvmhost(args):
     if (not general.grep("/proc/cpuinfo", "vmx|svm")):
         app.print_error("CPU don't support virtualization.")
         _abort_kvm_host_installation()
-        return
+
+    if (not general.grep("/proc/cpuinfo", "constant_tsc")):
+        app.print_error("CPU don't have a constant Time Stamp Counter.")
+        _abort_kvm_host_installation()
 
     # Install the kvm packages
     install.package("qemu-kvm.x86_64")
     install.package("libvirt.x86_64")
+    install.package("libguestfs-tools")
 
     # Provides the virt-install command for creating virtual machines.
     install.package("python-virtinst")
@@ -60,6 +77,8 @@ def install_kvmhost(args):
     # Start virsh
     general.shell_exec("service libvirtd start")
 
+    _enable_ksm()
+
     # Looks like we need to wait for the libvirtd to start, otherwise
     # the virsh nodeinfo below doesn't work.
     time.sleep(1)
@@ -69,19 +88,14 @@ def install_kvmhost(args):
 
     # Is virsh started?
     result = general.shell_exec("virsh nodeinfo")
-    if "CPU model:                     x86_64" not in result:
+    if "CPU model:" not in result:
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
-        return
 
     result = general.shell_exec("virsh -c qemu:///system list")
     if "Id Name" not in result:
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
-        return
-
-    # todo: Might fix mouse problems in the host when viewing through VNC.
-    # export SDL_VIDEO_X11_DGAMOUSE=0
 
     _setup_network_interfaces()
 
@@ -113,8 +127,8 @@ def _create_kvm_snapshot_partition():
         general.shell_exec("mkfs.ext4 -j " + devicename)
         general.shell_exec("mkdir -p /var/lib/libvirt/qemu")
         general.shell_exec("mount " + devicename + " /var/lib/libvirt/qemu")
-        general.shell_exec("chcon -R system_u:object_r:qemu_var_run_t:s0 /var/lib/libvirt/qemu")
         general.shell_exec("chown qemu:qemu /var/lib/libvirt/qemu")
+        general.shell_exec("restorecon -R -v /var/lib/libvirt/qemu")
 
         # Automount the new partion when rebooting.
         value = devicename + "        /var/lib/libvirt/qemu     ext4        defaults                1 2"
@@ -125,7 +139,8 @@ def _get_volgroup_name():
     volgroup = result.split(':', 1)[0].strip()
 
     if (not volgroup):
-        raise Exception("Can't find any volgroup name")
+        app.print_error("Can't find any volgroup name")
+        _abort_kvm_host_installation()
 
     return volgroup
 
@@ -134,6 +149,7 @@ def _setup_network_interfaces():
     Setup bonded network interfaces and bridges.
 
     Read more.
+    http://serverfault.com/questions/316623/what-is-the-correct-way-to-setup-a-bonded-bridge-on-centos-6-for-kvm-guests
     http://www.linuxfoundation.org/collaborate/workgroups/networking/bridge
     http://www.cyberciti.biz/faq/rhel-linux-kvm-virtualization-bridged-networking-with-libvirt/
     http://www.linux-kvm.org/page/HOWTO_BONDING
@@ -156,34 +172,41 @@ def _setup_network_interfaces():
                                  "alias bond0 bonding")
 
     num_of_if = net.num_of_eth_interfaces()
-    front_ip = app.get_front_ip(net.get_hostname())
-    back_ip = app.get_back_ip(net.get_hostname())
-    front_gw = app.get_front_gateway_server_ip()
-    back_gw = app.get_back_gateway_server_ip()
+
+    front_gw = config.general.get_front_gateway_ip()
+    front_resolver = config.general.get_front_resolver_ip()
+    front_netmask = config.general.get_front_netmask()
+    front_ip = config.host(net.get_hostname()).get_front_ip()
+
+    back_gw = config.general.get_back_gateway_ip()
+    back_resolver = config.general.get_back_resolver_ip()
+    back_netmask = config.general.get_back_netmask()
+    back_ip = config.host(net.get_hostname()).get_back_ip()
     if (num_of_if >= 4):
-        # Setup front-net
-        _setup_bridge("br0", front_ip, front_gw)
-        _setup_bond("bond0", "br0")
+        # Setup back-net
+        _setup_bridge("bridge0", back_ip, back_netmask, back_gw, back_resolver)
+        _setup_bond("bond0", "bridge0")
         _setup_eth("eth0", "bond0")
         _setup_eth("eth1", "bond0")
 
-        # _setup back-net
-        _setup_bridge("br1", back_ip, back_gw)
-        _setup_bond("bond1", "br1")
+        # _setup front-net
+        _setup_bridge("bridge1", front_ip, front_netmask, front_gw, front_resolver)
+        _setup_bond("bond1", "bridge1")
         _setup_eth("eth2", "bond1")
         _setup_eth("eth3", "bond1")
     elif (num_of_if == 2):
-        # Setup front-net
-        _setup_bridge("br0", front_ip, front_gw)
-        _setup_bond("bond0", "br0")
+        # Setup back-net
+        _setup_bridge("bridge0", back_ip, back_netmask, back_gw, back_resolver)
+        _setup_bond("bond0", "bridge0")
         _setup_eth("eth0", "bond0")
 
-        # _setup back-net
-        _setup_bridge("br1", back_ip, back_gw)
-        _setup_bond("bond1", "br1")
+        # _setup front-net
+        _setup_bridge("bridge1", front_ip, front_netmask, front_gw, front_resolver)
+        _setup_bond("bond1", "bridge1")
         _setup_eth("eth1", "bond1")
     else:
-        raise(Exception("To few network interfaces: " + num_of_if))
+        app.print_error("To few network interfaces: " + str(num_of_if))
+        _abort_kvm_host_installation()
 
 def _setup_bond(bond, bridge):
     """
@@ -196,63 +219,85 @@ def _setup_bond(bond, bridge):
     interface fails.
 
     """
-    _store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond, """
-DEVICE=%s
+    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond,
+"""DEVICE=%s
+BRIDGE=%s
 BONDING_OPTS="miimon=100 mode=1"
+ONBOOT=yes
+USERCTL=no
 ONPARENT=yes
 BOOTPROTO=none
-#USERCTL=no
-BRIDGE=br1
 """ % (bond, bridge))
 
 def _setup_eth(eth, bond):
+    '''
+    Setup the eth interface to be included in a bond.
+
+    '''
     filename = "/etc/sysconfig/network-scripts/ifcfg-" + eth
-    mac = _get_config_value(filename, "HWADDR")
-    _store_file(filename, """
-DEVICE=%s
+    mac = general.get_config_value(filename, "HWADDR")
+    general.store_file(filename,
+"""DEVICE="%s"
 HWADDR=%s
-BOOTPROTO=none
-ONBOOT=yes
 MASTER=%s
 SLAVE=yes
+NM_CONTROLLED="no"
+ONBOOT=yes
 USERCTL=no
+HOTPLUG=no
+BOOTPROTO=none
 """ % (eth, mac, bond))
 
-def _setup_bridge(bridge, ip, gateway):
-    _store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, """
-DEVICE=%s
+def _setup_bridge(bridge, ip, netmask, gateway, resolver):
+    '''
+    Bridge the bond network with the KVM guests.
+
+    Can work both with and without IP.
+
+    '''
+    content = """DEVICE=%s
 TYPE=Bridge
-BOOTPROTO=static
 ONBOOT=yes
-IPADDR=%s
-NETMASK=255.255.0.0
-GATEWAY=%s
-DNS1=%s
-DNS2=8.8.8.8
-""" % (bridge, ip, gateway, app.config.ger_first_dns_resolver()))
+USERCTL=no
+DELAY=0
+BOOTPROTO=none
+""" % (bridge)
 
-def _get_config_value(file_name, config_name):
-    '''
-    Get a value from an option in a config file.
-    '''
-    prog = re.compile("[\s]*" + config_name + "[:=\s]*(.*)")
-    for line in open(file_name):
-        m = prog.search(line)
-        if m:
-            return m.group(1)
-    return False
+    if ip:
+        broadcast = net.get_ip_class_c(ip) + ".255"
+        network = net.get_ip_class_c(ip) + ".0"
 
-def _store_file(file_name, value):
+        content = content + """IPADDR=%s
+NETMASK=%s
+NETWORK=%s
+BROADCAST=%s""" % (ip, netmask, network, broadcast)
+
+    if gateway:
+        content += "\nGATEWAY=" + gateway
+
+    if resolver:
+        content += "\nDNS=" + resolver
+
+    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, content)
+
+def _enable_ksm():
     '''
-    Store a text in a file.
+    Start KSM (Kernel Samepage Merging)
+
+    http://www.linux-kvm.com/content/using-ksm-kernel-samepage-merging-kvm
+
     '''
-    app.print_verbose("storing file " + file_name)
-    FILE = open(file_name, "w")
-    FILE.writelines(value)
-    FILE.close()
+    if (general.grep("/boot/config-" + os.uname()[2], "CONFIG_KSM=y")):
+        general.shell_exec("service ksm start")
+        general.shell_exec("chkconfig ksm on")
+
+        general.shell_exec("service ksmtuned start")
+        #general.shell_exec("service ksmtuned retune")
+        general.shell_exec("chkconfig ksmtuned on")
 
 def _abort_kvm_host_installation():
     '''
-    Write error message for aborting the installation.
+    Raise exception to abort the installation.
+
     '''
-    app.print_error("abort kvm host installation")
+    raise Exception("Abort kvm host installation.")

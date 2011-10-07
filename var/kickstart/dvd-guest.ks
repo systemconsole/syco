@@ -78,4 +78,8 @@ logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fs
 
 %post --nochroot --log=/root/ks-post.log
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
-yum install -y git
+yum install -y git, acpid
+service smartd stop
+chkconfig --del smartd
+service acpid start
+chkconfig acpid on

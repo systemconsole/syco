@@ -122,3 +122,8 @@ $SNIPPET('post_anamon')
 $kickstart_done
 # End final steps
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
+yum install -y git, acpid
+service smartd stop
+chkconfig --del smartd
+service acpid start
+chkconfig acpid on

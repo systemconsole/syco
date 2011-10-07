@@ -286,6 +286,28 @@ def set_config_property_batch(file_name, key_value_dict):
   for key, value in key_value_dict:
     set_config_property(file_name, "\$\{" + key + "\}", value)
 
+def get_config_value(file_name, config_name):
+    '''
+    Get a value from an option in a config file.
+
+    '''
+    prog = re.compile("[\s]*" + config_name + "[:=\s]*(.*)")
+    for line in open(file_name):
+        m = prog.search(line)
+        if m:
+            return m.group(1)
+    return False
+
+def store_file(file_name, value):
+    '''
+    Store a text in a file.
+
+    '''
+    app.print_verbose("storing file " + file_name)
+    FILE = open(file_name, "w")
+    FILE.writelines(value)
+    FILE.close()
+
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):
   search_exp = r".*" + re.escape(replace_exp) + r".*"
