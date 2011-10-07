@@ -156,15 +156,16 @@ class install_guest:
 
       shell_exec(
         "virt-install -d --connect qemu:///system --name " + self.hostname +
-        " --ram " + self.ram + " --vcpus=" + self.cpu + " " +
-        "--disk path=/dev/VolGroup00/" + self.hostname + " " +
-        "--location nfs:" + self.kvm_host_back_ip + ":/dvd " +
-        "--vnc --noautoconsole --hvm --accelerate " +
-        "--check-cpu " +
-        "--os-type linux --os-variant=rhel6 " +
-        "--network bridge:br0 " +
-        "--network bridge:br1 " +
-        '-x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
+        " --ram " + self.ram +
+        " --vcpus=" + self.cpu + " --cpuset=auto" +
+        " --disk path=/dev/VolGroup00/" + self.hostname +
+        " --location nfs:" + self.kvm_host_back_ip + ":/dvd" +
+        " --vnc --noautoconsole --hvm --accelerate" +
+        " --check-cpu" +
+        " --os-type linux --os-variant=rhel6" +
+        " --network bridge:br0" +
+        " --network bridge:br1" +
+        ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
         ' ksdevice=eth1' +
         ' ip=' + self.property_list['BACK_IP'] +
         ' netmask=' + self.property_list['BACK_NETMASK'] +
