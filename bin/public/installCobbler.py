@@ -66,16 +66,16 @@ def setup_all_systems(args):
   _import_repos()
   _refresh_all_profiles()
   _remove_all_systems()
-  for host_name in app.get_servers():
-    ip = app.get_back_ip(host_name)
+  for hostname in app.get_servers():
+    ip = app.get_back_ip(hostname)
 
     # IS KVM host?
-    if (len(app.get_guests(host_name))):
-      app.print_verbose("Install host " + host_name + "(" + ip + ")")
-      _host_add(host_name, ip)
+    if (len(app.get_guests(hostname))):
+      app.print_verbose("Install host " + hostname + "(" + ip + ")")
+      _host_add(hostname, ip)
     else:
-      app.print_verbose("Install guest " + host_name + "(" + ip + ")")
-      _guest_add(host_name, ip)
+      app.print_verbose("Install guest " + hostname + "(" + ip + ")")
+      _guest_add(hostname, ip)
 
   _cobbler_sync()
 
@@ -218,42 +218,42 @@ def _remove_all_systems():
   for name in stdout.rsplit():
     general.shell_exec("cobbler system remove --name " + name)
 
-def _host_add(host_name, ip):
-  mac = app.get_mac(host_name)
-  boot_device = app.get_boot_device(host_name, "cciss/c0d0")
+def _host_add(hostname, ip):
+  mac = app.get_mac(hostname)
+  boot_device = app.get_boot_device(hostname, "cciss/c0d0")
 
   general.shell_exec(
     "cobbler system add --profile=centos-vm_host " +
-    "--name=" + host_name + " --hostname=" + host_name + " " +
+    "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
     "--ksmeta=\"boot_device=" + str(boot_device) + "\""
   )
 
   # TODO: Configure on install.cfg what devices that should be bonded.
-  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+  general.shell_exec("cobbler system edit --name=" + hostname + " " +
     "--interface=eth0 --bonding=slave --bonding-master=bond0")
 
-  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+  general.shell_exec("cobbler system edit --name=" + hostname + " " +
     "--interface=eth1 --bonding=slave --bonding-master=bond0")
 
-  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+  general.shell_exec("cobbler system edit --name=" + hostname + " " +
     '--interface=bond0 --bonding=master --bonding-opts="miimon=100 mode=1"')
 
-  general.shell_exec("cobbler system edit --name=" + host_name + " " +
+  general.shell_exec("cobbler system edit --name=" + hostname + " " +
     "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + config.general.get_back_gateway_ip() + " --subnet=" + config.general.get_back_netmask())
 
-def _guest_add(host_name, ip):
-  boot_device = app.get_boot_device(host_name, "hda")
-  disk_var = app.get_disk_var(host_name)
+def _guest_add(hostname, ip):
+  boot_device = app.get_boot_device(hostname, "hda")
+  disk_var = app.get_disk_var(hostname)
   disk_var = int(disk_var) * 1024
-  ram = app.get_ram(host_name)
-  cpu = app.get_cpu(host_name)
+  ram = app.get_ram(hostname)
+  cpu = app.get_cpu(hostname)
 
   general.shell_exec("cobbler system add --profile=centos-vm_guest "
                      "--static=1 --gateway=" + config.general.get_back_gateway_ip() + " " +
                      "--subnet=" + config.general.get_back_netmask() + " " +
-                     "--virt-path=\"/dev/VolGroup00/" + host_name + "\" " +
+                     "--virt-path=\"/dev/VolGroup00/" + hostname + "\" " +
                      "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
-                     "--name=" + host_name + " --hostname=" + host_name + " --ip=" + str(ip) + " " +
+                     "--name=" + hostname + " --hostname=" + hostname + " --ip=" + str(ip) + " " +
                      '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
                      '--ksmeta="disk_var=' + str(disk_var) + ' boot_device=' + str(boot_device) + '"')

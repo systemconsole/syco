@@ -14,12 +14,12 @@ Version 0.25
   That will be instansiated from config.py.
   config.getHost("fo-tp-install").get_mac()
   config.getHost("fo-tp-install").get_ip()
+# Replace all host_name with hostname.
 
 * Setup ip in kickstart, front and back.
 * Test installGuestWithDVD.
 * Test installation of install server
 * Make it possible to install from the admin-net. gateways and such.
-* Replace all host_name with hostname.
 
 * Refactoring of password and passwordStore
 * Use properties instead of geters in config

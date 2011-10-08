@@ -45,12 +45,12 @@ def vir_list(args):
   old_verbose = app.options.verbose
   app.options.verbose = 2
   try:
-    for host_name in config.get_hosts():
-      server = config.host(host_name).get_back_ip()
+    for hostname in config.get_hosts():
+      server = config.host(hostname).get_back_ip()
 
       obj = ssh.Ssh(server, app.get_root_password())
 
-      app.print_verbose("List KVM guests on host " + host_name + " (" + server + ")")
+      app.print_verbose("List KVM guests on host " + hostname + " (" + server + ")")
       if (obj.is_alive()):
         obj.install_ssh_key()
         obj.ssh_exec("virsh list --all")

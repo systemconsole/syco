@@ -27,14 +27,14 @@ def install_guests(args):
 
   '''
   # Set what guests that should be installed.
-  guest_host_names = []
+  guest_hostnames = []
   if (len(args) == 2):
-    guest_host_names.append(args[1])
+    guest_hostnames.append(args[1])
   else:
-    host_name=socket.gethostname()
-    guest_host_names += app.get_guests(host_name)
+    hostname=socket.gethostname()
+    guest_hostnames += app.get_guests(hostname)
 
-  if (len(guest_host_names) <= 0):
+  if (len(guest_hostnames) <= 0):
     app.print_error("No guests to install.")
     return
 
@@ -47,7 +47,7 @@ def install_guests(args):
 
   # Start the installation.
   guests=[]
-  for guest_name in guest_host_names:
+  for guest_name in guest_hostnames:
     if (_is_guest_installed(guest_name, options="")):
       app.print_verbose(guest_name + " already installed", 2)
     else:

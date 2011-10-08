@@ -127,30 +127,30 @@ def _setup_backup_for_all_servers():
   checked_servers = 0
   while(len(servers)):
     checked_servers += 1
-    host_name = servers.pop()
-    ip = app.get_back_ip(host_name)
+    hostname = servers.pop()
+    ip = app.get_back_ip(hostname)
     remote_server = ssh.Ssh(ip, app.get_root_password())
     if (remote_server.is_alive()):
       remote_server.install_ssh_key()
-      _configure_backup_pathes(ip, host_name)
+      _configure_backup_pathes(ip, hostname)
     else:
-      servers.insert(0, host_name)
-      app.print_error("Server " + host_name + " is not alive.")
+      servers.insert(0, hostname)
+      app.print_error("Server " + hostname + " is not alive.")
 
     if (checked_servers > total_servers):
       total_servers = len(servers)
       checked_servers = 0
       time.sleep(60)
 
-def _configure_backup_pathes(ip, host_name):
-  app.print_verbose("Configure rsnapshot for " + host_name + " on " + ip)
+def _configure_backup_pathes(ip, hostname):
+  app.print_verbose("Configure rsnapshot for " + hostname + " on " + ip)
 
   # Add Caption
-  general.set_config_property("/etc/rsnapshot.conf", "# " + host_name, "\n# " + host_name)
+  general.set_config_property("/etc/rsnapshot.conf", "# " + hostname, "\n# " + hostname)
 
-  for url in config.host(host_name).get_backup_pathes():
+  for url in config.host(hostname).get_backup_pathes():
     url = "root@" + ip + ":" + url
-    new_row = "backup\t\t" + url + "\t\t" + host_name + "/"
+    new_row = "backup\t\t" + url + "\t\t" + hostname + "/"
     general.set_config_property("/etc/rsnapshot.conf", new_row, new_row)
 
 def _setup_cronjob():
@@ -180,10 +180,10 @@ def tar_backup(args):
     general.shell_exec("mkdir -p " + LONGTERM_BACKUP_ROOT)
 
   app.print_verbose("Make a compressed backup of all folder in " + BACKUP_ROOT + "monthly.0/")
-  for host_name in os.listdir(BACKUP_ROOT + "monthly.0/"):
-    for folder in os.listdir(BACKUP_ROOT + "monthly.0/" + host_name):
+  for hostname in os.listdir(BACKUP_ROOT + "monthly.0/"):
+    for folder in os.listdir(BACKUP_ROOT + "monthly.0/" + hostname):
 
-      backup_name = LONGTERM_BACKUP_ROOT + host_name + "-" + folder + ".tar.gz "
+      backup_name = LONGTERM_BACKUP_ROOT + hostname + "-" + folder + ".tar.gz "
       general.shell_exec(
-        "tar zcf " + backup_name + " " + folder, cwd=str(BACKUP_ROOT + "monthly.0/" + host_name)
+        "tar zcf " + backup_name + " " + folder, cwd=str(BACKUP_ROOT + "monthly.0/" + hostname)
       )

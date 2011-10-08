@@ -19,16 +19,16 @@ script_version = 1
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the fosh.py shell script. 
-  
+  Defines the commands that can be executed through the fosh.py shell script.
+
   '''
   commands.add("install-nagios",   install_nagios,  help="Install Nagios server on the server.")
-  
+
 
 def install_nagios(args):
   '''
   Apache installation
-  
+
   '''
 
   if os.path.exists('/etc/nagios/nagios_2.cfg'):
@@ -48,7 +48,7 @@ def install_nagios(args):
     #Setting upp nagios users
     #general.shell_exec("htpasswd -c /etc/nagios/passwd matte")
 
-   
+
 
     general.set_config_property("/etc/nagios/nagios.cfg", '^.*cfg_file\=\/etc\/nagios\/commands\.cfg.*',  '#cfg_file=/etc/nagios/commands.cfg')
     general.set_config_property("/etc/nagios/nagios.cfg", '^.*cfg_file\=\/etc\/nagios\/localhost\.cfg.*',  '#cfg_file=/etc/nagios/localhost.cfg')
@@ -72,7 +72,7 @@ def install_nagios(args):
         o.write("#host generated from fosh\n")
         o.write( "define host{\n")
         o.write( "use  inhouse ;template\n")
-        o.write( "host_name    "+ option+"\n")
+        o.write( "hostname    "+ option+"\n")
         o.write( "alias    "+option+"\n")
         o.write( "address  "+config.get('servers',option)+"\n")
         o.write( "}\n")
@@ -92,7 +92,7 @@ def install_nagios(args):
     o.write("members ")
     for option in server_group:
         print option
-        
+
         o.write(  option + ",")
     o.write( "\n}\n")
     o.close()
