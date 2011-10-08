@@ -128,7 +128,7 @@ def _setup_backup_for_all_servers():
   while(len(servers)):
     checked_servers += 1
     hostname = servers.pop()
-    ip = app.get_back_ip(hostname)
+    ip = config.host(hostname).get_back_ip()
     remote_server = ssh.Ssh(ip, app.get_root_password())
     if (remote_server.is_alive()):
       remote_server.install_ssh_key()

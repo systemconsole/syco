@@ -67,7 +67,7 @@ def install_local(args):
     hostname = socket.gethostname()
   app.print_verbose("Install all commands defined in install.cfg for host " + hostname + ".")
 
-  commands = app.get_commands(hostname, app.options.verbose >= 2)
+  commands = config.host(hostname).get_commands(app.options.verbose >= 2)
   if len(commands) > 0:
     for command in commands:
       general.shell_exec(command)
@@ -230,7 +230,7 @@ class RemoteInstall:
     ssh.ssh_exec(app.SYCO_PATH + "bin/syco.py install-syco")
 
   def _execute_commands(self, obj, hostname):
-    commands = app.get_commands(hostname, app.options.verbose >= 2)
+    commands = config.host(hostname).get_commands(app.options.verbose >= 2)
 
     while(len(commands) != 0):
       try:
@@ -256,8 +256,8 @@ class RemoteInstall:
     '''
     if (hostname):
       self.servers.append(hostname)
-      if (app.is_host(hostname)):
-        self.servers += app.get_guests(hostname)
+      if (config.host(hostname).is_host()):
+        self.servers += config.host(hostname).get_guests()
     else:
       self.servers = config.get_servers()
 

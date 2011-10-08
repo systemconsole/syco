@@ -37,7 +37,7 @@ def build_commands(commands):
 
 def install_cobbler(args):
   '''
-  Install cobbler on current host
+  Install cobbler on current host.
 
   '''
   app.print_verbose("Install cobbler version: %d" % SCRIPT_VERSION)
@@ -66,11 +66,11 @@ def setup_all_systems(args):
   _import_repos()
   _refresh_all_profiles()
   _remove_all_systems()
-  for hostname in app.get_servers():
-    ip = app.get_back_ip(hostname)
+  for hostname in config.get_servers():
+    ip = config.host(hostname().get_back_ip()
 
     # IS KVM host?
-    if (len(app.get_guests(hostname))):
+    if (config.host(hostname().is_host()):
       app.print_verbose("Install host " + hostname + "(" + ip + ")")
       _host_add(hostname, ip)
     else:
@@ -219,8 +219,8 @@ def _remove_all_systems():
     general.shell_exec("cobbler system remove --name " + name)
 
 def _host_add(hostname, ip):
-  mac = app.get_mac(hostname)
-  boot_device = app.get_boot_device(hostname, "cciss/c0d0")
+  mac = config.host(hostname).get_mac()
+  boot_device = config.host(hostname).get_boot_device("cciss/c0d0")
 
   general.shell_exec(
     "cobbler system add --profile=centos-vm_host " +
@@ -243,11 +243,10 @@ def _host_add(hostname, ip):
     "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + config.general.get_back_gateway_ip() + " --subnet=" + config.general.get_back_netmask())
 
 def _guest_add(hostname, ip):
-  boot_device = app.get_boot_device(hostname, "hda")
-  disk_var = app.get_disk_var(hostname)
-  disk_var = int(disk_var) * 1024
-  ram = app.get_ram(hostname)
-  cpu = app.get_cpu(hostname)
+  boot_device = config.host(hostname).get_boot_device("hda")
+  disk_var = config.host(hostname).get_disk_var_mb()
+  ram = config.host(hostname).get_ram()
+  cpu = config.host(hostname).get_cpu()
 
   general.shell_exec("cobbler system add --profile=centos-vm_guest "
                      "--static=1 --gateway=" + config.general.get_back_gateway_ip() + " " +

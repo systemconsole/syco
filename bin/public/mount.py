@@ -54,7 +54,7 @@ def mount_syco(args):
     remote_host.append(args[1])
 
   for hostname in remote_host:
-    ip = app.get_back_ip(hostname)
+    ip = config.host(hostname).get_back_ip()
     app.print_verbose("Mount ~/mount/" + hostname + " from " + ip)
     obj = ssh.Ssh(ip, app.get_root_password())
     if (obj.is_alive()):
@@ -85,7 +85,7 @@ def umount_syco(args):
   user_name = pwd.getpwuid(os.getuid()).pw_name
 
   for hostname in config.get_servers():
-    ip = app.get_back_ip(hostname)
+    ip = config.host(hostname).get_back_ip()
     mount_dir = os.environ['HOME'] + "/mount/" + hostname
 
     if os.access(mount_dir, os.W_OK):

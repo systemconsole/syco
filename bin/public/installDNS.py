@@ -307,9 +307,9 @@ def install_dns(args):
 
                         if zone == config.general.get_resolv_domain():
                             servers = config.get_servers()
-                            for server in servers:
-                                o.write (server + "." + zone + "." + "     IN     A    " + app.get_back_ip(server) + " \n")
-                                print server + app.get_back_ip(server)
+                            for hostname in servers:
+                                o.write (hostname + "." + zone + "." + "     IN     A    " + config.host(hostname).get_back_ip() + " \n")
+                                print hostname + config.host(hostname).get_back_ip()
 
                     else:
                          for option in config_zone.options("internal_" + zone + "_arecords"):
@@ -322,9 +322,9 @@ def install_dns(args):
 
                          if zone == config.general.get_resolv_domain():
                             servers = config.get_servers()
-                            for server in servers:
-                                o.write (server + "." + zone + "."+ "     IN     A    " + app.get_back_ip(server) + " \n")
-                                print server + app.get_back_ip(server)
+                            for hostname in servers:
+                                o.write (hostname + "." + zone + "."+ "     IN     A    " + config.host(hostname).get_back_ip() + " \n")
+                                print hostname + config.host(hostname).get_back_ip()
 
                     '''
                     Getting all Cnames from domain file
