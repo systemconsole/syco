@@ -21,18 +21,11 @@ Version 0.25
 * Test installation of install server
 * Make it possible to install from the admin-net. gateways and such.
 
-* Refactoring of password and passwordStore
-* Use properties instead of geters in config
+* Is a gatway configured on the kvm host after the installation.
+  /etc/sysconfig/network
 
-* Add paravirtualized drivers on host/guest
+* Is all drivers paravirtualized on host/guest
   http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/#id3302819
-
-* Add --cpuset=auto thingy to cobbler installed guests, to get the right NUMA.
-
-* Setup console
-  http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
-* Setup dhcp device
-  vi /etc/sysconfig/dhcpd
 
 * Is the ram option in install.cfg working? Code looks ok, verify after
   all guests are installed.
@@ -45,12 +38,6 @@ Version 0.3
 Version 0.4
 -----------
 * installNagios
-
-Version 3.6
------------
-* installHudson
-* installSonar
-
 
 Version 3.8
 -----------
@@ -135,8 +122,6 @@ Bra att logga till både rsyslog och syslogd-ng?
 Remote-install
 --------------
 * install-guests "virsh list" just print a .
-* Looks like the kvm host machines doesn't get any gateway after the installation.
-  /etc/sysconfig/network
 * remote-install should log all output to file, one for each server/thread.
   http://docs.python.org/library/logging.html#logging-to-multiple-destinations
   http://stackoverflow.com/questions/616645/how-do-i-duplicate-sys-stdout-to-a-log-file-in-python
@@ -151,6 +136,22 @@ Remote-install
 * The remote-install deamon should check for changes in install.cfg.
 * Add all output from syco to a log file.
 * Add "syco remote-install" in kickstart for fo-tp-install
+
+Refactoring
+-----------
+* Refactoring of password and passwordStore
+* Use properties instead of getters in config
+
+KVM
+---
+* Add --cpuset=auto thingy to cobbler installed guests, to get the right NUMA.
+* Setup console
+  http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
+
+Rentalfront Development enviornment
+-----------------------------------
+* installHudson
+* installSonar
 
 Version 5
 ---------
@@ -212,6 +213,8 @@ Other
 * Any good info here ? http://crunchtools.com/articles/
 * Add to git server
   https://bitbucket.org/sdorra/scm-manager/wiki/Home
+* Setup dhcp device in /etc/sysconfig/dhcpd for installDhcp
+
 
 On Call (Linux Ocean?)
 ----------------------
