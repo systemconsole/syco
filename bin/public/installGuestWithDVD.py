@@ -24,6 +24,7 @@ import os
 import time
 
 import app
+import config
 from general import set_config_property_batch, shell_exec
 import net
 import nfs
@@ -38,7 +39,7 @@ class install_guest:
   hostname = None
 
   def __init__(self, args):
-    self.init_commandline_args(args)
+    self.check_commandline_args(args)
     app.print_verbose("Install kvm guest " + self.hostname + ".")
     self.check_if_host_is_installed()
     self.init_host_options_from_config()
@@ -71,48 +72,39 @@ class install_guest:
     that will be forwarded to the starter app.
 
     '''
-    # The size of the var volume/partion.
-    self.disk_var_gb = app.get_disk_var(self.hostname)
-    self.disk_var_mb = str(int(self.disk_var_gb) * 1024)
-
-    # Total size of all volumes/partions, the size of the
-    # lvm volume on the host.
-    self.total_disk_gb = str(int(self.disk_var_gb) + 16)
-
-    # The total size of the physical volume in the guest.
-    self.total_disk_mb = str(int(self.total_disk_gb) * 1000)
-
     # The ip connected to the admin net, from which the nfs
     # export is done.
     self.kvm_host_back_ip = net.get_lan_ip()
 
-    self.ram = str(app.get_ram(self.hostname))
-    self.cpu = str(app.get_cpu(self.hostname))
+    self.ram = str(config.host(self.hostname).get_ram())
+    self.cpu = str(config.host(self.hostname).get_cpu())
 
-    self.property_list = self.get_kickstart_options()
+    self.set_kickstart_options()
 
-  def get_kickstart_options(self):
+  def set_kickstart_options(self):
     '''
     Properties that will be used to replace ${XXX} vars in kickstart file.
 
     '''
     prop = {}
-    prop[HOSTNAME] = self.hostname
-    prop[FRONT_IP] = app.get_front_ip(self.hostname)
-    prop[FRONT_NETMASK] = app.get_front_netmask()
-    prop[FRONT_GATEWAY] = app.get_front_gateway()
-    prop[FRONT_NAMESERVER] = app.config.get_external_dns_resolver()
+    prop['HOSTNAME'] = self.hostname
+    prop['FRONT_IP'] = config.host(self.hostname).get_front_ip()
+    prop['FRONT_NETMASK'] = config.general.get_front_netmask()
+    prop['FRONT_GATEWAY'] = config.general.get_front_gateway_ip()
+    prop['FRONT_NAMESERVER'] = config.general.get_front_resolver_ip()
 
-    prop[BACK_IP] = app.get_back_ip(self.hostname)
-    prop[BACK_NETMASK] = app.get_back_netmask()
-    prop[BACK_GATEWAY] = app.get_back_gateway()
-    prop[BACK_NAMESERVER] = app.options.get_internal_dns_resolvers()
+    prop['BACK_IP'] = config.host(self.hostname).get_back_ip()
+    prop['BACK_NETMASK'] = config.general.get_back_netmask()
+    prop['BACK_GATEWAY'] = config.general.get_back_gateway_ip()
+    prop['BACK_NAMESERVER'] = config.general.get_back_resolver_ip()
 
-    prop[ROOT_PASSWORD] = app.get_root_password_hash()
+    prop['ROOT_PASSWORD'] = app.get_root_password_hash()
 
-    prop[DISK_VAR_MB] = self.disk_var_mb
-    prop[TOTAL_DISK_MB] = self.total_disk_mb
-    return prop
+    prop['DISK_VAR_MB'] = config.host(self.hostname).get_disk_var_mb()
+    prop['TOTAL_DISK_MB'] = config.host(self.hostname).get_total_disk_mb()
+    prop['TOTAL_DISK_GB'] = config.host(self.hostname).get_total_disk_gb()
+
+    self.property_list = prop
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
@@ -151,27 +143,30 @@ class install_guest:
       nfs.remove_export("kickstart")
       nfs.remove_export('dvd')
 
-  def create_kvm_host():
+  def create_kvm_host(self):
       self.create_lvm_volumegroup()
 
-      shell_exec(
-        "virt-install -d --connect qemu:///system --name " + self.hostname +
-        " --ram " + self.ram +
-        " --vcpus=" + self.cpu + " --cpuset=auto" +
-        " --disk path=/dev/VolGroup00/" + self.hostname +
-        " --location nfs:" + self.kvm_host_back_ip + ":/dvd" +
-        " --vnc --noautoconsole --hvm --accelerate" +
-        " --check-cpu" +
-        " --os-type linux --os-variant=rhel6" +
-        " --network bridge:br0" +
-        " --network bridge:br1" +
-        ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
-        ' ksdevice=eth1' +
-        ' ip=' + self.property_list['BACK_IP'] +
-        ' netmask=' + self.property_list['BACK_NETMASK'] +
-        ' dns=' + self.property_list['BACK_NAMESERVER'] +
-        ' gateway=' +  + self.property_list['BACK_GATEWAY'])
+      cmd = "virt-install -d --connect qemu:///system"
+      cmd += " --name " + self.hostname
+      cmd +=  " --ram " + self.ram
+      cmd +=  " --vcpus=" + self.cpu + " --cpuset=auto"
+      cmd +=  " --vnc --noautoconsole"
+      cmd +=  " --hvm --accelerate"
+      cmd +=  " --check-cpu"
+      cmd +=  " --disk path=/dev/VolGroup00/" + self.hostname
+      cmd +=  " --os-type linux --os-variant=rhel6"
+      cmd +=  " --network bridge:br0"
+      cmd +=  " --network bridge:br1"
+      cmd +=  " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
+      cmd +=  ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
+      cmd +=  ' ksdevice=eth0'
+      cmd +=  ' ip=' + self.property_list['BACK_IP']
+      cmd +=  ' netmask=' + self.property_list['BACK_NETMASK']
+      cmd +=  ' dns=' + self.kvm_host_back_ip
+      cmd +=  ' gateway=' + self.kvm_host_back_ip
+      cmd +=  ' "'
 
+      shell_exec(cmd)
       self.wait_for_installation_to_complete()
       self.autostart_guests()
 
@@ -179,9 +174,9 @@ class install_guest:
     result = shell_exec("lvdisplay -v /dev/VolGroup00/" + self.hostname)
     if ("/dev/VolGroup00/" + self.hostname not in result):
       shell_exec("lvcreate -n " + self.hostname +
-                 " -L " + self.total_disk_gb + "G VolGroup00")
+                 " -L " + self.property_list['TOTAL_DISK_GB'] + "G VolGroup00")
 
-  def wait_for_installation_to_complete():
+  def wait_for_installation_to_complete(self):
     '''
     Waiting for the installation process to complete, and halt the guest.
 
@@ -193,7 +188,7 @@ class install_guest:
       print ".",
       sys.stdout.flush()
       result = shell_exec("virsh list", output=False)
-      if (hostname not in result):
+      if (self.hostname not in result):
         print "Now installed"
         break
 

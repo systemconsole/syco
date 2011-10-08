@@ -10,15 +10,15 @@ Version 0.25
 ------------
 # Upgrade scripts to centos 6
 # Setup bond and bridge installation in kvm host
+# Move all host dependent functions from app.py to it's own host/device class.
+  That will be instansiated from config.py.
+  config.getHost("fo-tp-install").get_mac()
+  config.getHost("fo-tp-install").get_ip()
+
 * Setup ip in kickstart, front and back.
 * Test installGuestWithDVD.
 * Test installation of install server
 * Make it possible to install from the admin-net. gateways and such.
-* Is the ram option in install.cfg working? gf computer hasn't enough memory.
-* Move all host dependent functions from app.py to it's own host/device class.
-  That will be instansiated from config.py.
-  config.getHost("fo-tp-install").get_mac()
-  config.getHost("fo-tp-install").get_ip()
 * Replace all host_name with hostname.
 
 * Refactoring of password and passwordStore
@@ -33,6 +33,9 @@ Version 0.25
   http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
 * Setup dhcp device
   vi /etc/sysconfig/dhcpd
+
+* Is the ram option in install.cfg working? Code looks ok, verify after
+  all guests are installed.
 
 Version 0.3
 -----------

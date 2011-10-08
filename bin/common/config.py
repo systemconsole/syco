@@ -293,6 +293,22 @@ class Config(object):
       '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
       return self.get_option("disk_var")
 
+    def get_disk_var_gb(self):
+      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return self.get_option("disk_var")
+
+    def get_disk_var_mb(self):
+      '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_total_disk_gb(self):
+      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
+      return str(int(self.get_disk_var_gb()) + 16)
+
+    def get_total_disk_mb(self):
+      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
+      return str(int(self.get_total_disk_gb()) * 1000)
+
     def get_boot_device(self, default_device = None):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)

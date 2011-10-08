@@ -184,25 +184,25 @@ def _setup_network_interfaces():
     back_ip = config.host(net.get_hostname()).get_back_ip()
     if (num_of_if >= 4):
         # Setup back-net
-        _setup_bridge("bridge0", back_ip, back_netmask, back_gw, back_resolver)
-        _setup_bond("bond0", "bridge0")
+        _setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
+        _setup_bond("bond0", "br0")
         _setup_eth("eth0", "bond0")
         _setup_eth("eth1", "bond0")
 
         # _setup front-net
-        _setup_bridge("bridge1", front_ip, front_netmask, front_gw, front_resolver)
-        _setup_bond("bond1", "bridge1")
+        _setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
+        _setup_bond("bond1", "br1")
         _setup_eth("eth2", "bond1")
         _setup_eth("eth3", "bond1")
     elif (num_of_if == 2):
         # Setup back-net
-        _setup_bridge("bridge0", back_ip, back_netmask, back_gw, back_resolver)
-        _setup_bond("bond0", "bridge0")
+        _setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
+        _setup_bond("bond0", "br0")
         _setup_eth("eth0", "bond0")
 
         # _setup front-net
-        _setup_bridge("bridge1", front_ip, front_netmask, front_gw, front_resolver)
-        _setup_bond("bond1", "bridge1")
+        _setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
+        _setup_bond("bond1", "br1")
         _setup_eth("eth1", "bond1")
     else:
         app.print_error("To few network interfaces: " + str(num_of_if))

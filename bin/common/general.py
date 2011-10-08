@@ -260,6 +260,9 @@ def set_config_property(file_name, search_exp, replace_exp):
 
   '''
   if os.path.exists(file_name):
+    if (replace_exp == None):
+      replace_exp = ""
+
     exist = False
     try:
       shutil.copyfile(file_name, file_name + ".bak")
@@ -283,7 +286,7 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.close()
 
 def set_config_property_batch(file_name, key_value_dict):
-  for key, value in key_value_dict:
+  for key, value in key_value_dict.iteritems():
     set_config_property(file_name, "\$\{" + key + "\}", value)
 
 def get_config_value(file_name, config_name):
