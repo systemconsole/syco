@@ -42,8 +42,8 @@ Version 0.4
 Version 3.8
 -----------
 # Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
+# Upgrade scripts to centos 6
 * Remove fareoffice relations in the public scripts and documentation.
-* Upgrade scripts to centos 6
 * restorecon -R -v /home/$ACCOUNT/.ssh
 * Read doc for centos 6
   http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/

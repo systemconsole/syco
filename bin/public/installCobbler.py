@@ -52,8 +52,8 @@ def install_cobbler(args):
   iptables.add_cobbler_chain()
   iptables.save()
 
-  _modify_coppler_settings()
-  _refresh_all_profiles()
+  _modify_cobbler_settings()
+  _import_repos()
   setup_all_systems(args)
   _cobbler_sync
   version_obj.mark_executed()
@@ -63,19 +63,14 @@ def setup_all_systems(args):
   Update cobbler with all settings in install.cfg.
 
   '''
-  _import_repos()
   _refresh_all_profiles()
   _remove_all_systems()
   for hostname in config.get_servers():
-    ip = config.host(hostname().get_back_ip()
-
     # IS KVM host?
     if (config.host(hostname().is_host()):
-      app.print_verbose("Install host " + hostname + "(" + ip + ")")
-      _host_add(hostname, ip)
+      _host_add(hostname)
     else:
-      app.print_verbose("Install guest " + hostname + "(" + ip + ")")
-      _guest_add(hostname, ip)
+      _guest_add(hostname)
 
   _cobbler_sync()
 
@@ -123,23 +118,41 @@ def _install_cobbler():
   general.shell_exec("/sbin/chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
-  general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect true')
-  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_t "/tftpboot/.*"')
-  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_t "/var/www/cobbler/images/.*"')
-  # Eventually if /var/www/cobbler/images wasn't set by above.
-  #chcon -R -t public_content_t "/var/www/cobbler/images/.*"
-  # Dont exist?? /usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"
+  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/tftpboot/.*"')
+  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/www/cobbler/images/.*"')
+  general.shell_exec('restorecon -R -v "/tftpboot/"')
+  general.shell_exec('restorecon -R -v "/var/www/cobbler/images.*"')
+
+  # Enables cobbler to read/write public_content_rw_t
+  general.shell_exec('/usr/sbin/setsebool -P cobbler_anon_write on')
+
+  # Enable httpd to connect to cobblerd (optional, depending on if web interface is installed)
+  # Notice: If you enable httpd_can_network_connect_cobbler and you should switch httpd_can_network_connect off
+  general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect off')
+  general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect_cobbler on')
+
+  #Enabled cobbler to use rsync etc.. (optional)
+  general.shell_exec('/usr/sbin/setsebool c-Pobbler_can_network_connect on')
+
+  #Enable cobbler to use CIFS based filesystems (optional)
+  #general.shell_exec('/usr/sbin/setsebool -P cobbler_use_cifs on')
+
+  # Enable cobbler to use NFS based filesystems (optional)
+  #general.shell_exec('/usr/sbin/setsebool -P cobbler_use_nfs on')
+
+  # Double check your choices
+  general.shell_exec('getsebool -a|grep cobbler')
 
   app.print_verbose("Update xinetd config files")
   general.set_config_property("/etc/xinetd.d/tftp", '[\s]*disable[\s]*[=].*', "        disable                 = no")
   general.set_config_property("/etc/xinetd.d/rsync", '[\s]*disable[\s]*[=].*', "        disable         = no")
   general.shell_exec("/etc/init.d/xinetd restart")
 
-def _modify_coppler_settings():
+def _modify_cobbler_settings():
   app.print_verbose("Update cobbler config files")
   general.set_config_property("/etc/cobbler/settings", '^server:.*', "server: " + config.general.get_installation_server_ip())
   general.set_config_property("/etc/cobbler/settings", '^next_server:.*', "next_server: " + config.general.get_installation_server_ip())
-  general.set_config_property("/etc/cobbler/settings", '^default_virt_bridge:.*', "default_virt_bridge: br1")
+  general.set_config_property("/etc/cobbler/settings", '^default_virt_bridge:.*', "default_virt_bridge: br0")
   general.set_config_property("/etc/cobbler/settings", '^default_password_crypted:.*', "default_password_crypted: " + app.get_root_password_hash())
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*', "default_virt_type: qemu")
   general.set_config_property("/etc/cobbler/settings", '^anamon_enabled:.*', "anamon_enabled: 1")
@@ -186,27 +199,28 @@ def _import_repos():
     general.shell_exec("cobbler repo add --arch=x86_64 --name=EPEL-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
     general.shell_exec("cobbler reposync")
 
+def _refresh_all_profiles():
+  # Removed unused distros/profiles
   general.shell_exec("cobbler distro remove --name centos-xen-x86_64")
   general.shell_exec("cobbler profile remove --name centos-x86_64")
 
-def _refresh_all_profiles():
   # Setup installation profiles and systems
-  general.shell_exec("cobbler profile remove --name=centos-vm_guest")
-  general.shell_exec(
-    'cobbler profile add --name=centos-vm_guest ' +
-    '--distro=centos-x86_64 --virt-type=qemu ' +
-    '--virt-ram=1024 --virt-cpus=1 ' +
-    '--repos="centos5-updates-x86_64" ' +
-    '--kickstart=/var/lib/cobbler/kickstarts/guest.ks ' +
-    '--virt-bridge=br1'
-  )
-
   general.shell_exec("cobbler profile remove --name=centos-vm_host")
   general.shell_exec(
-    'cobbler profile add --name=centos-vm_host ' +
-    '--distro=centos-x86_64 ' +
-    '--repos="centos5-updates-x86_64" ' +
-    '--kickstart=/var/lib/cobbler/kickstarts/host.ks'
+    'cobbler profile add --name=centos-vm_host' +
+    ' --distro=centos-x86_64' +
+    ' --repos="centos-updates-x86_64"' +
+    ' --kickstart=/var/lib/cobbler/kickstarts/host.ks'
+  )
+
+  general.shell_exec("cobbler profile remove --name=centos-vm_guest")
+  general.shell_exec(
+    'cobbler profile add --name=centos-vm_guest' +
+    ' --distro=centos-x86_64 --virt-type=qemu' +
+    ' --virt-ram=1024 --virt-cpus=1' +
+    ' --repos="centos-updates-x86_64"' +
+    ' --kickstart=/var/lib/cobbler/kickstarts/guest.ks' +
+    ' --virt-bridge=br0'
   )
 
 def _cobbler_sync():
@@ -218,41 +232,57 @@ def _remove_all_systems():
   for name in stdout.rsplit():
     general.shell_exec("cobbler system remove --name " + name)
 
-def _host_add(hostname, ip):
-  mac = config.host(hostname).get_mac()
-  boot_device = config.host(hostname).get_boot_device("cciss/c0d0")
+def _host_add(hostname):
+  app.print_verbose("Add " + hostname +
+                    "(" + config.general.get_back_gateway_ip() + ")")
 
   general.shell_exec(
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
-    "--ksmeta=\"boot_device=" + str(boot_device) + "\""
-  )
+    ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
-  # TODO: Configure on install.cfg what devices that should be bonded.
-  general.shell_exec("cobbler system edit --name=" + hostname + " " +
-    "--interface=eth0 --bonding=slave --bonding-master=bond0")
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth0 --static=1 " +
+    " --ip=" + str(config.host(hostname).get_back_ip()) +
+    " --mac=" + str(config.host(hostname).get_back_mac()) +
+    " --gateway=" + config.general.get_back_gateway_ip() +
+    " --subnet=" + config.general.get_back_netmask())
 
-  general.shell_exec("cobbler system edit --name=" + hostname + " " +
-    "--interface=eth1 --bonding=slave --bonding-master=bond0")
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth1 --static=1 " +
+    " --ip=" + str(config.host(hostname).get_front_ip()) +
+    " --mac=" + str(config.host(hostname).get_front_mac()) +
+    " --gateway=" + config.general.get_front_gateway_ip() +
+    " --subnet=" + config.general.get_front_netmask())
 
-  general.shell_exec("cobbler system edit --name=" + hostname + " " +
-    '--interface=bond0 --bonding=master --bonding-opts="miimon=100 mode=1"')
+def _guest_add(hostname):
+  app.print_verbose("Add " + hostname +
+                    "(" + config.general.get_back_gateway_ip() + ")")
 
-  general.shell_exec("cobbler system edit --name=" + hostname + " " +
-    "--interface=bond0 --static=1 --mac=" + mac + " --ip=" + str(ip) + " --gateway=" + config.general.get_back_gateway_ip() + " --subnet=" + config.general.get_back_netmask())
+  general.shell_exec(
+    "cobbler system add --profile=centos-vm_guest"
+    " --virt-path=\"/dev/VolGroup00/" + hostname + "\"" +
+    " --virt-ram=" + str(config.host(hostname).get_ram()) +
+    " --virt-cpus=" + str(config.host(hostname).get_cpu()) +
+    " --name=" + hostname + " --hostname=" + hostname +
+    ' --name-servers="' + config.general.get_front_resolver_ip() + '"' +
+    ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' boot_device=' + str(config.host(hostname).get_boot_device("hda")) + '"')
 
-def _guest_add(hostname, ip):
-  boot_device = config.host(hostname).get_boot_device("hda")
-  disk_var = config.host(hostname).get_disk_var_mb()
-  ram = config.host(hostname).get_ram()
-  cpu = config.host(hostname).get_cpu()
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth0 --static=1 " +
+    " --ip=" + str(config.host(hostname).get_back_ip()) +
+    " --gateway=" + config.general.get_back_gateway_ip() +
+    " --subnet=" + config.general.get_back_netmask())
 
-  general.shell_exec("cobbler system add --profile=centos-vm_guest "
-                     "--static=1 --gateway=" + config.general.get_back_gateway_ip() + " " +
-                     "--subnet=" + config.general.get_back_netmask() + " " +
-                     "--virt-path=\"/dev/VolGroup00/" + hostname + "\" " +
-                     "--virt-ram=" + str(ram) + " --virt-cpus=" + str(cpu) + " " +
-                     "--name=" + hostname + " --hostname=" + hostname + " --ip=" + str(ip) + " " +
-                     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
-                     '--ksmeta="disk_var=' + str(disk_var) + ' boot_device=' + str(boot_device) + '"')
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth1 --static=1 " +
+    " --ip=" + str(config.host(hostname).get_front_ip()) +
+    " --gateway=" + config.general.get_front_gateway_ip() +
+    " --subnet=" + config.general.get_front_netmask())

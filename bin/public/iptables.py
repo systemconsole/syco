@@ -454,6 +454,10 @@ def add_cobbler_chain():
   iptables("-N cobbler_output")
   iptables("-A syco_output -p ALL -j cobbler_output")
 
+  # DNS - TCP/UDP
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 53 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 53 -j allowed_udp")
+
   # TFTP - TCP/UDP
   iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 69 -j allowed_udp")
@@ -462,7 +466,6 @@ def add_cobbler_chain():
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 123 -j allowed_udp")
 
   # DHCP TODO: In/Out
-  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
   # HTTP/HTTPS

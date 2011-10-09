@@ -1,14 +1,17 @@
-# kickstart file for kvm guest installation with dvd (not with cobbler).
+# SYCO kickstart for guest hosts installation with dvd (not with cobbler).
+# 
 # Author: Daniel Lindh <daniel@cybercow.se>
 # Created: 2010-11-29
-#
-# This file is not used with cobbler.
 #
 # Documentation
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/ch-kickstart2.html
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-options.html
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-packageselection.html
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-startinginstall.html
+
+# Logging
+# One of debug, info, warning, error, or critical.
+#logging --host=10.100.100.200 --port=XX --level=debug
 
 # System authorization information
 auth  --useshadow  --enablemd5
@@ -62,14 +65,15 @@ clearpart --all --drives=vda --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=vda
 part pv.2 --size=${TOTAL_DISK_MB} --grow --ondisk=vda
 volgroup VolGroup00 pv.2
-
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=4096
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
 logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=${DISK_VAR_MB}
+logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
 logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
+
+#services --disabled=xxx,yyy
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
 %packages --nobase
