@@ -314,10 +314,21 @@ def _set_domain_passwords(domain_name, admin_port):
   )
 
   # Create new cert for https
-  # TODO move the fareoffice info to install.cfg
   os.chdir(GLASSFISH_DOMAINS_PATH + domain_name + "/config/")
   general.shell_exec("keytool -delete -alias s1as -keystore keystore.jks -storepass \"" + app.get_glassfish_master_password() + "\"", user="glassfish")
-  general.shell_exec('keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "CN=Fareoffice,O=Fareoffice,L=Stockholm,S=Stockholm,C=Sweden" -validity 3650 -keypass \"' + app.get_glassfish_master_password() + '\" -keystore keystore.jks -storepass \"' + app.get_glassfish_master_password() + "\"", user="glassfish")
+  general.shell_exec(
+    'keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "' +
+    'CN=' + config.general.get_organization_name() +
+    ',O=,' + config.general.get_organization_name() +
+    ',L=' + config.general.get_locality() +
+    ',S=' + config.general.get_state() +
+    ',C=' + config.general.get_country_name() +
+    '" -validity 3650' +
+    ' -keypass \"' + app.get_glassfish_master_password() + '\"' +
+    ' -keystore keystore.jks' +
+    ' -storepass \"' + app.get_glassfish_master_password() + "\"",
+    user="glassfish"
+  )
   general.shell_exec("keytool -list -keystore keystore.jks -storepass \"" + app.get_glassfish_master_password() + "\"", user="glassfish")
 
   asadmin_exec("start-domain " + domain_name)

@@ -32,7 +32,6 @@ def vir_rm(args):
 
   general.remove_file("/etc/libvirt/qemu/autostart/" + server_name + ".xml")
   general.remove_file("/etc/libvirt/qemu/" + server_name + ".xml")
-  general.remove_file("/opt/fareoffice/var/virtstorage/" + server_name + "*")
   general.remove_file("/var/log/libvirt/qemu/" + server_name + ".log")
 
   general.shell_exec("lvremove -f /dev/VolGroup00/" + server_name)

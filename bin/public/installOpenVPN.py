@@ -24,11 +24,17 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, stat
-import app, general, version, iptables
-
+import os
+import stat
 import expect
 import pexpect
+
+import app
+import config
+import general
+import version
+import iptables
+
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -55,11 +61,11 @@ def install_openvpn_server(args):
     general.shell_exec("cp " + app.SYCO_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
 
     # Prepare the ca cert generation.
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="SE"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="NA"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CITY.*',     'export KEY_CITY="STOCKHOLM"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_ORG.*',      'export KEY_ORG="FAREOFFICE"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="ssladmin@fareoffice.com"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="' + config.general.get_country_name() + '"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="' + config.general.get_state() + '"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CITY.*',     'export KEY_CITY="' + config.general.get_locality() + '"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_oranization_name() + '"')
+    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
 
     # Generate CA cert
     os.chdir("/etc/openvpn/easy-rsa/")
