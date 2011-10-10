@@ -32,8 +32,7 @@ SCRIPT_VERSION = 2
 
 def build_commands(commands):
   commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
-  commands.add("install-cobbler-config", setup_all_systems, help="Refresh install.cfg settings to cobbler.")
-  commands.add("install-cobbler-repo",   refresh_repo, help="Refresh all repos on the cobbler server.")
+  commands.add("install-cobbler-refresh", setup_all_systems, help="Refresh settings and repo info.")
 
 def install_cobbler(args):
   '''
@@ -48,14 +47,14 @@ def install_cobbler(args):
   app.get_root_password_hash()
 
   _install_cobbler()
+  _modify_cobbler_settings()
 
   iptables.add_cobbler_chain()
   iptables.save()
 
-  _modify_cobbler_settings()
   _import_repos()
   setup_all_systems(args)
-  _cobbler_sync
+
   version_obj.mark_executed()
 
 def setup_all_systems(args):
@@ -65,43 +64,9 @@ def setup_all_systems(args):
   '''
   _refresh_all_profiles()
   _remove_all_systems()
-  for hostname in config.get_servers():
-    # IS KVM host?
-    if (config.host(hostname().is_host()):
-      _host_add(hostname)
-    else:
-      _guest_add(hostname)
-
+  _add_all_systems()
+  _refresh_repo()
   _cobbler_sync()
-
-def refresh_repo(args):
-  '''
-  Refresh all repos on the cobbler/repo server.
-
-  Syco uses lots of external files, this function downloads all latest
-  versions.
-
-  TODO: Move the downloads array to each script, and this function
-  should retrieve a download array from each script.
-
-  '''
-  downloads = {}
-  downloads['jdk-6u24-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u24-linux-x64-rpm.bin'
-  downloads['jdk-6u25-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u25-linux-x64-rpm.bin'
-  downloads['jdk-6u26-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u24-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u26-linux-x64-rpm.bin'
-
-  for dst, src in downloads.items():
-    general.shell_exec("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
-
-  while(True):
-    num_of_processes = subprocess.Popen("ps aux | grep wget", stdout=subprocess.PIPE, shell=True).communicate()[0].count("\n")
-    if num_of_processes <=2:
-      break
-    app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
-    time.sleep(10)
-
-  general.shell_exec("cobbler reposync --tries=3 --no-fail")
-  general.shell_exec("cobbler sync")
 
 def _install_cobbler():
   #
@@ -167,8 +132,7 @@ def _modify_cobbler_settings():
   general.shell_exec("/etc/init.d/dhcpd restart")
 
   # Config crontab to update repo automagically
-  value="01 4 * * * syco install-cobbler-repo"
-  general.set_config_property("/etc/crontab", value, value)
+  general.set_config_property2("/etc/crontab", "01 4 * * * syco install-cobbler-repo")
 
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")
@@ -216,21 +180,26 @@ def _refresh_all_profiles():
   general.shell_exec("cobbler profile remove --name=centos-vm_guest")
   general.shell_exec(
     'cobbler profile add --name=centos-vm_guest' +
-    ' --distro=centos-x86_64 --virt-type=qemu' +
-    ' --virt-ram=1024 --virt-cpus=1' +
+    ' --distro=centos-x86_64' +
     ' --repos="centos-updates-x86_64"' +
     ' --kickstart=/var/lib/cobbler/kickstarts/guest.ks' +
+    ' --virt-type=qemu' +
+    ' --virt-ram=1024 --virt-cpus=1' +
     ' --virt-bridge=br0'
   )
-
-def _cobbler_sync():
-  general.shell_exec("cobbler sync")
-  general.shell_exec("cobbler report")
 
 def _remove_all_systems():
   stdout = general.shell_exec("cobbler system list")
   for name in stdout.rsplit():
     general.shell_exec("cobbler system remove --name " + name)
+
+def _add_all_systems():
+  for hostname in config.get_servers():
+    # Is a KVM host?
+    if (config.host(hostname().is_host())):
+      _host_add(hostname)
+    else:
+      _guest_add(hostname)
 
 def _host_add(hostname):
   app.print_verbose("Add " + hostname +
@@ -243,21 +212,16 @@ def _host_add(hostname):
     ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
+  _setup_network()
   general.shell_exec(
     "cobbler system edit --name=" + hostname +
-    " --interface=eth0 --static=1 " +
-    " --ip=" + str(config.host(hostname).get_back_ip()) +
-    " --mac=" + str(config.host(hostname).get_back_mac()) +
-    " --gateway=" + config.general.get_back_gateway_ip() +
-    " --subnet=" + config.general.get_back_netmask())
+    " --interface=eth0" +
+    " --mac=" + str(config.host(hostname).get_back_mac()))
 
   general.shell_exec(
     "cobbler system edit --name=" + hostname +
-    " --interface=eth1 --static=1 " +
-    " --ip=" + str(config.host(hostname).get_front_ip()) +
-    " --mac=" + str(config.host(hostname).get_front_mac()) +
-    " --gateway=" + config.general.get_front_gateway_ip() +
-    " --subnet=" + config.general.get_front_netmask())
+    " --interface=eth1" +
+    " --mac=" + str(config.host(hostname).get_front_mac()))
 
 def _guest_add(hostname):
   app.print_verbose("Add " + hostname +
@@ -273,6 +237,18 @@ def _guest_add(hostname):
     ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("hda")) + '"')
 
+  _setup_network()
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth0" +
+    ' --virt-bridge=br0')
+
+  general.shell_exec(
+    "cobbler system edit --name=" + hostname +
+    " --interface=eth1" +
+    ' --virt-bridge=br1')
+
+def _setup_network():
   general.shell_exec(
     "cobbler system edit --name=" + hostname +
     " --interface=eth0 --static=1 " +
@@ -286,3 +262,28 @@ def _guest_add(hostname):
     " --ip=" + str(config.host(hostname).get_front_ip()) +
     " --gateway=" + config.general.get_front_gateway_ip() +
     " --subnet=" + config.general.get_front_netmask())
+
+def _refresh_repo():
+  '''
+  Refresh all repos on the cobbler/repo server.
+
+  Syco uses lots of external files, this function downloads all latest
+  versions.
+
+  TODO: Move the downloads array to each script, and this function
+  should retrieve a download array from each script.
+
+  '''
+  #downloads = {}
+  #downloads['jdk-6u26-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u26-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u26-linux-x64-rpm.sbin'
+
+  #for dst, src in downloads.items():
+  #  general.shell_exec("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
+
+  #general.wait_for_processes_to_finish('wget')
+
+  general.shell_exec("cobbler reposync --tries=3 --no-fail")
+
+def _cobbler_sync():
+  general.shell_exec("cobbler sync")
+  general.shell_exec("cobbler report")

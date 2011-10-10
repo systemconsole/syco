@@ -145,6 +145,16 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
 
+def wait_for_procesess_to_finish(name):
+  while(True):
+    num_of_processes = subprocess.Popen(
+      "ps aux | grep " + name, stdout=subprocess.PIPE, shell=True
+    ).communicate()[0].count("\n")
+    if num_of_processes <=2:
+      break
+    app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
+    time.sleep(10)
+
 def shell_exec(command, user="", cwd=None, events=None, output=True):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
