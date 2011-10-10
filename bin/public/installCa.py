@@ -4,10 +4,10 @@ TODO, THIS FILE IS NOT READY TO USE.
 
 '''
 
-__author__ = "mattias@fareoffice.com"
+__author__ = "matte@elino.se"
 __copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
-__email__ = "daniel@fareoffice.com"
+__email__ = "syco@cybercow.se"
 __credits__ = ["Daniel LIndh"]
 __license__ = "???"
 __version__ = "1.0.0"
@@ -31,16 +31,16 @@ script_version = 1
 
 def build_commands(commands):
   '''
-  Defines the commands that can be executed through the syco.py shell script. 
-  
+  Defines the commands that can be executed through the syco.py shell script.
+
   '''
   commands.add("install-ca", install_ca, help="Install CA on the server.")
-  commands.add("uninstall-ca", uninstall_ca, help="uninstall CA and all certs on the server.")  
+  commands.add("uninstall-ca", uninstall_ca, help="uninstall CA and all certs on the server.")
 
 def install_ca(args):
   '''
   Apache installation
-  
+
   '''
   return
   app.print_verbose("Install CA version: %d" % script_version)
@@ -66,7 +66,7 @@ def install_ca(args):
     general.shell_exec("openssl x509 -req -days 365 -in certs/www.webbserver.com.csr -signkey ca/private/ca.key -out certs/www.webbserver.com.crt ")
 
   version_obj.mark_executed()
-    
+
 def uninstall_ca(args):
   '''
   Remove ca and all certs in the ca

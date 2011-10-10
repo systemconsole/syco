@@ -4,7 +4,7 @@ CGI for changing LDAP password.
 
 '''
 
-__author__ = "daniel.lindh@fareoffice.com, daniel.holm@fareoffice.com"
+__author__ = "daniel.lindh@cybercow.se, daniel.holm@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
@@ -34,20 +34,20 @@ class Page:
     message = ""
 
     def set_info(self, message):
-      self.message = '<p class="info">' + message + "</p>" 
+      self.message = '<p class="info">' + message + "</p>"
 
     def set_error(self, message):
       self.message = '<p class="error">' + message + "</p>"
 
     def get_message(self):
       return self.message
-      
+
   # Error/Info message to print on form.
   message = Message()
-  
+
   form = cgi.FieldStorage()
-  
-  def _action(self):    
+
+  def _action(self):
     if "username" in self.form:
       user = self.form.getfirst("username", "")
       old_password = self.form.getfirst("old_password", "")
@@ -61,9 +61,9 @@ class Page:
       elif (new_password == old_password):
         self.message.set_error("Same password used, password is not changed.")
       else:
-        self._change_password(user, old_password, new_password) 
+        self._change_password(user, old_password, new_password)
 
-  def _change_password(self, user, old_password, new_password):    
+  def _change_password(self, user, old_password, new_password):
     l = ""
     try:
       dn = "uid=" + user + ",ou=people," + LDAP_DN
@@ -103,11 +103,11 @@ class Page:
 
   def _get_form_html(self):
     return """
-<html xmlns="http://www.w3.org/1999/xhtml"> 
-  <head> 			 		
-    <title>Change LDAP Password</title> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Change LDAP Password</title>
 
-    <style> 
+    <style>
 
     /* General */
 
@@ -212,7 +212,7 @@ class Page:
       color: #1546b4;
       border: 1px solid #1546b4;
       background: #cdd2ef;
-    }		
+    }
 
     /* Specific */
 
@@ -226,29 +226,29 @@ class Page:
       background-color: #EEE;
     }
 
-    </style> 
-  </head> 
+    </style>
+  </head>
 
-  <body> 
-    <div id="container"> 
-      <h1>Change LDAP Password</h1> 
-      <form name="input" action="ldappassword.cgi" method="post"> 
-        <div> 
-          <label for="">Username:</label> 
-          <input type="text" name="username" value="%s"> 
-          <label for="">Old password:</label> 
-          <input type="password" name="old_password"> 
-          <label for="">New password:</label> 
-          <input type="password" name="new_password"> 
-          <label for="">Verify new password:</label> 
-          <input type="password" name="new_password_verification"> 
-          <input type="submit" value="Change Password"> 
-        </div> 
-      </form> 
+  <body>
+    <div id="container">
+      <h1>Change LDAP Password</h1>
+      <form name="input" action="ldappassword.cgi" method="post">
+        <div>
+          <label for="">Username:</label>
+          <input type="text" name="username" value="%s">
+          <label for="">Old password:</label>
+          <input type="password" name="old_password">
+          <label for="">New password:</label>
+          <input type="password" name="new_password">
+          <label for="">Verify new password:</label>
+          <input type="password" name="new_password_verification">
+          <input type="submit" value="Change Password">
+        </div>
+      </form>
       %s
-    </div> 
-  </body> 
-</html> 
+    </div>
+  </body>
+</html>
   """
 
   def _form(self):
