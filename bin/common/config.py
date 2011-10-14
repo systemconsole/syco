@@ -146,19 +146,19 @@ class Config(object):
 
     def get_front_resolver_ip(self):
       '''ip of external dns resolver that are configured on all servers.'''
-      return self.get_option("front.resolver")
+      return str(self.get_option("front.resolver"))
 
     def get_external_dns_resolver(self):
       '''todo get_front_dns_resolver_ip'''
-      return self.get_front_resolver_ip()
+      return str(self.get_front_resolver_ip())
 
     def get_back_resolver_ip(self):
       '''ip of internal dns resolver that are configured on all servers.'''
-      return self.get_option("back.resolver")
+      return str(self.get_option("back.resolver"))
 
     def get_internal_dns_resolvers(self):
       '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
-      return self.get_back_resolver_ip()
+      return str(self.get_back_resolver_ip())
 
     def get_dns_resolvers(self, limiter=" "):
       '''

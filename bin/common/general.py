@@ -262,7 +262,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 
   return stdout
 
-def set_config_property(file_name, search_exp, replace_exp):
+def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=True):
   '''
   Change or add a config property to a specific value.
 
@@ -284,7 +284,7 @@ def set_config_property(file_name, search_exp, replace_exp):
           exist = True
         w.write(line)
 
-      if exist == False:
+      if (exist == False and add_if_not_exist):
         w.write(replace_exp + "\n")
     finally:
       r.close()
@@ -295,9 +295,9 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.write(replace_exp + "\n")
     w.close()
 
-def set_config_property_batch(file_name, key_value_dict):
+def set_config_property_batch(file_name, key_value_dict, add_if_not_exist=True):
   for key, value in key_value_dict.iteritems():
-    set_config_property(file_name, "\$\{" + key + "\}", value)
+    set_config_property(file_name, "\$\{" + key + "\}", value, add_if_not_exist)
 
 def get_config_value(file_name, config_name):
     '''
