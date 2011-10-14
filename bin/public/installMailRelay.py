@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python
 '''
 Install mail relay Client/Server
@@ -28,8 +26,7 @@ from socket import gethostname
 import app
 import config
 import general
-from general import set_config_property
-from general import set_config_property2
+from general import set_config_property, set_config_property2
 import hardening
 import iptables
 import version
@@ -64,10 +61,10 @@ def install_mail_server(args):
   set_config_property2("/etc/mail/access", "Connect:10.100                          RELAY")
 
   # Remove the loopback address restriction to accept email from the internet or intranet.
-  set_config_property("/etc/mail/sendmail.mc",
+  set_config_property(
+    "/etc/mail/sendmail.mc",
     r".*DAEMON_OPTIONS\(\`Port\=smtp\,Addr\=127\.0\.0\.1\, Name\=MTA\'\)dnl",
-    r"dnl DAEMON_OPTIONS(`Port=smtp,Addr=127.0.0.1, Name=MTA')dnl"
-  )
+    r"dnl DAEMON_OPTIONS(`Port=smtp,Addr=127.0.0.1, Name=MTA')dnl")
 
   _rebuild_sendmail_config()
 

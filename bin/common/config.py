@@ -85,18 +85,21 @@ class Config(object):
       Get an option from the install.cfg file.
 
       '''
+      value = None
+
       if (self.has_section(section)):
         if (self.has_option(section, option)):
-          return self.get(section, option)
-        else:
-          errmsg = "Can't find option '" + option + "' in section '" + section + "' in install.cfg"
-      else:
-        errmsg = "Can't find section '" + section + "' in install.cfg"
+          value = str(self.get(section, option))
+          if value.lower() == "none":
+            return None
+          else:
+            return value
 
       if (default_value):
         return default_value
       else:
-        raise ConfigException(errmsg)
+        raise ConfigException(
+          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
 
   class GeneralConfig(SycoConfig):
     '''
@@ -143,23 +146,26 @@ class Config(object):
 
     def get_front_resolver_ip(self):
       '''ip of external dns resolver that are configured on all servers.'''
-      return self.get_option("front.resolver")
+      return str(self.get_option("front.resolver"))
 
     def get_external_dns_resolver(self):
       '''todo get_front_dns_resolver_ip'''
-      return self.get_front_resolver_ip()
+      return str(self.get_front_resolver_ip())
+
+    def get_back_resolver_ip(self):
+      '''ip of internal dns resolver that are configured on all servers.'''
+      return str(self.get_option("back.resolver"))
 
     def get_internal_dns_resolvers(self):
       '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
-      return self.get_option("back.resolver")
+      return str(self.get_back_resolver_ip())
 
     def get_dns_resolvers(self, limiter=" "):
       '''
-      ip list of all dns resolvers that are configured on all servers.
+      Ip list of all dns resolvers that are configured on all servers.
 
-      TODO: Remove?
       '''
-      resolvers = str(self.get_internal_dns_resolvers() + " " + self.get_external_dns_resolver())
+      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
@@ -253,17 +259,27 @@ class Config(object):
     def get_option(self, option, default_value = None):
       return Config.SycoConfig.get_option(self, self.hostname, option, default_value)
 
+    def get_type(self):
+      '''Get ip for a specific host, as it is defined in install.cfg'''
+      hosttype = self.get_option("type").lower()
+      if hosttype in ['host', 'guest']:
+        return hosttype
+
     def get_front_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       return self.get_option("front.ip")
+
+    def get_front_mac(self):
+      '''Get network mac address for a specific host, as it is defined in install.cfg'''
+      return self.get_option("front.mac")
 
     def get_back_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.ip")
 
-    def get_mac(self):
+    def get_back_mac(self):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
-      return self.get_option("mac")
+      return self.get_option("back.mac")
 
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
@@ -277,11 +293,30 @@ class Config(object):
       '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
       return self.get_option("disk_var")
 
+    def get_disk_var_gb(self):
+      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return self.get_option("disk_var")
+
+    def get_disk_var_mb(self):
+      '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_total_disk_gb(self):
+      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
+      return str(int(self.get_disk_var_gb()) + 16)
+
+    def get_total_disk_mb(self):
+      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
+      return str(int(self.get_total_disk_gb()) * 1000)
+
     def get_boot_device(self, default_device = None):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
     def is_host(self):
+      return self.get_type() == "host"
+
+    def has_guests(self):
       if (self.has_section(self.hostname)):
         for option, value in self.items(self.hostname):
           if ("guest" in option):

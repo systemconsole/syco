@@ -145,6 +145,16 @@ def wait_for_server_to_start(server, port):
     time.sleep(5)
   app.print_verbose(".")
 
+def wait_for_procesess_to_finish(name):
+  while(True):
+    num_of_processes = subprocess.Popen(
+      "ps aux | grep " + name, stdout=subprocess.PIPE, shell=True
+    ).communicate()[0].count("\n")
+    if num_of_processes <=2:
+      break
+    app.print_verbose(str(num_of_processes-2) + " processes running, wait 10 more sec.")
+    time.sleep(10)
+
 def shell_exec(command, user="", cwd=None, events=None, output=True):
   '''
   Execute a shell command using pexpect, and writing verbose affected output.
@@ -252,7 +262,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 
   return stdout
 
-def set_config_property(file_name, search_exp, replace_exp):
+def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=True):
   '''
   Change or add a config property to a specific value.
 
@@ -260,6 +270,9 @@ def set_config_property(file_name, search_exp, replace_exp):
 
   '''
   if os.path.exists(file_name):
+    if (replace_exp == None):
+      replace_exp = ""
+
     exist = False
     try:
       shutil.copyfile(file_name, file_name + ".bak")
@@ -271,7 +284,7 @@ def set_config_property(file_name, search_exp, replace_exp):
           exist = True
         w.write(line)
 
-      if exist == False:
+      if (exist == False and add_if_not_exist):
         w.write(replace_exp + "\n")
     finally:
       r.close()
@@ -282,9 +295,31 @@ def set_config_property(file_name, search_exp, replace_exp):
     w.write(replace_exp + "\n")
     w.close()
 
-def set_config_property_batch(file_name, key_value_dict):
-  for key, value in key_value_dict:
-    set_config_property(file_name, "\$\{" + key + "\}", value)
+def set_config_property_batch(file_name, key_value_dict, add_if_not_exist=True):
+  for key, value in key_value_dict.iteritems():
+    set_config_property(file_name, "\$\{" + key + "\}", value, add_if_not_exist)
+
+def get_config_value(file_name, config_name):
+    '''
+    Get a value from an option in a config file.
+
+    '''
+    prog = re.compile("[\s]*" + config_name + "[:=\s]*(.*)")
+    for line in open(file_name):
+        m = prog.search(line)
+        if m:
+            return m.group(1)
+    return False
+
+def store_file(file_name, value):
+    '''
+    Store a text in a file.
+
+    '''
+    app.print_verbose("storing file " + file_name)
+    FILE = open(file_name, "w")
+    FILE.writelines(value)
+    FILE.close()
 
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):

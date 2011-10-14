@@ -6,3 +6,4 @@ usr/
 var/kickstart/generated
 tmp/
 /nbproject/private/
+._*

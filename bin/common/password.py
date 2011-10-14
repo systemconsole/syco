@@ -68,9 +68,9 @@ def get_root_password_hash():
 
   '''
   root_password = get_root_password()
-  p = subprocess.Popen("openssl passwd -1 -salt 'sa#Gnxw4' '" + root_password + "'", stdout=subprocess.PIPE, shell=True)
+  p = subprocess.Popen("openssl passwd -1 '" + root_password + "'", stdout=subprocess.PIPE, shell=True)
   hash_root_password, stderr = p.communicate()
-  return str(hash_root_password)
+  return str(hash_root_password.strip())
 
 def get_user_password(username):
   '''The linux shell password for a specific user.'''

@@ -12,11 +12,7 @@ http://www.frozentux.net/iptables-tutorial/scripts/rc.DMZ.firewall.txt
 http://www.frozentux.net/iptables-tutorial/iptables-tutorial.html
 http://manpages.ubuntu.com/manpages/jaunty/man8/iptables.8.html
 http://www.cipherdyne.org/psad/
-
-TODO:
-* Add recent http://www.snowman.net/projects/ipt_recent/
-  http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
-* SSH to the server should only be allowed from certain ips.
+http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
 
 '''
 
@@ -155,8 +151,19 @@ def _create_chains():
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
   iptables("-A bad_tcp_packets -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j REJECT --reject-with tcp-reset")
+
+  # Force SYN checks
   iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOG --log-prefix 'IPT: New not syn:'")
   iptables("-A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j LOGDROP")
+
+  # Drop all fragments
+  iptables("-A bad_tcp_packets -f -j LOGDROP")
+
+  # Drop XMAS packets
+  iptables("-A bad_tcp_packets -p tcp --tcp-flags ALL ALL -j LOGDROP")
+
+  # Drop NULL packets
+  iptables("-A bad_tcp_packets -p tcp --tcp-flags ALL NONE -j LOGDROP")
 
   app.print_verbose("Create allowed tcp chain.")
   iptables("-N allowed_tcp")
@@ -188,14 +195,14 @@ def _create_chains():
   iptables("-t nat -N syco_nat_postrouting")
 
 def _setup_general_rules():
+  app.print_verbose("From Localhost interface to Localhost IP's.")
+  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
+  iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT")
+
   app.print_verbose("Bad TCP packets we don't want.")
   iptables("-A INPUT   -p tcp -j bad_tcp_packets")
   iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
   iptables("-A FORWARD -p tcp -j bad_tcp_packets")
-
-  app.print_verbose("From Localhost interface to Localhost IP's.")
-  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
-  iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT")
 
   iptables("-A INPUT   -p ALL -j syco_input")
   iptables("-A OUTPUT  -p ALL -j syco_output")
@@ -258,12 +265,12 @@ def _setup_dns_resolver_rules():
 
   '''
   app.print_verbose("Setup DNS resolver INPUT/OUTPUT rule.")
-  inet_ip = net.get_lan_ip()
   for resolver_ip in config.general.get_dns_resolvers().split(" "):
-    iptables("-A syco_output -p udp -s " + inet_ip + " --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_udp")
-    iptables("-A syco_input  -p udp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_udp")
-    iptables("-A syco_output -p tcp -s " + inet_ip + "  --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_tcp")
-    iptables("-A syco_input  -p tcp -s " + resolver_ip + " --sport 53 -d  " + inet_ip + "  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_tcp")
+    if resolver_ip.lower() != "none":
+      iptables("-A syco_output -p udp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_udp")
+      iptables("-A syco_input  -p udp -s " + resolver_ip + " --sport 53 --dport 1024:65535 -m state --state ESTABLISHED -j allowed_udp")
+      iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_tcp")
+      iptables("-A syco_input  -p tcp -s " + resolver_ip + " --sport 53  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_tcp")
 
 def _setup_gpg_rules():
   '''
@@ -321,8 +328,6 @@ def add_kvm_chain():
 
   iptables("-N kvm")
   iptables("-A syco_forward  -p ALL -j kvm")
-
-  iptables("-A kvm -m physdev --physdev-is-bridged -j ACCEPT")
 
   # DHCP / TODO: Needed??
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
@@ -456,6 +461,10 @@ def add_cobbler_chain():
   iptables("-N cobbler_output")
   iptables("-A syco_output -p ALL -j cobbler_output")
 
+  # DNS - TCP/UDP
+  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 53 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 53 -j allowed_udp")
+
   # TFTP - TCP/UDP
   iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 69 -j allowed_tcp")
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 69 -j allowed_udp")
@@ -464,7 +473,6 @@ def add_cobbler_chain():
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 123 -j allowed_udp")
 
   # DHCP TODO: In/Out
-  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
   # HTTP/HTTPS

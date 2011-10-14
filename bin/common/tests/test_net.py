@@ -27,7 +27,7 @@ class TestNet(unittest.TestCase):
         self.assertEqual(net.reverse_ip("1.2.3.4"), "4.3.2.1")
         self.assertEqual(net.get_ip_class_c("1.2.3.4"), "1.2.3")
         self.assertEqual(net.num_of_eth_interfaces(), 1)
-        self.assertEqual(net.get_host_name(), "fo-tp-dalitst")
+        self.assertEqual(net.get_hostname(), "fo-tp-dalitst")
 
 if __name__ == '__main__':
     unittest.main()

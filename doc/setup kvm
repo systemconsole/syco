@@ -16,13 +16,13 @@ h1. Setup KVM guest
 lvcreate -n fo-tp-install -L 100G VolGroup00
 
 mkfs.ext4 -j /dev/vg_data/VolData
-mkdir -p /opt/fareoffice/var/virtstorage
+mkdir -p /opt/syco/var/virtstorage
 mount /dev/vg_data/VolData /opt
 echo "/dev/vg_data/VolData  /opt  ext4  defaults  1 2" >> /etc/fstab
 
 # Create guest image
-qemu-img create -f raw /opt/fareoffice/var/virtstorage/fo-tp-install.img 100G
-qemu-img create -f raw /opt/fareoffice/var/virtstorage/fo-tp-install-swap.img 4G
+qemu-img create -f raw /opt/syco/var/virtstorage/fo-tp-install.img 100G
+qemu-img create -f raw /opt/syco/var/virtstorage/fo-tp-install-swap.img 4G
 
 # Create the data lvm logical volume
 lvcreate -n fo-tp-install -L 100G VolGroup00
@@ -30,8 +30,8 @@ lvcreate -n fo-tp-install-swap -L 4G VolGroup00
 
 # Create the KVM image
 virt-install --connect qemu:///system -n fo-tp-install -r 2048 --vcpus=2 \
-        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install.img \
-        --disk path=/opt/fareoffice/var/virtstorage/fo-tp-install-swap.img \
+        --disk path=/opt/syco/var/virtstorage/fo-tp-install.img \
+        --disk path=/opt/syco/var/virtstorage/fo-tp-install-swap.img \
         --cdrom /dev/cdrom \
         --vnc --noautoconsole --hvm --accelerate \
         --check-cpu \
@@ -52,10 +52,10 @@ h1. KVM Managment
 # /etc/libvirt/qemu.conf - Master configuration file for the QEMU driver.
 # /var/log/libvirt/ - The default log file directory. All VM specific logs files are stored here.
 # /var/log/koan/ - The default log file directory. All VM specific logs files are stored here.
-# /opt/fareoffice/var/virtstorage/ - Where the images are stored.
+# /opt/syco/var/virtstorage/ - Where the images are stored.
 
 # Get info about the vm images
-qemu-img info qcow2 /opt/fareoffice/var/virtstorage/xx.img
+qemu-img info qcow2 /opt/syco/var/virtstorage/xx.img
 
 # Get info from kvm
 virsh help

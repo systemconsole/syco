@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 '''
-Install a KVM guest from DVD instead of cobbler, that most syco servers uses
-for installation.
+Install a KVM guest from DVD instead of cobbler.
+
+This will probably only be used to install the installation server that hosts
+the cobbler service.
 
 This script should be executed directly on a kvm host.
 
-WARNING:
-Because of a bug in redhat/Centos it's required to have a DHCP server
-during the kickstart installation. Even though we use a static ip.
-Use "syco install-dhcp-server" before and "syco uninstall-dhcp-server" after
-you run this script.
-
-https://bugzilla.redhat.com/show_bug.cgi?id=392021
+All configurations are retrived from the install.cfg.
 
 '''
 
@@ -28,102 +24,176 @@ import os
 import time
 
 import app
-import general
+import config
+from general import set_config_property_batch, shell_exec
 import net
 import nfs
 import sys
 
 def build_commands(commands):
-  commands.add("install-guest", install_guest, "hostname, ip", help="Install kvm guest from dvd, without cobbler (reguire dhcp).")
+  commands.add(
+    "install-guest", install_guest, "hostname",
+    help="Install KVM guest from dvd.")
 
-# The main function
-#
-def install_guest(args):
+class install_guest:
+  hostname = None
 
-  if (len(args) != 3):
-    app.print_error("What server and ip should you use?")
-    return
+  def __init__(self, args):
+    self.check_commandline_args(args)
+    app.print_verbose("Install kvm guest " + self.hostname + ".")
+    self.check_if_host_is_installed()
+    self.init_host_options_from_config()
 
-  hostname = args[1]
-  ip = args[2]
+    self.mount_dvd()
+    self.create_kickstart()
+    self.start_nfs_export()
 
-  app.print_verbose("Install kvm guest " + hostname + " with ip " + ip )
+    self.create_kvm_host()
 
-  # Is server already installed?
-  result = general.shell_exec("virsh list --all")
-  if (hostname in result):
-    app.print_error(hostname + " already installed")
-    return
+    self.stop_nfs_export()
+    self.unmount_dvd()
 
-  # Mount dvd
-  if (not os.access("/media/dvd", os.F_OK)):
-    general.shell_exec("mkdir /media/dvd")
+  def check_commandline_args(self, args):
+    if (len(args) != 2):
+        raise Exception("Enter the hostname of the server to install")
+    else:
+      self.hostname = args[1]
 
-  if (not os.path.ismount("/media/dvd")):
-    general.shell_exec("mount -o ro /dev/dvd /media/dvd")
+  def check_if_host_is_installed(self):
+    result = shell_exec("virsh list --all")
+    if (self.hostname in result):
+      raise Exception(self.hostname + " already installed")
 
-  # Create kickstart for the installation
-  disk_var_gb = app.get_disk_var(hostname)
-  # Extra disk defined in dvd-guest.ks
-  disk_var_gb = str(int(disk_var_gb) + 15)
-  disk_var_mb = str(int(disk_var_gb) * 1024)
+  def init_host_options_from_config(self):
+    '''
+    Initialize all used options from install.cfg.
 
-  general.shell_exec("mkdir -p " + app.SYCO_PATH + "var/kickstart/generated")
-  ks_path = app.SYCO_PATH + "var/kickstart/generated/" + hostname + ".ks"
-  general.shell_exec("cp " + app.SYCO_PATH + "var/kickstart/dvd-guest.ks " + ks_path)
-  general.set_config_property(ks_path, "\$\{HOSTNAME\}", hostname)
-  general.set_config_property(ks_path, "\$\{IP\}", ip)
-  general.set_config_property(ks_path, "\$\{GATEWAY\}", config.general.get_front_gateway_ip())
-  general.set_config_property(ks_path, "\$\{NAMESERVER\}", config.general.get_first_dns_resolver())
-  general.set_config_property(ks_path, "\$\{ROOT_PASSWORD\}", app.get_root_password_hash())
-  general.set_config_property(ks_path, "\$\{EXTERNAL_NAMESERVER\}", config.general.get_external_dns_resolver())
-  general.set_config_property(ks_path, "\$\{DISK_VAR\}", disk_var_mb)
+    If the options are invalid, app and config will throw exceptions,
+    that will be forwarded to the starter app.
 
-  # Export kickstart file
-  nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
-  nfs.add_export("dvd", "/media/dvd/")
-  nfs.configure_with_static_ip()
-  nfs.restart_services()
-  nfs.add_iptables_rules()
+    '''
+    # The ip connected to the admin net, from which the nfs
+    # export is done.
+    self.kvm_host_back_ip = net.get_lan_ip()
 
-  # Create the data lvm volumegroup
-  result = general.shell_exec("lvdisplay -v /dev/VolGroup00/" + hostname)
-  if ("/dev/VolGroup00/" + hostname not in result):
-    general.shell_exec("lvcreate -n " + hostname + " -L " + disk_var_gb + "G VolGroup00")
+    self.ram = str(config.host(self.hostname).get_ram())
+    self.cpu = str(config.host(self.hostname).get_cpu())
 
-  # Create the KVM image
-  local_ip = net.get_lan_ip()
+    self.set_kickstart_options()
 
-  ram = str(app.get_ram(hostname))
-  cpu = str(app.get_cpu(hostname))
+  def set_kickstart_options(self):
+    '''
+    Properties that will be used to replace ${XXX} vars in kickstart file.
 
-  general.shell_exec("virt-install --connect qemu:///system --name " + hostname + " --ram " + ram + " --vcpus=" + cpu + " " +
-    "--disk path=/dev/VolGroup00/" + hostname + " " +
-    "--location nfs:" + local_ip + ":/exports/dvd " +
-    "--vnc --noautoconsole --hvm --accelerate " +
-    "--check-cpu " +
-    "--os-type linux --os-variant=rhel6 " +
-    "--network bridge:br1 " +
-    '-x "ks=nfs:' + local_ip + ":/exports/kickstart/" + hostname + ".ks" + '"')
+    '''
+    prop = {}
+    prop['HOSTNAME'] = self.hostname
+    prop['FRONT_IP'] = config.host(self.hostname).get_front_ip()
+    prop['FRONT_NETMASK'] = config.general.get_front_netmask()
+    prop['FRONT_GATEWAY'] = config.general.get_front_gateway_ip()
+    prop['FRONT_NAMESERVER'] = config.general.get_front_resolver_ip()
 
-  # Waiting for the installation process to complete, and halt the guest.
-  app.print_verbose("Wait for " + hostname + " server to be installed. ", new_line=False)
-  while(True):
-    time.sleep(10)
-    print ".",
-    sys.stdout.flush()
-    result = general.shell_exec("virsh list", output=False)
-    if (hostname not in result):
-      print "Now installed"
-      break
+    prop['BACK_IP'] = config.host(self.hostname).get_back_ip()
+    prop['BACK_NETMASK'] = config.general.get_back_netmask()
+    prop['BACK_GATEWAY'] = config.general.get_back_gateway_ip()
+    prop['BACK_NAMESERVER'] = config.general.get_back_resolver_ip()
 
-  # Autostart guests.
-  general.shell_exec("virsh autostart " + hostname)
-  general.shell_exec("virsh start " + hostname)
+    prop['ROOT_PASSWORD'] = '"' + app.get_root_password_hash() + '"'
 
-  nfs.remove_iptables_rules()
-  nfs.stop_services()
-  nfs.remove_export("kickstart")
-  nfs.remove_export('dvd')
+    prop['DISK_VAR_MB'] = config.host(self.hostname).get_disk_var_mb()
+    prop['TOTAL_DISK_MB'] = config.host(self.hostname).get_total_disk_mb()
+    prop['TOTAL_DISK_GB'] = config.host(self.hostname).get_total_disk_gb()
 
-  general.shell_exec("umount /media/dvd")
+    self.property_list = prop
+
+  def mount_dvd(self):
+    if (not os.access("/media/dvd", os.F_OK)):
+      shell_exec("mkdir /media/dvd")
+
+    if (not os.path.ismount("/media/dvd")):
+      shell_exec("mount -o ro /dev/dvd /media/dvd")
+
+  def unmount_dvd(self):
+    shell_exec("umount /media/dvd")
+
+  def create_kickstart(self):
+      '''
+      Create the kickstart file that should be used during installation.
+
+      '''
+      ks_folder = app.SYCO_PATH + "var/kickstart/generated/"
+      hostname_ks_file = ks_folder + self.hostname + ".ks"
+      dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
+
+      shell_exec("mkdir -p " + ks_folder)
+      shell_exec("cp " + dvd_ks_file + " " + hostname_ks_file)
+
+      set_config_property_batch(hostname_ks_file, self.property_list, False)
+
+  def start_nfs_export(self):
+      nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
+      nfs.add_export("dvd", "/media/dvd/")
+      nfs.configure_with_static_ip()
+      nfs.restart_services()
+      nfs.add_iptables_rules()
+
+  def stop_nfs_export(self):
+      nfs.remove_iptables_rules()
+      nfs.stop_services()
+      time.sleep(1)
+      nfs.remove_export("kickstart")
+      nfs.remove_export('dvd')
+
+  def create_kvm_host(self):
+      self.create_lvm_volumegroup()
+
+      cmd = "virt-install -d --connect qemu:///system"
+      cmd += " --name " + self.hostname
+      cmd +=  " --ram " + self.ram
+      cmd +=  " --vcpus=" + self.cpu + " --cpuset=auto"
+      cmd +=  " --vnc --noautoconsole"
+      cmd +=  " --hvm --accelerate"
+      cmd +=  " --check-cpu"
+      cmd +=  " --disk path=/dev/VolGroup00/" + self.hostname
+      cmd +=  " --os-type linux --os-variant=rhel6"
+      cmd +=  " --network bridge:br0"
+      cmd +=  " --network bridge:br1"
+      cmd +=  " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
+      cmd +=  ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
+      cmd +=  ' ksdevice=eth0'
+      cmd +=  ' ip=' + self.property_list['BACK_IP']
+      cmd +=  ' netmask=' + self.property_list['BACK_NETMASK']
+      cmd +=  ' dns=' + self.kvm_host_back_ip
+      cmd +=  ' gateway=' + self.kvm_host_back_ip
+      cmd +=  ' "'
+
+      shell_exec(cmd)
+      self.wait_for_installation_to_complete()
+      self.autostart_guests()
+
+  def create_lvm_volumegroup(self):
+    result = shell_exec("lvdisplay -v /dev/VolGroup00/" + self.hostname)
+    if ("/dev/VolGroup00/" + self.hostname not in result):
+      shell_exec("lvcreate -n " + self.hostname +
+                 " -L " + self.property_list['TOTAL_DISK_GB'] + "G VolGroup00")
+
+  def wait_for_installation_to_complete(self):
+    '''
+    Waiting for the installation process to complete, and halt the guest.
+
+    '''
+    app.print_verbose("Wait for installation of " + self.hostname +
+                      " to complete", new_line=False)
+    while(True):
+      time.sleep(10)
+      print ".",
+      sys.stdout.flush()
+      result = shell_exec("virsh list", output=False)
+      if (self.hostname not in result):
+        print "Now installed"
+        break
+
+  def autostart_guests(self):
+    # Autostart guests.
+    shell_exec("virsh autostart " + self.hostname)
+    shell_exec("virsh start " + self.hostname)

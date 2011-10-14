@@ -197,6 +197,11 @@ def _setup_slapd_config():
   shell_exec("cp /etc/openldap/DB_CONFIG.example /var/lib/ldap/DB_CONFIG")
   shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/common.ldif")
 
+  for dir in os.listdir(app.SYCO_USR_PATH):
+    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/common.ldif")
+    if (os.access(filename, os.F_OK)):
+      shell_exec("slapadd -l " + filename)
+
 def _setup_password_policy():
   app.print_verbose("Setup password policy.")
   value = "moduleload /usr/lib64/openldap/ppolicy.la"

@@ -1,0 +1,83 @@
+module sycocobbler 1.0;
+
+require {
+  type semanage_store_t;
+  type syslogd_t;
+  type sysfs_t;
+  type var_lock_t;
+  type rpm_var_cache_t;
+  type httpd_sys_content_t;
+  type proc_net_t;
+  type file_context_t;
+  type semanage_read_lock_t;
+  type lib_t;
+  type sysctl_modprobe_t;
+  type security_t;
+  type cobblerd_t;
+  type modules_conf_t;
+  type rpm_var_lib_t;
+  type tftpdir_rw_t;
+  type modules_dep_t;
+  type devlog_t;
+  type sysctl_kernel_t;
+  type modules_object_t;
+  type default_context_t;
+  class rawip_socket { getopt create };
+  class capability { net_admin net_raw fsetid sys_ptrace };
+  class file { rename setattr read lock create write getattr unlink open };
+  class netlink_audit_socket create;
+  class sock_file { write getattr };
+  class lnk_file { read create getattr };
+  class unix_dgram_socket { create connect sendto };
+  class dir { rename search setattr read create write getattr rmdir remove_name open add_name };
+}
+
+#============= cobblerd_t ==============
+allow cobblerd_t default_context_t:dir search;
+allow cobblerd_t devlog_t:sock_file { write getattr };
+allow cobblerd_t file_context_t:dir search;
+#!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
+# cobbler_var_lib_t, tftpdir_rw_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t
+
+allow cobblerd_t httpd_sys_content_t:dir { rename write rmdir setattr remove_name create add_name };
+allow cobblerd_t httpd_sys_content_t:file { write rename create unlink setattr };
+#!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
+# var_lib_t, var_log_t, named_zone_t, var_t, cobbler_var_lib_t, tftpdir_rw_t, etc_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t, root_t
+
+allow cobblerd_t lib_t:dir { write remove_name add_name };
+allow cobblerd_t lib_t:file { write create unlink };
+allow cobblerd_t modules_conf_t:dir { read search open };
+allow cobblerd_t modules_conf_t:file { read getattr open };
+allow cobblerd_t modules_dep_t:file { read getattr open };
+allow cobblerd_t modules_object_t:dir search;
+allow cobblerd_t modules_object_t:file { read open };
+allow cobblerd_t proc_net_t:file { read getattr open };
+#!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
+# cobbler_var_lib_t, tftpdir_rw_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t
+
+allow cobblerd_t rpm_var_cache_t:dir { search read create write getattr remove_name open add_name };
+allow cobblerd_t rpm_var_cache_t:file { rename create unlink open setattr };
+#!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
+# var_lib_t, var_log_t, named_zone_t, cobbler_var_log_t, var_t, cobbler_var_lib_t, tftpdir_rw_t, etc_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t, root_t
+
+allow cobblerd_t rpm_var_lib_t:dir { write search getattr };
+allow cobblerd_t rpm_var_lib_t:file open;
+allow cobblerd_t security_t:dir read;
+allow cobblerd_t self:capability { net_admin net_raw fsetid sys_ptrace };
+allow cobblerd_t self:netlink_audit_socket create;
+allow cobblerd_t self:rawip_socket { getopt create };
+allow cobblerd_t self:unix_dgram_socket { create connect };
+allow cobblerd_t semanage_read_lock_t:file { read lock open };
+#!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
+# var_lib_t, var_log_t, named_zone_t, var_t, cobbler_var_lib_t, tftpdir_rw_t, etc_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t, root_t
+
+allow cobblerd_t semanage_store_t:dir { read write search };
+allow cobblerd_t semanage_store_t:file { read getattr open };
+allow cobblerd_t sysctl_kernel_t:dir search;
+allow cobblerd_t sysctl_modprobe_t:file read;
+allow cobblerd_t sysfs_t:dir { search getattr };
+allow cobblerd_t sysfs_t:file { read getattr open };
+allow cobblerd_t syslogd_t:unix_dgram_socket sendto;
+allow cobblerd_t tftpdir_rw_t:lnk_file { read create getattr };
+allow cobblerd_t var_lock_t:dir search;
+allow cobblerd_t var_lock_t:file getattr;

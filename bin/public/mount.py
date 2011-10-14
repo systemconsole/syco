@@ -53,15 +53,15 @@ def mount_syco(args):
   else:
     remote_host.append(args[1])
 
-  for host_name in remote_host:
-    ip = app.get_back_ip(host_name)
-    app.print_verbose("Mount ~/mount/" + host_name + " from " + ip)
+  for hostname in remote_host:
+    ip = config.host(hostname).get_back_ip()
+    app.print_verbose("Mount ~/mount/" + hostname + " from " + ip)
     obj = ssh.Ssh(ip, app.get_root_password())
     if (obj.is_alive()):
       obj.install_ssh_key()
 
       # ssh_mount_server
-      mount_dir = os.environ['HOME'] + "/mount/" + host_name
+      mount_dir = os.environ['HOME'] + "/mount/" + hostname
 
       if not os.access(mount_dir, os.W_OK):
         os.makedirs(mount_dir)
@@ -84,9 +84,9 @@ def umount_syco(args):
 
   user_name = pwd.getpwuid(os.getuid()).pw_name
 
-  for host_name in config.get_servers():
-    ip = app.get_back_ip(host_name)
-    mount_dir = os.environ['HOME'] + "/mount/" + host_name
+  for hostname in config.get_servers():
+    ip = config.host(hostname).get_back_ip()
+    mount_dir = os.environ['HOME'] + "/mount/" + hostname
 
     if os.access(mount_dir, os.W_OK):
       shell_run("umount " + mount_dir)

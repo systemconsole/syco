@@ -1,4 +1,4 @@
-# Fareoffice default kickstart file
+# SYCO kickstart for baremetal hosts.
 #
 # Author: Daniel Lindh
 # Created: 2010-11-10
@@ -16,6 +16,9 @@ auth  --useshadow  --enablemd5
 # Logging
 # One of debug, info, warning, error, or critical.
 #logging --host=10.100.100.200 --port=XX --level=debug
+
+# System authorization information
+auth  --useshadow  --enablemd5
 
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
@@ -68,12 +71,16 @@ timezone --utc Europe/Stockholm
 install
 
 # Partioning
+#
+# See installCobbler.py when changing disk usage.
+#
 clearpart --all --drives=$boot_device --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=$boot_device
 part pv.2 --size=0 --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=32768
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
+logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var
 logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
@@ -81,14 +88,10 @@ logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fs
 
 #services --disabled=xxx,yyy
 
-%packages
-@base
+# Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
+%packages --nobase
 @core
-keyutils
-trousers
-fipscheck
-device-mapper-multipath
-#-autofs
+@server-policy
 
 %pre
 $SNIPPET('log_ks_pre')
@@ -118,3 +121,8 @@ $SNIPPET('post_anamon')
 $kickstart_done
 # End final steps
 rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
+yum install -y git, acpid
+service smartd stop
+chkconfig --add smartd
+service acpid start
+chkconfig acpid on

@@ -24,7 +24,7 @@ TODO: When modsec fails, execute a shell script that looks for info about the at
 
 '''
 
-__author__ = "mattias@fareoffice.com"
+__author__ = "matte@elino.se"
 __copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"

@@ -8,44 +8,48 @@ Version 0.2
 
 Version 0.25
 ------------
-* Upgrade scripts to centos 6
-* Setup console
-  http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
-* Setup dhcp device
-  vi /etc/sysconfig/dhcpd
-* Setup ip in kickstart, front and back.
+# Upgrade scripts to centos 6
+# Setup bond and bridge installation in kvm host
+# Move all host dependent functions from app.py to it's own host/device class.
+  That will be instansiated from config.py.
+  config.getHost("fo-tp-install").get_mac()
+  config.getHost("fo-tp-install").get_ip()
+# Replace all host_name with hostname.
+# Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
+# Upgrade scripts to centos 6
+# Removed fareoffice relations in the public scripts and documentation.
+# Setup ip in kickstart, front and back.
+# Test installGuestWithDVD.
+# Test installation of install server
+
 * Make it possible to install from the admin-net. gateways and such.
+
+* Is a gatway configured on the kvm host after the installation.
+  /etc/sysconfig/network
+
+* Is all drivers paravirtualized on host/guest
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/#id3302819
+
+* Is the ram option in install.cfg working? Code looks ok, verify after
+  all guests are installed.
 
 Version 0.3
 -----------
 * installBind
+  Remove fareoffice relation.
+  /Users/dali/mount/fo-tp-dalitst/syco/var/dns/fareonline.net:
 * Test bind installation with https://www.ultratools.com
 
 Version 0.4
 -----------
 * installNagios
 
-Version 3.6
------------
-* installHudson
-* installSonar
-
-
-Version 3.8
------------
-# Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
-* Remove fareoffice relations in the public scripts and documentation.
-* Upgrade scripts to centos 6
-* restorecon -R -v /home/$ACCOUNT/.ssh
-* Read doc for centos 6
-  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/
-
 Version 3.9 (iptables)
 ----------------------
 # Refactor iptable.py, add a rule chain that can be controlled from other scripts?
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
-* http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
-* Are all iptables rules tested and moved to iptables-setup.
+# Are all iptables rules tested and moved to iptables-setup.
+# http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
 * Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp.
   This will optimize all rules by "50%".
 * Don't try to delete chains, when they don't exist. To remove the error message from iptables.
@@ -55,17 +59,16 @@ Version 3.9 (iptables)
   http://lonesysadmin.net/2007/10/29/how-to-install-a-tftp-server-on-red-hat-enterprise-linux/
   # /etc/sysconfig/iptables-config
   # Add IPTABLES_MODULES="ip_conntrack_tftp"
+* Add recent http://www.snowman.net/projects/ipt_recent/
+  http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
+* SSH to the server should only be allowed from certain ips.
+* Write fireall/router iptables forwarding script.
 
 Version 4
 ---------
 * Move all companies repos to git or create install-svn.
-* Is the ram option in install.cfg working? gf computer hasn't enough memory.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
-* Move all host dependent functions from app.py to it's own host/device class.
-  That will be instansiated from config.py.
-  config.getHost("fo-tp-install").get_mac()
-  config.getHost("fo-tp-install").get_ip()
 
 Monitor
 -------
@@ -75,9 +78,12 @@ Monitor
   A webserver should never ever have to swap, as swapping increases the latency
   of each request beyond a point that users consider "fast enough".
 * Monitor cpu temp
+* Check that no swap exists on the kvm hosts.
 
 Hardening
 ---------
+* Read doc for centos 6
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/
 * installClam
 * Read http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
 * Harden kickstart files according to
@@ -118,8 +124,6 @@ Bra att logga till både rsyslog och syslogd-ng?
 Remote-install
 --------------
 * install-guests "virsh list" just print a .
-* Looks like the kvm host machines doesn't get any gateway after the installation.
-  /etc/sysconfig/network
 * remote-install should log all output to file, one for each server/thread.
   http://docs.python.org/library/logging.html#logging-to-multiple-destinations
   http://stackoverflow.com/questions/616645/how-do-i-duplicate-sys-stdout-to-a-log-file-in-python
@@ -135,8 +139,25 @@ Remote-install
 * Add all output from syco to a log file.
 * Add "syco remote-install" in kickstart for fo-tp-install
 
+Refactoring
+-----------
+* Refactoring of password and passwordStore
+* Use properties instead of getters in config
+
+KVM
+---
+* Add --cpuset=auto thingy to cobbler installed guests, to get the right NUMA.
+* Setup console
+  http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
+
+Rentalfront Development enviornment
+-----------------------------------
+* installHudson
+* installSonar
+
 Version 5
 ---------
+* Anything that is useful http://www.lesswatts.org/?
 * Add reviewboard.com to vcs server???
 * Check "gerrit" code review software and implement on vcs server.
 * Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html
@@ -154,6 +175,7 @@ Version 5
 STABILITY
 ---------
 * install-mysql-replication should wait until users are installed on primary database.
+* restorecon -R -v /home/$ACCOUNT/.ssh
 
 LDAP
 ----
@@ -194,6 +216,8 @@ Other
 * Any good info here ? http://crunchtools.com/articles/
 * Add to git server
   https://bitbucket.org/sdorra/scm-manager/wiki/Home
+* Setup dhcp device in /etc/sysconfig/dhcpd for installDhcp
+
 
 On Call (Linux Ocean?)
 ----------------------
