@@ -1,5 +1,5 @@
 # SYCO kickstart for guest hosts installation with dvd (not with cobbler).
-# 
+#
 # Author: Daniel Lindh <daniel@cybercow.se>
 # Created: 2010-11-29
 #
@@ -73,17 +73,42 @@ logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fs
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
 logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 
-#services --disabled=xxx,yyy
+services --disabled=smartd --enabled=acpid
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
 %packages --nobase
-@core
+# @core
 @server-policy
+policycoreutils-python
 
-%post --nochroot --log=/root/ks-post.log
-rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
-yum install -y git, acpid
-service smartd stop
-chkconfig --del smartd
-service acpid start
-chkconfig acpid on
+# Enables shutdown etc. from virsh
+acpid
+
+git
+coreutils
+yum
+rpm
+e2fsprogs
+lvm2
+grub
+openssh-server
+openssh-clients
+yum-presto
+man
+mlocate
+wget
+-atmel-firmware
+-b43-openfwwf
+-ipw2100-firmware
+-ipw2200-firmware
+-ivtv-firmware
+-iwl1000-firmware
+-iwl3945-firmware
+-iwl4965-firmware
+-iwl5000-firmware
+-iwl5150-firmware
+-iwl6000-firmware
+-iwl6050-firmware
+-libertas-usb8388-firmware
+-zd1211-firmware
+-xorg-x11-drv-ati-firmware
