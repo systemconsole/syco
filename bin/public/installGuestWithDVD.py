@@ -98,7 +98,7 @@ class install_guest:
     prop['BACK_GATEWAY'] = config.general.get_back_gateway_ip()
     prop['BACK_NAMESERVER'] = config.general.get_back_resolver_ip()
 
-    prop['ROOT_PASSWORD'] = app.get_root_password_hash()
+    prop['ROOT_PASSWORD'] = '"' + app.get_root_password_hash() + '"'
 
     prop['DISK_VAR_MB'] = config.host(self.hostname).get_disk_var_mb()
     prop['TOTAL_DISK_MB'] = config.host(self.hostname).get_total_disk_mb()
@@ -128,7 +128,7 @@ class install_guest:
       shell_exec("mkdir -p " + ks_folder)
       shell_exec("cp " + dvd_ks_file + " " + hostname_ks_file)
 
-      set_config_property_batch(hostname_ks_file, self.property_list)
+      set_config_property_batch(hostname_ks_file, self.property_list, False)
 
   def start_nfs_export(self):
       nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
@@ -140,6 +140,7 @@ class install_guest:
   def stop_nfs_export(self):
       nfs.remove_iptables_rules()
       nfs.stop_services()
+      time.sleep(1)
       nfs.remove_export("kickstart")
       nfs.remove_export('dvd')
 
