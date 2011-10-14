@@ -32,7 +32,7 @@ config.load(SYCO_ETC_PATH, SYCO_USR_PATH)
 import install
 
 # Syco uses packages from the EPEL repo.
-install.epel_repo()
+# install.epel_repo()
 
 # Required yum package.
 install.package("gnupg2")
