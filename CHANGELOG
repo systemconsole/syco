@@ -21,11 +21,11 @@ Version 0.25
 # Setup ip in kickstart, front and back.
 # Test installGuestWithDVD.
 # Test installation of install server
+# Make it possible to install from the admin-net. gateways and such.
+# Test install fo-tc-ldap with cobbler.
+# Added popen that can replace shell_exec when events is not needed.
 
-* Make it possible to install from the admin-net. gateways and such.
-* Test install fo-tc-ldap with cobbler.
-
-* optimze shell_exec
+* Install all guests on fo-tc-vh01
 
 * Is a gatway configured on the kvm host after the installation.
   /etc/sysconfig/network

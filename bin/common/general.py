@@ -262,6 +262,48 @@ def shell_run(command, user="root", cwd=None, events={}):
 
   return stdout
 
+def popen(command, user=""):
+  '''
+  Execute a shell command and handles output verbosity.
+
+  '''
+  if (user):
+    command="su " + user + ' -c "' + command + '"'
+
+  app.print_verbose("Command: " + command)
+  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+  return handle_subprocess(p)
+
+def handle_subprocess(p):
+  stdout=""
+  stderr=""
+  while (True):
+    for txt in p.stdout:
+      # Only write caption once.
+      if (stdout==""):
+        app.print_verbose("---- Result ----", 2)
+      app.print_verbose(txt.strip(), 2, new_line=False)
+      stdout+=txt
+
+    for txt in p.stderr:
+      stderr += txt
+
+    if (p.poll() != None):
+      break
+
+  if (stderr):
+    app.print_error(stderr.strip())
+
+  if (p.returncode):
+    app.print_error("Invalid returncode %d" % p.returncode)
+
+  # An extra line break for the looks.
+  if ((stdout or stderr) and app.options.verbose >=2):
+    print("\n"),
+
+  return stdout
+
 def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=True):
   '''
   Change or add a config property to a specific value.
