@@ -26,7 +26,7 @@ import time
 import subprocess
 
 from constant import *
-import passwordStore
+import passwordstore
 
 def _get_password_store():
   '''

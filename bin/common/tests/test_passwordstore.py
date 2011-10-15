@@ -16,9 +16,10 @@ __status__ = "Test"
 import unittest
 import os
 
-from common.passwordStore import PasswordStore
+#from common.passwordstore import PasswordStore
 
-# class TestPasswordStore(unittest.TestCase):
+class TestPasswordStore(unittest.TestCase):
+    pass
 
 #     def test_passwordstore(self):
 #         pws = PasswordStore("/tmp/test.conf")
