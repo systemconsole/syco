@@ -21,7 +21,7 @@ import net
 class TestNet(unittest.TestCase):
 
     def test_general(self):
-        self.assertEqual(net.get_all_interfaces(), {'lo': '127.0.0.1', 'eth0': '10.100.100.231'})
+        self.assertEqual(net.get_all_interfaces(), {'sit0': None, 'lo': '127.0.0.1', 'eth0': '10.100.100.231'})
         self.assertEqual(net.get_interface_ip("eth0"), "10.100.100.231")
         self.assertEqual(net.get_lan_ip(), "10.100.100.231")
         self.assertEqual(net.reverse_ip("1.2.3.4"), "4.3.2.1")
