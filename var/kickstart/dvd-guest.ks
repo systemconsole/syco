@@ -1,7 +1,6 @@
 # SYCO kickstart for guest hosts installation with dvd (not with cobbler).
 #
 # Author: Daniel Lindh <daniel@cybercow.se>
-# Created: 2010-11-29
 #
 # Documentation
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/ch-kickstart2.html
@@ -17,8 +16,9 @@
 auth  --useshadow  --enablemd5
 
 # Bootloader
+# Put a password on the boot loader to keep the riff raff out,
 # disable usb as per NSA 2.2.2.2.3:
-bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=vda
+bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=$boot_device --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
@@ -39,14 +39,14 @@ keyboard sv-latin1
 lang en_US.UTF-8
 
 # Network information
-network --bootproto=static --ip=${BACK_IP}  --netmask=${BACK_NETMASK}  --gateway=${BACK_GATEWAY}  --hostname=${HOSTNAME} --device=eth0 --onboot=on --nameserver=${BACK_NAMESERVER}  --noipv6
-network --bootproto=static --ip=${FRONT_IP} --netmask=${FRONT_NETMASK} --gateway=${FRONT_GATEWAY} --hostname=${HOSTNAME} --device=eth1 --onboot=on --nameserver=${FRONT_NAMESERVER} --noipv6
+network --bootproto=static --ip=$back_ip  --netmask=$back_netmask  --gateway=$back_gateway  --hostname=$hostname --device=eth0 --onboot=on --nameserver=$back_nameserver  --noipv6
+network --bootproto=static --ip=$front_ip --netmask=$front_netmask --gateway=$front_gateway --hostname=$hostname --device=eth1 --onboot=on --nameserver=$front_nameserver --noipv6
 
 # Reboot after installation
 reboot
 
 #Root password
-rootpw --iscrypted ${ROOT_PASSWORD}
+rootpw --iscrypted $default_password_crypted
 
 # SELinux configuration
 selinux --enforcing
@@ -61,13 +61,16 @@ timezone --utc Europe/Stockholm
 install
 
 # Partioning
-clearpart --all --drives=vda --initlabel
-part /boot --fstype ext4 --size=100 --ondisk=vda
-part pv.2 --size=${TOTAL_DISK_MB} --grow --ondisk=vda
+#
+# See installGuestWithDVD.py when changing disk usage.
+#
+clearpart --all --drives=$boot_device --initlabel
+part /boot --fstype ext4 --size=100 --ondisk=$boot_device
+part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
-logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=4096
+logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
-logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=${DISK_VAR_MB}
+logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
 logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev

@@ -132,8 +132,7 @@ def _modify_cobbler_settings():
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*', "yum_post_install_mirror: 1")
   general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*', "manage_dhcp: 1")
 
-  shutil.copyfile(app.SYCO_PATH + "/var/kickstart/host.ks", "/var/lib/cobbler/kickstarts/host.ks")
-  shutil.copyfile(app.SYCO_PATH + "/var/kickstart/guest.ks", "/var/lib/cobbler/kickstarts/guest.ks")
+  shutil.copyfile(app.SYCO_PATH + "/var/kickstart/cobbler.ks", "/var/lib/cobbler/kickstarts/cobbler.ks")
 
   # Configure DHCP
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
@@ -170,7 +169,7 @@ def _import_repos():
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
     general.shell_exec("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    general.shell_exec("cobbler repo add --arch=x86_64 --name=EPEL-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
+    general.shell_exec("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
     general.shell_exec("cobbler reposync")
 
 def _refresh_all_profiles():
@@ -183,16 +182,14 @@ def _refresh_all_profiles():
   general.shell_exec(
     'cobbler profile add --name=centos-vm_host' +
     ' --distro=centos-x86_64' +
-    ' --repos="centos-updates-x86_64"' +
-    ' --kickstart=/var/lib/cobbler/kickstarts/host.ks'
+    ' --repos="centos-updates-x86_64 epel-x86_64"' +
+    ' --kickstart=/var/lib/cobbler/kickstarts/cobbler.ks'
   )
 
   general.shell_exec("cobbler profile remove --name=centos-vm_guest")
   general.shell_exec(
     'cobbler profile add --name=centos-vm_guest' +
-    ' --distro=centos-x86_64' +
-    ' --repos="centos-updates-x86_64"' +
-    ' --kickstart=/var/lib/cobbler/kickstarts/guest.ks' +
+    ' --parent=centos-vm_host' +
     ' --virt-type=qemu' +
     ' --virt-ram=1024 --virt-cpus=1' +
     ' --virt-bridge=br0'
@@ -218,7 +215,8 @@ def _host_add(hostname):
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
-    ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
   _setup_network(hostname)
@@ -243,7 +241,8 @@ def _guest_add(hostname):
     " --virt-cpus=" + str(config.host(hostname).get_cpu()) +
     " --name=" + hostname + " --hostname=" + hostname +
     ' --name-servers="' + config.general.get_front_resolver_ip() + '"' +
-    ' --ksmeta="disk_var=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("hda")) + '"')
 
   _setup_network(hostname)

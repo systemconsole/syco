@@ -297,7 +297,7 @@ def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=Tru
 
 def set_config_property_batch(file_name, key_value_dict, add_if_not_exist=True):
   for key, value in key_value_dict.iteritems():
-    set_config_property(file_name, "\$\{" + key + "\}", value, add_if_not_exist)
+    set_config_property(file_name, key, value, add_if_not_exist)
 
 def get_config_value(file_name, config_name):
     '''
