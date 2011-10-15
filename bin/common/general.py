@@ -262,7 +262,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 
   return stdout
 
-def popen(command, user=""):
+def popen(command, user="", output=True):
   '''
   Execute a shell command and handles output verbosity.
 
@@ -270,20 +270,22 @@ def popen(command, user=""):
   if (user):
     command="su " + user + ' -c "' + command + '"'
 
-  app.print_verbose("Command: " + command)
+  if (output):
+    app.print_verbose("Command: " + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-  return handle_subprocess(p)
+  return handle_subprocess(p, output)
 
-def handle_subprocess(p):
+def handle_subprocess(p, output):
   stdout=""
   stderr=""
   while (True):
     for txt in p.stdout:
       # Only write caption once.
-      if (stdout==""):
-        app.print_verbose("---- Result ----", 2)
-      app.print_verbose(txt.strip(), 2, new_line=False)
+      if (output):
+        if (stdout==""):
+          app.print_verbose("---- Result ----", 2)
+        app.print_verbose(txt, 2, new_line=False)
       stdout+=txt
 
     for txt in p.stderr:
@@ -292,14 +294,14 @@ def handle_subprocess(p):
     if (p.poll() != None):
       break
 
-  if (stderr):
+  if (stderr and output):
     app.print_error(stderr.strip())
 
-  if (p.returncode):
+  if (p.returncode and output):
     app.print_error("Invalid returncode %d" % p.returncode)
 
   # An extra line break for the looks.
-  if ((stdout or stderr) and app.options.verbose >=2):
+  if ((stdout or stderr) and app.options.verbose >=2 and output):
     print("\n"),
 
   return stdout

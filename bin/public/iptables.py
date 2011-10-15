@@ -50,7 +50,7 @@ def iptables(args, output = True):
   Execute the iptables shell command.
 
   '''
-  general.shell_exec("/sbin/iptables " + args, output=output)
+  general.popen("/sbin/iptables " + args, output=output)
 
 def iptables_clear(args):
   '''
@@ -97,7 +97,7 @@ def save():
 
   '''
   app.print_verbose("Save current iptables rules to /etc/sysconfig/iptables.")
-  general.shell_exec("/sbin/iptables-save > /etc/sysconfig/iptables")
+  general.popen("/sbin/iptables-save > /etc/sysconfig/iptables")
 
 def iptables_setup(args):
   '''

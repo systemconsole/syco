@@ -25,7 +25,7 @@ import time
 
 import app
 import config
-from general import set_config_property_batch, shell_exec
+from general import set_config_property_batch, popen
 import net
 import nfs
 import sys
@@ -60,7 +60,7 @@ class install_guest:
       self.hostname = args[1]
 
   def check_if_host_is_installed(self):
-    result = shell_exec("virsh list --all")
+    result = popen("virsh list --all")
     if (self.hostname in result):
       raise Exception(self.hostname + " already installed")
 
@@ -111,13 +111,13 @@ class install_guest:
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
-      shell_exec("mkdir /media/dvd")
+      popen("mkdir /media/dvd")
 
     if (not os.path.ismount("/media/dvd")):
-      shell_exec("mount -o ro /dev/dvd /media/dvd")
+      popen("mount -o ro /dev/dvd /media/dvd")
 
   def unmount_dvd(self):
-    shell_exec("umount /media/dvd")
+    popen("umount /media/dvd")
 
   def create_kickstart(self):
       '''
@@ -128,8 +128,8 @@ class install_guest:
       hostname_ks_file = ks_folder + self.hostname + ".ks"
       dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
 
-      shell_exec("mkdir -p " + ks_folder)
-      shell_exec("cp " + dvd_ks_file + " " + hostname_ks_file)
+      popen("mkdir -p " + ks_folder)
+      popen("cp " + dvd_ks_file + " " + hostname_ks_file)
 
       set_config_property_batch(hostname_ks_file, self.property_list, False)
 
@@ -170,14 +170,14 @@ class install_guest:
       cmd +=  ' gateway=' + self.kvm_host_back_ip
       cmd +=  ' "'
 
-      shell_exec(cmd)
+      popen(cmd)
       self.wait_for_installation_to_complete()
       self.autostart_guests()
 
   def create_lvm_volumegroup(self):
-    result = shell_exec("lvdisplay -v /dev/VolGroup00/" + self.hostname)
+    result = popen("lvdisplay -v /dev/VolGroup00/" + self.hostname)
     if ("/dev/VolGroup00/" + self.hostname not in result):
-      shell_exec("lvcreate -n " + self.hostname +
+      popen("lvcreate -n " + self.hostname +
                  " -L " + self.property_list['total_disk_gb'] + "G VolGroup00")
 
   def wait_for_installation_to_complete(self):
@@ -191,12 +191,12 @@ class install_guest:
       time.sleep(10)
       print ".",
       sys.stdout.flush()
-      result = shell_exec("virsh list", output=False)
+      result = popen("virsh list", output=False)
       if (self.hostname not in result):
         print "Now installed"
         break
 
   def autostart_guests(self):
     # Autostart guests.
-    shell_exec("virsh autostart " + self.hostname)
-    shell_exec("virsh start " + self.hostname)
+    popen("virsh autostart " + self.hostname)
+    popen("virsh start " + self.hostname)
