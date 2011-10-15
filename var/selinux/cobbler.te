@@ -22,6 +22,7 @@ require {
   type sysctl_kernel_t;
   type modules_object_t;
   type default_context_t;
+  type cobbler_var_log_t;
   class rawip_socket { getopt create };
   class capability { net_admin net_raw fsetid sys_ptrace };
   class file { rename setattr read lock create write getattr unlink open };
@@ -81,3 +82,6 @@ allow cobblerd_t syslogd_t:unix_dgram_socket sendto;
 allow cobblerd_t tftpdir_rw_t:lnk_file { read create getattr };
 allow cobblerd_t var_lock_t:dir search;
 allow cobblerd_t var_lock_t:file getattr;
+
+allow cobblerd_t cobbler_var_log_t:dir { read remove_name create };
+allow cobblerd_t cobbler_var_log_t:file { write unlink };
