@@ -30,6 +30,7 @@ def install_guests(args):
   '''
   guest_hostnames = get_hosts_to_install(args)
 
+  install.epel_repo()
   install.package("koan")
 
   # Wait to install guests until installation server is alive.
@@ -59,7 +60,7 @@ def start_installation(guest_hostnames):
   '''
   guests=[]
   for guest_name in guest_hostnames:
-    if (_is_guest_installed(guest_name, options="")):
+    if (_is_guest_installed(guest_name, options="--all")):
       app.print_verbose(guest_name + " already installed", 2)
     else:
       _install_guest(guest_name)
@@ -92,10 +93,14 @@ def _install_guest(guest_name):
   if ("/dev/VolGroup00/" + guest_name not in result):
     vol_group_size=int()
     general.shell_exec("lvcreate -n " + guest_name +
-                       " -L " + config.host(host_name).get_total_disk_gb() +
+                       " -L " + config.host(guest_name).get_total_disk_gb() +
                        "G VolGroup00")
 
-  general.shell_exec("koan --server=" + config.general.get_installation_server_ip() + " --virt --system=" + guest_name)
+  general.shell_exec(
+    "koan --server=" + config.general.get_installation_server_ip() +
+    " --system=" + guest_name +
+    " --virt -v --static-interface=eth0")
+
   general.shell_exec("virsh autostart " + guest_name)
 
 def _start_guest(guest_name):
@@ -109,7 +114,7 @@ def _start_guest(guest_name):
     general.shell_exec("virsh start " + guest_name)
     return True
 
-def _is_guest_installed(guest_name, options="--all"):
+def _is_guest_installed(guest_name, options=""):
   '''
   Is the guest already installed on the kvm host.
 

@@ -74,7 +74,7 @@ install
 #
 clearpart --all --drives=$boot_device --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=$boot_device
-part pv.2 --size=0 --grow --ondisk=$boot_device
+part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
 logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096

@@ -63,10 +63,10 @@ def setup_all_systems(args):
   Update cobbler with all settings in install.cfg.
 
   '''
+  _refresh_repo()
   _refresh_all_profiles()
   _remove_all_systems()
   _add_all_systems()
-  _refresh_repo()
   _cobbler_sync()
 
 def _install_cobbler():
@@ -209,13 +209,14 @@ def _add_all_systems():
       _guest_add(hostname)
 
 def _host_add(hostname):
-  app.print_verbose("Add barmetalhost" + hostname)
+  app.print_verbose("Add baremetalhost " + hostname)
 
   general.shell_exec(
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
@@ -232,7 +233,7 @@ def _host_add(hostname):
     " --mac=" + str(config.host(hostname).get_front_mac()))
 
 def _guest_add(hostname):
-  app.print_verbose("Add guest" + hostname)
+  app.print_verbose("Add guest " + hostname)
 
   general.shell_exec(
     "cobbler system add --profile=centos-vm_guest"
@@ -242,8 +243,9 @@ def _guest_add(hostname):
     " --name=" + hostname + " --hostname=" + hostname +
     ' --name-servers="' + config.general.get_front_resolver_ip() + '"' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
-    ' boot_device=' + str(config.host(hostname).get_boot_device("hda")) + '"')
+    ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')
 
   _setup_network(hostname)
 

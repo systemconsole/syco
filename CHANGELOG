@@ -23,6 +23,9 @@ Version 0.25
 # Test installation of install server
 
 * Make it possible to install from the admin-net. gateways and such.
+* Test install fo-tc-ldap with cobbler.
+
+* optimze shell_exec
 
 * Is a gatway configured on the kvm host after the installation.
   /etc/sysconfig/network
