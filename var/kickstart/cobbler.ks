@@ -1,7 +1,6 @@
-# SYCO kickstart for baremetal hosts.
+# SYCO kickstart for cobbler installed hosts/guests.
 #
-# Author: Daniel Lindh
-# Created: 2010-11-10
+# Author: Daniel Lindh <daniel@cybercow.se>
 #
 # On kvm host run
 # cobbler profile getks --name=centos5.5-vm_guest
@@ -9,9 +8,8 @@
 # Documentation
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/ch-kickstart2.html
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-options.html
-
-# System authorization information
-auth  --useshadow  --enablemd5
+# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-packageselection.html
+# http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s1-kickstart2-startinginstall.html
 
 # Logging
 # One of debug, info, warning, error, or critical.
@@ -78,20 +76,53 @@ clearpart --all --drives=$boot_device --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=$boot_device
 part pv.2 --size=0 --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
-logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=32768
+logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
 logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
-logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var
+logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
 logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
 logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 
-#services --disabled=xxx,yyy
+services --disabled=smartd --enabled=acpid
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
 %packages --nobase
-@core
+# @core
 @server-policy
+policycoreutils-python
+
+# Enables shutdown etc. from virsh
+acpid
+
+git
+coreutils
+yum
+rpm
+e2fsprogs
+lvm2
+grub
+openssh-server
+openssh-clients
+yum-presto
+man
+mlocate
+wget
+-atmel-firmware
+-b43-openfwwf
+-ipw2100-firmware
+-ipw2200-firmware
+-ivtv-firmware
+-iwl1000-firmware
+-iwl3945-firmware
+-iwl4965-firmware
+-iwl5000-firmware
+-iwl5150-firmware
+-iwl6000-firmware
+-iwl6050-firmware
+-libertas-usb8388-firmware
+-zd1211-firmware
+-xorg-x11-drv-ati-firmware
 
 %pre
 $SNIPPET('log_ks_pre')
@@ -99,9 +130,6 @@ $kickstart_start
 $SNIPPET('pre_install_network_config')
 # Enable installation monitoring
 $SNIPPET('pre_anamon')
-
-%packages
-$SNIPPET('func_install_if_enabled')
 
 %post
 $SNIPPET('log_ks_post')
@@ -120,9 +148,3 @@ $SNIPPET('post_anamon')
 # Start final steps
 $kickstart_done
 # End final steps
-rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
-yum install -y git, acpid
-service smartd stop
-chkconfig --add smartd
-service acpid start
-chkconfig acpid on

@@ -289,6 +289,14 @@ class Config(object):
       '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
       return self.get_option("cpu")
 
+    def get_disk_swap_gb(self):
+      '''Get the size of the swap partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return self.get_option("disk_swap", "4")
+
+    def get_disk_swap_mb(self):
+      '''Get the size of the swap partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      return str(int(self.get_disk_swap_gb()) * 1024)
+
     def get_disk_var(self):
       '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
       return self.get_option("disk_var")
