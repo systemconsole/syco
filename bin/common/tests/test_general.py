@@ -28,7 +28,7 @@ class TestGeneral(unittest.TestCase):
         self.assertEqual(popen("uname", user="root"), "Linux\n")
 
         app.options.verbose = 2
-        self.assertEqual(popen("uname", ), "Linux\n")
+        self.assertEqual(popen("uname"), "Linux\n")
         self.assertEqual(popen("dont-exist", ), "")
 
         app.options.verbose = 1

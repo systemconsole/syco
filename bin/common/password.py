@@ -34,7 +34,7 @@ def _get_password_store():
 
   '''
   if (not _get_password_store.password_store):
-    _get_password_store.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+    _get_password_store.password_store = passwordstore.PasswordStore(PASSWORD_STORE_PATH)
 
   return _get_password_store.password_store
 

@@ -169,11 +169,11 @@ def _import_repos():
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
-  general.popen("cobbler distro remove --name centos-xen-x86_64")
   general.popen("cobbler profile remove --name centos-x86_64")
+  general.popen("cobbler profile remove --name=centos-vm_guest")
+  general.popen("cobbler profile remove --name=centos-vm_host")
 
   # Setup installation profiles and systems
-  general.popen("cobbler profile remove --name=centos-vm_host")
   general.popen(
     'cobbler profile add --name=centos-vm_host' +
     ' --distro=centos-x86_64' +
@@ -181,7 +181,6 @@ def _refresh_all_profiles():
     ' --kickstart=/var/lib/cobbler/kickstarts/cobbler.ks'
   )
 
-  general.popen("cobbler profile remove --name=centos-vm_guest")
   general.popen(
     'cobbler profile add --name=centos-vm_guest' +
     ' --parent=centos-vm_host' +
@@ -191,6 +190,12 @@ def _refresh_all_profiles():
   )
 
 def _remove_all_systems():
+  '''
+  Delete all systems.
+
+  It's not needed to run this if the profiles has been deleted.
+
+  '''
   stdout = general.popen("cobbler system list")
   for name in stdout.rsplit():
     general.popen("cobbler system remove --name " + name)
@@ -204,6 +209,7 @@ def _add_all_systems():
       _guest_add(hostname)
 
 def _host_add(hostname):
+  app.print_verbose("")
   app.print_verbose("Add baremetalhost " + hostname)
 
   general.popen(
@@ -216,19 +222,12 @@ def _host_add(hostname):
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
   _setup_network(hostname)
-
-  general.popen(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth0" +
-    " --mac=" + str(config.host(hostname).get_back_mac()))
-
-  general.popen(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth1" +
-    " --mac=" + str(config.host(hostname).get_front_mac()))
+  edit_iface_attr(hostname, 'eth0', '--mac', config.host(hostname).get_back_mac())
+  edit_iface_attr(hostname, 'eth1', '--mac', config.host(hostname).get_front_mac())
 
 def _guest_add(hostname):
-  app.print_verbose("Add guest " + hostname)
+  app.print_verbose("")
+  app.print_verbose("\Add guest " + hostname)
 
   general.popen(
     "cobbler system add --profile=centos-vm_guest"
@@ -243,41 +242,40 @@ def _guest_add(hostname):
     ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')
 
   _setup_network(hostname)
-
-  general.popen(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth0" +
-    ' --virt-bridge=br0')
-
-  general.popen(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth1" +
-    ' --virt-bridge=br1')
+  edit_iface_attr(hostname, 'eth0', '--virt-bridge', 'br0')
+  edit_iface_attr(hostname, 'eth1', '--virt-bridge', 'br1')
 
 def _setup_network(hostname):
+  edit_iface(
+    hostname, 'eth0',
+    config.host(hostname).get_back_ip(),
+    config.general.get_back_netmask(),
+    config.general.get_back_gateway_ip()
+  )
+
+  edit_iface(
+    hostname, 'eth1',
+    config.host(hostname).get_front_ip(),
+    config.general.get_front_netmask(),
+    config.general.get_front_gateway_ip()
+  )
+
+def edit_iface(hostname, iface, ip, netmask, gateway):
   cmd  = "cobbler system edit --name=" + hostname
-  cmd += " --interface=eth0 --static=1"
+  cmd += " --interface=%s --static=1" % iface
 
-  if config.host(hostname).get_back_ip():
-    cmd += " --ip=" + config.host(hostname).get_back_ip()
-    cmd += " --subnet=" + config.general.get_back_netmask()
-
-  if config.general.get_back_gateway_ip():
-    cmd += " --gateway=" + config.general.get_back_gateway_ip()
+  if ip:
+    cmd += " --ip=" + ip
+    cmd += " --subnet=" + netmask
+    if gateway:
+      cmd += " --gateway=" + gateway
 
   general.popen(cmd)
 
-  cmd  = "cobbler system edit --name=" + hostname
-  cmd += " --interface=eth1 --static=1"
-
-  if config.host(hostname).get_front_ip():
-    cmd += " --ip=" + config.host(hostname).get_front_ip()
-    cmd += " --subnet=" + config.general.get_front_netmask()
-
-  if config.general.get_front_gateway_ip():
-    cmd += " --gateway=" + config.general.get_front_gateway_ip()
-
-  general.popen(cmd)
+def edit_iface_attr(hostname, iface, key, value):
+  if (key and value):
+    general.popen("cobbler system edit --name=%s --interface=%s %s=%s" %
+                  (hostname, iface,key, value))
 
 def _refresh_repo():
   '''

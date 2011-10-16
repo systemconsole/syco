@@ -87,25 +87,25 @@ class install_guest:
 
     '''
     prop = {}
-    prop['$hostname'] = self.hostname
+    prop['\$hostname'] = self.hostname
 
-    prop['$front_ip'] = config.host(self.hostname).get_front_ip()
-    prop['$front_netmask'] = config.general.get_front_netmask()
-    prop['$front_gateway'] = config.general.get_front_gateway_ip()
-    prop['$front_nameserver'] = config.general.get_front_resolver_ip()
+    prop['\$front_ip'] = config.host(self.hostname).get_front_ip()
+    prop['\$front_netmask'] = config.general.get_front_netmask()
+    prop['\$front_gateway'] = config.general.get_front_gateway_ip()
+    prop['\$front_nameserver'] = config.general.get_front_resolver_ip()
 
-    prop['$back_ip'] = config.host(self.hostname).get_back_ip()
-    prop['$back_netmask'] = config.general.get_back_netmask()
-    prop['$back_gateway'] = config.general.get_back_gateway_ip()
-    prop['$back_nameserver'] = config.general.get_back_resolver_ip()
+    prop['\$back_ip'] = config.host(self.hostname).get_back_ip()
+    prop['\$back_netmask'] = config.general.get_back_netmask()
+    prop['\$back_gateway'] = config.general.get_back_gateway_ip()
+    prop['\$back_nameserver'] = config.general.get_back_resolver_ip()
 
-    prop['$default_password_crypted'] = '"' + app.get_root_password_hash() + '"'
+    prop['\$default_password_crypted'] = app.get_root_password_hash()
 
-    prop['$disk_swap_mb'] = config.host(hostname).get_disk_swap_mb()
-    prop['$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
-    prop['$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
-    prop['$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
-    prop['$boot_device'] = config.host(hostname).get_boot_device("vda")
+    prop['\$disk_swap_mb'] = config.host(self.hostname).get_disk_swap_mb()
+    prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
+    prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
+    prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
+    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
 
     self.property_list = prop
 
@@ -164,8 +164,8 @@ class install_guest:
       cmd +=  " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
       cmd +=  ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
       cmd +=  ' ksdevice=eth0'
-      cmd +=  ' ip=' + self.property_list['back_ip']
-      cmd +=  ' netmask=' + self.property_list['back_netmask']
+      cmd +=  ' ip=' + self.property_list['\$back_ip']
+      cmd +=  ' netmask=' + self.property_list['\$back_netmask']
       cmd +=  ' dns=' + self.kvm_host_back_ip
       cmd +=  ' gateway=' + self.kvm_host_back_ip
       cmd +=  ' "'
@@ -178,7 +178,7 @@ class install_guest:
     result = popen("lvdisplay -v /dev/VolGroup00/" + self.hostname)
     if ("/dev/VolGroup00/" + self.hostname not in result):
       popen("lvcreate -n " + self.hostname +
-                 " -L " + self.property_list['total_disk_gb'] + "G VolGroup00")
+                 " -L " + self.property_list['\$total_disk_gb'] + "G VolGroup00")
 
   def wait_for_installation_to_complete(self):
     '''
