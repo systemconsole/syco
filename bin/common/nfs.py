@@ -30,8 +30,8 @@ def add_export(name, path):
   Will create the export /exports/dvd
 
   '''
-  general.shell_exec("mkdir -p /exports/" + name)
-  general.shell_exec("mount --bind " + path + " /exports/" + name)
+  general.popen("mkdir -p /exports/" + name)
+  general.popen("mount --bind " + path + " /exports/" + name)
 
   general.set_config_property("/etc/exports", "^/exports/" + name + ".*$", "/exports/" + name + " *(rw,sync,nohide)")
 
@@ -42,22 +42,22 @@ def add_export(name, path):
   #general.set_config_property("/etc/exports", "^" + name + ".*$", name + " *(rw,sync,nohide,insecure,root_squash,no_subtree_check,fsid=0)")
 
 def remove_export(name):
-  general.shell_exec("umount /exports/" + name)
+  general.popen("umount /exports/" + name)
   general.set_config_property("/etc/exports", "^/exports/" + name + ".*$", "")
 
 def restart_services():
-  general.shell_exec("exportfs -rv")
-  general.shell_exec("setsebool -P nfs_export_all_rw 1")
-  general.shell_exec("service rpcbind restart")
-  general.shell_exec("service nfs restart")
-  general.shell_exec("service nfslock restart")
-  general.shell_exec("service rpcsvcgssd restart")
+  general.popen("exportfs -rv")
+  general.popen("setsebool -P nfs_export_all_rw 1")
+  general.popen("service rpcbind restart")
+  general.popen("service nfs restart")
+  general.popen("service nfslock restart")
+  general.popen("service rpcsvcgssd restart")
 
 def stop_services():
-  general.shell_exec("service rpcsvcgssd stop")
-  general.shell_exec("service nfslock stop")
-  general.shell_exec("service nfs stop")
-  general.shell_exec("service rpcbind stop")
+  general.popen("service rpcsvcgssd stop")
+  general.popen("service nfslock stop")
+  general.popen("service nfs stop")
+  general.popen("service rpcbind stop")
 
 def configure_with_static_ip():
   '''
