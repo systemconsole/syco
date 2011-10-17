@@ -45,6 +45,8 @@ Version 3.9 (iptables)
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
 # Are all iptables rules tested and moved to iptables-setup.
 # http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
+* Looks like iptables allows port 80 to all servers. Can connect to
+  offical yum repo servers.
 * Separate rules for eth0 and eth1, br0 and br1?
 * Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp.
   This will optimize all rules by "50%".
@@ -137,12 +139,14 @@ Remote-install
 
 Refactoring / Stability
 -----------------------
+* Change so first virtualhost uses installserver as repo server after installation.
 * Refactoring of password and passwordStore
 * Use properties instead of getters in config
 * install-mysql-replication should wait until users are installed on primary database.
 * restorecon -R -v /home/$ACCOUNT/.ssh
 * cobbler reposync has problems when selinux is enabled.
   See tmp/test-cobbler-sync.sh
+* Rename general.popen to x (as in eXecute)
 
 KVM
 ---
