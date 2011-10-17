@@ -24,6 +24,7 @@ Version 0.25
 # Make it possible to install from the admin-net. gateways and such.
 # Test install fo-tc-ldap with cobbler.
 # Added popen that can replace shell_exec when events is not needed.
+* Do the sync on install server again.
 
 * Install all guests on fo-tc-vh01
 
@@ -53,6 +54,7 @@ Version 3.9 (iptables)
 # Iptable rules on fo-tp-install should be synced in iptables-setup.
 # Are all iptables rules tested and moved to iptables-setup.
 # http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
+* Separate rules for eth0 and eth1, br0 and br1?
 * Create the allowed_tcp/udp directly under INPUT to first filter on tcp or udp.
   This will optimize all rules by "50%".
 * Don't try to delete chains, when they don't exist. To remove the error message from iptables.
@@ -142,10 +144,14 @@ Remote-install
 * Add all output from syco to a log file.
 * Add "syco remote-install" in kickstart for fo-tp-install
 
-Refactoring
------------
+Refactoring / Stability
+-----------------------
 * Refactoring of password and passwordStore
 * Use properties instead of getters in config
+* install-mysql-replication should wait until users are installed on primary database.
+* restorecon -R -v /home/$ACCOUNT/.ssh
+* cobbler reposync has problems when selinux is enabled.
+  See tmp/test-cobbler-sync.sh
 
 KVM
 ---
@@ -175,10 +181,6 @@ Version 5
   http://jessenoller.com/2009/02/05/ssh-programming-with-paramiko-completely-different/
 * Test ZFS?
 
-STABILITY
----------
-* install-mysql-replication should wait until users are installed on primary database.
-* restorecon -R -v /home/$ACCOUNT/.ssh
 
 LDAP
 ----

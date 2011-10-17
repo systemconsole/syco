@@ -25,7 +25,7 @@ require {
   type cobbler_var_log_t;
   class rawip_socket { getopt create };
   class capability { net_admin net_raw fsetid sys_ptrace };
-  class file { rename setattr read lock create write getattr unlink open };
+  class file { rename setattr read lock create write getattr unlink open append};
   class netlink_audit_socket create;
   class sock_file { write getattr };
   class lnk_file { read create getattr };
@@ -41,7 +41,7 @@ allow cobblerd_t file_context_t:dir search;
 # cobbler_var_lib_t, tftpdir_rw_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t
 
 allow cobblerd_t httpd_sys_content_t:dir { rename write rmdir setattr remove_name create add_name };
-allow cobblerd_t httpd_sys_content_t:file { write rename create unlink setattr };
+allow cobblerd_t httpd_sys_content_t:file { append write rename create unlink setattr };
 #!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
 # var_lib_t, var_log_t, named_zone_t, var_t, cobbler_var_lib_t, tftpdir_rw_t, etc_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t, root_t
 
