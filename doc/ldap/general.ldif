@@ -1,0 +1,49 @@
+###########################################################
+# General configuration
+###########################################################
+
+# Set password for cn=admin,cn=config
+dn: olcDatabase={0}config,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+
+# Setup logfile (not working now, propably needing debug level settings.)
+dn: cn=config
+changetype:modify
+replace: olcLogFile
+olcLogFile: /var/log/slapd.log
+
+# Change LDAP-domain, password and access rights.
+dn: olcDatabase={1}bdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=syco,dc=net
+-
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=syco,dc=net
+-
+replace: olcRootPW
+olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+-
+replace: olcAccess
+olcAccess: {0}to attrs=userPassword,shadowLastChange by dn="cn=Manager,dc=syco,dc=net" write by self write by anonymous auth by * none
+olcAccess: {1}to dn.base="" by * read
+olcAccess: {2}to * by dn="cn=Manager,dc=syco,dc=net" write by * read
+
+# Set access for the monitor db.
+dn: olcDatabase={2}monitor,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.base="cn=Manager,dc=syco,dc=net" read  by * none
+
+###########################################################
+# Setup TLS
+###########################################################
+dn: cn=config
+changetype:modify
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/cacerts/slapd.key
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/cacerts/slapd.crt
