@@ -9,19 +9,21 @@ o: System Console Project
 dc: syco
 description: Tree root
 
-dn: ou=group,dc=syco,dc=net
-objectClass: top
-objectclass: organizationalunit
-ou: group
-
-dn: ou=people,dc=syco,dc=net
-objectClass: top
-objectclass: organizationalunit
-ou: people
+# Used by sssd to ask general queries.
+dn: cn=sssd,dc=syco,dc=net
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: sssd
+description: Account for sssd.
+userPassword: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
 
 ###########################################################
 # GROUPS
 ###########################################################
+dn: ou=group,dc=syco,dc=net
+objectClass: top
+objectclass: organizationalunit
+ou: group
 
 dn: cn=sycousers,ou=group,dc=syco,dc=net
 cn: sycousers
@@ -49,12 +51,17 @@ memberUid: user3
 ###########################################################
 # USERS
 ###########################################################
+dn: ou=people,dc=syco,dc=net
+objectClass: top
+objectclass: organizationalunit
+ou: people
 
 dn: uid=user1,ou=people,dc=syco,dc=net
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 uid: user1
+employeeType: Sysop
 givenName: User1
 surname: Syco
 displayName: Syco User1
@@ -79,11 +86,13 @@ mobile: +46 (0)73 xx xx xx xx
 homePhone: +46 (0)8 xx xx xx xx
 postalAddress:
 
+
 dn: uid=user2,ou=people,dc=syco,dc=net
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 uid: user2
+employeeType: Sysop
 givenName: User2
 surname: Syco
 displayName: Syco User2
@@ -113,6 +122,7 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 uid: user3
+employeeType: Developer
 givenName: User3
 surname: Syco
 displayName: Syco User3
@@ -142,6 +152,7 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 uid: user4
+employeeType: Manager
 givenName: User4
 surname: Syco
 displayName: Syco User4
@@ -158,10 +169,100 @@ shadowExpire: -1
 shadowFlag: 0
 shadowWarning: 7
 shadowMin: 8
-shadowMax: 999999
+shadowMax: 180
 shadowLastChange: 10877
 mail: sycouser@syco.net
 postalCode: 666666
 mobile: +46 (0)73 xx xx xx xx
 homePhone: +46 (0)8 xx xx xx xx
 postalAddress:
+
+###########################################################
+# SUDOERS
+###########################################################
+dn: ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: SUDOers
+
+dn: cn=defaults,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: defaults
+description: Default sudoOptions go here
+sudoOption: requiretty
+sudoOption: always_set_home
+sudoOption: env_reset
+sudoOption: env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS"
+sudoOption: env_keep+="MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE"
+sudoOption: env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES"
+sudoOption: env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
+sudoOption: env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
+sudoOption: secure_path=/sbin:/bin:/usr/sbin:/usr/bin
+
+dn: cn=root,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: root
+sudoUser: root
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
+
+# Allow all sysops to execute anything
+dn: cn=%sysop,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: %sysop
+sudoUser: %sysop
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
+
+###########################################################
+# Password Policies
+###########################################################
+# dn: olcDatabase={1}bdb,cn=config
+# changetype: modify
+# replace: objectClass
+# objectClass: pwdpolicyconfig
+# objectClass: olcDatabaseConfig
+# objectClass: olcBdbConfig
+
+# -
+# replace: olcOverlay
+# olcOverlay: ppolicy
+# -
+# replace: ppolicy_default
+# ppolicy_default "cn=default,ou=policies,dc=syco,dc=net"
+
+
+
+# dn: ou=policies,dc=syco,dc=net
+# objectClass: organizationalUnit
+# objectClass: top
+# ou: policies
+
+# dn: cn=default,ou=policies,dc=syco,dc=net
+# cn: default
+# objectClass: pwdPolicyChecker
+# objectClass: pwdPolicy
+# objectClass: person
+# objectClass: top
+# pwdAllowUserChange: TRUE
+# pwdCheckQuality: 2
+# pwdExpireWarning: 600
+# pwdFailureCountInterval: 30
+# pwdGraceAuthNLimit: 5
+# pwdInHistory: 5
+# pwdLockout: TRUE
+# pwdLockoutDuration: 0
+# pwdMaxAge: 0
+# pwdMaxFailure: 5
+# pwdMinAge: 0
+# pwdMinLength: 5
+# pwdMustChange: FALSE
+# pwdSafeModify: FALSE
+# sn: dummy value
+# pwdAttribute: 2.5.4.35
+# pwdCheckModule: crackcheck.so

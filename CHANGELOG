@@ -28,6 +28,13 @@ Version 0.25
 # Test install fo-tc-ldap with cobbler.
 # Added popen that can replace shell_exec when events is not needed.
 
+* Anything good on this site?
+  http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
+  http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
+
+* Add something from this
+  http://serverfault.com/questions/322997/how-do-you-make-it-obvious-you-are-on-a-production-system
+
 Version 0.3
 -----------
 * installBind

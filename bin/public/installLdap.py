@@ -2,9 +2,16 @@
 '''
 Install LDAP client and server.
 
+
+http://www.salsaunited.net/blog/?p=74
+http://home.roadrunner.com/~computertaijutsu/ldap.html
+http://www.server-world.info/en/note?os=CentOS_6&p=ldap
+http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=3
+http://www.openldap.org/doc/admin24/guide.html
+
 # LDAP Setup
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Directory_Servers.html#s1-OpenLDAP
 http://www.skills-1st.co.uk/papers/security-with-ldap-jan-2002/security-with-ldap.html
-http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/5/html/Deployment_Guide/ch-ldap.html
 http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
 
 # Password policy
@@ -65,7 +72,7 @@ import version
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 SLAPD_FN = "/etc/openldap/slapd.conf"
 LDAP_SERVER_HOST_NAME = config.general.get_ldap_hostname()
@@ -92,16 +99,16 @@ def install_ldap_server(args):
   value = "127.0.0.1 " + LDAP_SERVER_HOST_NAME
   general.set_config_property("/etc/hosts", value, value)
 
-  shell_exec("yum -y install openldap.x86_64 openldap-servers.x86_64 authconfig nss_ldap openldap-servers-overlays.x86_64")
+  shell_exec("yum -y install openldap openldap-servers authconfig nss-pam-ldapd")
 
   _setup_slapd_config()
   #_setup_password_policy()
   _setup_tls()
   _import_users()
 
-  shell_exec("chown -R ldap /var/lib/ldap")
-  shell_exec("/etc/init.d/ldap start")
-  shell_exec("/sbin/chkconfig ldap on")
+  shell_exec("chown -R ldap:ldap /var/lib/ldap")
+  shell_exec("service sldap start")
+  shell_exec("/sbin/chkconfig sldap on")
 
   iptables.add_ldap_chain()
   iptables.save()
@@ -117,10 +124,17 @@ def install_ldap_client(args):
   Install ldap client on current host and connect to networks ldap server.
 
   '''
+
+  #http://serverfault.com/questions/299855/centos-6-linux-and-nss-pam-ldapd
+
+
   app.print_verbose("Install ldap server version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
+  install.package("authconfig")
+  install.package("pam_ldap")
+  install.package("nscd")
   iptables.add_ldap_chain()
   iptables.save()
 
