@@ -7,29 +7,59 @@
 # on all clients that should authenticate against the
 # LDAP-server
 #
-###########################################################
-
-# Client installation
-#
 # This script is based on information from at least the following links.
 #   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=2
 #   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/chap-SSSD_User_Guide-Introduction.html
 #
+###########################################################
 
+###########################################################
 # Uninstall sssd
+#
 # Note: Only needed if sssd has been setup before.
-#TODO yum -y remove openldap-clients sssd
-#TODO rm -rf /var/lib/sss/
+#       might need --skip-broken when installing sssd.
+###########################################################
+#yum -y remove openldap-clients sssd
+#rm -rf /var/lib/sss/
 
-
+###########################################################
+# Install relevant packages
+###########################################################
 # Install packages
-#TODO yum -y install openldap-clients sssd
+yum -y install openldap-clients
 
 # Pick one package from the Continuous Release
 # Version 1.5.1 of sssd.
-#TODO yum -y install centos-release-cr
-#TODO yum -y update sssd
-#TODO yum -y remove centos-release-cr
+yum -y install sssd --skip-broken
+yum -y install centos-release-cr
+yum -y update sssd
+yum -y remove centos-release-cr
+
+###########################################################
+# Get certificate from ldap server
+#
+# This is not needed to be done on the server.
+###########################################################
+if [ ! -f /etc/openldap/cacerts/client.pem ];
+then
+    scp root@10.100.110.7:/etc/openldap/cacerts/client.pem /etc/openldap/cacerts/client.pem
+fi
+
+if [ ! -f /etc/openldap/cacerts/ca.crt ];
+then
+    scp root@10.100.110.7:/etc/openldap/cacerts/ca.crt /etc/openldap/cacerts/ca.crt
+fi
+
+/usr/sbin/cacertdir_rehash /etc/openldap/cacerts
+chown -Rf root:ldap /etc/openldap/cacerts
+chmod -Rf 750 /etc/openldap/cacerts
+restorecon -R /etc/openldap/cacerts
+
+###########################################################
+# Configure client authenticate against ldap.
+###########################################################
+# Setup iptables before configuring sssd, so it can connect to the server.
+iptables -I OUTPUT -m state --state NEW -p tcp -d 10.100.110.7 --dport 636 -j ACCEPT
 
 # Communication with the LDAP-server needs to be done with domain name, and not
 # the ip. This ensures the dns-name is configured.
@@ -38,19 +68,7 @@ cat >> /etc/hosts << EOF
 10.100.110.7 ldap.syco.net
 EOF
 
-# Get certificate from ldap server
-#TODO scp root@10.100.110.7:/etc/openldap/cacerts/client.pem /etc/openldap/cacerts/client.pem
-#TODO scp root@10.100.110.7:/etc/openldap/cacerts/ca.crt /etc/openldap/cacerts/ca.crt
-
-/usr/sbin/cacertdir_rehash /etc/openldap/cacerts
-chown -Rf root:ldap /etc/openldap/cacerts
-chmod -Rf 750 /etc/openldap/cacerts
-restorecon -R /etc/openldap/cacerts
-
-# Setup iptables
-iptables -I OUTPUT -m state --state NEW -p tcp -d 10.100.110.7 --dport 636 -j ACCEPT
-
-# Configure all relevant /etc files for ssd, ldap etc.
+# Configure all relevant /etc files for sssd, ldap etc.
 authconfig \
     --enablesssd --enablesssdauth --enablecachecreds \
     --enableldap --enableldaptls --enableldapauth \
@@ -67,9 +85,9 @@ TLS_CERT /etc/openldap/cacerts/client.pem
 TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
 
-#
+###########################################################
 # Configure sssd
-#
+###########################################################
 
 # If the authentication provider is offline, specifies for how long to allow
 # cached log-ins (in days). This value is measured from the last successful
@@ -103,46 +121,51 @@ service sssd restart
 # Start sssd after reboot.
 chkconfig sssd on
 
-
+###########################################################
 # Configure the client to use sudo
+###########################################################
+sed -i '/^sudoers.*/d' /etc/nsswitch.conf
 cat >> /etc/nsswitch.conf << EOF
 sudoers: ldap files
 EOF
 
-cat >> /etc/openldap/ldap.conf << EOF
-
+sed -i '/^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key.*\|sudoers_debug.*/d' /etc/ldap.conf
+cat >> /etc/ldap.conf << EOF
 # Configure sudo ldap.
+uri ldaps://ldap.syco.net
+base dc=syco,dc=net
 sudoers_base ou=SUDOers,dc=syco,dc=net
 binddn cn=sssd,dc=syco,dc=net
 bindpw secret
 ssl on
+tls_cacertdir /etc/openldap/cacerts
 tls_cert /etc/openldap/cacerts/client.pem
 tls_key /etc/openldap/cacerts/client.pem
 #sudoers_debug 5
 EOF
 
-# Looks like sudo reads directly from /etc/ldap.conf
-ln /etc/openldap/ldap.conf /etc/ldap.conf
-
-#
+###########################################################
 # Test to see that everything works fine.
-#
+###########################################################
 
 # Should return everything.
-#ldapsearch -b dc=syco,dc=net -D "cn=Manager,dc=syco,dc=net" -w secret
+# ldapsearch -b dc=syco,dc=net -D "cn=Manager,dc=syco,dc=net" -w secret
 
 # Return my self.
-#ldapsearch -b uid=user4,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
+# ldapsearch -b uid=user1,ou=people,dc=syco,dc=net -D "uid=user1,ou=people,dc=syco,dc=net" -w fratsecret
 
 # Can't access somebody else
-#ldapsearch -b uid=user3,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
+# ldapsearch -b uid=user3,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
 
 # Should return nothing.
-#ldapsearch -b dc=syco,dc=net -D ""
+# ldapsearch -b dc=syco,dc=net -D ""
+
+# Return sudo info
+# ldapsearch -b ou=SUDOers,dc=syco,dc=net -D "cn=sssd,dc=syco,dc=net" -w secret
 
 # Test sssd
-#getent passwd
-#getent group
+# getent passwd
+# getent group
 
 # Test if sudo is using LDAP.
-#sudo -l
+# sudo -l

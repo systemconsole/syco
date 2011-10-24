@@ -33,7 +33,11 @@
 #    password  required pam_cracklib.so \
 #                       dcredit=-1 ucredit=-1 ocredit=-1 lcredit=0 minlen=8
 # * Radius?
-#   http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch31_:_Centralized_Logins_Using_LDAP_and_RADIUS#Configuring_RADIUS_for_LDAP 
+#   http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch31_:_Centralized_Logins_Using_LDAP_and_RADIUS#Configuring_RADIUS_for_LDAP
+#
+# # Create a password that can be inserted into the ldif files.
+#   echo `slappasswd -s secret`
+#
 
 ###########################################################
 # Uninstall LDAP-server
@@ -43,11 +47,23 @@
 # options.
 #
 ###########################################################
-
 service slapd stop
+yum -y remove openldap-servers
 rm -rf /etc/openldap/slapd.d/
 rm -rf /var/lib/ldap/*
-yum -y remove openldap-servers
+
+/etc/openldap/ldap.conf
+
+# Remove client cert configs
+sed -i '/^TLS_CERT.*\|^TLS_KEY.*/d' /root/ldaprc
+
+# Remove sudo configs.
+sed -i '/# Configure sudo ldap/d' /etc/openldap/ldap.conf
+sed -i '/^sudoers.*/d' /etc/nsswitch.conf
+sed -i '/^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key.*\|sudoers_debug.*/d' /etc/ldap.conf
+
+# Host information
+sed -i '/^10.100.110.7.*/d' /etc/hosts
 
 rm -f /var/log/audit/audit.log
 service auditd restart
@@ -59,23 +75,129 @@ service auditd restart
 ###########################################################
 
 # Enable SELinux for higher security.
-#TODO setenforce 1
-#TODO setsebool -P domain_kernel_load_modules 1
+setenforce 1
+setsebool -P domain_kernel_load_modules 1
 
 # Communication with the LDAP-server needs to be done with domain name, and not
 # the ip. This ensures the dns-name is configured.
-sed -i '/127.0.0.1/s/ ldap.syco.net//' /etc/hosts
-sed -i '/127.0.0.1/s/$/ ldap.syco.net/' /etc/hosts
+cat >> /etc/hosts << EOF
+10.100.110.7 ldap.syco.net
+EOF
 
-# Install packages
+# Install all required packages.
 yum -y install openldap-servers openldap-clients
 
-# Setup iptables (Add destination ip)
-iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j ACCEPT
+# Create backend database.
+cp /usr/share/doc/openldap-servers-2.4.19/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+chown -R ldap:ldap /var/lib/ldap
 
+# Set password for cn=admin,cn=config (it's secret)
+cat >> /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{0\}config.ldif << EOF
+olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+EOF
+
+# Autostart slapd after reboot.
+chkconfig slapd on
+
+# Start ldap server
+service slapd start
+
+# Wait for slapd to start.
+sleep 1
+
+###########################################################
+# General configuration of the server.
+###########################################################
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+
+# Setup logfile (not working now, propably needing debug level settings.)
+dn: cn=config
+changetype:modify
+replace: olcLogFile
+olcLogFile: /var/log/slapd.log
+-
+replace: olcLogLevel
+olcLogLevel: conns filter config acl stats shell
+-
+replace: olcIdleTimeout
+olcIdleTimeout: 30
+
+# Set access for the monitor db.
+dn: olcDatabase={2}monitor,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.base="cn=Manager,dc=syco,dc=net" read  by * none
+
+# Set password for cn=admin,cn=config
+dn: olcDatabase={0}config,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+
+# Change LDAP-domain, password and access rights.
+dn: olcDatabase={1}bdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=syco,dc=net
+-
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=syco,dc=net
+-
+replace: olcRootPW
+olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+-
+replace: olcAccess
+olcAccess: {0}to attrs=employeeType by dn="cn=sssd,dc=syco,dc=net" read by self read by * none
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by anonymous auth by * none
+olcAccess: {2}to dn.base="" by * none
+olcAccess: {3}to * by dn="cn=admin,cn=config" write by dn="cn=sssd,dc=syco,dc=net" read by self write by * none
+
+EOF
+
+##########################################################
+# Configure sudo in ldap
 #
-# Setup certificates
-#
+# Users that should have sudo rights, are configured in
+# in the ldap-db. The ldap sudo schema are not configured
+# by default, and are here created.
+##########################################################
+
+# Copy the sudo Schema into the LDAP schema repository
+/bin/cp -f /usr/share/doc/sudo-1.7.2p2/schema.OpenLDAP /etc/openldap/schema/sudo.schema
+restorecon /etc/openldap/schema/sudo.schema
+
+# Create a conversion file for schema
+mkdir ~/sudoWork
+echo "include /etc/openldap/schema/sudo.schema" > ~/sudoWork/sudoSchema.conf
+
+# Convert the "Schema" to "LDIF".
+slapcat -f ~/sudoWork/sudoSchema.conf -F /tmp/ -n0 -s "cn={0}sudo,cn=schema,cn=config" > ~/sudoWork/sudo.ldif
+
+# Remove invalid data.
+sed -i "s/{0}sudo/sudo/g" ~/sudoWork/sudo.ldif
+
+# Remove last 8 (invalid) lines.
+head -n-8 ~/sudoWork/sudo.ldif > ~/sudoWork/sudo2.ldif
+
+# Load the schema into the LDAP server
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret -f ~/sudoWork/sudo2.ldif
+
+# Add index to sudoers db
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+dn: olcDatabase={1}bdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: sudoUser    eq
+EOF
+
+##########################################################
+# Add users, groups, sudoers. Ie. the dc=syco,dc=net database.
+##########################################################
+ldapadd  -H ldap:/// -x -D "cn=Manager,dc=syco,dc=net" -w secret  -f /opt/syco/doc/ldap/manager.ldif
+
+###########################################################
+# Create certificates
+###########################################################
 
 # Create CA
 echo "00" > /etc/openldap/cacerts/ca.srl
@@ -138,167 +260,35 @@ restorecon -R /etc/openldap/cacerts
 # openssl x509 -text -in /etc/openldap/cacerts/client.pem
 # openssl req -noout -text -in /etc/openldap/cacerts/client.csr
 
+###########################################################
+# Configure ssl
 #
-# Configure LDAP-server
-#
-
-# Create backend database.
-cp /usr/share/doc/openldap-servers-2.4.19/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
-chown -R ldap:ldap /var/lib/ldap
-
-# Set password for cn=admin,cn=config (it's secret)
-cat >> /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{0\}config.ldif << EOF
-olcRootPW: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+# Configure slapd to only be accessible over ssl,
+# with client certificate.
+###########################################################
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=config
+changetype:modify
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/cacerts/slapd.key
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/cacerts/slapd.crt
+-
+replace: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/openldap/cacerts/ca.crt
+-
+replace: olcTLSCipherSuite
+olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
+-
+replace: olcTLSVerifyClient
+olcTLSVerifyClient: demand
 EOF
-
-# Test config files
-slaptest -u
-
-# Start ldap server
-service slapd start
-chkconfig slapd on
-
-# Wait for slapd to start.
-sleep 1
-
-# Create a password that can be inserted into the ldif files.
-# echo `slappasswd -s secret`
-
-# General configuration of the server.
-ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret -f general.ldif
 
 # Enable LDAPS and dispable LDAP
 sed -i 's/[#]*SLAPD_LDAPS=.*/SLAPD_LDAPS=yes/g' /etc/sysconfig/ldap
 sed -i 's/[#]*SLAPD_LDAP=.*/SLAPD_LDAP=no/g' /etc/sysconfig/ldap
 service slapd restart
-
-#
-# Install sudo-ldap
-#
-
-# Copy the sudo Schema into the LDAP schema repository
-sudo cp /usr/share/doc/sudo-1.7.2p2/schema.OpenLDAP /etc/openldap/schema/sudo.schema
-restorecon /etc/openldap/schema/sudo.schema
-
-# Create a conversion file for schema
-mkdir ~/sudoWork
-echo "include /etc/openldap/schema/sudo.schema" > ~/sudoWork/sudoSchema.conf
-
-# Convert the "Schema" to "LDIF".
-slapcat -f ~/sudoWork/sudoSchema.conf -F /tmp/ -n0 -s "cn={0}sudo,cn=schema,cn=config" > ~/sudoWork/sudo.ldif
-
-# Remove invalid data.
-sed -i "s/{0}sudo/sudo/g" ~/sudoWork/sudo.ldif
-
-# Remove last 8 (invalid) lines.
-head -n-8 ~/sudoWork/cn\=sudo.ldif > ~/sudoWork/sudo2.ldif
-
-# Load the schema into the LDAP server
-ldapadd -x -D "cn=admin,cn=config" -w secret -f ~/sudoWork/sudo2.ldif
-
-# Add index to sudoers db
-ldapadd -x -D "cn=admin,cn=config" -w secret << EOF
-dn: olcDatabase={1}bdb,cn=config
-changetype: modify
-add: olcDbIndex
-olcDbIndex: sudoUser    eq
-EOF
-
-ldapadd -x -D "cn=admin,cn=config" -w secret -f ~/sudoWork/sudo2.ldif
-
-# List the new schema
-ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
-
-#
-# Add users, groups, sudoers. Ie. the dc=syco,dc=net database.
-#
-ldapadd -D "cn=Manager,dc=syco,dc=net" -w secret  -f manager.ldif
-
-#
-# Debug/Testing
-#
-
-# Verify the client-cert auth
-# openssl s_client -connect localhost:636 -state \
-#     -CAfile /etc/openldap/cacerts/ca.crt \
-#     -cert /etc/openldap/cacerts/client.pem \
-#     -key /etc/openldap/cacerts/client.pem
-#ldapsearch -x -D "cn=admin,cn=config" -w secret  -v -d1
-
-# List all info from the dc=syco,dc=net database.
-# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net
-
-# List all relevant database options.
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config schema
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={0}config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
-# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret  olcDatabase={2}monitor,cn=config
-
-# List all database options.
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
-
-###########################################################
-# Install LDAP-client
-#
-# This part should be executed on both LDAP-Server and
-# on all clients that should authenticate against the
-# LDAP-server
-#
-###########################################################
-
-# Client installation
-#
-# This script is based on information from at least the following links.
-#   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=2
-#   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/chap-SSSD_User_Guide-Introduction.html
-#
-
-# Uninstall sssd
-# Note: Only needed if sssd has been setup before.
-#TODO yum -y remove openldap-clients sssd
-#TODO rm -rf /var/lib/sss/
-
-
-# Install packages
-#TODO yum -y install openldap-clients sssd
-
-# Pick one package from the Continuous Release
-# Version 1.5.1 of sssd.
-#TODO yum -y install centos-release-cr
-#TODO yum -y update sssd
-#TODO yum -y remove centos-release-cr
-
-# Communication with the LDAP-server needs to be done with domain name, and not
-# the ip. This ensures the dns-name is configured.
-sed -i '/^10.100.110.7.*/d' /etc/hosts
-cat >> /etc/hosts << EOF
-10.100.110.7 ldap.syco.net
-EOF
-
-# Get certificate from ldap server
-#TODO scp root@10.100.110.7:/etc/openldap/cacerts/client.pem /etc/openldap/cacerts/client.pem
-#TODO scp root@10.100.110.7:/etc/openldap/cacerts/ca.crt /etc/openldap/cacerts/ca.crt
-
-/usr/sbin/cacertdir_rehash /etc/openldap/cacerts
-chown -Rf root:ldap /etc/openldap/cacerts
-chmod -Rf 750 /etc/openldap/cacerts
-restorecon -R /etc/openldap/cacerts
-
-# Setup iptables
-iptables -I OUTPUT -m state --state NEW -p tcp -d 10.100.110.7 --dport 636 -j ACCEPT
-
-# Configure all relevant /etc files for ssd, ldap etc.
-authconfig \
-    --enablesssd --enablesssdauth --enablecachecreds \
-    --enableldap --enableldaptls --enableldapauth \
-    --ldapserver=ldaps://ldap.syco.net --ldapbasedn=dc=syco,dc=net \
-    --disablenis --disablekrb5 \
-    --enableshadow --enablemkhomedir --enablelocauthorize \
-    --passalgo=sha512 \
-    --updateall
 
 # Configure the client cert to be used by ldapsearch for user root.
 sed -i '/^TLS_CERT.*\|^TLS_KEY.*/d' /root/ldaprc
@@ -307,82 +297,64 @@ TLS_CERT /etc/openldap/cacerts/client.pem
 TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
 
-#
-# Configure sssd
-#
+###########################################################
+# Require higher security from clients.
+###########################################################
+ldapadd -H ldaps://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=config
+changetype:modify
+replace: olcLocalSSF
+olcLocalSSF: 128
+-
+replace: olcSaslSecProps
+olcSaslSecProps: noanonymous,noplain
 
-# If the authentication provider is offline, specifies for how long to allow
-# cached log-ins (in days). This value is measured from the last successful
-# online log-in. If not specified, defaults to 0 (no limit).
-sed -i '/\[pam\]/a offline_credentials_expiration=5' /etc/sssd/sssd.conf
-
-cat >> /etc/sssd/sssd.conf << EOF
-# Enumeration means that the entire set of available users and groups on the
-# remote source is cached on the local machine. When enumeration is disabled,
-# users and groups are only cached as they are requested.
-enumerate=true
-
-# Configure client certificate auth.
-ldap_tls_cert = /etc/openldap/cacerts/client.pem
-ldap_tls_key = /etc/openldap/cacerts/client.pem
-ldap_tls_reqcert = demand
-
-# Only users with this employeeType are allowed to login to this computer.
-access_provider = ldap
-ldap_access_filter = (employeeType=Sysop)
-
-# Login to ldap with a specified user.
-ldap_default_bind_dn = cn=sssd,dc=syco,dc=net
-ldap_default_authtok_type = password
-ldap_default_authtok = secret
+dn: cn=config
+changetype:modify
+replace: olcSecurity
+olcSecurity: ssf=128
+olcSecurity: simple_bind=128
+olcSecurity: tls=128
 EOF
 
-# Restart sssd
-service sssd restart
-
-# Start sssd after reboot.
-chkconfig sssd on
-
-
-# Configure the client to use sudo
-cat >> /etc/nsswitch.conf << EOF
-sudoers: ldap files
-EOF
-
-cat >> /etc/openldap/ldap.conf << EOF
-
-# Configure sudo ldap.
-sudoers_base ou=SUDOers,dc=syco,dc=net
-binddn cn=sssd,dc=syco,dc=net
-bindpw secret
-ssl on
-tls_cert /etc/openldap/cacerts/client.pem
-tls_key /etc/openldap/cacerts/client.pem
-#sudoers_debug 5
-EOF
-
-# Looks like sudo reads directly from /etc/ldap.conf
-ln /etc/openldap/ldap.conf /etc/ldap.conf
-
+###########################################################
+# Open firewall
 #
-# Test to see that everything works fine.
+# Let clients connect to the server through the firewall.
+# This is done after everything else is done, so we are sure
+# that the server is secure before letting somebody in.
+# TODO: Add destination ip
+###########################################################
+iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j ACCEPT
+
+###########################################################
+# Debug/Testing
 #
+# Need to install client before ldapsearch will work.
+###########################################################
 
-# Should return everything.
-#ldapsearch -b dc=syco,dc=net -D "cn=Manager,dc=syco,dc=net" -w secret
+# Test config files
+# slaptest -u
 
-# Return my self.
-#ldapsearch -b uid=user4,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
+# Verify the client-cert auth
+# openssl s_client -connect localhost:636 -state \
+#     -CAfile /etc/openldap/cacerts/ca.crt \
+#     -cert /etc/openldap/cacerts/client.pem \
+#     -key /etc/openldap/cacerts/client.pem
+# ldapsearch -x -D "cn=admin,cn=config" -w secret  -v -d1
 
-# Can't access somebody else
-#ldapsearch -b uid=user3,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
+# List all info from the dc=syco,dc=net database.
+# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net
 
-# Should return nothing.
-#ldapsearch -b dc=syco,dc=net -D ""
+# List the sudo.schema
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
 
-# Test sssd
-#getent passwd
-#getent group
-
-# Test if sudo is using LDAP.
-#sudo -l
+# List all relevant database options.
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config schema
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={0}config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
+# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret  olcDatabase={2}monitor,cn=config

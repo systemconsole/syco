@@ -1,0 +1,61 @@
+###########################################################
+# Enable audit log
+###########################################################
+# dn: cn=module{0},cn=config
+# objectClass: olcModuleList
+# cn: module{0}
+# olcModulePath: /usr/lib64/openldap/
+# olcModuleLoad: {0}accesslog.la
+# olcModuleLoad: {1}auditlog.la
+
+# dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
+# changetype: add
+# objectClass: olcOverlayConfig
+# objectClass: olcAuditLogConfig
+# olcOverlay: auditlog
+# olcAuditlogFile: /var/log/slapd-auditlog.ldif
+
+# http://www.zytrax.com/books/ldap/ch6/ppolicy.html
+
+
+# The  cn=Module  entries will only appear in configurations where slapd was built with support for dynamically loaded modules. There can be multiple entries, one for each configured
+# module path. Within each entry there will be values recorded for each module loaded on a given path. These entries have no children.
+
+
+
+# ldapadd -D "cn=admin,cn=config" -w secret
+
+
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=module{0},cn=config
+
+
+###########################################################
+# Testing
+###########################################################
+# dn: cn=module{0},cn=config
+# objectClass: olcModuleList
+# cn: module{0}
+# olcModulePath: /usr/lib64/openldap/
+# olcModuleLoad: {0}back_bdb
+# olcModuleLoad: {1}memberof.la
+# structuralObjectClass: olcModuleList
+# entryUUID: a410ce98-3fdf-102e-82cf-59ccb6b4d60d
+# creatorsName: cn=config
+# createTimestamp: 20090927183056Z
+# entryCSN: 20091009174548.503911Z#000000#000#000000
+# modifiersName: cn=admin,cn=config
+# modifyTimestamp: 20091009174548Z
+
+
+# dn: cn=sycousers,ou=group,dc=syco,dc=net
+# objectclass: groupofnames
+# cn: sycousers
+# description: Users allowed to connect on VPN
+# member: dn: uid=user1,ou=people,dc=syco,dc=net
+
+
+# dn: cn=sycousers2,ou=group,dc=syco,dc=net
+# cn: sycousers2
+# objectclass: groupofnames
+# description: Users allowed to connect on VPN
+# member: dn: uid=user1,ou=people,dc=syco,dc=net
