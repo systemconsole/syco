@@ -108,13 +108,20 @@ sleep 1
 ###########################################################
 # General configuration of the server.
 ###########################################################
+
+# Create folder to store log files in
+mkdir /var/log/slapd
+chmod 755 /var/log/slapd/
+chown ldap:ldap /var/log/slapd/
+
+# Do the configurations.
 ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
 
 # Setup logfile (not working now, propably needing debug level settings.)
 dn: cn=config
 changetype:modify
 replace: olcLogFile
-olcLogFile: /var/log/slapd.log
+olcLogFile: /var/log/slapd/slapd.log
 -
 replace: olcLogLevel
 olcLogLevel: conns filter config acl stats shell
@@ -151,7 +158,6 @@ olcAccess: {0}to attrs=employeeType by dn="cn=sssd,dc=syco,dc=net" read by self 
 olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by anonymous auth by * none
 olcAccess: {2}to dn.base="" by * none
 olcAccess: {3}to * by dn="cn=admin,cn=config" write by dn="cn=sssd,dc=syco,dc=net" read by self write by * none
-
 EOF
 
 ##########################################################
@@ -296,6 +302,31 @@ cat >> /root/ldaprc  << EOF
 TLS_CERT /etc/openldap/cacerts/client.pem
 TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
+###########################################################
+# Create modules area
+#
+###########################################################
+ldapadd -H ldaps://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=module{0},cn=config
+objectClass: olcModuleList
+cn: module{0}
+olcModulePath: /usr/lib64/openldap/
+olcModuleLoad: auditlog.la
+EOF
+
+###########################################################
+# General configuration of the server.
+#
+# http://www.manpagez.com/man/5/slapo-auditlog/
+###########################################################
+ldapadd -H ldaps://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
+dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcAuditLogConfig
+olcOverlay: auditlog
+olcAuditlogFile: /var/log/slapd/auditlog.log
+EOF
 
 ###########################################################
 # Require higher security from clients.
@@ -349,6 +380,9 @@ iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j 
 # List the sudo.schema
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
 
+# Verify that the AuditLog is configured.
+# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config
+
 # List all relevant database options.
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
@@ -357,4 +391,5 @@ iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j 
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=module{0}
 # ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret  olcDatabase={2}monitor,cn=config
