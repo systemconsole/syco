@@ -18,6 +18,40 @@ description: Account for sssd.
 userPassword: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
 
 ###########################################################
+# Add pwdpolicy overlay
+# Need to be done before adding new users.
+###########################################################
+dn: ou=pwpolicies,dc=syco,dc=net
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
+
+dn: cn=default,ou=pwpolicies,dc=syco,dc=net
+cn: default
+#objectClass: pwdPolicyChecker
+objectClass: pwdPolicy
+objectClass: person
+objectClass: top
+pwdAllowUserChange: TRUE
+pwdAttribute: 2.5.4.35
+#pwdCheckModule: crackcheck.so
+#pwdCheckQuality: 2
+pwdExpireWarning: 604800
+pwdFailureCountInterval: 30
+pwdGraceAuthNLimit: 0
+pwdInHistory: 10
+pwdLockout: TRUE
+pwdLockoutDuration: 3600
+pwdMaxAge: 7776000
+pwdMaxFailure: 5
+pwdMinAge: 3600
+pwdMinLength: 12
+pwdMustChange: FALSE
+pwdSafeModify: FALSE
+sn: dummy value
+EOF
+
+###########################################################
 # GROUPS
 ###########################################################
 dn: ou=group,dc=syco,dc=net
@@ -85,7 +119,6 @@ postalCode: 666666
 mobile: +46 (0)73 xx xx xx xx
 homePhone: +46 (0)8 xx xx xx xx
 postalAddress:
-
 
 dn: uid=user2,ou=people,dc=syco,dc=net
 objectClass: inetOrgPerson
@@ -218,51 +251,3 @@ sudoUser: %sysop
 sudoHost: ALL
 sudoRunAsUser: ALL
 sudoCommand: ALL
-
-###########################################################
-# Password Policies
-###########################################################
-# dn: olcDatabase={1}bdb,cn=config
-# changetype: modify
-# replace: objectClass
-# objectClass: pwdpolicyconfig
-# objectClass: olcDatabaseConfig
-# objectClass: olcBdbConfig
-
-# -
-# replace: olcOverlay
-# olcOverlay: ppolicy
-# -
-# replace: ppolicy_default
-# ppolicy_default "cn=default,ou=policies,dc=syco,dc=net"
-
-
-
-# dn: ou=policies,dc=syco,dc=net
-# objectClass: organizationalUnit
-# objectClass: top
-# ou: policies
-
-# dn: cn=default,ou=policies,dc=syco,dc=net
-# cn: default
-# objectClass: pwdPolicyChecker
-# objectClass: pwdPolicy
-# objectClass: person
-# objectClass: top
-# pwdAllowUserChange: TRUE
-# pwdCheckQuality: 2
-# pwdExpireWarning: 600
-# pwdFailureCountInterval: 30
-# pwdGraceAuthNLimit: 5
-# pwdInHistory: 5
-# pwdLockout: TRUE
-# pwdLockoutDuration: 0
-# pwdMaxAge: 0
-# pwdMaxFailure: 5
-# pwdMinAge: 0
-# pwdMinLength: 5
-# pwdMustChange: FALSE
-# pwdSafeModify: FALSE
-# sn: dummy value
-# pwdAttribute: 2.5.4.35
-# pwdCheckModule: crackcheck.so

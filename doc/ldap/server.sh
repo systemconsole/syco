@@ -17,10 +17,6 @@
 #   http://eatingsecurity.blogspot.com/2008/10/openldap-continued.html
 #   http://www.sudo.ws/sudo/man/1.8.2/sudoers.ldap.man.html
 #
-# PPolicy
-#   http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&sektion=5&apropos=0&manpath=OpenLDAP+2.3-Release
-#   http://www.symas.com/blog/?page_id=66
-#
 # TODO
 # * ppolicy
 # * authconfig --ldaploadcacert=<URL>   load CA certificate from the URL
@@ -32,6 +28,7 @@
 #    /etc/pam.d/system-auth
 #    password  required pam_cracklib.so \
 #                       dcredit=-1 ucredit=-1 ocredit=-1 lcredit=0 minlen=8
+# * http://open.calivia.com/projects/openldap/
 # * Radius?
 #   http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch31_:_Centralized_Logins_Using_LDAP_and_RADIUS#Configuring_RADIUS_for_LDAP
 #
@@ -51,8 +48,6 @@ service slapd stop
 yum -y remove openldap-servers
 rm -rf /etc/openldap/slapd.d/
 rm -rf /var/lib/ldap/*
-
-/etc/openldap/ldap.conf
 
 # Remove client cert configs
 sed -i '/^TLS_CERT.*\|^TLS_KEY.*/d' /root/ldaprc
@@ -114,17 +109,21 @@ mkdir /var/log/slapd
 chmod 755 /var/log/slapd/
 chown ldap:ldap /var/log/slapd/
 
+# Redirect all log files through rsyslog.
+sed -i "/local4.*/d" /etc/rsyslog.conf
+cat >> /etc/rsyslog.conf << EOF
+local4.*                        /var/log/slapd/slapd.log
+EOF
+service rsyslog restart
+
 # Do the configurations.
-ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+ldapadd -H ldap://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
 
 # Setup logfile (not working now, propably needing debug level settings.)
 dn: cn=config
 changetype:modify
-replace: olcLogFile
-olcLogFile: /var/log/slapd/slapd.log
--
 replace: olcLogLevel
-olcLogLevel: conns filter config acl stats shell
+olcLogLevel: config stats shell
 -
 replace: olcIdleTimeout
 olcIdleTimeout: 30
@@ -194,6 +193,90 @@ dn: olcDatabase={1}bdb,cn=config
 changetype: modify
 add: olcDbIndex
 olcDbIndex: sudoUser    eq
+EOF
+
+###########################################################
+# Create modules area
+#
+###########################################################
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=module{0},cn=config
+objectClass: olcModuleList
+cn: module{0}
+olcModulePath: /usr/lib64/openldap/
+EOF
+
+###########################################################
+# Add auditlog overlay.
+#
+# http://www.manpagez.com/man/5/slapo-auditlog/
+###########################################################
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=module{0},cn=config
+changetype:modify
+add: olcModuleLoad
+olcModuleLoad: auditlog.la
+
+dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcAuditLogConfig
+olcOverlay: auditlog
+olcAuditlogFile: /var/log/slapd/auditlog.log
+EOF
+
+###########################################################
+# Add accesslog overlay.
+#
+# http://www.manpagez.com/man/5/slapo-accesslog/
+#
+# TODO: Didn't get it working.
+#
+###########################################################
+# ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+# dn: cn=module,cn=config
+# objectClass: olcModuleList
+# cn: module
+# olcModulePath: /usr/lib64/openldap/
+# olcModuleLoad: access.la
+#
+#
+# dn: olcOverlay=accesslog,olcDatabase={1}bdb,cn=config
+# changetype: add
+# olcOverlay: accesslog
+# objectClass: olcOverlayConfig
+# objectClass: olcAccessLogConfig
+# logdb: cn=auditlog
+# logops: writes reads
+# # read log every 5 days and purge entries
+# # when older than 30 days
+# logpurge 180+00:00 5+00:00
+# # optional - saves the previous contents of
+# # person objectclass before performing a write operation
+# logold: (objectclass=person)
+# EOF
+
+###########################################################
+# Add pwdpolicy overlay
+#
+# http://www.zytrax.com/books/ldap/ch6/ppolicy.html
+# http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&sektion=5&apropos=0&manpath=OpenLDAP+2.3-Release
+# http://www.symas.com/blog/?page_id=66
+###########################################################
+
+ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+dn: cn=module{0},cn=config
+changetype:modify
+add: olcModuleLoad
+olcModuleLoad: ppolicy.la
+
+dn: olcOverlay=ppolicy,olcDatabase={1}bdb,cn=config
+olcOverlay: ppolicy
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcPPolicyHashCleartext: TRUE
+olcPPolicyUseLockout: FALSE
+olcPPolicyDefault: cn=default,ou=pwpolicies,dc=syco,dc=net
 EOF
 
 ##########################################################
@@ -302,31 +385,6 @@ cat >> /root/ldaprc  << EOF
 TLS_CERT /etc/openldap/cacerts/client.pem
 TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
-###########################################################
-# Create modules area
-#
-###########################################################
-ldapadd -H ldaps://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
-dn: cn=module{0},cn=config
-objectClass: olcModuleList
-cn: module{0}
-olcModulePath: /usr/lib64/openldap/
-olcModuleLoad: auditlog.la
-EOF
-
-###########################################################
-# General configuration of the server.
-#
-# http://www.manpagez.com/man/5/slapo-auditlog/
-###########################################################
-ldapadd -H ldaps://ldap.syco.net -x -D "cn=admin,cn=config" -w secret << EOF
-dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
-changetype: add
-objectClass: olcOverlayConfig
-objectClass: olcAuditLogConfig
-olcOverlay: auditlog
-olcAuditlogFile: /var/log/slapd/auditlog.log
-EOF
 
 ###########################################################
 # Require higher security from clients.
@@ -375,7 +433,7 @@ iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j 
 # ldapsearch -x -D "cn=admin,cn=config" -w secret  -v -d1
 
 # List all info from the dc=syco,dc=net database.
-# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net
+# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net -e ppolicy
 
 # List the sudo.schema
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
@@ -383,13 +441,28 @@ iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j 
 # Verify that the AuditLog is configured.
 # ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config
 
+# List root DN:s, controls, featurs etc.
+# ldapsearch -LLL -x  -b "" -s base +
+
+#
+# ldapsearch -x -b "dc=syco,dc=net" -e ppolicy objectclass=posixAccount
+
 # List all relevant database options.
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config schema
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=schema,cn=config
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={0}config
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
 # ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=module{0}
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
 # ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret  olcDatabase={2}monitor,cn=config
+
+
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
+# ldapsearch -D "cn=admin,cn=config" -w secret -b dc=syco,dc=net cn=default
+# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config olcOverlay=ppolicy
+# ldapsearch -D "cn=admin,cn=config" -w secret -b uid=user4,ou=people,dc=syco,dc=net
+# # Return my self.
+# ldapsearch -b uid=user1,ou=people,dc=syco,dc=net -D "uid=user1,ou=people,dc=syco,dc=net" -w fratsecret
