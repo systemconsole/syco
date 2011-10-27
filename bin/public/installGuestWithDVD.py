@@ -25,7 +25,7 @@ import time
 
 import app
 import config
-from general import set_config_property_batch, popen
+from general import set_config_property_batch, x
 import net
 import nfs
 import sys
@@ -60,7 +60,7 @@ class install_guest:
       self.hostname = args[1]
 
   def check_if_host_is_installed(self):
-    result = popen("virsh list --all")
+    result = x("virsh list --all")
     if (self.hostname in result):
       raise Exception(self.hostname + " already installed")
 
@@ -111,13 +111,13 @@ class install_guest:
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
-      popen("mkdir /media/dvd")
+      x("mkdir /media/dvd")
 
     if (not os.path.ismount("/media/dvd")):
-      popen("mount -o ro /dev/dvd /media/dvd")
+      x("mount -o ro /dev/dvd /media/dvd")
 
   def unmount_dvd(self):
-    popen("umount /media/dvd")
+    x("umount /media/dvd")
 
   def create_kickstart(self):
       '''
@@ -128,8 +128,8 @@ class install_guest:
       hostname_ks_file = ks_folder + self.hostname + ".ks"
       dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
 
-      popen("mkdir -p " + ks_folder)
-      popen("cp " + dvd_ks_file + " " + hostname_ks_file)
+      x("mkdir -p " + ks_folder)
+      x("cp " + dvd_ks_file + " " + hostname_ks_file)
 
       set_config_property_batch(hostname_ks_file, self.property_list, False)
 
@@ -170,14 +170,14 @@ class install_guest:
       cmd +=  ' gateway=' + self.kvm_host_back_ip
       cmd +=  ' "'
 
-      popen(cmd)
+      x(cmd)
       self.wait_for_installation_to_complete()
       self.autostart_guests()
 
   def create_lvm_volumegroup(self):
-    result = popen("lvdisplay -v /dev/VolGroup00/" + self.hostname)
+    result = x("lvdisplay -v /dev/VolGroup00/" + self.hostname)
     if ("/dev/VolGroup00/" + self.hostname not in result):
-      popen("lvcreate -n " + self.hostname +
+      x("lvcreate -n " + self.hostname +
                  " -L " + self.property_list['\$total_disk_gb'] + "G VolGroup00")
 
   def wait_for_installation_to_complete(self):
@@ -191,12 +191,12 @@ class install_guest:
       time.sleep(10)
       print ".",
       sys.stdout.flush()
-      result = popen("virsh list", output=False)
+      result = x("virsh list", output=False)
       if (self.hostname not in result):
         print "Now installed"
         break
 
   def autostart_guests(self):
     # Autostart guests.
-    popen("virsh autostart " + self.hostname)
-    popen("virsh start " + self.hostname)
+    x("virsh autostart " + self.hostname)
+    x("virsh start " + self.hostname)

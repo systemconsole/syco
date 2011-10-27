@@ -18,6 +18,7 @@ import time
 import app
 import config
 import general
+from general import x
 import install
 import installCobbler
 
@@ -88,20 +89,20 @@ def _install_guest(guest_name):
   app.print_verbose("Install " + guest_name)
 
   # Create the data lvm volumegroup
-  # TODO: Do we need error=False result, err=general.popen("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
-  result = general.popen("lvdisplay -v /dev/VolGroup00/" + guest_name)
+  # TODO: Do we need error=False result, err=x("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
+  result = x("lvdisplay -v /dev/VolGroup00/" + guest_name)
   if ("/dev/VolGroup00/" + guest_name not in result):
     vol_group_size=int()
-    general.popen("lvcreate -n " + guest_name +
+    x("lvcreate -n " + guest_name +
                        " -L " + config.host(guest_name).get_total_disk_gb() +
                        "G VolGroup00")
 
-  general.popen(
+  x(
     "koan --server=" + config.general.get_installation_server_ip() +
     " --system=" + guest_name +
     " --virt -v --static-interface=eth0")
 
-  general.popen("virsh autostart " + guest_name)
+  x("virsh autostart " + guest_name)
 
 def _start_guest(guest_name):
   '''
@@ -111,7 +112,7 @@ def _start_guest(guest_name):
   if (_is_guest_installed(guest_name, options="")):
     return False
   else:
-    general.popen("virsh start " + guest_name)
+    x("virsh start " + guest_name)
     return True
 
 def _is_guest_installed(guest_name, options=""):
@@ -119,7 +120,7 @@ def _is_guest_installed(guest_name, options=""):
   Is the guest already installed on the kvm host.
 
   '''
-  result = general.popen("virsh list " + options)
+  result = x("virsh list " + options)
   if (guest_name in result):
     return True
   else:

@@ -262,7 +262,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 
   return stdout
 
-def popen(command, user="", output=True):
+def x(command, user="", output=True):
   '''
   Execute a shell command and handles output verbosity.
 

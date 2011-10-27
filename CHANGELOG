@@ -146,6 +146,7 @@ Remote-install
 
 Refactoring / Stability
 -----------------------
+# Rename general.popen to x (as in eXecute)
 * Change so first virtualhost uses installserver as repo server after installation.
 * Refactoring of password and passwordStore
 * Use properties instead of getters in config
@@ -153,7 +154,6 @@ Refactoring / Stability
 * restorecon -R -v /home/$ACCOUNT/.ssh
 * cobbler reposync has problems when selinux is enabled.
   See tmp/test-cobbler-sync.sh
-* Rename general.popen to x (as in eXecute)
 
 KVM
 ---
@@ -186,16 +186,28 @@ Version 5
 
 LDAP
 ----
+# Enable sudo for LDAP users.
+  http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
+# Setup SSSD
+# Setup password policy
+* Setup replication, to get master-master working?
+* Add  or similiar
+  http://en.wikipedia.org/wiki/LDAP_Account_Manager
+  http://en.wikipedia.org/wiki/PhpLDAPadmin
 * Setup kickstart to use LDAP
   http://web.archiveorange.com/archive/v/YcynVMg4S203uVyu3ZFc
-* Enable sudo for LDAP users.
-  http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
-* SSSD or NSCD
-* Setup password policy
 * Two-factor auth with http://www.wikidsystems.com/ or something else.
 * Two-factor SSH with YubiKey on CentOS 5.6
   http://www.grennan.com/?p=170
   http://code.google.com/p/yubico-pam/wiki/ReadMe
+* 2-factor auth
+  http://www.wikidsystems.com/
+  http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-factor-authentication-to-openldap-and-freeradius
+* Add Kerberos
+* check_password pwdChecker http://open.calivia.com/projects/openldap/
+* Add Radius?
+  http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch31_:_Centralized_Logins_Using_LDAP_and_RADIUS#Configuring_RADIUS_for_LDAP
+
 
   Buy?
   https://store.yubico.com/

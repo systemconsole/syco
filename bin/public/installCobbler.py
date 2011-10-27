@@ -21,6 +21,7 @@ import subprocess
 import app
 import config
 import general
+from general import x
 import iptables
 import version
 import install
@@ -82,43 +83,43 @@ def _install_cobbler():
   install.epel_repo()
 
   # To get cobbler and kvm work correct.
-  general.popen("yum -y install yum-utils cobbler koan httpd")
-  general.popen("/sbin/chkconfig httpd on")
+  x("yum -y install yum-utils cobbler koan httpd")
+  x("/sbin/chkconfig httpd on")
 
   # This allows the Apache httpd server to connect to the network
-  general.popen('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/lib/tftpboot/.*"')
-  general.popen('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/www/cobbler/images/.*"')
-  general.popen('/usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"')
-  general.popen('restorecon -R -v "/var/lib/tftpboot/"')
-  general.popen('restorecon -R -v "/var/www/cobbler/images"')
-  general.popen('restorecon -R -v "/var/lib/cobbler/webui_sessions/"')
+  x('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/lib/tftpboot/.*"')
+  x('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/www/cobbler/images/.*"')
+  x('/usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"')
+  x('restorecon -R -v "/var/lib/tftpboot/"')
+  x('restorecon -R -v "/var/www/cobbler/images"')
+  x('restorecon -R -v "/var/lib/cobbler/webui_sessions/"')
 
   # Enables cobbler to read/write public_content_rw_t
-  general.popen('/usr/sbin/setsebool -P cobbler_anon_write on')
+  x('/usr/sbin/setsebool -P cobbler_anon_write on')
 
   # Enable httpd to connect to cobblerd (optional, depending on if web interface is installed)
   # Notice: If you enable httpd_can_network_connect_cobbler and you should switch httpd_can_network_connect off
-  general.popen('/usr/sbin/setsebool -P httpd_can_network_connect off')
-  general.popen('/usr/sbin/setsebool -P httpd_can_network_connect_cobbler on')
+  x('/usr/sbin/setsebool -P httpd_can_network_connect off')
+  x('/usr/sbin/setsebool -P httpd_can_network_connect_cobbler on')
 
   #Enabled cobbler to use rsync etc.. (optional)
-  general.popen('/usr/sbin/setsebool -P cobbler_can_network_connect on')
+  x('/usr/sbin/setsebool -P cobbler_can_network_connect on')
 
   #Enable cobbler to use CIFS based filesystems (optional)
-  #general.popen('/usr/sbin/setsebool -P cobbler_use_cifs on')
+  #x('/usr/sbin/setsebool -P cobbler_use_cifs on')
 
   # Enable cobbler to use NFS based filesystems (optional)
-  #general.popen('/usr/sbin/setsebool -P cobbler_use_nfs on')
+  #x('/usr/sbin/setsebool -P cobbler_use_nfs on')
 
   _install_custom_selinux_policy()
 
   # Double check your choices
-  general.popen('getsebool -a|grep cobbler')
+  x('getsebool -a|grep cobbler')
 
   app.print_verbose("Update xinetd config files")
   general.set_config_property("/etc/xinetd.d/tftp", '[\s]*disable[\s]*[=].*', "        disable                 = no")
   general.set_config_property("/etc/xinetd.d/rsync", '[\s]*disable[\s]*[=].*', "        disable         = no")
-  general.popen("/etc/init.d/xinetd restart")
+  x("/etc/init.d/xinetd restart")
 
 def _modify_cobbler_settings():
   app.print_verbose("Update cobbler config files")
@@ -139,49 +140,49 @@ def _modify_cobbler_settings():
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")
 
-  general.popen("/etc/init.d/httpd restart")
+  x("/etc/init.d/httpd restart")
 
   # TODO: Do we need no_return=True
-  # general.popen("/etc/init.d/cobblerd restart", no_return=True)
-  general.popen("/etc/init.d/cobblerd restart")
+  # x("/etc/init.d/cobblerd restart", no_return=True)
+  x("/etc/init.d/cobblerd restart")
 
   # Wait for cobblered to restart
   time.sleep(1)
 
   # Iptables rules need be fixed now.
-  general.popen("cobbler get-loaders")
+  x("cobbler get-loaders")
 
   # Setup distro/repo for centos
-  general.popen("cobbler check")
+  x("cobbler check")
 
 def _import_repos():
   if (os.access("/var/www/cobbler/ks_mirror/centos-x86_64", os.F_OK)):
     app.print_verbose("Centos-x86_64 already imported")
   else:
-    general.popen('cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/os/x86_64/ --name=centos --arch=x86_64')
+    x('cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/os/x86_64/ --name=centos --arch=x86_64')
 
   if (os.access("/var/www/cobbler/repo_mirror/centos-updates-x86_64", os.F_OK)):
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
-    general.popen("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    general.popen("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
-    general.popen("cobbler reposync")
+    x("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
+    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
+    x("cobbler reposync")
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
-  general.popen("cobbler profile remove --name centos-x86_64")
-  general.popen("cobbler profile remove --name=centos-vm_guest")
-  general.popen("cobbler profile remove --name=centos-vm_host")
+  x("cobbler profile remove --name centos-x86_64")
+  x("cobbler profile remove --name=centos-vm_guest")
+  x("cobbler profile remove --name=centos-vm_host")
 
   # Setup installation profiles and systems
-  general.popen(
+  x(
     'cobbler profile add --name=centos-vm_host' +
     ' --distro=centos-x86_64' +
     ' --repos="centos-updates-x86_64 epel-x86_64"' +
     ' --kickstart=/var/lib/cobbler/kickstarts/cobbler.ks'
   )
 
-  general.popen(
+  x(
     'cobbler profile add --name=centos-vm_guest' +
     ' --parent=centos-vm_host' +
     ' --virt-type=qemu' +
@@ -196,9 +197,9 @@ def _remove_all_systems():
   It's not needed to run this if the profiles has been deleted.
 
   '''
-  stdout = general.popen("cobbler system list")
+  stdout = x("cobbler system list")
   for name in stdout.rsplit():
-    general.popen("cobbler system remove --name " + name)
+    x("cobbler system remove --name " + name)
 
 def _add_all_systems():
   for hostname in config.get_servers():
@@ -212,7 +213,7 @@ def _host_add(hostname):
   app.print_verbose("")
   app.print_verbose("Add baremetalhost " + hostname)
 
-  general.popen(
+  x(
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
@@ -229,7 +230,7 @@ def _guest_add(hostname):
   app.print_verbose("")
   app.print_verbose("\Add guest " + hostname)
 
-  general.popen(
+  x(
     "cobbler system add --profile=centos-vm_guest"
     " --virt-path=\"/dev/VolGroup00/" + hostname + "\"" +
     " --virt-ram=" + str(config.host(hostname).get_ram()) +
@@ -270,11 +271,11 @@ def edit_iface(hostname, iface, ip, netmask, gateway):
     if gateway:
       cmd += " --gateway=" + gateway
 
-  general.popen(cmd)
+  x(cmd)
 
 def edit_iface_attr(hostname, iface, key, value):
   if (key and value):
-    general.popen("cobbler system edit --name=%s --interface=%s %s=%s" %
+    x("cobbler system edit --name=%s --interface=%s %s=%s" %
                   (hostname, iface,key, value))
 
 def _refresh_repo():
@@ -292,15 +293,15 @@ def _refresh_repo():
   #downloads['jdk-6u26-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u26-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u26-linux-x64-rpm.sbin'
 
   #for dst, src in downloads.items():
-  #  general.popen("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
+  #  x("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
 
   #general.wait_for_processes_to_finish('wget')
 
-  general.popen("cobbler reposync --tries=3 --no-fail")
+  x("cobbler reposync --tries=3 --no-fail")
 
 def _cobbler_sync():
-  general.popen("cobbler sync")
-  general.popen("cobbler report")
+  x("cobbler sync")
+  x("cobbler report")
 
 def _install_custom_selinux_policy():
   '''
@@ -312,6 +313,6 @@ def _install_custom_selinux_policy():
   mod = "/tmp/cobbler.te"
   pp = "/tmp/cobbler.te"
 
-  general.popen("checkmodule -M -m -o %s %s" % (mod, te))
-  general.popen("semodule_package -o %s -m %s" % (pp, mod))
-  general.popen("semodule -i %s" % pp)
+  x("checkmodule -M -m -o %s %s" % (mod, te))
+  x("semodule_package -o %s -m %s" % (pp, mod))
+  x("semodule -i %s" % pp)

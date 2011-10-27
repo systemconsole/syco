@@ -17,19 +17,19 @@ import unittest
 import os
 
 import app
-from general import popen, shell_exec
+from general import x, shell_exec
 
 class TestGeneral(unittest.TestCase):
     def test_shell_exec(self):
         print "Will print error and stuff."
         app.options.verbose = 1
 
-        self.assertEqual(popen("uname"), "Linux\n")
-        self.assertEqual(popen("uname", user="root"), "Linux\n")
+        self.assertEqual(x("uname"), "Linux\n")
+        self.assertEqual(x("uname", user="root"), "Linux\n")
 
         app.options.verbose = 2
-        self.assertEqual(popen("uname"), "Linux\n")
-        self.assertEqual(popen("dont-exist", ), "")
+        self.assertEqual(x("uname"), "Linux\n")
+        self.assertEqual(x("dont-exist", ), "")
 
         app.options.verbose = 1
 
