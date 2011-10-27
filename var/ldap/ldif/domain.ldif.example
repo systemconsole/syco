@@ -1,0 +1,253 @@
+###########################################################
+# NEW DATABASE
+###########################################################
+dn: dc=syco,dc=net
+objectClass: top
+objectclass: dcObject
+objectclass: organization
+o: System Console Project
+dc: syco
+description: Tree root
+
+# Used by sssd to ask general queries.
+dn: cn=sssd,dc=syco,dc=net
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: sssd
+description: Account for sssd.
+userPassword: {SSHA}OjXYLr1oZ/LrHHTmjnPWYi1GjbgcYxSb
+
+###########################################################
+# Add pwdpolicy overlay
+# Need to be done before adding new users.
+###########################################################
+dn: ou=pwpolicies,dc=syco,dc=net
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
+
+dn: cn=default,ou=pwpolicies,dc=syco,dc=net
+cn: default
+#objectClass: pwdPolicyChecker
+objectClass: pwdPolicy
+objectClass: person
+objectClass: top
+pwdAllowUserChange: TRUE
+pwdAttribute: 2.5.4.35
+#pwdCheckModule: crackcheck.so
+#pwdCheckQuality: 2
+pwdExpireWarning: 604800
+pwdFailureCountInterval: 30
+pwdGraceAuthNLimit: 0
+pwdInHistory: 10
+pwdLockout: TRUE
+pwdLockoutDuration: 3600
+pwdMaxAge: 7776000
+pwdMaxFailure: 5
+pwdMinAge: 3600
+pwdMinLength: 12
+pwdMustChange: FALSE
+pwdSafeModify: FALSE
+sn: dummy value
+EOF
+
+###########################################################
+# GROUPS
+###########################################################
+dn: ou=group,dc=syco,dc=net
+objectClass: top
+objectclass: organizationalunit
+ou: group
+
+dn: cn=sycousers,ou=group,dc=syco,dc=net
+cn: sycousers
+objectClass: posixGroup
+gidNumber: 2000
+memberUid: user1
+memberUid: user2
+memberUid: user3
+memberUid: user4
+
+dn: cn=sysop,ou=group,dc=syco,dc=net
+cn: sysop
+objectClass: posixGroup
+gidNumber: 2001
+memberUid: user1
+memberUid: user2
+
+dn: cn=management,ou=group,dc=syco,dc=net
+cn: management
+objectClass: posixGroup
+gidNumber: 2002
+memberUid: user1
+memberUid: user3
+
+###########################################################
+# USERS
+###########################################################
+dn: ou=people,dc=syco,dc=net
+objectClass: top
+objectclass: organizationalunit
+ou: people
+
+dn: uid=user1,ou=people,dc=syco,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user1
+employeeType: Sysop
+givenName: User1
+surname: Syco
+displayName: Syco User1
+commonName: Syco User1
+gecos: Syco User1
+initials: SU
+title: System Administrator (fratsecret)
+userPassword: {CRYPT}frzelFSD.VhkI
+loginShell: /bin/bash
+uidNumber: 2001
+gidNumber: 2000
+homeDirectory: /home/user1
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: sycouser@syco.net
+postalCode: 666666
+mobile: +46 (0)73 xx xx xx xx
+homePhone: +46 (0)8 xx xx xx xx
+postalAddress:
+
+dn: uid=user2,ou=people,dc=syco,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user2
+employeeType: Sysop
+givenName: User2
+surname: Syco
+displayName: Syco User2
+commonName: Syco User2
+gecos: Syco User2
+initials: SU
+title: System Administrator
+userPassword: {CRYPT}frzelFSD.VhkI
+loginShell: /bin/bash
+uidNumber: 2002
+gidNumber: 2000
+homeDirectory: /home/user2
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: sycouser@syco.net
+postalCode: 666666
+mobile: +46 (0)73 xx xx xx xx
+homePhone: +46 (0)8 xx xx xx xx
+postalAddress:
+
+dn: uid=user3,ou=people,dc=syco,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user3
+employeeType: Developer
+givenName: User3
+surname: Syco
+displayName: Syco User3
+commonName: Syco User3
+gecos: Syco User3
+initials: SU
+title: System Administrator
+userPassword: {CRYPT}frzelFSD.VhkI
+loginShell: /bin/bash
+uidNumber: 2003
+gidNumber: 2000
+homeDirectory: /home/user3
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: sycouser@syco.net
+postalCode: 666666
+mobile: +46 (0)73 xx xx xx xx
+homePhone: +46 (0)8 xx xx xx xx
+postalAddress:
+
+dn: uid=user4,ou=people,dc=syco,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user4
+employeeType: Manager
+givenName: User4
+surname: Syco
+displayName: Syco User4
+commonName: Syco User4
+gecos: Syco User4
+initials: SU
+title: System Administrator
+userPassword: {CRYPT}frzelFSD.VhkI
+loginShell: /bin/bash
+uidNumber: 2004
+gidNumber: 2000
+homeDirectory: /home/user4
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 180
+shadowLastChange: 10877
+mail: sycouser@syco.net
+postalCode: 666666
+mobile: +46 (0)73 xx xx xx xx
+homePhone: +46 (0)8 xx xx xx xx
+postalAddress:
+
+###########################################################
+# SUDOERS
+###########################################################
+dn: ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: SUDOers
+
+dn: cn=defaults,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: defaults
+description: Default sudoOptions go here
+sudoOption: requiretty
+sudoOption: always_set_home
+sudoOption: env_reset
+sudoOption: env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS"
+sudoOption: env_keep+="MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE"
+sudoOption: env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES"
+sudoOption: env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
+sudoOption: env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
+sudoOption: secure_path=/sbin:/bin:/usr/sbin:/usr/bin
+
+dn: cn=root,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: root
+sudoUser: root
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
+
+# Allow all sysops to execute anything
+dn: cn=%sysop,ou=SUDOers,dc=syco,dc=net
+objectClass: top
+objectClass: sudoRole
+cn: %sysop
+sudoUser: %sysop
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
