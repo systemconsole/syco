@@ -10,6 +10,7 @@
 # This script is based on information from at least the following links.
 #   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=2
 #   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/chap-SSSD_User_Guide-Introduction.html
+#   http://directory.fedoraproject.org/wiki/Howto:PAM
 #
 ###########################################################
 
@@ -26,7 +27,7 @@
 # Install relevant packages
 ###########################################################
 # Install packages
-yum -y install openldap-clients
+yum -y install openldap-clients authconfig
 
 # Pick one package from the Continuous Release
 # Version 1.5.1 of sssd.

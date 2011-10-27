@@ -1,6 +1,7 @@
 #!/bin/sh
 #
 # This script is based on information from at least the following links.
+#   http://www.openldap.org/doc/admin24/guide.html
 #   https://help.ubuntu.com/10.04/serverguide/C/openldap-server.html
 #   http://home.roadrunner.com/~computertaijutsu/ldap.html
 #   http://www.salsaunited.net/blog/?p=74
@@ -8,31 +9,10 @@
 #   http://www.server-world.info/en/note?os=CentOS_6&p=ldap
 #   http://linux.die.net/man/5/slapd-config
 #   http://eatingsecurity.blogspot.com/2008/11/openldap-security.html
+#   http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Directory_Servers.html#s1-OpenLDAP
+#   http://www.howtoforge.com/linux_ldap_authentication
 #
-# Client certificate docs.
-#   http://www.openldap.org/pub/ksoper/OpenLDAP_TLS.html#4.0
-#   http://www.openldap.org/faq/data/cache/185.html
-#
-# SUDO
-#   http://eatingsecurity.blogspot.com/2008/10/openldap-continued.html
-#   http://www.sudo.ws/sudo/man/1.8.2/sudoers.ldap.man.html
-#
-# TODO
-# * ppolicy
-# * authconfig --ldaploadcacert=<URL>   load CA certificate from the URL
-# * http://www.michael-hammer.at/blog/ldap_sudo/
-# * Try https://docs.fedoraproject.org/en-US/Fedora/15/html/FreeIPA_Guide/index.html
-# * http://eatingsecurity.blogspot.com/2008/11/openldap-security.html
-# * Kerberos
-# * For complexity checking, it's fairly easy to enable and configure pam_cracklib on each client
-#    /etc/pam.d/system-auth
-#    password  required pam_cracklib.so \
-#                       dcredit=-1 ucredit=-1 ocredit=-1 lcredit=0 minlen=8
-# * http://open.calivia.com/projects/openldap/
-# * Radius?
-#   http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch31_:_Centralized_Logins_Using_LDAP_and_RADIUS#Configuring_RADIUS_for_LDAP
-#
-# # Create a password that can be inserted into the ldif files.
+# * Create a password that can be inserted into the ldif files.
 #   echo `slappasswd -s secret`
 #
 
@@ -165,6 +145,9 @@ EOF
 # Users that should have sudo rights, are configured in
 # in the ldap-db. The ldap sudo schema are not configured
 # by default, and are here created.
+#
+# http://eatingsecurity.blogspot.com/2008/10/openldap-continued.html
+# http://www.sudo.ws/sudo/man/1.8.2/sudoers.ldap.man.html
 ##########################################################
 
 # Copy the sudo Schema into the LDAP schema repository
@@ -354,6 +337,9 @@ restorecon -R /etc/openldap/cacerts
 #
 # Configure slapd to only be accessible over ssl,
 # with client certificate.
+#
+# http://www.openldap.org/pub/ksoper/OpenLDAP_TLS.html#4.0
+# http://www.openldap.org/faq/data/cache/185.html
 ###########################################################
 ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
 dn: cn=config
