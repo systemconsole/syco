@@ -1,51 +1,18 @@
 #!/usr/bin/env python
 '''
-Install LDAP client and server.
+Install openldap-server.
 
-
-http://www.salsaunited.net/blog/?p=74
-http://home.roadrunner.com/~computertaijutsu/ldap.html
-http://www.server-world.info/en/note?os=CentOS_6&p=ldap
-http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=3
-http://www.openldap.org/doc/admin24/guide.html
-
-# LDAP Setup
-http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Directory_Servers.html#s1-OpenLDAP
-http://www.skills-1st.co.uk/papers/security-with-ldap-jan-2002/security-with-ldap.html
-http://www.openldap.org/doc/admin24/OpenLDAP-Admin-Guide.pdf
-
-# Password policy
-http://www.zytrax.com/books/ldap/ch6/ppolicy.html
-http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&apropos=0&sektion=5&manpath=OpenLDAP+2.3-Release&format=html
-
-# Enable sudo with LDAP
-http://electromech.info/sudo-ldap-with-rhds-linux-open-source.html
-
-# Enable ldap on clients
-http://directory.fedoraproject.org/wiki/Howto:PAM
-
-# LDAP Read
-http://www.linux.com/archive/feature/114074
-http://www.howtoforge.com/linux_ldap_authentication
-http://www.debuntu.org/ldap-server-and-linux-ldap-clients
-http://www.yolinux.com/TUTORIALS/LDAP_Authentication.html
-
-# 2-factor auth
-http://www.wikidsystems.com/
-http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-factor-authentication-to-openldap-and-freeradius
-http://freeradius.org/
-
-# Redhat Directory service.
-#
-# I tried to used the centos directory service/389 directory service first. But
-# it feelt to heavy and bloated. And impossible to find documentation about
-# how to setup the PAM -> ldap. I did choose to use the less complicated openldap.
-http://wiki.centos.org/HowTos/DirectoryServerSetup
-http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/pdf/Installation_Guide/Red_Hat_Directory_Server-8.2-Installation_Guide-en-US.pdf
-http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administration_Guide/index.html
-http://docs.redhat.com/docs/en-US/Red_Hat_Directory_Server/8.2/html/Administration_Guide/User_Account_Management.html
-http://www.oreillynet.com/sysadmin/blog/2006/07/a_new_favorite_fedora_director.html
-http://www.linux.com/archive/feature/114074
+This script is based on information from at least the following links.
+    http://www.openldap.org/doc/admin24/guide.html
+    https://help.ubuntu.com/10.04/serverguide/C/openldap-server.html
+    http://home.roadrunner.com/~computertaijutsu/ldap.html
+    http://www.salsaunited.net/blog/?p=74
+    http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=3
+    http://www.server-world.info/en/note?os=CentOS_6&p=ldap
+    http://linux.die.net/man/5/slapd-config
+    http://eatingsecurity.blogspot.com/2008/11/openldap-security.html
+    http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Directory_Servers.html#s1-OpenLDAP
+    http://www.howtoforge.com/linux_ldap_authentication
 
 '''
 
@@ -55,293 +22,684 @@ __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __status__ = "Production"
 
 import os
 import re
+from types import ListType
 
 import app
 import config
-import general
-from general import shell_exec
-from general import shell_run
+from general import x
+from scopen import scOpen
 import iptables
 import version
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
 SCRIPT_VERSION = 2
 
-SLAPD_FN = "/etc/openldap/slapd.conf"
-LDAP_SERVER_HOST_NAME = config.general.get_ldap_hostname()
-LDAP_DN = config.general.get_ldap_dn()
-
 def build_commands(commands):
-  commands.add("install-ldap-server", install_ldap_server, help="Install ldap server.")
-  commands.add("install-ldap-client", install_ldap_client, help="Install ldap client.")
-  commands.add("uninstall-ldap", uninstall_ldap, help="Uninstall ldap client/server.")
+    commands.add("install-openldap", install_openldap, help="Install openldap.")
+    commands.add("uninstall-openldap", uninstall_openldap, help="Uninstall openldap.")
 
-def install_ldap_server(args):
-  '''
-  Install ldap server on current host.
+def install_openldap(args):
+    '''
+    Install openldap on current host.
 
-  '''
-  app.print_verbose("Install ldap server version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
-  version_obj.check_executed()
+    '''
+    app.print_verbose("Install openldap script-version: %d" % SCRIPT_VERSION)
+    version_obj = version.Version("InstallOpenLdap", SCRIPT_VERSION)
+    version_obj.check_executed()
 
-  # Get all passwords from user at the start of the script.
-  app.get_ca_password()
+    # Get all passwords from installation user at the start of the script.
+    app.get_ca_password()
+    app.get_ldap_admin_password()
 
-  # Setup ldap dns/hostname used by slapd
-  value = "127.0.0.1 " + LDAP_SERVER_HOST_NAME
-  general.set_config_property("/etc/hosts", value, value)
+    # Do the installation.
+    enable_selinux()
+    install_packages()
+    store_logs_on_file()
+    configure_openldap()
+    configure_sudo_in_ldap()
+    create_modules()
+    add_auditlog_overlay()
+    add_pwdpolicy_overlay()
+    add_user_domain()
+    create_certs()
+    enable_ssl()
+    require_highest_security_from_clients()
 
-  shell_exec("yum -y install openldap openldap-servers authconfig nss-pam-ldapd")
+    # Let clients connect to the server through the firewall. This is done after
+    # everything else is done, so we are sure that the server is secure before
+    # letting somebody in.
+    iptables.add_ldap_chain()
+    iptables.save()
 
-  _setup_slapd_config()
-  #_setup_password_policy()
-  _setup_tls()
-  _import_users()
+    _install_web_page()
 
-  shell_exec("chown -R ldap:ldap /var/lib/ldap")
-  shell_exec("service sldap start")
-  shell_exec("/sbin/chkconfig sldap on")
+    version_obj.mark_executed()
 
-  iptables.add_ldap_chain()
-  iptables.save()
+def uninstall_openldap(args):
+    '''
+    Uninstall openldap.
 
-  install_ldap_client(args)
+    '''
+    app.print_verbose("Uninstall openldap script-version: %d" % SCRIPT_VERSION)
+    x("service slapd stop")
+    x("yum -y remove openldap-servers openldap-clients")
 
-  _install_web_page()
+    x("rm -f /etc/openldap/cacerts/*")
+    x("rm -rf /etc/openldap/schema")
+    x("rm -f /etc/openldap/slapd.conf.bak")
+    x("rm -rf /etc/openldap/slapd.d")
+    x("rm -rf /var/lib/ldap")
 
-  version_obj.mark_executed()
+    # Remove client cert configs
+    scOpen("/root/ldaprc").remove("TLS_CERT.*\|^TLS_KEY.*")
 
-def install_ldap_client(args):
-  '''
-  Install ldap client on current host and connect to networks ldap server.
+    # Remove sudo configs.
+    scOpen("/etc/nsswitch.conf").remove("^sudoers.*")
+    scOpen("/etc/ldap.conf").remove(
+        "^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key.*\|sudoers_debug.*"
+    )
 
-  '''
+    # Host information
+    scOpen("/etc/hosts").remove('^' + config.general.get_ldap_server_ip() + ".*")
 
-  #http://serverfault.com/questions/299855/centos-6-linux-and-nss-pam-ldapd
+    # Remove web files
+    x("rm -rf /var/www/ldap")
+    x("rm -f /etc/httpd/conf.d/010-ldap.conf")
+    x("rm -rf /var/log/slapd")
 
+    iptables.del_ldap_chain()
+    iptables.save()
 
-  app.print_verbose("Install ldap server version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
-  version_obj.check_executed()
+    version_obj = version.Version("InstallOpenLdap", SCRIPT_VERSION)
+    version_obj.mark_uninstalled()
 
-  install.package("authconfig")
-  install.package("pam_ldap")
-  install.package("nscd")
-  iptables.add_ldap_chain()
-  iptables.save()
+def enable_selinux():
+    '''
+    Enable SELinux for higher security.
 
-  ip = config.general.get_ldap_server_ip()
-  general.wait_for_server_to_start(ip, "389")
+    '''
+    x("setenforce 1")
+    x("setsebool -P domain_kernel_load_modules 1")
 
-  # Copy the TLS cert needed to login to the ldap-server.
-  shell_run("scp root@" + ip + ":/etc/openldap/cacerts/ldap.pem /etc/openldap/cacerts/ldap.pem",
-    events={
-      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
-      "root@" + ip + "\'s password\:": app.get_root_password() + "\n"
+def install_packages():
+    '''
+    Install packages and start service.
+
+    '''
+    # Communication with the LDAP-server needs to be done with domain name, and not
+    # the ip. This ensures the dns-name is configured.
+    scOpen('/etc/hosts').remove('^' + config.general.get_ldap_server_ip() + '.*')
+    scOpen('/etc/hosts').add(
+        '%(ldap_ip)s %(domain_name)s' %
+        {'ldap_ip' : config.general.get_ldap_server_ip(),
+         'domain_name' : config.general.get_ldap_hostname()}
+    )
+
+    # Install all required packages.
+    x("yum -y install openldap-servers openldap-clients")
+
+    # Update the locate database
+    x('updatedb')
+
+    # Create backend database.
+    filepath = x('locate /usr/share/doc/*/DB_CONFIG.example').strip()
+    x("cp %s /var/lib/ldap/DB_CONFIG" % filepath)
+    x("chown -R ldap:ldap /var/lib/ldap")
+
+    # Set password for cn=admin,cn=config (it's secret)
+    scOpen('/etc/openldap/slapd.d/cn\=config/olcDatabase\=\{0\}config.ldif').add(
+        'olcRootPW: %(ldap_password)s' %
+        {'ldap_password': get_hashed_password(app.get_ldap_admin_password())}
+    )
+
+    # Autostart slapd after reboot.
+    x("chkconfig slapd on")
+
+    # Start ldap server
+    x("service slapd start")
+
+def store_logs_on_file():
+    '''
+    Store all openldap logs on file.
+
+    '''
+    # Create folder to store log files in
+    x("mkdir /var/log/slapd")
+    x("chmod 755 /var/log/slapd")
+    x("chown ldap:ldap /var/log/slapd")
+
+    # Redirect all log files through rsyslog to file.
+    scOpen('/etc/rsyslog.conf').remove('local4.*')
+    scOpen('/etc/rsyslog.conf').add(
+        'local4.*                                                /var/log/slapd/slapd.log'
+    )
+    x("service rsyslog restart")
+
+def configure_openldap():
+    '''
+    General configuration of cn=config like passwords and access rights.
+
+    '''
+    # Ensure that openldap got time to start.
+    x("sleep 1")
+
+    # Do the configurations.
+    ldapadd("admin", """
+# Setup what to log.
+dn: cn=config
+changetype:modify
+replace: olcLogLevel
+olcLogLevel: config stats shell
+-
+replace: olcIdleTimeout
+olcIdleTimeout: 30
+
+# Set access for the monitor db.
+dn: olcDatabase={2}monitor,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.base="cn=Manager,%(dn)s" read by * none
+
+# Set password for cn=admin,cn=config
+dn: olcDatabase={0}config,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: %(password)s
+
+# Change LDAP-domain, password and access rights.
+dn: olcDatabase={1}bdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: %(dn)s
+-
+replace: olcRootDN
+olcRootDN: cn=Manager,%(dn)s
+-
+replace: olcRootPW
+olcRootPW: %(password)s
+-
+replace: olcAccess
+olcAccess: {0}to attrs=employeeType by dn="cn=sssd,%(dn)s" read by self read by * none
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by anonymous auth by * none
+olcAccess: {2}to dn.base="" by * none
+olcAccess: {3}to * by dn="cn=admin,cn=config" write by dn="cn=sssd,%(dn)s" read by self write by * none
+""" % {
+    "dn": config.general.get_ldap_dn(),
+    "password": get_hashed_password(app.get_ldap_admin_password())
     }
-  )
+)
 
-  shell_run("scp root@" + ip + ":/etc/openldap/cacerts/ca.cert /etc/openldap/cacerts/ca.cert",
-    events={
-      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
-      "root@" + ip + "\'s password\:": app.get_root_password() + "\n"
-    }
-  )
+def configure_sudo_in_ldap():
+    '''
+    Configure sudo in ldap
 
-  shell_exec("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
+    Users that should have sudo rights, are configured in the ldap-db. The ldap
+    sudo schema are not configured by default, and are here created.
 
-  # Enable as a client
-  shell_exec("authconfig --enableldap --enableldaptls --enableldapauth --disablenis --enablecache --enablemkhomedir --enablelocauthorize " +
-    "--ldapserver=" + LDAP_SERVER_HOST_NAME + " --ldapbasedn=" + LDAP_DN + " "
-    "--updateall")
+    Learn more:
+        http://eatingsecurity.blogspot.com/2008/10/openldap-continued.html
+        http://www.sudo.ws/sudo/man/1.8.2/sudoers.ldap.man.html
 
-  version_obj.mark_executed()
+    '''
+    # Copy the sudo Schema into the LDAP schema repository
+    filepath = x('locate /usr/share/doc/*/schema.OpenLDAP').strip()
+    x("/bin/cp -f %s /etc/openldap/schema/sudo.schema" % filepath)
+    x("restorecon /etc/openldap/schema/sudo.schema")
 
-def uninstall_ldap(args):
-  '''
-  Uninstall both ldap client and server.
+    # Create a conversion file for the schema.
+    x("mkdir /tmp/sudoWork")
+    x("echo 'include /etc/openldap/schema/sudo.schema' > /tmp/sudoWork/sudoSchema.conf")
 
-  '''
-  app.print_verbose("Uninstall ldap client/server")
-  shell_exec("yum -y erase openldap-servers openldap-servers-overlays.x86_64")
-  shell_exec("rm /etc/openldap/slapd.conf.rpmsave")
-  shell_exec("rm -r /var/lib/ldap")
-  shell_exec("rm -r /etc/ldap.conf.rpmnew")
-  shell_exec("rm -r /etc/ldap.conf.rpmsave")
-  shell_exec("rm /var/www/ldap")
-  shell_exec("rm /etc/httpd/conf.d/010-ldap.conf")
+    # Convert the "Schema" to "LDIF".
+    x("slapcat -f /tmp/sudoWork/sudoSchema.conf -F /tmp/ -n0 -s 'cn={0}sudo,cn=schema,cn=config' > /tmp/sudoWork/sudo.ldif")
 
-  iptables.del_ldap_chain()
-  iptables.save()
+    # Remove invalid data.
+    scOpen('/tmp/sudoWork/sudo.ldif').replace('{0}sudo', 'sudo')
 
-  version_obj = version.Version("InstallLdapServer", SCRIPT_VERSION)
-  version_obj.mark_uninstalled()
+    # Remove last 8 (invalid) lines.
+    scOpen('/tmp/sudoWork/sudo.ldif').remove_eof(8)
 
-def _setup_slapd_config():
-  general.set_config_property(SLAPD_FN, ".*suffix.*", 'suffix "' + LDAP_DN + '"')
-  general.set_config_property(SLAPD_FN, ".*rootdn.*Manager.*", 'rootdn "cn=Manager,' + LDAP_DN + '"')
+    # Load the schema into the LDAP server
+    ldapadd("admin", open("/tmp/sudoWork/sudo.ldif").readlines())
 
-  # Not needed when all communication to ldap server is done on localhost
-  # from localhost.
-  # hash_password = shell_exec('slappasswd -c "%s" -s ' + password)
-  # general.set_config_property(SLAPD_FN, ".*rootpw.*[{]crypt[}].*", 'rootpw ' + hash_password)
+    x("rm -rf /tmp/sudoWork")
 
-  # Access Control
-  # Users can change their own passwords
-  # Everyone can read everything except passwords
-  if (not general.grep(SLAPD_FN, "access to attrs=userPassword")):
-    f = open(SLAPD_FN, "a")
-    f.write("access to attrs=userPassword\n")
-    f.write("  by self write\n")
-    f.write("  by anonymous auth\n")
-    f.write("  by * none\n")
-    f.write("access to *\n")
-    f.write("  by * read\n")
-    f.close()
+    # Add index to sudoers db
+    ldapadd("admin", """
+dn: olcDatabase={1}bdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: sudoUser eq""")
 
-  # Setup LDAP backend database
-  shell_exec("cp /etc/openldap/DB_CONFIG.example /var/lib/ldap/DB_CONFIG")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/common.ldif")
+def create_modules():
+    '''
+    Create the ldap node that are used to dynamically load overlay modules.
 
-  for dir in os.listdir(app.SYCO_USR_PATH):
-    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/common.ldif")
-    if (os.access(filename, os.F_OK)):
-      shell_exec("slapadd -l " + filename)
+    '''
+    ldapadd("admin", """
+dn: cn=module{0},cn=config
+objectClass: olcModuleList
+cn: module{0}
+olcModulePath: /usr/lib64/openldap/""")
 
-def _setup_password_policy():
-  app.print_verbose("Setup password policy.")
-  value = "moduleload /usr/lib64/openldap/ppolicy.la"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+def add_auditlog_overlay():
+    '''
+    Add auditlog overlay.
 
-  value = "include /etc/openldap/schema/ppolicy.schema"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+    Learn more:
+        http://www.manpagez.com/man/5/slapo-auditlog/
 
-  # Invokes password policies for this DIT only
-  value = "overlay ppolicy"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+    '''
+    ldapadd("admin", """
+dn: cn=module{0},cn=config
+changetype:modify
+add: olcModuleLoad
+olcModuleLoad: auditlog.la
 
-  # Define the default policy
-  value = 'ppolicy_default "cn=default,cn=pwpolicies,' + LDAP_DN + '"'
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcAuditLogConfig
+olcOverlay: auditlog
+olcAuditlogFile: /var/log/slapd/auditlog.log
+""")
 
-def _setup_tls():
-  '''
-  Create TLS cert and setup slapd to use them.
+def add_pwdpolicy_overlay():
+    '''
+    Add pwdpolicy overlay
 
-  '''
-  app.print_verbose("Setup TLS")
+    Learn more:
+        http://www.zytrax.com/books/ldap/ch6/ppolicy.html
+        http://www.openldap.org/software/man.cgi?query=slapo-ppolicy&sektion=5&apropos=0&manpath=OpenLDAP+2.3-Release
+        http://www.symas.com/blog/?page_id=66
+    '''
+    ldapadd("admin", """
+dn: cn=module{0},cn=config
+changetype:modify
+add: olcModuleLoad
+olcModuleLoad: ppolicy.la
 
-  # Create dir
-  certdir = "/etc/openldap/tls"
-  shell_exec("mkdir -p " + certdir)
+dn: olcOverlay=ppolicy,olcDatabase={1}bdb,cn=config
+olcOverlay: ppolicy
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcPPolicyHashCleartext: TRUE
+olcPPolicyUseLockout: FALSE
+olcPPolicyDefault: cn=default,ou=pwpolicies,%(ldap_dn)s
+""" % {'ldap_dn': config.general.get_ldap_dn()})
 
-  # Create CA
-  ca_pass_phrase = app.get_ca_password()
-  shell_run("openssl genrsa -des3 -out ca.key 2048",
-    cwd=certdir,
-    events={
-      r'Enter pass phrase for ca.key:': ca_pass_phrase + "\n",
-      r'Verifying.*Enter pass phrase for ca.key:': ca_pass_phrase + "\n",
-    }
-  )
+def add_user_domain():
+    '''
+    Add users, groups, sudoers. To the dc=example,dc=com database.
 
-  # Create CA cert.
-  shell_run("openssl req -new -x509 -days 365 -key ca.key -out ca.cert",
-    cwd=certdir,
-    events={
-      re.compile('Enter pass phrase for ca.key:'): ca_pass_phrase + "\n",
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.general.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.general.get_state() + "\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.general.get_locality() + "\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.general.get_organization_name() + "\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.general.get_organizational_unit_name() + "\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): config.general.get_organizational_unit_name() + "CA\n",
-      re.compile('Email Address \[\]\:'): config.general.get_admin_email() + "\n",
-    }
-  )
+    '''
+    filenames = []
 
-  # Create ldap cert
-  shell_exec("openssl genrsa -out ldap.key 1024", cwd=certdir)
-  shell_run("openssl req -new -key ldap.key -out ldap.csr",
-    cwd=certdir,
-    events={
-      re.compile('Country Name \(2 letter code\) \[GB\]\:'): config.general.get_country_name() + "\n",
-      re.compile('State or Province Name \(full name\) \[Berkshire\]\:'): config.general.get_state() + ".\n",
-      re.compile('Locality Name \(eg, city\) \[Newbury\]\:'): config.general.get_locality() + ".\n",
-      re.compile('Organization Name \(eg, company\) \[My Company Ltd\]\:'): config.general.get_organization_name() + ".\n",
-      re.compile('Organizational Unit Name \(eg, section\) \[\]\:'): config.general.get_organizational_unit_name() + "\n",
-      re.compile('Common Name \(eg, your name or your server\'s hostname\) \[\]\:'): LDAP_SERVER_HOST_NAME + "\n",
-      re.compile('Email Address \[\]\:'): config.general.get_admin_email() + "\n",
-      re.compile('A challenge password \[\]\:'): "\n",
-      re.compile('An optional company name \[\]\:'): "\n",
-    }
-  )
+    # Add public domain.
+    filenames.append(app.SYCO_PATH + "var/ldap/ldif/domain.ldif")
 
-  # Sign ldap cert with CA.
-  shell_run("openssl x509 -req -in ldap.csr -out ldap.cert -CA ca.cert -CAkey ca.key -CAcreateserial -days 365",
-    cwd=certdir,
-    events={
-      r'Enter pass phrase for ca.key:': ca_pass_phrase + "\n",
-    }
-  )
+    # Add private domains.
+    for dir in os.listdir(app.SYCO_USR_PATH):
+        filenames.append(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/domain.ldif")
 
-  shell_exec("cp /etc/openldap/tls/ca.cert /etc/openldap/cacerts/")
-  shell_exec("cat /etc/openldap/tls/ldap.key > /etc/openldap/cacerts/ldap.pem")
-  shell_exec("cat /etc/openldap/tls/ldap.cert >> /etc/openldap/cacerts/ldap.pem")
+    # Import the files
+    for filename in filenames:
+        filename = os.path.abspath(filename)
+        if (os.access(filename, os.F_OK)):
+            ldapadd("manager", open(filename).readlines())
 
-  # Configure slapd for TLS
-  value = "TLSCertificateFile /etc/openldap/cacerts/ldap.pem"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+def create_certs():
+    '''
+    Create all certificates that are needed by openldap.
 
-  value = "TLSCertificateKeyFile /etc/openldap/cacerts/ldap.pem"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+    ca         - Signing client and server cert.
+    slapd    - The server cert configured in the openldap server.
+    client - All clients (sssd, ldapsearch etc.) need to send this with all their
+                    requests.
 
-  value = "TLSCACertificateFile /etc/openldap/cacerts/ca.cert"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+    View cert info
+    openssl x509 -text -in /etc/openldap/cacerts/ca.crt
+    openssl x509 -text -in /etc/openldap/cacerts/slapd.crt
+    openssl x509 -text -in /etc/openldap/cacerts/client.pem
+    openssl req -noout -text -in /etc/openldap/cacerts/client.csr
 
-  # http://www.openldap.org/doc/admin24/guide.html#Authentication Methods
-  value = "security ssf=1 update_ssf=112 simple_bind=64"
-  general.set_config_property(SLAPD_FN, ".*" + value + ".*", value)
+    '''
+    create_ca_cert()
+    create_server_cert()
+    create_client_cert()
+    set_permissions_on_certs()
 
-def _import_users():
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/users.ldif")
-  shell_exec("slapadd -l " + app.SYCO_PATH + "var/ldap/ldif/groups.ldif")
+def get_cert_subj(commonName):
+    '''
+    Return args for openssl "-subj" option.
 
-  for dir in os.listdir(app.SYCO_USR_PATH):
-    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/users.ldif")
-    if (os.access(filename, os.F_OK)):
-      shell_exec("slapadd -l " + filename)
+    '''
+    return "'/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s/emailAddress=%s'" % (
+        config.general.get_country_name(),
+        config.general.get_state(),
+        config.general.get_locality(),
+        config.general.get_organization_name(),
+        config.general.get_organizational_unit_name(),
+        commonName,
+        config.general.get_admin_email()
+    )
 
-    filename = os.path.abspath(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/groups.ldif")
-    if (os.access(filename, os.F_OK)):
-      shell_exec("slapadd -l " + filename)
+def create_ca_cert():
+    x("echo '00' > /etc/openldap/cacerts/ca.srl")
+    x("openssl req -new -x509 -sha512 -nodes -days 3650 -newkey rsa:4096" +
+      " -out /etc/openldap/cacerts/ca.crt" +
+      " -keyout /etc/openldap/cacerts/ca.key" +
+      " -subj " + get_cert_subj(config.general.get_organization_name() + "CA"))
+
+def create_server_cert():
+    x("openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096 " +
+      " -keyout /etc/openldap/cacerts/slapd.key" +
+      " -out /etc/openldap/cacerts/slapd.csr" +
+      " -subj " + get_cert_subj(config.general.get_ldap_hostname()))
+
+    x("openssl x509 -req -sha512 -days 1095" +
+      " -in /etc/openldap/cacerts/slapd.csr" +
+      " -out /etc/openldap/cacerts/slapd.crt" +
+      " -CA /etc/openldap/cacerts/ca.crt" +
+      " -CAkey /etc/openldap/cacerts/ca.key")
+
+def create_client_cert():
+    # Create a CSR (Certificate Signing Request) file for client cert
+    x("openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096" +
+      " -keyout /etc/openldap/cacerts/client.key" +
+      " -out /etc/openldap/cacerts/client.csr" +
+      " -subj " + get_cert_subj(config.general.get_organization_name() + "client"))
+
+    # Create a signed client crt.
+    x("""cat > /etc/openldap/cacerts/sign.conf << EOF
+[ v3_req ]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature
+subjectKeyIdentifier = hash
+EOF""")
+
+    x("openssl x509 -req -days 1095" +
+      " -sha512" +
+      " -extensions v3_req" +
+      " -extfile /etc/openldap/cacerts/sign.conf" +
+      " -CA /etc/openldap/cacerts/ca.crt" +
+      " -CAkey /etc/openldap/cacerts/ca.key" +
+      " -in /etc/openldap/cacerts/client.csr" +
+      " -out /etc/openldap/cacerts/client.crt")
+
+    # One file with both crt and key. Easier to manage the cert on client side.
+    x("cat /etc/openldap/cacerts/client.crt" +
+      " /etc/openldap/cacerts/client.key > " +
+      " /etc/openldap/cacerts/client.pem")
+
+def set_permissions_on_certs():
+    # Create hash and set permissions of cert
+    x("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
+    x("chown -Rf root:ldap /etc/openldap/cacerts")
+    x("chmod -Rf 750 /etc/openldap/cacerts")
+    x("restorecon -R /etc/openldap/cacerts")
+
+    # httpd need permissions to read the files.
+    x("chmod +x /etc/openldap/cacerts")
+    x("chmod +r /etc/openldap/cacerts/ca.crt")
+    x("chmod +r 750 /etc/openldap/cacerts/client.pem")
+
+
+def enable_ssl():
+    '''
+    Configure slapd to only be accessible over ssl,
+    with client certificate.
+
+    Learn more:
+        http://www.openldap.org/pub/ksoper/OpenLDAP_TLS.html#4.0
+        http://www.openldap.org/faq/data/cache/185.html
+
+    '''
+    ldapadd("admin", """
+dn: cn=config
+changetype:modify
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/cacerts/slapd.key
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/cacerts/slapd.crt
+-
+replace: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/openldap/cacerts/ca.crt
+-
+replace: olcTLSCipherSuite
+olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
+-
+replace: olcTLSVerifyClient
+olcTLSVerifyClient: demand""")
+
+    # Enable LDAPS and dispable LDAP
+    scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAPS=.*', 'SLAPD_LDAPS=yes')
+    scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAP=.*', 'SLAPD_LDAPS=no')
+    x("service slapd restart")
+
+    # Configure the client cert to be used by ldapsearch for user root.
+    scOpen("/root/ldaprc").remove("TLS_CERT.*\|^TLS_KEY.*")
+    scOpen("/root/ldaprc").add(
+        "TLS_CERT /etc/openldap/cacerts/client.pem\n" +
+        "TLS_KEY /etc/openldap/cacerts/client.pem"
+    )
+
+def require_highest_security_from_clients():
+    '''
+    Required a high Security Strength Factor from clients.
+
+    Learn more:
+        http://www.openldap.org/doc/admin24/guide.html#Authentication Methods
+    TODO:
+        add olcSaslSecProps: noactive, nodict, passcred, minssf=128
+        add olcSecurity: transport=128
+        add olcSecurity: sasl=128
+        add olcSecurity: update_ssl=128
+        add olcSecurity: update_transport=128
+        add olcSecurity: update_tls=128
+        add olcSecurity: update_sasl=128
+
+    '''
+    ldapsadd("admin", """
+dn: cn=config
+changetype:modify
+replace: olcLocalSSF
+olcLocalSSF: 128
+-
+replace: olcSaslSecProps
+olcSaslSecProps: noanonymous,noplain
+
+dn: cn=config
+changetype:modify
+replace: olcSecurity
+olcSecurity: ssf=128
+olcSecurity: simple_bind=128
+olcSecurity: tls=128""")
 
 def _install_web_page():
-  # Used by the python cgi script that is installed.
-  shell_exec("yum -y install python-ldap")
+    # Install cgi-bin and html files
+    x("cp -R " + app.SYCO_PATH + "var/ldap/html /var/www/ldap")
+    x("chmod -R 555 /var/www/ldap")
+    x("chcon -R system_u:object_r:httpd_sys_content_t:s0 /var/www/ldap")
+    x("chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/ldap/cgi-bin")
 
-  # Install cgi-bin and html files
-  shell_exec("cp -R " + app.SYCO_PATH + "var/ldap/html /var/www/ldap")
-  shell_exec("chmod -R 555 /var/www/ldap")
-  shell_exec("chcon -R system_u:object_r:httpd_sys_content_t:s0 /var/www/ldap")
-  shell_exec("chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/ldap/cgi-bin")
+    scOpen("/var/www/ldap/cgi-bin/ldappassword.cgi").replace(
+        "${LDAP_DN}", config.general.get_ldap_dn()
+    )
 
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_DN\}", config.general.get_ldap_dn())
-  general.set_config_property("/var/www/ldap/cgi-bin/ldappassword.cgi", "\$\{LDAP_\HOSTNAME}", config.general.get_ldap_hostname())
+    scOpen("/var/www/ldap/cgi-bin/ldappassword.cgi").replace(
+        "${LDAP_HOSTNAME}", config.general.get_ldap_hostname()
+    )
 
-  # Config apache
-  shell_exec("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
-  general.set_config_property("/etc/httpd/conf.d/010-ldap.conf", "\$\{LDAP_\HOSTNAME}", config.general.get_ldap_hostname())
+    # Config apache
+    x("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
+    scOpen("/etc/httpd/conf.d/010-ldap.conf").replace(
+        "${LDAP_HOSTNAME}", config.general.get_ldap_hostname()
+    )
 
-  shell_exec("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/010-ldap.conf")
-  shell_exec("chown root:root /etc/httpd/conf.d/010-ldap.conf")
-  shell_exec("chmod 644 /etc/httpd/conf.d/010-ldap.conf")
-  shell_exec("/etc/init.d/httpd restart")
+    x("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/010-ldap.conf")
+    x("chown root:root /etc/httpd/conf.d/010-ldap.conf")
+    x("chmod 644 /etc/httpd/conf.d/010-ldap.conf")
+    x("/etc/init.d/httpd restart")
+
+def get_hashed_password(password):
+    '''
+    Returns a seeded SHA-1 hashed password.
+
+    get_hashed_password is used to generate an userPassword value suitable for
+    use with ldapmodify(1), slapd.conf(5) rootpw configuration directive or the
+    slapd-config(5) olcRootPW configura-tion directive.
+
+    password
+        The password that should be hashed.
+
+    return
+        ie. {SSHA}sR7O1GhqEUMiy14uliQdHo7pE0dwlmxL
+
+    '''
+    return x("slappasswd -h '{SSHA}' -s '" + password +"'").strip()
+
+def ldapadd(user, value, uri="-H ldap:///"):
+    '''
+    Add ldif to openldap over ldap with shell command ldapadd.
+
+    user
+        The user used to bind with openldap.
+        Only user 'admin' and 'manager' are allowed.
+
+    value
+        The ldif value that should be added to openldap.
+
+    '''
+    if user == 'admin':
+        user = 'cn=admin,cn=config'
+    elif user == 'manager':
+        user = 'cn=Manager,' + config.general.get_ldap_dn()
+    else:
+        raise Exception("Only admin and manager users are supported by ldapXadd")
+
+    if isinstance(value, ListType):
+        tmpvalue = ""
+        for val in value:
+            tmpvalue += val
+        value = tmpvalue
+
+    x("ldapadd %s -x -D '%s' -w '%s' << EOF\n%s\nEOF\n\n" % (
+        uri,
+        user,
+        app.get_ldap_admin_password(),
+        value
+    ))
+
+def ldapsadd(user, value):
+    '''
+    Add ldif to openldap over ldaps with shell command ldapadd.
+
+    '''
+    ldapadd(user, value, '')
+
+
+
+
+
+
+###########################################################
+# Debug/Testing
+#
+# Need to install client before ldapsearch will work.
+###########################################################
+
+# Test config files
+# slaptest -u
+
+# Verify the client-cert auth
+# openssl s_client -connect localhost:636 -state \
+#         -CAfile /etc/openldap/cacerts/ca.crt \
+#         -cert /etc/openldap/cacerts/client.pem \
+#         -key /etc/openldap/cacerts/client.pem
+# ldapsearch -x -D "cn=admin,cn=config" -w secret    -v -d1
+
+# List all info from the dc=syco,dc=net database.
+# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net -e ppolicy
+
+# List the sudo.schema
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
+
+# Verify that the AuditLog is configured.
+# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config
+
+# List root DN:s, controls, featurs etc.
+# ldapsearch -LLL -x    -b "" -s base +
+
+#
+# ldapsearch -D "cn=admin,cn=config" -w secret -x -b "dc=syco,dc=net" -e ppolicy objectclass=posixAccount
+
+# List all relevant database options.
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config schema
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=schema,cn=config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={0}config
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
+# ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret    olcDatabase={2}monitor,cn=config
+
+
+# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
+# ldapsearch -D "cn=admin,cn=config" -w secret -b dc=syco,dc=net cn=default
+# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config olcOverlay=ppolicy
+# ldapsearch -D "cn=admin,cn=config" -w secret -b uid=user4,ou=people,dc=syco,dc=net
+# # Return my self.
+# ldapsearch -b uid=user1,ou=people,dc=syco,dc=net -D "uid=user1,ou=people,dc=syco,dc=net" -w fratsecret
+
+# Unlock ppolicy locked account
+# ldapadd -D "cn=admin,cn=config" -W
+# dn: uid=danlin,ou=people,dc=fareoffice,dc=com
+# changetype: modify
+# delete: pwdAccountLockedTime
+#
+# Unlock ppolicy locked account or remove the pwdMinAge
+# dn: uid=danlin,ou=people,dc=fareoffice,dc=com
+# changetype: modify
+# add: pwdReset
+# pwdReset: TRUE
+
+###########################################################
+# Add accesslog overlay.
+#
+# http://www.manpagez.com/man/5/slapo-accesslog/
+#
+# TODO: Didn't get it working.
+#
+###########################################################
+# ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+# dn: cn=module,cn=config
+# objectClass: olcModuleList
+# cn: module
+# olcModulePath: /usr/lib64/openldap/
+# olcModuleLoad: access.la
+#
+#
+# dn: olcOverlay=accesslog,olcDatabase={1}bdb,cn=config
+# changetype: add
+# olcOverlay: accesslog
+# objectClass: olcOverlayConfig
+# objectClass: olcAccessLogConfig
+# logdb: cn=auditlog
+# logops: writes reads
+# # read log every 5 days and purge entries
+# # when older than 30 days
+# logpurge 180+00:00 5+00:00
+# # optional - saves the previous contents of
+# # person objectclass before performing a write operation
+# logold: (objectclass=person)
+# EOF

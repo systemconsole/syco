@@ -31,6 +31,7 @@ import sys
 import app
 import config
 import general
+from general import x
 import installGlassfish301
 import installGlassfish31
 import net
@@ -50,7 +51,7 @@ def iptables(args, output = True):
   Execute the iptables shell command.
 
   '''
-  general.popen("/sbin/iptables " + args, output=output)
+  x("/sbin/iptables " + args, output=output)
 
 def iptables_clear(args):
   '''
@@ -97,7 +98,7 @@ def save():
 
   '''
   app.print_verbose("Save current iptables rules to /etc/sysconfig/iptables.")
-  general.popen("/sbin/iptables-save > /etc/sysconfig/iptables")
+  x("/sbin/iptables-save > /etc/sysconfig/iptables")
 
 def iptables_setup(args):
   '''
@@ -427,26 +428,35 @@ def del_nfs_chain():
   iptables("-X nfs_export", False)
 
 def add_ldap_chain():
-  app.print_verbose("Add iptables chain for ldap")
   del_ldap_chain()
 
-  iptables("-N ldap")
+  app.print_verbose("Add iptables chain for ldap")
 
-  if (not os.path.exists('/etc/init.d/ldap')):
-    iptables("-A syco_input  -p tcp -j ldap")
+  iptables("-N ldap_in")
+  iptables("-N ldap_out")
 
-  # TODO: Should only be able to contact the syco ldap server.
-  iptables("-A syco_output -p tcp -j ldap")
+  if (os.path.exists('/etc/init.d/slapd')):
+    iptables("-A syco_input  -p tcp -j ldap_in")
+    iptables(
+      "-A ldap_in -m state --state NEW -p tcp -s %s --dport 636 -j allowed_tcp" %
+      (config.general.get_ldap_server_ip() + "/" + config.general.get_back_netmask())
+    )
 
-  # LDAP with none TLS and with TLS
-  iptables("-A ldap -m state --state NEW -p tcp --dport 389 -j allowed_tcp")
+  iptables("-A syco_output -p tcp -j ldap_out")
+  iptables(
+    "-A ldap_out -m state --state NEW -p tcp -d %s --dport 636 -j allowed_tcp" %
+    config.general.get_ldap_hostname()
+  )
 
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
-  iptables("-D syco_input  -p tcp -j ldap", False)
-  iptables("-D syco_output -p tcp -j ldap", False)
-  iptables("-F ldap", False)
-  iptables("-X ldap", False)
+  iptables("-D syco_input -p tcp -j ldap_in", True)
+  iptables("-F ldap_in", True)
+  iptables("-X ldap_in", True)
+
+  iptables("-D syco_output -p tcp -j ldap_out", True)
+  iptables("-F ldap_out", True)
+  iptables("-X ldap_out", True)
 
 def add_cobbler_chain():
   if (not os.path.exists('/etc/init.d/cobblerd')):

@@ -26,6 +26,7 @@ import sys
 from random import choice
 from socket import *
 
+from constant import *
 import app
 import expect
 import pexpect
@@ -271,7 +272,7 @@ def x(command, user="", output=True):
     command="su " + user + ' -c "' + command + '"'
 
   if (output):
-    app.print_verbose("Command: " + command)
+    app.print_verbose(BOLD + "Command: " + RESET + command)
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
   return handle_subprocess(p, output)
@@ -304,7 +305,7 @@ def handle_subprocess(p, output):
   if ((stdout or stderr) and app.options.verbose >=2 and output):
     print("\n"),
 
-  return stdout
+  return stdout + str(stderr)
 
 def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=True):
   '''

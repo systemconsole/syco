@@ -11,23 +11,6 @@ Version 0.2
 
 Version 0.25
 ------------
-# Upgrade scripts to centos 6
-# Setup bond and bridge installation in kvm host
-# Move all host dependent functions from app.py to it's own host/device class.
-  That will be instansiated from config.py.
-  config.getHost("fo-tp-install").get_mac()
-  config.getHost("fo-tp-install").get_ip()
-# Replace all host_name with hostname.
-# Set the linux root email address. The one that are emailed when for example sudo is executed without permission.
-# Upgrade scripts to centos 6
-# Removed fareoffice relations in the public scripts and documentation.
-# Setup ip in kickstart, front and back.
-# Test installGuestWithDVD.
-# Test installation of install server
-# Make it possible to install from the admin-net. gateways and such.
-# Test install fo-tc-ldap with cobbler.
-# Added popen that can replace shell_exec when events is not needed.
-
 * Anything good on this site?
   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
@@ -48,10 +31,6 @@ Version 0.4
 
 Version 3.9 (iptables)
 ----------------------
-# Refactor iptable.py, add a rule chain that can be controlled from other scripts?
-# Iptable rules on fo-tp-install should be synced in iptables-setup.
-# Are all iptables rules tested and moved to iptables-setup.
-# http://security.blogoverflow.com/2011/08/base-rulesets-in-iptables/
 * Looks like iptables allows port 80 to all servers. Can connect to
   offical yum repo servers.
 * Separate rules for eth0 and eth1, br0 and br1?
@@ -84,6 +63,7 @@ Monitor
   of each request beyond a point that users consider "fast enough".
 * Monitor cpu temp
 * Check that no swap exists on the kvm hosts.
+* Monitor hardware, snmp??
 
 Hardening
 ---------
@@ -243,71 +223,3 @@ On Call (Linux Ocean?)
 * Surrvelience service, an sms is sent when somehting is wrong. The on call guy
   needs to report back to a system, that the error is notified. Otherwiese
   a new sms is sent to the second on call guy.
-
-CHANGELOG
-=========
-MAHE=Mattias Hemmingsson
-DALI=Daniel Lindh
-
-110205 DALI - Create webpage for systemconsole.github.com
-110205 DALI - Removed changelog from all scripts. The changelog is to be found
-              in the git log.
-110204 DALI - Rename project to syco (System Console) and pushed to
-              github.com/systemconsole/syco.git
-110304 DALI - When user add -f (force) to command line, version.check_executed()
-              ignores value in version.cfg.
-110304 DALI - When user run an uninstall command, the version.cfg should be reset to version 0.
-110304 DALI - vir-list, show all guests on all hosts based on install.cfg
-110212 DALI - installHttpd workign with httpd and mod_sec.
-110212 DALI - Added scripts that should be executed during installation phase.
-110212 DALI - Renamed fo-tp-svn to fo-tp-vcs (version control system).
-110212 DALI - Disabled modsec rule "block not allowed urls.", things got to complicated in installFarepayment.
-110212 DALI - Enable SELinux httpd_can_network_connect on apache servers, to get mod_proxy working.
-110212 DALI - Modsecurity-crs file was downloaded to the wrong filename.
-110212 DALI - Automatically delete install dir when syco exit.
-110212 DALI - Set java and java_home path for the currently logged in user, when installing glassfish.
-110210 DALI - Move private plugins from bin/private to usr/
-110210 DALI - Moving private files to private repo.
-110207 DALI - Adding configuration of httpd and modsec for farepayment.
-110205 DALI - Added allowed_udp chain to use with UDP rules for iptables.
-110205 DALI - Added support for httpd and modsecurity for iptables.
-110128 DALI - Version 1.0.0 of installFarepayment completed.
-110203 DALI - Fixes in installFarepayment after previous refactoring.
-110203 DALI - Bugfixing in glassfish installation after all refactoring.
-110203 DALI - shell_exec didn't execute the command in the current working directory.
-110203 DALI - download_file only need first argument, and will download the file to install dir
-110203 DALI - Changed name of svn user to syscon.
-110203 DALI - Saving passwords to file after they have been executed entered by user.
-110203 DALI - Invalid use of variables in version.mark_executed(), crashed the program.
-110203 DALI - Use the constants GLASSFISH_PATH, GLASSFISH_DOMAINS_PATH, GLASSFISH_START_SCRIPT_PATH everywhere.
-110203 DALI - Replace /opt/syco with app.SYCO_PATH in all files.
-110203 DALI - Changed use of shell_exec to asadmin_exec
-110201 DALI - Fixed the output of print_verbose and shell_exec.
-110201 DALI - Replaced shell_exec with shell_exec_p everywhere in the code.
-110201 DALI - Refactoring and comments in general.py.
-110201 DALI - Some minor refactoring and commenting in app.py
-110201 DALI - Fixed unused imports (found by netbeans)
-110130 DALI - Refactoring the use off class Version.
-110129 DALI - Refactoring and cleaning up the SSH code.
-110129 DALI - Use PasswordStore everywhere in the code where passwords are used.
-110129 DALI - Adding file header and comments to all syco files.
-110129 DALI - Added public and private command types, refactoring of code.
-110128 DALI - Added git-clean command
-110128 DALI - Version 1.0.0 of installFarepayment completed.
-110128 DALI - Version 1.0.0 of PasswordStore completed.
-110127 DALI - installFarepayment, create database, deploy ear
-110127 DALI - installGlassfish.py script
-110124 DALI - More secure configuration of NTP. (Still missing optimal iptables)
-110123 DALI - Working draft of installNTP.py
-110121 DALI - Draft of install-mysql
-110121 DALI - setup_iptables for installMysql
-110121 DALI - Working install-mysql
-110121 DALI - Working install-mysql-replication.
-101215 DALI - Install pexpect on all syco servers.
-101214 DALI - Write installVpn.py script to install openvpn.
-101210 DALI - Indicate disk space to use for a guest in install.cfg
-101210 DALI - Configure install.cfg to use all computers.
-101210 DALI - Read "configuration" of which commands to use from the dir bin/syco/syco/
-              http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python/1057765#1057765
-101209 DALI - Install all servers with pxe.
-101209 DALI - Move dhcp to fo-tp-install

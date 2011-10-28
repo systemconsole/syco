@@ -84,6 +84,10 @@ def get_svn_password():
   '''The svn password for user syscon_svn'''
   return _get_password("svn", "syscon")
 
+def get_ldap_admin_password():
+  '''The ldap admin password.'''
+  return _get_password("ldap", "admin")
+
 def get_glassfish_master_password():
   '''Used to sign keystore, never transfered over network.'''
   return _get_password("glassfish", "master")
