@@ -73,7 +73,7 @@ EOF
 authconfig \
     --enablesssd --enablesssdauth --enablecachecreds \
     --enableldap --enableldaptls --enableldapauth \
-    --ldapserver=ldaps://ldap.syco.net --ldapbasedn=dc=syco,dc=net \
+    --ldapserver=ldaps://ldap.fareoffice.com --ldapbasedn=dc=fareoffice,dc=com \
     --disablenis --disablekrb5 \
     --enableshadow --enablemkhomedir --enablelocauthorize \
     --passalgo=sha512 \
@@ -111,7 +111,7 @@ access_provider = ldap
 ldap_access_filter = (employeeType=Sysop)
 
 # Login to ldap with a specified user.
-ldap_default_bind_dn = cn=sssd,dc=syco,dc=net
+ldap_default_bind_dn = cn=sssd,dc=fareoffice,dc=com
 ldap_default_authtok_type = password
 ldap_default_authtok = secret
 EOF
@@ -134,9 +134,9 @@ sed -i '/^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key
 cat >> /etc/ldap.conf << EOF
 # Configure sudo ldap.
 uri ldaps://ldap.syco.net
-base dc=syco,dc=net
-sudoers_base ou=SUDOers,dc=syco,dc=net
-binddn cn=sssd,dc=syco,dc=net
+base dc=fareoffice,dc=com
+sudoers_base ou=SUDOers,dc=fareoffice,dc=com
+binddn cn=sssd,dc=fareoffice,dc=com
 bindpw secret
 ssl on
 tls_cacertdir /etc/openldap/cacerts
@@ -150,19 +150,19 @@ EOF
 ###########################################################
 
 # Should return everything.
-# ldapsearch -b dc=syco,dc=net -D "cn=Manager,dc=syco,dc=net" -w secret
+# ldapsearch -b dc=fareoffice,dc=com -D "cn=Manager,dc=fareoffice,dc=com" -w secret
 
 # Return my self.
-# ldapsearch -b uid=user1,ou=people,dc=syco,dc=net -D "uid=user1,ou=people,dc=syco,dc=net" -w fratsecret
+# ldapsearch -b uid=user1,ou=people,dc=fareoffice,dc=com -D "uid=user1,ou=people,dc=fareoffice,dc=com" -w fratsecret
 
 # Can't access somebody else
-# ldapsearch -b uid=user3,ou=people,dc=syco,dc=net -D "uid=user4,ou=people,dc=syco,dc=net" -w fratsecret
+# ldapsearch -b uid=user3,ou=people,dc=fareoffice,dc=com -D "uid=user4,ou=people,dc=fareoffice,dc=com" -w fratsecret
 
 # Should return nothing.
-# ldapsearch -b dc=syco,dc=net -D ""
+# ldapsearch -b dc=fareoffice,dc=com -D ""
 
 # Return sudo info
-# ldapsearch -b ou=SUDOers,dc=syco,dc=net -D "cn=sssd,dc=syco,dc=net" -w secret
+# ldapsearch -b ou=SUDOers,dc=fareoffice,dc=com -D "cn=sssd,dc=fareoffice,dc=com" -w secret
 
 # Test sssd
 # getent passwd
