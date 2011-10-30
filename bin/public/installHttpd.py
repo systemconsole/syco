@@ -126,7 +126,7 @@ def set_file_permissions():
 def _install_httpd():
   # Install yum packages for apache httpd
   if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
-    x("yum -y install httpd mod_ssl")
+    x("yum -y install httpd mod_ssl file")
     x("/sbin/chkconfig httpd on")
 
   # Copy config files

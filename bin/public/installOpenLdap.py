@@ -440,17 +440,25 @@ EOF""")
       " /etc/openldap/cacerts/client.key > " +
       " /etc/openldap/cacerts/client.pem")
 
+def add_read_permission(filename):
+    if (os.path.exists(filename)):
+        x("chmod 744 " + filename)
+
 def set_permissions_on_certs():
     # Create hash and set permissions of cert
     x("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
-    x("chown -Rf root:ldap /etc/openldap/cacerts")
-    x("chmod -Rf 750 /etc/openldap/cacerts")
+    x("chown -Rf root:root /etc/openldap/cacerts")
+    x("chmod -f 755 /etc/openldap/cacerts")
     x("restorecon -R /etc/openldap/cacerts")
 
     # httpd need permissions to read the files.
-    x("chmod +x /etc/openldap/cacerts")
-    x("chmod +r /etc/openldap/cacerts/ca.crt")
-    x("chmod +r /etc/openldap/cacerts/client.pem")
+    x("chmod -f 700 /etc/openldap/cacerts/*")
+    add_read_permission("/etc/openldap/cacerts/ca.crt")
+    add_read_permission("/etc/openldap/cacerts/client.pem")
+    add_read_permission("/etc/openldap/cacerts/client.crt")
+    add_read_permission("/etc/openldap/cacerts/client.key")
+    add_read_permission("/etc/openldap/cacerts/slapd.crt")
+    add_read_permission("/etc/openldap/cacerts/slapd.key")
 
 def enable_ssl():
     '''

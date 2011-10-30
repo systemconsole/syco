@@ -42,15 +42,15 @@ def _package(name, command):
   version_obj = version.Version("package-" + name, SCRIPT_VERSION)
   if (not version_obj.is_executed()):
     print("Install " + name)
-    if (not _is_rpm_installed(name)):
+    if (not is_rpm_installed(name)):
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
 
-    if (_is_rpm_installed(name)):
+    if (is_rpm_installed(name)):
       version_obj.mark_executed()
     else:
       raise Exception("Failed to install " + name + ".")
 
-def _is_rpm_installed(name):
+def is_rpm_installed(name):
     stdoutdata = subprocess.Popen("rpm -q " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
     if ("package " + name + " is not installed" in stdoutdata):
       return False

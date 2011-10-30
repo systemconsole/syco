@@ -266,7 +266,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 X_OUTPUT_NONE = 0
 X_OUTPUT_ALL = 1
 X_OUTPUT_CMD = 2
-def x(command, user = "", output = X_OUTPUT_NONE):
+def x(command, user = "", output = X_OUTPUT_ALL):
   '''
   Execute a shell command and handles output verbosity.
 

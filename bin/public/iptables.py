@@ -442,7 +442,8 @@ def add_ldap_chain():
       (config.general.get_ldap_server_ip() + "/" + config.general.get_back_netmask())
     )
 
-  if (os.path.exists('/etc/sss/sssd.conf')):
+  if (os.path.exists('/etc/init.d/slapd') or
+      os.path.exists('/etc/init.d/sssd')):
     iptables("-A syco_output -p tcp -j ldap_out")
     iptables(
       "-A ldap_out -m state --state NEW -p tcp -d %s --dport 636 -j allowed_tcp" %
