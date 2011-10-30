@@ -53,9 +53,7 @@ def install_openldap(args):
     version_obj = version.Version("InstallOpenLdap", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    # Get all passwords from installation user at the start of the script.
-    app.get_ca_password()
-    app.get_ldap_admin_password()
+    initialize_passwords()
 
     # Do the installation.
     enable_selinux()
@@ -97,7 +95,9 @@ def uninstall_openldap(args):
     x("rm -rf /var/lib/ldap")
 
     # Remove client cert configs
-    scOpen("/root/ldaprc").remove("TLS_CERT.*\|^TLS_KEY.*")
+    scOpen("/etc/profile").remove(
+        "^LDAPTLS_CERT.*\|^LDAPTLS_KEY.*\|export LDAPTLS_CERT LDAPTLS_KEY.*"
+    )
 
     # Remove sudo configs.
     scOpen("/etc/nsswitch.conf").remove("^sudoers.*")
@@ -119,6 +119,15 @@ def uninstall_openldap(args):
     version_obj = version.Version("InstallOpenLdap", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
 
+def initialize_passwords():
+    '''
+    Get all passwords from installation user at the start of the script.
+
+    '''
+    app.get_ca_password()
+    app.get_ldap_admin_password()
+    app.get_ldap_sssd_password()
+
 def enable_selinux():
     '''
     Enable SELinux for higher security.
@@ -132,14 +141,7 @@ def install_packages():
     Install packages and start service.
 
     '''
-    # Communication with the LDAP-server needs to be done with domain name, and not
-    # the ip. This ensures the dns-name is configured.
-    scOpen('/etc/hosts').remove('^' + config.general.get_ldap_server_ip() + '.*')
-    scOpen('/etc/hosts').add(
-        '%(ldap_ip)s %(domain_name)s' %
-        {'ldap_ip' : config.general.get_ldap_server_ip(),
-         'domain_name' : config.general.get_ldap_hostname()}
-    )
+    setup_hosts()
 
     # Install all required packages.
     x("yum -y install openldap-servers openldap-clients")
@@ -448,8 +450,7 @@ def set_permissions_on_certs():
     # httpd need permissions to read the files.
     x("chmod +x /etc/openldap/cacerts")
     x("chmod +r /etc/openldap/cacerts/ca.crt")
-    x("chmod +r 750 /etc/openldap/cacerts/client.pem")
-
+    x("chmod +r /etc/openldap/cacerts/client.pem")
 
 def enable_ssl():
     '''
@@ -484,12 +485,7 @@ olcTLSVerifyClient: demand""")
     scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAP=.*', 'SLAPD_LDAPS=no')
     x("service slapd restart")
 
-    # Configure the client cert to be used by ldapsearch for user root.
-    scOpen("/root/ldaprc").remove("TLS_CERT.*\|^TLS_KEY.*")
-    scOpen("/root/ldaprc").add(
-        "TLS_CERT /etc/openldap/cacerts/client.pem\n" +
-        "TLS_KEY /etc/openldap/cacerts/client.pem"
-    )
+    configure_client_cert_for_ldaptools()
 
 def require_highest_security_from_clients():
     '''
@@ -605,10 +601,35 @@ def ldapsadd(user, value):
     '''
     ldapadd(user, value, '')
 
+def setup_hosts():
+    '''
+    Communication with the LDAP-server needs to be done with domain name, and not
+    the ip. This ensures the dns-name is configured.
 
+    '''
+    scOpen('/etc/hosts').remove('^' + config.general.get_ldap_server_ip() + '.*')
+    scOpen('/etc/hosts').add(
+        '%(ldap_ip)s %(domain_name)s' % {
+            'ldap_ip' : config.general.get_ldap_server_ip(),
+            'domain_name' : config.general.get_ldap_hostname()
+        }
+    )
 
+def configure_client_cert_for_ldaptools():
+    '''
+    Configure the client cert to be used by ldaptools (ldapsearch etc.).
 
+    This is done by setting environment variables for all users in /etc/profile
 
+    '''
+    scOpen("/etc/profile").remove(
+        "^LDAPTLS_CERT.*\|^LDAPTLS_KEY.*\|export LDAPTLS_CERT LDAPTLS_KEY.*"
+    )
+    scOpen("/etc/profile").add(
+        "LDAPTLS_CERT=/etc/openldap/cacerts/client.pem\n" +
+        "LDAPTLS_KEY=/etc/openldap/cacerts/client.pem\n" +
+        "export LDAPTLS_CERT LDAPTLS_KEY"
+    )
 
 ###########################################################
 # Debug/Testing

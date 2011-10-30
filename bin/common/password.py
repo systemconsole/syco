@@ -88,6 +88,10 @@ def get_ldap_admin_password():
   '''The ldap admin password.'''
   return _get_password("ldap", "admin")
 
+def get_ldap_sssd_password():
+  '''The password that is used by sssd to connect to the ldap-server.'''
+  return _get_password("ldap", "sssd")
+
 def get_glassfish_master_password():
   '''Used to sign keystore, never transfered over network.'''
   return _get_password("glassfish", "master")

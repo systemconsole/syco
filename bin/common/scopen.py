@@ -15,7 +15,7 @@ __status__ = "Production"
 
 from general import x
 
-class scOpen():
+class scOpen:
     '''
     Class to manipulate files.
 

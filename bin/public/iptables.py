@@ -422,10 +422,10 @@ def add_nfs_chain():
 
 def del_nfs_chain():
   app.print_verbose("Delete iptables chain for nfs")
-  iptables("-D syco_input  -p ALL -j nfs_export", False)
-  iptables("-D syco_output -p ALL -j nfs_export", False)
-  iptables("-F nfs_export", False)
-  iptables("-X nfs_export", False)
+  iptables("-D syco_input  -p ALL -j nfs_export", True)
+  iptables("-D syco_output -p ALL -j nfs_export", True)
+  iptables("-F nfs_export", True)
+  iptables("-X nfs_export", True)
 
 def add_ldap_chain():
   del_ldap_chain()
