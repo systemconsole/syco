@@ -275,7 +275,7 @@ def x(command, user = "", output = X_OUTPUT_NONE):
     command="su " + user + ' -c "' + command + '"'
 
   if (output > X_OUTPUT_NONE):
-    app.print_verbose(BOLD + "Command: " + RESET + command)
+    app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
 
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
