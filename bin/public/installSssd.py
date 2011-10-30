@@ -53,14 +53,15 @@ def install_sssd(args):
     app.get_ldap_sssd_password()
 
     install_packages()
-    install_certs()
-    installOpenLdap.setup_hosts()
 
     iptables.add_ldap_chain()
     iptables.save()
 
     ip = config.general.get_ldap_server_ip()
     general.wait_for_server_to_start(ip, "636")
+
+    install_certs()
+    installOpenLdap.setup_hosts()
 
     authconfig()
     installOpenLdap.configure_client_cert_for_ldaptools()
@@ -81,11 +82,11 @@ def uninstall_sssd(args):
     version_obj.mark_uninstalled()
 
 def install_packages():
-    x("yum -y install openldap-clients authconfig")
+    x("yum -y install openldap-clients authconfig pam_ldap")
 
     # Pick Version 1.5.1 of sssd from the Continuous Release.
     # This is required to get the client cert to work.
-    x("yum -y install sssd --skip-broken")
+    x("yum -y install sssd")
     x("yum -y install centos-release-cr")
     x("yum -y install sssd")
     x("yum -y update sssd")
@@ -116,7 +117,6 @@ def install_certs():
     '''
     download_cert("client.pem")
     download_cert("ca.crt")
-    x("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
     installOpenLdap.set_permissions_on_certs()
 
 def authconfig():
@@ -197,6 +197,9 @@ def configured_sudo():
     scOpen("/etc/nsswitch.conf").remove("^sudoers.*")
     scOpen("/etc/nsswitch.conf").add("sudoers: ldap files")
 
+    x("touch /etc/ldap.conf")
+    x("chown root:root /etc/ldap.conf")
+    x("chmod 644 /etc/ldap.conf")
     scOpen("/etc/ldap.conf").remove("^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key.*\|sudoers_debug.*")
     scOpen("/etc/ldap.conf").add(
         "tls_cacertdir /etc/openldap/cacerts\n" +
