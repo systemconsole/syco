@@ -187,6 +187,11 @@ def configured_sssd():
     scOpen("/etc/sssd/sssd.conf").add(
         "ldap_default_authtok = " + app.get_ldap_sssd_password()
     )
+
+    # Need to change the modified date before restarting, to tell sssd to reload
+    # the config file.
+    x("touch /etc/sssd/sssd.conf")
+
     # Restart sssd
     x("service sssd restart")
 
@@ -203,25 +208,24 @@ def configured_sudo():
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
     x("chmod 644 /etc/ldap.conf")
-    scOpen("/etc/ldap.conf").remove("^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl on.*\|^tls_cert.*\|^tls_key.*\|sudoers_debug.*")
+    scOpen("/etc/ldap.conf").remove(
+        "^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl.*\|^tls_cacertdir.*\|" +
+        "^tls_cert.*\|^tls_key.*\|sudoers_debug.*"
+    )
     scOpen("/etc/ldap.conf").add(
+        "uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
+        "base " + config.general.get_ldap_dn() + "\n" +
+        "ssl on\n" +
         "tls_cacertdir /etc/openldap/cacerts\n" +
         "tls_cert /etc/openldap/cacerts/client.pem\n" +
-        "tls_key /etc/openldap/cacerts/client.pem\n"
+        "tls_key /etc/openldap/cacerts/client.pem\n" +
+        "sudoers_base ou=SUDOers," + config.general.get_ldap_dn() + "\n" +
+        "binddn cn=sssd," + config.general.get_ldap_dn() + "\n" +
+        "bindpw " + app.get_ldap_sssd_password()
     )
 
-# # Configure sudo ldap.
-# uri ldaps://ldap.syco.net
-# base dc=fareoffice,dc=com
-# sudoers_base ou=SUDOers,dc=fareoffice,dc=com
-# binddn cn=sssd,dc=fareoffice,dc=com
-# bindpw secret
-# ssl on
-# tls_cacertdir /etc/openldap/cacerts
-# tls_cert /etc/openldap/cacerts/client.pem
-# tls_key /etc/openldap/cacerts/client.pem
-# #sudoers_debug 5
-# EOF
+    # Enable debugmode
+    #scOpen("/etc/ldap.conf").add("sudoers_debug 5")
 
 ###########################################################
 # Test to see that everything works fine.

@@ -70,6 +70,7 @@ def install_mail_server(args):
 
   _rebuild_sendmail_config()
 
+  _test_mail()
   version_obj.mark_executed()
 
 def install_mail_client(args):

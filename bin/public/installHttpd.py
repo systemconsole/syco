@@ -182,8 +182,7 @@ def _install_mod_security():
       "yum -y erase httpd-devel apr-devel apr-util-devel cpp gcc" +
       " cyrus-sasl-devel db4-devel expat-devel glibc-devel glibc-headers" +
       " kernel-headers openldap-devel pcre-devel curl-devel" +
-      " lua-devel keyutils-libs-devel krb5-devel libidn-devel" +
-      " libselinux-devel libsepol-devel openssl-devel"
+      " lua-devel libidn-devel"
     )
 
   # Install mode-sec config files.
