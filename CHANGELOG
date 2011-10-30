@@ -11,6 +11,7 @@ Version 0.2
 
 Version 0.25
 ------------
+* Do the sync on install server again.
 * Anything good on this site?
   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
