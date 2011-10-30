@@ -27,6 +27,7 @@ Version 0.25
 # Make it possible to install from the admin-net. gateways and such.
 # Test install fo-tc-ldap with cobbler.
 # Added popen that can replace shell_exec when events is not needed.
+* Do the sync on install server again.
 
 * Anything good on this site?
   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
@@ -153,7 +154,6 @@ Refactoring / Stability
 * restorecon -R -v /home/$ACCOUNT/.ssh
 * cobbler reposync has problems when selinux is enabled.
   See tmp/test-cobbler-sync.sh
-* Rename general.popen to x (as in eXecute)
 
 KVM
 ---
