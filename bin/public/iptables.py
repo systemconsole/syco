@@ -442,11 +442,12 @@ def add_ldap_chain():
       (config.general.get_ldap_server_ip() + "/" + config.general.get_back_netmask())
     )
 
-  iptables("-A syco_output -p tcp -j ldap_out")
-  iptables(
-    "-A ldap_out -m state --state NEW -p tcp -d %s --dport 636 -j allowed_tcp" %
-    config.general.get_ldap_hostname()
-  )
+  if (os.path.exists('/etc/sss/sssd.conf')):
+    iptables("-A syco_output -p tcp -j ldap_out")
+    iptables(
+      "-A ldap_out -m state --state NEW -p tcp -d %s --dport 636 -j allowed_tcp" %
+      config.general.get_ldap_hostname()
+    )
 
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
