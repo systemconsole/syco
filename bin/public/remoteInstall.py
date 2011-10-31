@@ -42,7 +42,10 @@ def remote_install(args):
   # Start installation timer.
   t0= time.time()
 
-  remote_host = args[1]
+  remote_host = None
+  if len(args) > 1:
+    remote_host = args[1]
+
   obj = RemoteInstall()
   obj.run(remote_host)
 
@@ -60,7 +63,7 @@ def install_local(args):
   app.init_all_passwords()
 
   hostname = ""
-  if len(args) == 2:
+  if len(args) > 1:
     hostname = args[1]
 
   if hostname == "":
@@ -81,7 +84,10 @@ def remote_install_syco(args):
   # so the installation can go on headless.
   app.init_all_passwords()
 
-  remote_host = args[1]
+  remote_host = None
+  if len(args) > 1:
+    remote_host = args[1]
+
   obj = RemoteInstall()
   obj.remote_install_syco(remote_host)
 
@@ -193,7 +199,7 @@ class RemoteInstall:
 
     '''
     try:
-      server = config.host[hostname].get_back_ip()
+      server = config.host(hostname).get_back_ip()
       app.print_verbose("Try to install " + hostname + " (" + server + ")", 2)
 
       obj = ssh.Ssh(server, app.get_root_password())
@@ -271,7 +277,7 @@ class RemoteInstall:
 
     '''
     for hostname in self.servers:
-      if (not config.host[hostname].get_back_ip()):
+      if (not config.host(hostname).get_back_ip()):
         self.invalid_config[hostname] = "No"
         app.print_verbose("In install.cfg, cant find ip for " + hostname)
       else:
@@ -311,7 +317,7 @@ class RemoteInstall:
     for hostname in self.servers:
       app.print_verbose("   " +
         hostname.ljust(30) +
-        app.get_back_ip(hostname).ljust(15) +
+        config.host(hostname).get_back_ip().ljust(15) +
         self._get_alive(hostname).ljust(6) +
         self._get_invalid_config(hostname).ljust(13) +
         self._get_installed(hostname).ljust(10) +

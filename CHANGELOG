@@ -12,6 +12,8 @@ Version 0.2
 Version 0.25
 ------------
 * Do the sync on install server again.
+* mail_relay.domain_name should be mail_relay.hostname
+* mysql.primary_master should be mysql.primary_master.servername
 * Anything good on this site?
   http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
