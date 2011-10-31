@@ -34,6 +34,7 @@ SCRIPT_VERSION = 3
 def build_commands(commands):
   commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
   commands.add("install-cobbler-refresh", setup_all_systems, help="Refresh settings and repo info.")
+  commands.add("install-cobbler-conf-refresh", refresh_configs, help="Refresh settings.")
 
 def install_cobbler(args):
   '''
@@ -61,10 +62,17 @@ def install_cobbler(args):
 
 def setup_all_systems(args):
   '''
-  Update cobbler with all settings in install.cfg.
+  Update cobbler with all settings in install.cfg and repos.
 
   '''
   _refresh_repo()
+  refresh_configs(args)
+
+def refresh_configs(args):
+  '''
+  Update cobbler with all settings in install.cfg.
+
+  '''
   _refresh_all_profiles()
   _remove_all_systems()
   _add_all_systems()
@@ -228,7 +236,7 @@ def _host_add(hostname):
 
 def _guest_add(hostname):
   app.print_verbose("")
-  app.print_verbose("\Add guest " + hostname)
+  app.print_verbose("Add guest " + hostname)
 
   x(
     "cobbler system add --profile=centos-vm_guest"
