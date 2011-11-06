@@ -33,13 +33,15 @@ class scOpen:
         Add value to end off file with cat.
 
         '''
-        x("""cat >> %s << EOF\n%s\nEOF""" % (self.filename, value))
+        value = value.replace("/", "\/")
+        x("sed -i '$a%s' %s" % (value, self.filename))
 
     def remove(self, search):
         '''
         Remove a value from a file using sed.
 
         '''
+        search = search.replace("/", "\/")
         x("sed -i '/%s/d' %s" % (search, self.filename))
 
     def replace(self, search, replace):
@@ -47,6 +49,8 @@ class scOpen:
         Replace search string with replace string using sed.
 
         '''
+        search = search.replace("/", "\/")
+        replace = replace.replace("/", "\/")
         x("sed -i 's/%s/%s/g' %s" % (search, replace, self.filename))
 
     def remove_eof(self, lines):

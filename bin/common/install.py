@@ -16,6 +16,7 @@ __status__ = "Production"
 import subprocess
 
 import version
+from constant import BOLD, RESET
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -41,7 +42,7 @@ def rpm(name, url):
 def _package(name, command):
   version_obj = version.Version("package-" + name, SCRIPT_VERSION)
   if (not version_obj.is_executed()):
-    print("Install " + name)
+    print("\t" + BOLD + "Command: " + RESET + command)
     if (not is_rpm_installed(name)):
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
 

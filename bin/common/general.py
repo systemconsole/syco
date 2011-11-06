@@ -62,8 +62,8 @@ def delete_install_dir():
   '''
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
-    shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
     os.chdir("/tmp")
+    x("rm -rf " + app.INSTALL_DIR)
 
 def create_install_dir():
   '''
@@ -77,11 +77,11 @@ def create_install_dir():
 
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
-    os.makedirs(app.INSTALL_DIR)
+    x("mkdir -p " + app.INSTALL_DIR)
     atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    os.chmod(app.INSTALL_DIR, stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+    x("chmod o+rwx " + app.INSTALL_DIR)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
@@ -247,7 +247,7 @@ def shell_run(command, user="root", cwd=None, events={}):
   if (cwd == None):
     cwd = os.getcwd()
 
-  app.print_verbose("Command: " + command)
+  app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
   (stdout, exit_status) = pexpect.run(command,
     cwd=cwd,
     events=events,

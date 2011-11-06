@@ -32,7 +32,6 @@ import app
 import config
 import general
 from general import x
-import installGlassfish301
 import installGlassfish31
 import net
 import version
@@ -513,10 +512,7 @@ def del_cobbler_chain():
   iptables("-X cobbler_output", general.X_OUTPUT_CMD)
 
 def add_glassfish_chain():
-  if (
-    not os.path.exists("/etc/init.d/" + installGlassfish301.GLASSFISH_VERSION) and
-    not os.path.exists("/etc/init.d/" + installGlassfish31.GLASSFISH_VERSION)
-  ):
+  if (not os.path.exists("/etc/init.d/" + installGlassfish31.GLASSFISH_VERSION)):
     return
 
   app.print_verbose("Add iptables chain for glassfish")

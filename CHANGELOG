@@ -7,6 +7,8 @@ my (Daniel) personal to do list.
 Version 0.2
 -----------
 * See syco-private step 1-6
+* Set glassfish user to not be able to login
+  glassfish:x:200:200::/home/glassfish:/sbin/nologin
 * Change version in app.py, set tag for version 0.2
 
 Version 0.25
@@ -226,3 +228,87 @@ On Call (Linux Ocean?)
 * Surrvelience service, an sms is sent when somehting is wrong. The on call guy
   needs to report back to a system, that the error is notified. Otherwiese
   a new sms is sent to the second on call guy.
+
+Glassfish
+----------
+
+* Configure virutal servers/virtual hosts?
+
+* Change folder where logs are stored
+  http://docs.sun.com/app/docs/doc/821-1751/abluj?l=en&a=view
+
+  stop glassfish
+  vi /usr/local/glassfish/glassfish/domains/domain1/config/logging.properties
+  change .sun.enterprise.server.logging.GFFileHandler.file
+
+* Check if the log files are to big, backup, rotate.
+
+* Kolla av olika profiler (develop/cluster/enterprise)
+
+* Monitor software
+  In the "has anything changed, tool" run this, and see if any
+  values has been changed since last time the report was executed.
+
+  * generate-jvm-report --type summary
+  * It exist a monitor thing in the admin console.
+
+  * Might be another command that makes the result easier to parase.
+    asadmin> list-system-properties
+    asadmin> list-applications --type web
+    asadmin> list-containers
+    asadmin> list-modules
+    asadmin> list-commands --localonly
+    asadmin> list-timers server
+    asadmin> show-component-status MEjbApp
+    asadmin> uptime
+    asadmin> generate-jvm-report --type summary
+    asadmin> list-logger-levels
+
+ * Optimizations
+   http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html
+
+* Setup Thread pools
+  http://docs.sun.com/app/docs/doc/821-1751/abluc?l=en&a=view
+  asadmin> list-threadpools
+
+* Something to read.
+  http://kalali.me/learning-glassfish-v3-command-line-administration-interface-cli/
+
+* Secure glassfish some more
+  change /opt/glassfishv3/glassfish/domains/domain1/config/domain.xml
+  Didn't get this to work. Need to use --secure on all asadmin.
+  Maybe it works in glassfish 3.1
+  The creates ssl connection between asadmin and DAS or other nodes
+  TODO:general.shell_exec("/usr/local/glassfish/bin/asadmin set server-config.network-config.protocols.protocol.admin-listener.security-enabled=true", user="glassfish")
+
+* Something in glassfish might need this, according to install requriments.
+  yum install compat-libstdc++ compat-libgcc
+
+* Extending and Updating GlassFish Server Inside a Closed Network
+   http://docs.sun.com/app/docs/doc/821-1751/gjcya?l=en&a=view
+
+* Log to syslog instead??
+  com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true
+  Write to system log:
+  Enabled
+  Use UNIX syslog service to produce and manage log messages
+  Log to Console:
+  Enabled
+  Write log messages to system console
+
+* Turn on proxy
+  Might be useful if the server is locked down, and need to reach internet.
+  http://download.oracle.com/javase/6/docs/technotes/guides/net/proxies.html
+  /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyHost=my.proxy.host
+  /usr/local/glassfish/bin/asadmin create-jvm-options -Dhttp.proxyPort=3128
+
+* Activate mod_jk and loadbalancing?
+  Use mod_jk to loadbalance between tc and nsg servers, maybe between nodes
+  in a cluster?
+  administration-guide.pdf page 118
+
+* Forward SSL cert from apache to glassfish.
+  Documentation exists in redmine
+
+* Read performance-tuning-guide.pdf
+
