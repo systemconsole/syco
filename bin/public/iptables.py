@@ -294,16 +294,24 @@ def _setup_installation_server_rules():
   # Need to have this, until all repos are on the installation server.
   iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
 
+def del_ntp_chain():
+  app.print_verbose("Delete iptables chain for ntp")
+  iptables("-D syco_input  -p UDP -j ntp", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p UDP -j ntp", general.X_OUTPUT_CMD)
+  iptables("-F ntp", general.X_OUTPUT_CMD)
+  iptables("-X ntp", general.X_OUTPUT_CMD)
+
 def add_ntp_chain():
   '''
   TODO: Only allow traffic to dedicated NTP servers and clients (restrict on ip).
 
   '''
+  del_ntp_chain()
+
   if (not os.path.exists('/etc/init.d/ntpd')):
     return
 
   app.print_verbose("Add iptables chain for ntp")
-  del_ntp_chain()
 
   iptables("-N ntp")
   iptables("-A syco_input  -p UDP -j ntp")
@@ -312,19 +320,20 @@ def add_ntp_chain():
   app.print_verbose("Setup NTP input/output rule.")
   iptables("-A ntp -p UDP --dport 123 -j allowed_udp")
 
-def del_ntp_chain():
-  app.print_verbose("Delete iptables chain for ntp")
-  iptables("-D syco_input  -p UDP -j ntp", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p UDP -j ntp", general.X_OUTPUT_CMD)
-  iptables("-F ntp", general.X_OUTPUT_CMD)
-  iptables("-X ntp", general.X_OUTPUT_CMD)
+
+def del_kvm_chain():
+  app.print_verbose("Delete iptables chain for kvm")
+  iptables("-D syco_forward  -p ALL -j kvm", general.X_OUTPUT_CMD)
+  iptables("-F kvm", general.X_OUTPUT_CMD)
+  iptables("-X kvm", general.X_OUTPUT_CMD)
 
 def add_kvm_chain():
+  del_kvm_chain()
+
   if (not os.path.exists('/etc/init.d/libvirtd')):
     return
 
   app.print_verbose("Add iptables chain for kvm")
-  del_kvm_chain()
 
   iptables("-N kvm")
   iptables("-A syco_forward  -p ALL -j kvm")
@@ -333,13 +342,19 @@ def add_kvm_chain():
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
-def del_kvm_chain():
-  app.print_verbose("Delete iptables chain for kvm")
-  iptables("-D syco_forward  -p ALL -j kvm", general.X_OUTPUT_CMD)
-  iptables("-F kvm", general.X_OUTPUT_CMD)
-  iptables("-X kvm", general.X_OUTPUT_CMD)
+def del_mysql_chain():
+  app.print_verbose("Delete iptables chain for mysql")
+  iptables("-D syco_input  -p ALL -j mysql_input", general.X_OUTPUT_CMD)
+  iptables("-F mysql_input", general.X_OUTPUT_CMD)
+  iptables("-X mysql_input", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p ALL -j mysql_output", general.X_OUTPUT_CMD)
+  iptables("-F mysql_output", general.X_OUTPUT_CMD)
+  iptables("-X mysql_output", general.X_OUTPUT_CMD)
 
 def add_mysql_chain():
+  del_mysql_chain()
+
   if (not os.path.exists('/etc/init.d/mysqld')):
     return
 
@@ -355,17 +370,19 @@ def add_mysql_chain():
   iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
-def del_mysql_chain():
-  app.print_verbose("Delete iptables chain for mysql")
-  iptables("-D syco_input  -p ALL -j mysql_input", general.X_OUTPUT_CMD)
-  iptables("-F mysql_input", general.X_OUTPUT_CMD)
-  iptables("-X mysql_input", general.X_OUTPUT_CMD)
+def del_httpd_chain():
+  app.print_verbose("Delete iptables chain for httpd")
+  iptables("-D syco_input  -p ALL -j httpd_input", general.X_OUTPUT_CMD)
+  iptables("-F httpd_input", general.X_OUTPUT_CMD)
+  iptables("-X httpd_input", general.X_OUTPUT_CMD)
 
-  iptables("-D syco_output -p ALL -j mysql_output", general.X_OUTPUT_CMD)
-  iptables("-F mysql_output", general.X_OUTPUT_CMD)
-  iptables("-X mysql_output", general.X_OUTPUT_CMD)
+  iptables("-D syco_output  -p ALL -j httpd_output", general.X_OUTPUT_CMD)
+  iptables("-F httpd_output", general.X_OUTPUT_CMD)
+  iptables("-X httpd_output", general.X_OUTPUT_CMD)
 
 def add_httpd_chain():
+  del_httpd_chain()
+
   if (not os.path.exists('/etc/init.d/httpd')):
     return
 
@@ -383,15 +400,12 @@ def add_httpd_chain():
   iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
-def del_httpd_chain():
-  app.print_verbose("Delete iptables chain for httpd")
-  iptables("-D syco_input  -p ALL -j httpd_input", general.X_OUTPUT_CMD)
-  iptables("-F httpd_input", general.X_OUTPUT_CMD)
-  iptables("-X httpd_input", general.X_OUTPUT_CMD)
-
-  iptables("-D syco_output  -p ALL -j httpd_output", general.X_OUTPUT_CMD)
-  iptables("-F httpd_output", general.X_OUTPUT_CMD)
-  iptables("-X httpd_output", general.X_OUTPUT_CMD)
+def del_nfs_chain():
+  app.print_verbose("Delete iptables chain for nfs")
+  iptables("-D syco_input  -p ALL -j nfs_export", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j nfs_export", general.X_OUTPUT_CMD)
+  iptables("-F nfs_export", general.X_OUTPUT_CMD)
+  iptables("-X nfs_export", general.X_OUTPUT_CMD)
 
 def add_nfs_chain():
   del_nfs_chain()
@@ -419,12 +433,15 @@ def add_nfs_chain():
   iptables("-A nfs_export -m state --state NEW -p udp --dport 2049 -j allowed_udp")
   iptables("-A nfs_export -m state --state NEW -p udp --dport 111 -j allowed_udp")
 
-def del_nfs_chain():
-  app.print_verbose("Delete iptables chain for nfs")
-  iptables("-D syco_input  -p ALL -j nfs_export", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j nfs_export", general.X_OUTPUT_CMD)
-  iptables("-F nfs_export", general.X_OUTPUT_CMD)
-  iptables("-X nfs_export", general.X_OUTPUT_CMD)
+def del_ldap_chain():
+  app.print_verbose("Delete iptables chain for ldap")
+  iptables("-D syco_input -p tcp -j ldap_in", general.X_OUTPUT_CMD)
+  iptables("-F ldap_in", general.X_OUTPUT_CMD)
+  iptables("-X ldap_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p tcp -j ldap_out", general.X_OUTPUT_CMD)
+  iptables("-F ldap_out", general.X_OUTPUT_CMD)
+  iptables("-X ldap_out", general.X_OUTPUT_CMD)
 
 def add_ldap_chain():
   del_ldap_chain()
@@ -449,22 +466,24 @@ def add_ldap_chain():
       config.general.get_ldap_hostname()
     )
 
-def del_ldap_chain():
-  app.print_verbose("Delete iptables chain for ldap")
-  iptables("-D syco_input -p tcp -j ldap_in", general.X_OUTPUT_CMD)
-  iptables("-F ldap_in", general.X_OUTPUT_CMD)
-  iptables("-X ldap_in", general.X_OUTPUT_CMD)
+def del_cobbler_chain():
+  app.print_verbose("Delete iptables chain for cobbler")
+  iptables("-D syco_input  -p ALL -j cobbler", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j cobbler", general.X_OUTPUT_CMD)
+  iptables("-F cobbler", general.X_OUTPUT_CMD)
+  iptables("-X cobbler", general.X_OUTPUT_CMD)
 
-  iptables("-D syco_output -p tcp -j ldap_out", general.X_OUTPUT_CMD)
-  iptables("-F ldap_out", general.X_OUTPUT_CMD)
-  iptables("-X ldap_out", general.X_OUTPUT_CMD)
+  iptables("-D syco_input -p ALL -j cobbler_output", general.X_OUTPUT_CMD)
+  iptables("-F cobbler_output", general.X_OUTPUT_CMD)
+  iptables("-X cobbler_output", general.X_OUTPUT_CMD)
 
 def add_cobbler_chain():
+  del_cobbler_chain()
+
   if (not os.path.exists('/etc/init.d/cobblerd')):
     return
 
   app.print_verbose("Add iptables chain for cobbler")
-  del_cobbler_chain()
 
   iptables("-N cobbler_input")
   iptables("-A syco_input -p ALL -j cobbler_input")
@@ -500,23 +519,22 @@ def add_cobbler_chain():
   # RSYNC
   iptables("-A cobbler_output -m state --state NEW -m tcp -p tcp --dport 873 -j allowed_tcp")
 
-def del_cobbler_chain():
-  app.print_verbose("Delete iptables chain for cobbler")
-  iptables("-D syco_input  -p ALL -j cobbler", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j cobbler", general.X_OUTPUT_CMD)
-  iptables("-F cobbler", general.X_OUTPUT_CMD)
-  iptables("-X cobbler", general.X_OUTPUT_CMD)
-
-  iptables("-D syco_input -p ALL -j cobbler_output", general.X_OUTPUT_CMD)
-  iptables("-F cobbler_output", general.X_OUTPUT_CMD)
-  iptables("-X cobbler_output", general.X_OUTPUT_CMD)
+def del_glassfish_chain():
+  app.print_verbose("Delete iptables chain for glassfish")
+  iptables("-D syco_input  -p ALL -j glassfish_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j glassfish_output", general.X_OUTPUT_CMD)
+  iptables("-F glassfish_input", general.X_OUTPUT_CMD)
+  iptables("-X glassfish_input", general.X_OUTPUT_CMD)
+  iptables("-F glassfish_output", general.X_OUTPUT_CMD)
+  iptables("-X glassfish_output", general.X_OUTPUT_CMD)
 
 def add_glassfish_chain():
+  del_glassfish_chain()
+
   if (not os.path.exists("/etc/init.d/" + installGlassfish31.GLASSFISH_VERSION)):
     return
 
   app.print_verbose("Add iptables chain for glassfish")
-  del_glassfish_chain()
 
   iptables("-N glassfish_input")
   iptables("-N glassfish_output")
@@ -531,21 +549,20 @@ def add_glassfish_chain():
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
-def del_glassfish_chain():
-  app.print_verbose("Delete iptables chain for glassfish")
-  iptables("-D syco_input  -p ALL -j glassfish_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j glassfish_output", general.X_OUTPUT_CMD)
-  iptables("-F glassfish_input", general.X_OUTPUT_CMD)
-  iptables("-X glassfish_input", general.X_OUTPUT_CMD)
-  iptables("-F glassfish_output", general.X_OUTPUT_CMD)
-  iptables("-X glassfish_output", general.X_OUTPUT_CMD)
+def del_openvpn_chain():
+  app.print_verbose("Delete iptables chain for openvpn")
+  iptables("-D syco_input  -p ALL -j openvpn", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j openvpn", general.X_OUTPUT_CMD)
+  iptables("-F openvpn", general.X_OUTPUT_CMD)
+  iptables("-X openvpn", general.X_OUTPUT_CMD)
 
 def add_openvpn_chain():
+  del_openvpn_chain()
+
   if (not os.path.exists('/etc/init.d/openvpn')):
     return
 
   app.print_verbose("Add iptables chain for openvpn")
-  del_openvpn_chain()
 
   iptables("-N openvpn_input")
   iptables("-N openvpn_forward")
@@ -565,16 +582,16 @@ def add_openvpn_chain():
   iptables.iptables("-A syco_forward -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
   iptables.iptables('-A syco_forward -i eth0 -o tun0 -m state --state "ESTABLISHED,RELATED" -j ACCEPT')
 
-def del_openvpn_chain():
-  app.print_verbose("Delete iptables chain for openvpn")
-  iptables("-D syco_input  -p ALL -j openvpn", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j openvpn", general.X_OUTPUT_CMD)
-  iptables("-F openvpn", general.X_OUTPUT_CMD)
-  iptables("-X openvpn", general.X_OUTPUT_CMD)
+def del_mail_relay_chain():
+  app.print_verbose("Delete iptables chain for mail_relay")
+  iptables("-D syco_input -p tcp -j mail_relay", general.X_OUTPUT_CMD)
+  iptables("-F mail_relay", general.X_OUTPUT_CMD)
+  iptables("-X mail_relay", general.X_OUTPUT_CMD)
 
 def add_mail_relay_chain():
-  app.print_verbose("Add iptables chain for mail relay")
   del_mail_relay_chain()
+
+  app.print_verbose("Add iptables chain for mail relay")
 
   if (os.path.exists('/etc/mail/syco_mail_relay_server')):
     iptables("-N mail_relay")
@@ -582,12 +599,6 @@ def add_mail_relay_chain():
 
     # mail_relay with none TLS and with TLS
     iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
-
-def del_mail_relay_chain():
-  app.print_verbose("Delete iptables chain for mail_relay")
-  iptables("-D syco_input -p tcp -j mail_relay", general.X_OUTPUT_CMD)
-  iptables("-F mail_relay", general.X_OUTPUT_CMD)
-  iptables("-X mail_relay", general.X_OUTPUT_CMD)
 
 def _execute_private_repo_rules():
   '''
@@ -623,4 +634,3 @@ def _get_modules(commands_path):
       pass
 
   return modules
-
