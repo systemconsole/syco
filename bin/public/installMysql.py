@@ -8,48 +8,6 @@ http://dev.mysql.com/doc/refman/5.0/en/security-against-attack.html
 http://dev.mysql.com/doc/refman/5.0/en/mysqld-option-tables.html
 http://www.learn-mysql-tutorial.com/SecureInstall.cfm
 
-TODO:
-* Remove the root user, only have personal sysop accounts.
-* defragment_all_tables():
-*   ALTER TABLE xxx ENGINE=INNODB
-* calculate_cardinality():
-    Unlike MyISAM, InnoDB does not store an index cardinality value in its
-    tables. Instead, InnoDB computes a cardinality for a table the first time
-    it accesses it after startup. With a large number of tables, this might take
-    significant time. It is the initial table open operation that is important,
-    so to "warm up" a table for later use, access it immediately after startup
-    by issuing a statement such as SELECT 1 FROM tbl_name LIMIT 1.
-* Test mysql proxy - http://dev.mysql.com/doc/refman/5.1/en/mysql-proxy.html
-* Test mysql heartbeat - http://dev.mysql.com/doc/refman/5.1/en/ha-heartbeat.html
-* Backup innodb??
-    http://www.learn-mysql-tutorial.com/BackupRestore.cfm
-    http://www.innodb.com/doc/hot_backup/manual.html
-    1 Shut down your MySQL server, ensure shut down proceeds without errors.
-    2 Copy all your data files (ibdata files and .ibd files) into a secure and reliable location.
-    3 Copy all your ib_logfile files.
-    4 Copy your configuration file(s) (my.cnf or similar).
-    5 Copy all the .frm files for your InnoDB tables.
-
-    In addition to making binary backups, you should also regularly make dumps of
-    your tables with mysqldump. The reason for this is that a binary file might be
-    corrupted with no visible signs. Dumped tables are stored into text files that
-    are simpler and human-readable, so spotting table corruption becomes easier.
-    mysqldump also has a --single- transaction option that you can use to make a
-    consistent snapshot without locking out other clients.
-
-* Need a script to check if the innodb tablespace is about to be empty.
-* Investigate --chroot=name
-* monitor mysql, show inodb status;
-* Is binary logs properly purged
-    SHOW SLAVE STATUS
-    PURGE BINARY LOGS BEFORE '2008-04-02 22:46:26';
-* Modify table cache
-    http://dev.mysql.com/doc/refman/5.0/en/server-system-variables.html#sysvar_table_cache
-    show status like '%Opened_tables%';
-    shows a lot of opened files, you might like to increase table cache
-* Optimization
-    http://dev.mysql.com/doc/refman/5.0/en/order-by-optimization.html
-
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -64,6 +22,7 @@ __status__ = "Production"
 import fileinput, shutil, os
 import app, general, version
 import iptables
+import config
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -96,7 +55,8 @@ def install_mysql(args):
 
   # Install the mysql-server packages.
   if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):
-    general.shell_exec("yum -y install mysql-server")
+    general.shell_exec("yum -y install mysql-server hdparm")
+
     general.shell_exec("/sbin/chkconfig mysqld on ")
     if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
       raise Exception("Couldn't install mysql-server")
@@ -158,6 +118,7 @@ def install_mysql(args):
   )
 
   mysql_exec("DROP DATABASE test;")
+  mysql_exec("SELECT host,user FROM mysql.db;")
   mysql_exec("SELECT host,user FROM mysql.user;")
   mysql_exec("RESET MASTER;")
   mysql_exec("FLUSH PRIVILEGES;")
@@ -173,12 +134,15 @@ def uninstall_mysql(args):
     general.shell_exec("/etc/init.d/mysqld stop")
   general.shell_exec("yum -y groupremove MySQL Database")
   general.shell_exec("rm -f /root/.mysql_history")
-  general.shell_exec("rm -fr /usr/share/mysql")
   general.shell_exec("rm -fr /var/lib/mysql")
   general.shell_exec("rm -f /var/log/mysqld-slow.log")
   general.shell_exec("rm -f /var/log/mysqld.log.rpmsave")
   general.shell_exec("rm -f /var/log/mysqld.log")
   general.shell_exec("rm -f /etc/my.cnf")
+
+  # Don't need to delete, provided by mysql-libs
+  #general.shell_exec("rm -fr /usr/share/mysql")
+
   version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
 
