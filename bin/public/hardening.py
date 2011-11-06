@@ -133,7 +133,6 @@ def _disable_services():
   _disable_service("gpm")
   _disable_service("yum-updatesd")
   _disable_service("portmap")
-  _disable_service("sendmail")
   _disable_service("mcstrans")
   _disable_service("pcscd")
   _disable_service("nfslock")
