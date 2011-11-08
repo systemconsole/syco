@@ -272,6 +272,7 @@ def x(command, user = "", output = X_OUTPUT_ALL):
 
   '''
   if (user):
+    command = command.replace('"', '\\"')
     command="su " + user + ' -c "' + command + '"'
 
   if (output > X_OUTPUT_NONE):

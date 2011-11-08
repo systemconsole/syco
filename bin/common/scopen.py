@@ -28,12 +28,15 @@ class scOpen:
     def __init__(self, filename):
         self.filename = filename
 
+    def esc(self, value):
+        return value.replace('\n', '\\\n').replace("/", "\/")
+
     def add(self, value):
         '''
         Add value to end off file with cat.
 
         '''
-        value = value.replace("/", "\/")
+        value = self.esc(value)
         x("sed -i '$a%s' %s" % (value, self.filename))
 
     def remove(self, search):
@@ -41,7 +44,7 @@ class scOpen:
         Remove a value from a file using sed.
 
         '''
-        search = search.replace("/", "\/")
+        search = self.esc(search)
         x("sed -i '/%s/d' %s" % (search, self.filename))
 
     def replace(self, search, replace):
@@ -49,8 +52,8 @@ class scOpen:
         Replace search string with replace string using sed.
 
         '''
-        search = search.replace("/", "\/")
-        replace = replace.replace("/", "\/")
+        search = self.esc(search)
+        replace = self.esc(replace)
         x("sed -i 's/%s/%s/g' %s" % (search, replace, self.filename))
 
     def remove_eof(self, lines):

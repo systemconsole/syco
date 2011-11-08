@@ -7,7 +7,7 @@ my (Daniel) personal to do list.
 Version 0.2
 -----------
 * See syco-private step 1-6
-* Set glassfish user to not be able to login
+* Set glassfish user to not be able to login in passwd.
   glassfish:x:200:200::/home/glassfish:/sbin/nologin
 * Change version in app.py, set tag for version 0.2
 
