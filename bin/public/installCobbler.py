@@ -91,8 +91,10 @@ def _install_cobbler():
   install.epel_repo()
 
   # To get cobbler and kvm work correct.
-  x("yum -y install yum-utils cobbler koan httpd")
+  # dhcp is needed to get pxe-boot to work.
+  x("yum -y install yum-utils cobbler koan httpd dhcp")
   x("/sbin/chkconfig httpd on")
+  x("/sbin/chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
   x('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/lib/tftpboot/.*"')
@@ -138,9 +140,13 @@ def _modify_cobbler_settings():
   general.set_config_property("/etc/cobbler/settings", '^default_virt_type:.*', "default_virt_type: qemu")
   general.set_config_property("/etc/cobbler/settings", '^anamon_enabled:.*', "anamon_enabled: 1")
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*', "yum_post_install_mirror: 1")
-  general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*', "manage_dhcp: 0")
+  general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*', "manage_dhcp: 1")
 
   shutil.copyfile(app.SYCO_PATH + "/var/kickstart/cobbler.ks", "/var/lib/cobbler/kickstarts/cobbler.ks")
+
+  # Configure DHCP
+  shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
+  general.shell_exec("/etc/init.d/dhcpd restart")
 
   # Config crontab to update repo automagically
   general.set_config_property2("/etc/crontab", "01 4 * * * syco install-cobbler-repo")
