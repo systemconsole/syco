@@ -52,6 +52,37 @@ def iptables(args, output = True):
   '''
   x("/sbin/iptables " + args, output=output)
 
+def del_module(name):
+  '''
+  Delete module from IPTABLES_MODULES in /etc/sysconfig/iptables-config
+
+  Plus not needed whitespaces.
+
+  '''
+  app.print_verbose("Del module " + name)
+
+  # Line 1: Remove all old existing module X
+  # Line 2: Only one whitespace between each module
+  # Line 3: No whitespaces before last "
+  # Line 4: No whitespaces before firstt "
+  x('sed -i "/IPTABLES_MODULES=/s/' + name + '\( \|\\"\)/\\1/g;' +
+    '/IPTABLES_MODULES=/s/\( \)\+/ /g;' +
+    '/IPTABLES_MODULES=/s/ \\"/\\"/g;' +
+    '/IPTABLES_MODULES=/s/\\" /\\"/g' +
+    '" /etc/sysconfig/iptables-config')
+  x("modprobe -r " + name)
+
+def add_module(name):
+  '''
+  Add module to the beginning of IPTABLES_MODULES in /etc/sysconfig/iptables-config
+
+  '''
+  app.print_verbose("Add module " + name)
+  x('sed -i "/IPTABLES_MODULES=/s/\\"/\\"' + name + ' /;' +
+    '/IPTABLES_MODULES=/s/ \\"/\\"/g' +
+    '" /etc/sysconfig/iptables-config')
+  x("modprobe " + name)
+
 def iptables_clear(args):
   '''
   Remove all iptables rules.
@@ -477,6 +508,8 @@ def del_cobbler_chain():
   iptables("-F cobbler_output", general.X_OUTPUT_CMD)
   iptables("-X cobbler_output", general.X_OUTPUT_CMD)
 
+  del_module("nf_conntrack_tftp")
+
 def add_cobbler_chain():
   del_cobbler_chain()
 
@@ -484,6 +517,8 @@ def add_cobbler_chain():
     return
 
   app.print_verbose("Add iptables chain for cobbler")
+
+  add_module("nf_conntrack_tftp")
 
   iptables("-N cobbler_input")
   iptables("-A syco_input -p ALL -j cobbler_input")
