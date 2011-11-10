@@ -7,21 +7,6 @@ my (Daniel) personal to do list.
 Version 0.2
 -----------
 * See syco-private step 1-6
-* Set glassfish user to not be able to login in passwd.
-  glassfish:x:200:200::/home/glassfish:/sbin/nologin
-* Change version in app.py, set tag for version 0.2
-
-Version 0.25
-------------
-* Do the sync on install server again.
-* mail_relay.domain_name should be mail_relay.hostname
-* mysql.primary_master should be mysql.primary_master.servername
-* Anything good on this site?
-  http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
-  http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
-
-* Add something from this
-  http://serverfault.com/questions/322997/how-do-you-make-it-obvious-you-are-on-a-production-system
 
 Version 0.3
 -----------
@@ -51,7 +36,7 @@ Version 3.9 (iptables)
 * Add recent http://www.snowman.net/projects/ipt_recent/
   http://www.frozentux.net/iptables-tutorial/scripts/recent-match.txt
 * SSH to the server should only be allowed from certain ips.
-* Write fireall/router iptables forwarding script.
+* Write fireall/router iptables forwarding script. To replace clavister
 
 Version 4
 ---------
@@ -131,6 +116,9 @@ Remote-install
 
 Refactoring / Stability
 -----------------------
+* mail_relay.domain_name should be mail_relay.hostname
+* mysql.primary_master should be mysql.primary_master.servername
+* Add timestamp to the prompt, for better logging.
 # Rename general.popen to x (as in eXecute)
 * Change so first virtualhost uses installserver as repo server after installation.
 * Refactoring of password and passwordStore
@@ -154,6 +142,11 @@ Rentalfront Development enviornment
 Version 5
 ---------
 * Anything that is useful http://www.lesswatts.org/?
+* Anything good on this site?
+  http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=1
+  http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/index.html
+* Add something from this
+  http://serverfault.com/questions/322997/how-do-you-make-it-obvious-you-are-on-a-production-system
 * Add reviewboard.com to vcs server???
 * Check "gerrit" code review software and implement on vcs server.
 * Configure openvpn for ubuntu https://help.ubuntu.com/10.04/serverguide/C/openvpn.html
@@ -231,6 +224,9 @@ On Call (Linux Ocean?)
 
 Glassfish
 ----------
+
+* Set glassfish user to not be able to login in passwd.
+  glassfish:x:200:200::/home/glassfish:/sbin/nologin
 
 * Configure virutal servers/virtual hosts?
 
