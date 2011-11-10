@@ -28,7 +28,7 @@ MYSQL_IPS.append("${MYSQL_SECONDARY}")
 OWNER="glassfish";
 
 # The path to where you have your glassfish server installed.
-GLASSFISH_PATH="/usr/local/glassfish-3.1.1/glassfish"
+GLASSFISH_PATH="/usr/local/glassfish-3.1.1"
 
 # Import used python modules.
 from socket import *
@@ -120,12 +120,12 @@ def write_to_log(domain_name, message, verbose=1):
     Write MESSAGE to screen and the startup log for the gf domain DOMAIN_NAME.
 
     The logs are stored in
-    GLASSFISH_PATH/domains/DOMAIN_NAME/logs/startup.log
+    GLASSFISH_PATH/glassfish/domains/DOMAIN_NAME/logs/startup.log
 
     '''
     print_verbose(message, verbose)
 
-    file_name = "%s/domains/%s/logs/startup.log" % (GLASSFISH_PATH, domain_name)
+    file_name = "%s/glassfish/domains/%s/logs/startup.log" % (GLASSFISH_PATH, domain_name)
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     message = now + " - " + message;
@@ -143,7 +143,7 @@ def asadmin_exec(domain_name, command):
     Execute COMMAND with glassfish asadmin.
 
     '''
-    asacmd = "%s/bin/asadmin %s" % (GLASSFISH_PATH, command)
+    asacmd = "%s/glassfish/bin/asadmin %s" % (GLASSFISH_PATH, command)
 
     print_verbose(BOLD + "Command: " + RESET + asacmd, 2)
     write_to_log(domain_name, "Command: " + asacmd, 99)
@@ -155,6 +155,19 @@ def asadmin_exec(domain_name, command):
         write_to_log(domain_name, stderr, 1)
 
     return pid
+
+def set_permission():
+    '''
+    Set all permissions for all glassfish related files.
+
+    This to be sure that no invalid persmissions has ben set when somebody
+    has been fildeling around with the files. Apps or sysops.
+
+    '''
+    print_verbose("Set permissions.")
+    x("chmod -R 770 " + GLASSFISH_PATH)
+    x("chown -R 200:200 " + GLASSFISH_PATH)
+    x("restorecon -R " + GLASSFISH_PATH)
 
 def start(domain_name):
     write_to_log(domain_name, "Starting Glassfish (%s)." % domain_name)
@@ -213,7 +226,10 @@ def main():
     commands = {'start' : start, 'stop': stop, 'restart' : restart}
     command = ARGS[0].lower()
     if command in commands:
+        if (command != 'stop'):
+            set_permission()
         commands[command]('domain1')
+
         if (OPTIONS.all_domains):
             commands[command]('domain2')
 
