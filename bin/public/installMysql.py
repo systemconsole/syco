@@ -36,7 +36,7 @@ def build_commands(commands):
   commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]", help="Install mysql server on the current server.")
   commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")
   commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master.")
-  commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
+  commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")  
 
 def install_mysql(args):
   '''
@@ -202,7 +202,7 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
     cmd+= "-h" + host + " "
 
   if (with_user):
-    cmd+="-uroot -p'" + app.get_mysql_root_password() + "' "
+    cmd+='-uroot -p"' + app.get_mysql_root_password() + '" '
 
   return x(cmd + '-e "' + command + '"')
 
