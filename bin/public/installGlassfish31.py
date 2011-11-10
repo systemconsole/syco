@@ -103,8 +103,9 @@ def install_glassfish(args):
       _set_jvm_options(admin_port)
       _install_domains_plugins(domain_name)
 
-    # # Restart to take effect
-    x("/etc/init.d/" + GLASSFISH_VERSION + " restart -an")
+    # Restart to get all options take affect.
+    x("/etc/init.d/" + GLASSFISH_VERSION + " stop -an")
+    x("/etc/init.d/" + GLASSFISH_VERSION + " start -an")
 
     version_obj.mark_executed()
   except Exception, error_text:
