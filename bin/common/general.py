@@ -266,7 +266,7 @@ def shell_run(command, user="root", cwd=None, events={}):
 X_OUTPUT_NONE = 0
 X_OUTPUT_ALL = 1
 X_OUTPUT_CMD = 2
-def x(command, user = "", output = X_OUTPUT_ALL):
+def x(command, user = "", output = X_OUTPUT_ALL, cwd=None):
   '''
   Execute a shell command and handles output verbosity.
 
@@ -275,10 +275,16 @@ def x(command, user = "", output = X_OUTPUT_ALL):
     command = command.replace('"', '\\"')
     command="su " + user + ' -c "' + command + '"'
 
+  if (cwd == None):
+    cwd = os.getcwd()
+  elif (output > X_OUTPUT_NONE):
+    app.print_verbose("\t" + BOLD + "Command: " + RESET + "cd " + cwd)
+
+
   if (output > X_OUTPUT_NONE):
     app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
 
-  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
   return handle_subprocess(p, output)
 
