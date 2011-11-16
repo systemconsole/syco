@@ -52,8 +52,12 @@ def _package(name, command):
       raise Exception("Failed to install " + name + ".")
 
 def is_rpm_installed(name):
+    '''
+    Check if an rpm package is installed.
+
+    '''
     stdoutdata = subprocess.Popen("rpm -q " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
-    if ("package " + name + " is not installed" in stdoutdata):
-      return False
-    else:
+    if stdoutdata.strip().find(name) == 0:
       return True
+    else:
+      return False
