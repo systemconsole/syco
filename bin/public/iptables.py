@@ -479,10 +479,8 @@ def add_ldap_chain():
 
   app.print_verbose("Add iptables chain for ldap")
 
-  iptables("-N ldap_in")
-  iptables("-N ldap_out")
-
   if (os.path.exists('/etc/init.d/slapd')):
+    iptables("-N ldap_in")
     iptables("-A syco_input  -p tcp -j ldap_in")
     iptables(
       "-A ldap_in -m state --state NEW -p tcp -s %s --dport 636 -j allowed_tcp" %
@@ -491,6 +489,7 @@ def add_ldap_chain():
 
   if (os.path.exists('/etc/init.d/slapd') or
       os.path.exists('/etc/init.d/sssd')):
+    iptables("-N ldap_out")
     iptables("-A syco_output -p tcp -j ldap_out")
     iptables(
       "-A ldap_out -m state --state NEW -p tcp -d %s --dport 636 -j allowed_tcp" %
