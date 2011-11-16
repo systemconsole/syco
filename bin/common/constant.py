@@ -17,7 +17,7 @@ import os
 import sys
 
 # The version of the syco script
-version = "0.3-snapshot"
+version = "0.2"
 parser = ''
 
 # SYCO root folder.
