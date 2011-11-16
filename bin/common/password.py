@@ -138,7 +138,10 @@ def init_all_passwords():
   '''
   get_root_password()
   get_svn_password()
+  get_ldap_admin_password()
+  get_ldap_sssd_password()
   get_glassfish_master_password()
   get_glassfish_admin_password()
   get_user_password("glassfish")
+
   init_mysql_passwords()
