@@ -21,6 +21,7 @@ import general
 from general import x
 import install
 import installCobbler
+import disk
 
 def build_commands(commands):
   commands.add("install-guests", install_guests, "guestname", help="Install all KVM guest defined for this server in install.cfg.")
@@ -87,15 +88,8 @@ def _install_guest(guest_name):
 
   '''
   app.print_verbose("Install " + guest_name)
-
-  # Create the data lvm volumegroup
-  # TODO: Do we need error=False result, err=x("lvdisplay -v /dev/VolGroup00/" + guest_name, error=False)
-  result = x("lvdisplay -v /dev/VolGroup00/" + guest_name)
-  if ("/dev/VolGroup00/" + guest_name not in result):
-    vol_group_size=int()
-    x("lvcreate -n " + guest_name +
-                       " -L " + config.host(guest_name).get_total_disk_gb() +
-                       "G VolGroup00")
+  
+  devicename = disk.create_lvm_volumegroup(guest_name, config.host(guest_name).get_total_disk_gb())
 
   x(
     "koan --server=" + config.general.get_installation_server_ip() +

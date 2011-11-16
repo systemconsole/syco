@@ -29,6 +29,7 @@ from general import set_config_property_batch, x
 import net
 import nfs
 import sys
+import disk
 
 def build_commands(commands):
   commands.add(
@@ -114,7 +115,10 @@ class install_guest:
       x("mkdir /media/dvd")
 
     if (not os.path.ismount("/media/dvd")):
-      x("mount -o ro /dev/dvd /media/dvd")
+      x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
+    
+    if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
+      raise Exception("Couldn't mount dvd")    
 
   def unmount_dvd(self):
     x("umount /media/dvd")
@@ -148,7 +152,7 @@ class install_guest:
       nfs.remove_export('dvd')
 
   def create_kvm_host(self):
-      self.create_lvm_volumegroup()
+      devicename = disk.create_lvm_volumegroup(self.hostname, self.property_list['\$total_disk_gb'])
 
       cmd = "virt-install -d --connect qemu:///system"
       cmd += " --name " + self.hostname
@@ -157,7 +161,7 @@ class install_guest:
       cmd +=  " --vnc --noautoconsole"
       cmd +=  " --hvm --accelerate"
       cmd +=  " --check-cpu"
-      cmd +=  " --disk path=/dev/VolGroup00/" + self.hostname
+      cmd +=  " --disk path=" + devicename
       cmd +=  " --os-type linux --os-variant=rhel6"
       cmd +=  " --network bridge:br0"
       cmd +=  " --network bridge:br1"
@@ -173,12 +177,6 @@ class install_guest:
       x(cmd)
       self.wait_for_installation_to_complete()
       self.autostart_guests()
-
-  def create_lvm_volumegroup(self):
-    result = x("lvdisplay -v /dev/VolGroup00/" + self.hostname)
-    if ("/dev/VolGroup00/" + self.hostname not in result):
-      x("lvcreate -n " + self.hostname +
-                 " -L " + self.property_list['\$total_disk_gb'] + "G VolGroup00")
 
   def wait_for_installation_to_complete(self):
     '''

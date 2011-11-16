@@ -37,6 +37,7 @@ import version
 import install
 import net
 import iptables
+import disk
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -119,7 +120,7 @@ def _create_kvm_snapshot_partition():
 
     TODO: Size should be equal to RAM.
     '''
-    volgroup = _get_volgroup_name()
+    volgroup = disk.active_volgroup_name()
     devicename = "/dev/" + volgroup + "/qemu"
     result = general.shell_exec("lvdisplay -v " + devicename, output = False)
     if (devicename not in result):
@@ -133,16 +134,6 @@ def _create_kvm_snapshot_partition():
         # Automount the new partion when rebooting.
         value = devicename + "        /var/lib/libvirt/qemu     ext4        defaults                1 2"
         general.set_config_property("/etc/fstab", value, value)
-
-def _get_volgroup_name():
-    result = general.shell_exec("vgdisplay --activevolumegroups -c")
-    volgroup = result.split(':', 1)[0].strip()
-
-    if (not volgroup):
-        app.print_error("Can't find any volgroup name")
-        _abort_kvm_host_installation()
-
-    return volgroup
 
 def _setup_network_interfaces():
     """
