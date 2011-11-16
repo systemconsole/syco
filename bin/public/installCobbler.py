@@ -48,6 +48,9 @@ def install_cobbler(args):
   # Initialize password.
   app.get_root_password_hash()
 
+  # Disable SELINUX it just messes with me.
+  x("echo 0 > /selinux/enforce")
+
   _install_cobbler()
 
   iptables.add_cobbler_chain()
@@ -57,6 +60,10 @@ def install_cobbler(args):
 
   _import_repos()
   setup_all_systems(args)
+
+  # Start/Restart used services.
+  x("/etc/init.d/dhcpd restart")
+  x("/etc/init.d/httpd restart")
 
   version_obj.mark_executed()
 
@@ -146,7 +153,6 @@ def _modify_cobbler_settings():
 
   # Configure DHCP
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
-  general.shell_exec("/etc/init.d/dhcpd restart")
 
   # Config crontab to update repo automagically
   general.set_config_property2("/etc/crontab", "01 4 * * * syco install-cobbler-repo")
@@ -154,10 +160,6 @@ def _modify_cobbler_settings():
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")
 
-  x("/etc/init.d/httpd restart")
-
-  # TODO: Do we need no_return=True
-  # x("/etc/init.d/cobblerd restart", no_return=True)
   x("/etc/init.d/cobblerd restart")
 
   # Wait for cobblered to restart
@@ -179,8 +181,9 @@ def _import_repos():
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
     x("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
+    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://ftp.df.lth.se/pub/fedora-epel/6/x86_64")
     x("cobbler reposync")
+
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
