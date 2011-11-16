@@ -44,6 +44,9 @@ Version 4
 * Move all companies repos to git or create install-svn.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
+* Try --extra-args "console=ttyS0,115200 text headless"
+  on virt-install.
+  http://serverfault.com/questions/257962/kvm-guest-installed-from-console-but-how-to-get-to-the-guests-console
 
 Monitor
 -------
@@ -134,6 +137,9 @@ KVM
 * Add --cpuset=auto thingy to cobbler installed guests, to get the right NUMA.
 * Setup console
   http://www.cyberciti.biz/faq/linux-kvm-redirecting-freebsd-virtual-machines-console-to-aserialport/
+* http://www.linux-kvm.org/page/Tuning_KVM
+* http://www.linux-kvm.org/page/Tuning_Kernel
+* http://www.linux-kvm.org/page/HOWTO
 
 Rentalfront Development enviornment
 -----------------------------------
@@ -312,6 +318,7 @@ Glassfish
 mysql
 -----
 
+* http://www.mysqlperformanceblog.com/2007/11/03/choosing-innodb_buffer_pool_size/
 * Remove the root user, only have personal sysop accounts.
 * defragment_all_tables():
 *   ALTER TABLE xxx ENGINE=INNODB
