@@ -24,6 +24,7 @@ require {
   type modules_object_t;
   type default_context_t;
   type cobbler_var_log_t;
+  type auditd_log_t;
   class process signull;
   class rawip_socket { getopt create };
   class capability { net_admin net_raw fsetid sys_ptrace };
@@ -93,3 +94,6 @@ allow cobblerd_t cobbler_var_log_t:file { write unlink };
 allow cobblerd_t root_t:dir { create rmdir };
 allow cobblerd_t root_t:lnk_file create;
 allow cobblerd_t self:process signull;
+
+allow cobblerd_t auditd_log_t:dir getattr;
+  

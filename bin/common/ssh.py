@@ -283,6 +283,14 @@ class Ssh:
 
     return self.key_is_installed
 
+def scp_from(server, src, dst):
+  general.shell_run("scp -r " + server + ":" + src + " " + dst,
+    events={
+      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
+      server + "\'s password\:": app.get_root_password() + "\n"
+    }
+  )
+
 if (__name__ == "__main__"):
   app.options.verbose = 2
   obj = Ssh("localhost", "password")
