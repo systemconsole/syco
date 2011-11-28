@@ -1,27 +1,19 @@
 '''
-Handling git from syco.
-
-Read more
-http://whygitisbetterthanx.com/
-http://progit.org/book/
-http://www.kernel.org/pub/software/scm/git/docs/user-manual.html
-http://gitready.com/
-
-https://git.wiki.kernel.org/index.php/Interfaces,_frontends,_and_tools
-http://nfocipher.com/index.php?op=ViewArticle&articleId=12&blogId=1
-
-$ syco install-git-server
 Install git server software on current host.
 
-$ syco git-commit "Commit comment"
-Add all files in syco folder git repo on github.
+Requires:
+  syco install-httpd
 
-$ syco git-clean
-Remove files that should not be added to the git-repo. For now .pyc files.
+Read more:
+  http://whygitisbetterthanx.com/
+  http://progit.org/book/
+  http://www.kernel.org/pub/software/scm/git/docs/user-manual.html
+  http://gitready.com/
+  https://git.wiki.kernel.org/index.php/Interfaces,_frontends,_and_tools
+  http://nfocipher.com/index.php?op=ViewArticle&articleId=12&blogId=1
 
-TODO: Add commit for all plugins.
-TODO: use syco install-httpd ???
-TODO: git-svn, sync with the fo svn.
+Example:
+  $ syco install-git-server  
 
 '''
 
@@ -39,140 +31,186 @@ import shutil
 import re
 
 import app
-import general
 import version
+import general
+import config
+import ssh
+from general import x
+from app import INSTALL_DIR
+from scopen import scOpen
+import installSssd
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
+# The version of this module, used to prevent the same script version to be 
+# executed more then once on the same host.
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("install-git-server",   install_git_server, help="Install git server")
-  commands.add("uninstall-git-server", uninstall_git_server, help="Uninstall git server")
-  commands.add("git-commit", git_commit, "[comment]", help="Commit changes to syco to github")
-  commands.add("git-clean", git_clean, help="Remove files that should not be added to the git-repo. For now .pyc files.")
 
 def install_git_server(args):
   app.print_verbose("Install Git-Server version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("InstallGit", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  # Install git
-  general.shell_exec("yum -y install git")
+  # Get all passwords from installation user at the start of the script.
+  app.get_ldap_sssd_password()
+  
+  x("yum -y install git")
 
-  # Setup user
-  general.shell_exec("groupadd git -g 551")
-  general.shell_exec("adduser -m -r --shell /bin/sh -u151 -g551 git")
-  general.shell_exec("mkdir /home/git/.ssh")
-  general.shell_exec("touch /home/git/.ssh/authorized_keys")
-  general.shell_exec("chown -R git:git /home/git")
+  setup_git_user()
 
-  # Config git
-  general.shell_exec('git config --global user.email "' + config.get_admin_email() + '"', user="git")
-  general.shell_exec('git config --global user.name "' + app.SERVER_ADMIN_NAME + '"', user="git")
-
-  # Setup repo folder
-  general.shell_exec("mkdir /var/lib/git")
-  general.shell_exec("ln -s /var/lib/git /git")
-
-  # Setup repo
-  general.shell_exec("git clone --bare git://github.com/systemconsole/syco.git /var/lib/git/syco.git")
-  general.shell_exec("git clone --bare git://github.com/systemconsole/syco-template.git /var/lib/git/syco-private.git")
-
-  #
-  # Create an empty repo
-  #
-  general.shell_exec("mkdir /var/lib/git/project.git")
-  general.shell_exec("git --bare init --shared=group", cwd="/var/lib/git/project.git")
-
-  # Commit README file to empty repo
-  general.create_install_dir()
-  general.shell_exec("mkdir " + INSTALL_DIR + "project")
-  general.shell_exec("git init", cwd=INSTALL_DIR + "project")
-  general.shell_exec("touch README", cwd=INSTALL_DIR + "project")
-  general.shell_exec("git add README", cwd=INSTALL_DIR + "project")
-  general.shell_exec('git commit -m"Initialized repo"', cwd=INSTALL_DIR + "project")
-  general.shell_exec("git remote add origin file:///var/lib/git/project.git", cwd=INSTALL_DIR + "project")
-  general.shell_exec("git push origin master", cwd=INSTALL_DIR + "project")
-  general.shell_exec("rm -fr " + INSTALL_DIR + "project")
+  setup_repo_folder()
+  create_empty_test_repo()
+  set_permission_on_repos()
 
   # Deny user git to login on SSH
-  general.shell_exec("usermod --shell /usr/bin/git-shell git")
+  x("usermod --shell /usr/bin/git-shell git")
 
-  # Set permission on git repos
-  general.shell_exec('semanage fcontext -a -t httpd_sys_content_t "/var/lib/git(/.*)?"')
-  general.shell_exec("restorecon -RF /var/lib/git")
-  general.shell_exec("chown -R git:git /var/lib/git")
+  install_gitweb()
+  install_cgit()
 
-  # Install gitweb
-  general.shell_run("yum -y install gitweb.x86_64 httpd",
-    events={
-      re.compile('Is this ok [(]y[/]n[)][:].*'): "y\r\n"
-    }
-  )
-  shutil.copy(app.SYCO_PATH + "var/git/git.conf", "/etc/httpd/conf.d/git.conf")
-
-  general.set_config_property("/var/www/git/gitweb.cgi", "^our.*projectroot.*", 'our $projectroot = "/var/lib/git";')
-  #general.shell_exec("ln -s /var/lib/git /var/www/git/git")
-
-  # Install cgit
-  general.shell_exec("yum -y install cgit")
-  general.shell_exec("setsebool -P httpd_enable_cgi 1")
-
-  general.set_config_property("/etc/cgitrc", r"$include=/etc/cgitrepos", r"include=/etc/cgitrepos")
-
-  # Configure all repos in cgit
-  general.shell_exec("rm -f /etc/cgitrepos")
-  general.shell_exec("touch /etc/cgitrepos")
-
-  file = open("/etc/cgitrepos","w")
-  for dir in os.listdir("/var/lib/git"):
-    basename = os.path.basename(dir)
-    repo_name = os.path.splitext(os.path.basename(dir))[0]
-    file.write("repo.url=" + repo_name + "\n")
-    file.write("repo.path=/var/lib/git/" + basename + "\n")
-    file.write("repo.desc=No desc" + "\n")
-    file.write("repo.owner=unknown" + "\n\n")
-
-  general.shell_exec("chcon -R system_u:object_r:etc_t /etc/cgitrepos")
-  general.shell_exec("rm -f /var/cache/cgit/50100000")
-  general.shell_exec("cat /etc/cgitrepos")
-
-  general.shell_exec("/etc/init.d/httpd restart")
+  # Configure apache
+  x("cp " + app.SYCO_PATH + "var/git/git.conf /etc/httpd/conf.d/git.conf")
+  _install_httpd_certificates()
+  _setup_ldap_auth()
+  x("/etc/init.d/httpd restart")
 
   # Install startpage
   shutil.copy(app.SYCO_PATH + "var/git/index.html", "/var/www/html/index.html")
 
-  #version_obj.mark_executed()
+  version_obj.mark_executed()
 
-def uninstall_git_server(args):
-  os.chdir("/tmp")
-  general.shell_exec("/etc/init.d/httpd stop")
-  general.shell_exec("yum -y remove git gitweb cgit perl-Git")
-  general.shell_exec("rm /git")
-  general.shell_exec("rm -rf /var/lib/git")
-  general.shell_exec("rm /etc/cgitrepos")
-  general.shell_exec("rm -rf /var/cache/cgit")
-  general.shell_exec("rm -rf /home/git")
-  general.shell_exec("rm -rf /var/www")
-  general.shell_exec("rm -rf /etc/httpd")
-  general.shell_exec("rm /root/.gitconfig")
-  general.shell_exec("userdel git")
+def setup_git_user():
+  '''
+  Create linux user that should be used with "git push origin"
+
+  '''
+  x("groupadd git -g 551")
+  x("adduser -m -r --shell /bin/sh -u151 -g551 git")
+  x("mkdir /home/git/.ssh")
+  x("touch /home/git/.ssh/authorized_keys")
+  x("chown -R git:git /home/git")
+  x("usermod --shell /bin/bash git")
+
+  # Config git
+  x('git config --global user.email "' + config.general.get_admin_email() + '"', user="git", cwd="/tmp")
+  x('git config --global user.name "' + app.SERVER_ADMIN_NAME + '"', user="git", cwd="/tmp")
+
+  x('git config --global user.email "' + config.general.get_admin_email() + '"')
+  x('git config --global user.name "' + app.SERVER_ADMIN_NAME + '"')
+
+def setup_repo_folder():
+  '''
+  Create folders where all git repos are stored.
+
+  '''
+  x("mkdir /var/lib/git")
+  x("ln -s /var/lib/git /git")
+
+def create_empty_test_repo():
+  '''
+  Create an empty git repo that can be used to test the git server.
+
+  '''
+  x("mkdir /var/lib/git/project.git")
+  x("git --bare init --shared=group", cwd="/var/lib/git/project.git")
+
+  # Commit README file to empty repo
+  general.create_install_dir()
+  x("mkdir " + INSTALL_DIR + "project")
+  x("git init", cwd=INSTALL_DIR + "project")
+  x("touch README", cwd=INSTALL_DIR + "project")
+  x("git add README", cwd=INSTALL_DIR + "project")
+  x('git commit -m"Initialized repo"', cwd=INSTALL_DIR + "project")
+  x("git remote add origin file:///var/lib/git/project.git", cwd=INSTALL_DIR + "project")
+  x("git push origin master", cwd=INSTALL_DIR + "project")
+  x("rm -fr " + INSTALL_DIR + "project")
+
+def set_permission_on_repos():
+  '''
+  Set linux and SELinux permissions on all git repos.
+
+  '''
+  x('semanage fcontext -a -t httpd_git_rw_content_t "/var/lib/git(/.*)?"')
+  x("restorecon -RF /var/lib/git")
+  x("chown -R git:git /var/lib/git")
+
+def install_gitweb():
+  '''
+  Install the git web interface gitweb.
+
+  '''
+  x("yum -y install gitweb")  
+  scOpen("/var/www/git/gitweb.cgi").replace(
+    "^our.*projectroot.*", 'our $projectroot = "/var/lib/git";'
+  )
+
+def install_cgit():
+  '''
+  Install the git web interface cgit.
+
+  '''
+  x("yum -y install cgit")
+  x("setsebool -P httpd_enable_cgi 1")  
+  scOpen("/etc/cgitrc").remove("^include=.*")
+  scOpen("/etc/cgitrc").add("include=/etc/cgitrepos")  
+  configure_repos_for_cgit()
+
+def configure_repos_for_cgit():
+  '''
+  Congigure cgit to view all installed repos.
+
+  Note: Should be executed after new repos are added.
+
+  '''
+  x("rm -f /etc/cgitrepos")
+  x("touch /etc/cgitrepos")
+  
+  file = scOpen("/etc/cgitrepos")
+  for dir in os.listdir("/var/lib/git"):
+    basename = os.path.basename(dir)
+    repo_name = os.path.splitext(os.path.basename(dir))[0]
+    file.add("repo.url=" + repo_name)
+    file.add("repo.path=/var/lib/git/" + basename)
+    file.add("repo.desc=No desc")
+    file.add("repo.owner=unknown")
+    file.add("")
+
+  x("restorecon system_u:object_r:etc_t /etc/cgitrepos")
+  x("rm -f /var/cache/cgit/50100000")
+  x("cat /etc/cgitrepos")
+
+def _install_httpd_certificates():
+  '''
+  Install syco wildcard certificate to be used by VCS server.
+
+  Both https cert used to browse the VCS httpd server and the client certs
+  used to authenticate to the LDAP-server.
+
+  '''  
+  srv = "root@" + config.general.get_cert_server_ip()
+
+  x("mkdir -p /etc/httpd/ssl/")
+  ssh.scp_from(srv, config.general.get_cert_wild_ca(), "/etc/httpd/ssl/vcs-ca.pem")
+  ssh.scp_from(srv, config.general.get_cert_wild_crt(), "/etc/httpd/ssl/vcs.crt")
+  ssh.scp_from(srv, config.general.get_cert_wild_key(), "/etc/httpd/ssl/vcs.key")
+
+  installSssd.install_certs()
+
+def _setup_ldap_auth():
+  '''
+  Configure the httpd conf files to authenticate against syco LDAP-server.
+
+  '''
+  fn = "/etc/httpd/conf.d/git.conf"
+  scOpen(fn).replace("${AUTHLDAPBINDDN}", "cn=sssd," + config.general.get_ldap_dn())
+  scOpen(fn).replace("${AUTHLDAPBINDPASSWORD}", app.get_ldap_sssd_password())
+
+  ldapurl = "ldaps://%s:636/ou=people,%s?uid" % (
+    config.general.get_ldap_hostname(),
+    config.general.get_ldap_dn()
+  )
+  scOpen(fn).replace("${AUTHLDAPURL}", ldapurl)
 
   version_obj = version.Version("InstallGit", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
-
-def git_commit(args):
-  '''
-  Commit the syco folder to the github repository.
-
-  '''
-  comment = args[1]
-  git_clean(args)
-  general.shell_exec("git add *", cwd=app.SYCO_PATH)
-  general.shell_exec("git commit -a -m'" + comment + "'", cwd=app.SYCO_PATH)
-  general.shell_exec("git push origin", cwd=app.SYCO_PATH)
-
-def git_clean(args):
-  general.shell_exec("find " + app.SYCO_PATH + " -iname '*.pyc' -delete")

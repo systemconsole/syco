@@ -35,9 +35,8 @@ class scOpen:
         '''
         Add value to end off file with cat.
 
-        '''
-        value = self.esc(value)
-        x("sed -i '$a%s' %s" % (value, self.filename))
+        '''        
+        x("echo '%s' >> %s" % (value, self.filename))
 
     def remove(self, search):
         '''

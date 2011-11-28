@@ -212,6 +212,18 @@ class Config(object):
       '''The ip of the cert server.'''
       return self.host(self.get_cert_server()).get_back_ip()
 
+    def get_cert_wild_ca(self):
+      '''The hostname of the cert server.'''
+      return self.get_option("cert.wild.ca")
+
+    def get_cert_wild_crt(self):
+      '''The hostname of the cert server.'''
+      return self.get_option("cert.wild.crt")
+      
+    def get_cert_wild_key(self):
+      '''The hostname of the cert server.'''
+      return self.get_option("cert.wild.key")            
+
     def get_mysql_primary_master(self):
       return self.get_option("mysql.primary_master")
 
