@@ -10,25 +10,24 @@ __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __status__ = "Production"
 
 import cgi
 import cgitb
-import ldap
+import subprocess
 
 # Remove in production
 # cgitb.enable()
-# cgitb.enable(display=0, logdir="/tmp")
+# cgitb.enable(display=1)
 
 # Constants set from syco
-LDAP_DN = "${LDAP_DN}"              # dc=fareonline,dc=net
-LDAP_HOSTNAME = "${LDAP_HOSTNAME}"  # ldap.fareonline.net
+LDAP_DN = "${LDAP_DN}" # dc=syco,dc=net
 
 class Page:
   class Message:
     '''
-    Used to store error messages.
+    Used to store error and info messages.
 
     '''
     message = ""
@@ -40,12 +39,16 @@ class Page:
       self.message = '<p class="error">' + message + "</p>"
 
     def get_message(self):
-      return self.message
+      return self.message.replace("\n", "<br>")
 
   # Error/Info message to print on form.
-  message = Message()
+  message = None
 
-  form = cgi.FieldStorage()
+  form = None
+
+  def __init__(self):
+    self.message = Page.Message()
+    self.form = cgi.FieldStorage()
 
   def _action(self):
     if "username" in self.form:
@@ -61,45 +64,49 @@ class Page:
       elif (new_password == old_password):
         self.message.set_error("Same password used, password is not changed.")
       else:
-        self._change_password(user, old_password, new_password)
+        self._ldappasswd(user, old_password, new_password)
 
-  def _change_password(self, user, old_password, new_password):
-    l = ""
-    try:
-      dn = "uid=" + user + ",ou=people," + LDAP_DN
-      l = ldap.initialize("ldap://" + LDAP_HOSTNAME)
-      l.set_option(ldap.OPT_X_TLS_DEMAND, True)
-      l.start_tls_s()
-      l.simple_bind_s(dn, old_password)
-      l.passwd_s(dn, old_password, new_password)
+  def sanitize_error(self, error):
+    '''
+    Convert messages returned by shellcmd ldappasswd to human readable.
+
+    '''
+    error = error.replace("Result: Constraint violation (19)", "", 1).strip()
+    error = error.replace("Result: Server is unwilling to perform (53)", "", 1).strip()
+    error = error.replace("Additional info:", "", 1).strip()
+    error = error.replace("ldap_bind: Invalid credentials (49)", "Invalid username and/or password.")
+
+
+    return error
+
+  def _ldappasswd(self, user, old_password, new_password):
+    '''
+    Execute shellcmd ldappasswd to change user password.
+
+    '''
+    dn = "uid=" + user + ",ou=people," + LDAP_DN
+
+    command = "ldappasswd -D '%(dn)s' -w '%(opsw)s' -a '%(opsw)s' -s '%(npsw)s' " % {
+      'dn' : dn,
+      'opsw' : old_password,
+      'npsw' : new_password
+    }
+
+    envvar = {
+      "LDAPTLS_CERT" : "/etc/openldap/cacerts/client.pem",
+      "LDAPTLS_KEY" : "/etc/openldap/cacerts/client.pem"
+    }
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=envvar)
+    stdout, stderr = p.communicate()
+
+    if p.returncode == 0:
       self.message.set_info("Password changed")
+      return
 
-    except ldap.UNWILLING_TO_PERFORM, e:
-      self.message.set_error("Unwilling to perform operation.")
+    stdout += str(stderr)
+    stdout = self.sanitize_error(stdout)
 
-    except ldap.INVALID_CREDENTIALS, e:
-      self.message.set_error("Invalid username and or password.")
-
-    except ldap.LDAPError, e:
-      message =""
-      if "info" in e[0]:
-        message = str(e[0]['info'])
-        if "desc" in e[0]:
-          message += " (" + str(e[0]['desc']) + ")."
-      elif hasattr(e, 'message'):
-        if type(e.message) == dict:
-          for (k, v) in e.message.iteritems():
-            message += "%s: %sn\n" % (k, v)
-        else:
-          message = "%sn\n" % e.message
-      else:
-        message = str(e)
-      self.message.set_error(message)
-
-    try:
-      l.unbind()
-    except:
-      pass
+    self.message.set_error(stdout)
 
   def _get_form_html(self):
     return """

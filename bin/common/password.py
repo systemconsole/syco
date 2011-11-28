@@ -26,7 +26,7 @@ import time
 import subprocess
 
 from constant import *
-import passwordStore
+import passwordstore
 
 def _get_password_store():
   '''
@@ -34,7 +34,7 @@ def _get_password_store():
 
   '''
   if (not _get_password_store.password_store):
-    _get_password_store.password_store = passwordStore.PasswordStore(PASSWORD_STORE_PATH)
+    _get_password_store.password_store = passwordstore.PasswordStore(PASSWORD_STORE_PATH)
 
   return _get_password_store.password_store
 
@@ -84,6 +84,14 @@ def get_svn_password():
   '''The svn password for user syscon_svn'''
   return _get_password("svn", "syscon")
 
+def get_ldap_admin_password():
+  '''The ldap admin password.'''
+  return _get_password("ldap", "admin")
+
+def get_ldap_sssd_password():
+  '''The password that is used by sssd to connect to the ldap-server.'''
+  return _get_password("ldap", "sssd")
+
 def get_glassfish_master_password():
   '''Used to sign keystore, never transfered over network.'''
   return _get_password("glassfish", "master")
@@ -130,7 +138,10 @@ def init_all_passwords():
   '''
   get_root_password()
   get_svn_password()
+  get_ldap_admin_password()
+  get_ldap_sssd_password()
   get_glassfish_master_password()
   get_glassfish_admin_password()
   get_user_password("glassfish")
+
   init_mysql_passwords()

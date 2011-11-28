@@ -29,6 +29,7 @@ from socket import gethostname
 import app
 import config
 import general
+from general import x
 import version
 import install
 
@@ -74,13 +75,13 @@ def hardening(args):
 #  while name == "":
 #    name = raw_input("User name:")
 #
-#  general.shell_exec("useradd " + name + " -G wheel,root")
-#  error while general.shell_exec("passwd " + name):
+#  x("useradd " + name + " -G wheel,root")
+#  error while x("passwd " + name):
 #    pass
 #
-#  general.shell_exec("chmod +w /etc/sudoers")
+#  x("chmod +w /etc/sudoers")
 #  general.set_config_property("/etc/sudoers",'^# %wheel.*ALL=\(ALL\).*ALL$',"%wheel        ALL=(ALL)       ALL")
-#  general.shell_exec("chmod 0440 /etc/sudoers")
+#  x("chmod 0440 /etc/sudoers")
 #
 #  process = subprocess.Popen('visudo -c', shell=True, stdout=subprocess.PIPE)
 #  if process.communicate()[0][:-1] != "/etc/sudoers: parsed OK":
@@ -132,7 +133,6 @@ def _disable_services():
   _disable_service("gpm")
   _disable_service("yum-updatesd")
   _disable_service("portmap")
-  _disable_service("sendmail")
   _disable_service("mcstrans")
   _disable_service("pcscd")
   _disable_service("nfslock")
@@ -191,14 +191,14 @@ def _hardening():
 
   app.print_verbose("   Disable usb drives.")
   general.set_config_property("/etc/modprobe.d/syco.conf", "^blacklist usb-storage$", "blacklist usb-storage")
-  general.shell_exec("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
+  x("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
   # todo:
   #app.print_verbose("   Disallow Root Ssh Login (Must Su To Root)")
   #general.set_config_property("/etc/ssh/sshd_config", "^[#]*PermitRootLogin.*$", "PermitRootLogin no")
 
   app.print_verbose("   Store passwords sha512 instead of md5")
-  general.shell_exec("authconfig --passalgo=sha512 --update --disablefingerprint")
+  x("authconfig --passalgo=sha512 --update --disablefingerprint")
 
   app.print_verbose("   Help kernel to prevent certain kinds of attacks")
   general.set_config_property("/etc/sysctl.conf", "^net.ipv4.icmp_ignore_bogus_error_messages=.*$","net.ipv4.icmp_ignore_bogus_error_messages=1")
@@ -208,12 +208,12 @@ def _hardening():
 
 def _clear_login_screen():
   '''Clear information shown on the console login screen.'''
-  general.shell_exec("clear > /etc/issue")
-  general.shell_exec("clear > /etc/issue.net")
+  x("clear > /etc/issue")
+  x("clear > /etc/issue.net")
 
 def _yum_update():
   app.print_verbose("Update with yum")
-  general.shell_exec("yum update -y")
+  x("yum update -y")
 
 def _disable_ip6_support():
   app.print_verbose("Disable IP6 support")
@@ -224,7 +224,7 @@ def _disable_ip6_support():
 def _forward_root_mail():
   app.print_verbose("Forward all root email to " + config.general.get_admin_email())
   general.set_config_property("/etc/aliases", ".*root[:].*", "root:		" + config.general.get_admin_email())
-  general.shell_exec("/usr/bin/newaliases")
+  x("/usr/bin/newaliases")
 
 def configure_resolv_conf():
   app.print_verbose("Configure /etc/resolv.conf")
@@ -240,7 +240,7 @@ def configure_localhost():
   general.set_config_property("/etc/hosts", "127.0.0.1.*", localhost)
 
 def restart_network():
-  general.shell_exec("service network restart")
+  x("service network restart")
 
 #
 # Helper functions
@@ -265,4 +265,4 @@ def _rpm_remove(name):
   '''Remove rpm packages'''
   process=subprocess.Popen('rpm -q ' + name, shell=True, stdout=subprocess.PIPE)
   if process.communicate()[0][:-1] != "package " + name + " is not installed":
-    general.shell_exec("rpm -e " + name)
+    x("rpm -e " + name)

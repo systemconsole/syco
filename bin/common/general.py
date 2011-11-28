@@ -26,6 +26,7 @@ import sys
 from random import choice
 from socket import *
 
+from constant import *
 import app
 import expect
 import pexpect
@@ -61,8 +62,8 @@ def delete_install_dir():
   '''
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
-    shutil.rmtree(app.INSTALL_DIR, ignore_errors=True)
     os.chdir("/tmp")
+    x("rm -rf " + app.INSTALL_DIR)
 
 def create_install_dir():
   '''
@@ -76,11 +77,11 @@ def create_install_dir():
 
   if (not os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Create install dir " + app.INSTALL_DIR + " to use during installation.")
-    os.makedirs(app.INSTALL_DIR)
+    x("mkdir -p " + app.INSTALL_DIR)
     atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    os.chmod(app.INSTALL_DIR, stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+    x("chmod o+rwx " + app.INSTALL_DIR)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
@@ -246,7 +247,7 @@ def shell_run(command, user="root", cwd=None, events={}):
   if (cwd == None):
     cwd = os.getcwd()
 
-  app.print_verbose("Command: " + command)
+  app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
   (stdout, exit_status) = pexpect.run(command,
     cwd=cwd,
     events=events,
@@ -261,6 +262,61 @@ def shell_run(command, user="root", cwd=None, events={}):
     raise Exception("Couldnt execute " + command)
 
   return stdout
+
+X_OUTPUT_NONE = 0
+X_OUTPUT_ALL = 1
+X_OUTPUT_CMD = 2
+def x(command, user = "", output = X_OUTPUT_ALL, cwd=None):
+  '''
+  Execute a shell command and handles output verbosity.
+
+  '''
+  if (user):
+    command = command.replace('"', '\\"')
+    command="su " + user + ' -c "' + command + '"'
+
+  if (cwd == None):
+    cwd = os.getcwd()
+  elif (output > X_OUTPUT_NONE):
+    app.print_verbose("\t" + BOLD + "Command: " + RESET + "cd " + cwd)
+
+
+  if (output > X_OUTPUT_NONE):
+    app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
+
+  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+
+  return handle_subprocess(p, output)
+
+def handle_subprocess(p, output):
+  stdout=""
+  stderr=""
+  while (True):
+    for txt in p.stdout:
+      # Only write caption once.
+      if (output == X_OUTPUT_ALL):
+        if (stdout==""):
+          app.print_verbose("---- Result ----", 2)
+        app.print_verbose(txt, 2, new_line=False)
+      stdout+=txt
+
+    for txt in p.stderr:
+      stderr += txt
+
+    if (p.poll() != None):
+      break
+
+  if (stderr and output == X_OUTPUT_ALL):
+    app.print_error(stderr.strip())
+
+  if (p.returncode and output == X_OUTPUT_ALL):
+    app.print_error("Invalid returncode %d" % p.returncode)
+
+  # An extra line break for the looks.
+  if ((stdout or stderr) and app.options.verbose >=2 and output == X_OUTPUT_ALL):
+    print("\n"),
+
+  return stdout + str(stderr)
 
 def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=True):
   '''

@@ -46,7 +46,7 @@ network --bootproto=static --ip=$front_ip --netmask=$front_netmask --gateway=$fr
 reboot
 
 #Root password
-rootpw --iscrypted $default_password_crypted
+rootpw --iscrypted "$default_password_crypted"
 
 # SELinux configuration
 selinux --enforcing

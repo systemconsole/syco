@@ -46,6 +46,8 @@ def install_mail_server(args):
   version_obj = version.Version("Install-mail-relay-server", SCRIPT_VERSION)
   version_obj.check_executed()
 
+  general.shell_exec("yum -y install sendmail")
+
   # Tell iptables that this server is configured as a mail-relay server.
   general.shell_exec("touch /etc/mail/syco_mail_relay_server")
   iptables.add_mail_relay_chain()
@@ -68,12 +70,15 @@ def install_mail_server(args):
 
   _rebuild_sendmail_config()
 
+  _test_mail()
   version_obj.mark_executed()
 
 def install_mail_client(args):
   app.print_verbose("Install mail-relay-server version: %d" % SCRIPT_VERSION)
   version_obj = version.Version("Install-mail-relay-client", SCRIPT_VERSION)
   version_obj.check_executed()
+
+  general.shell_exec("yum -y install sendmail")
 
   file = "/etc/mail/sendmail.mc"
   domain = config.general.get_mail_relay_domain_name()

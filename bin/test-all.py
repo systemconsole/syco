@@ -21,6 +21,8 @@ import os, os.path
 import sys
 import trace
 
+file_name = ""
+
 def get_project_home():
     '''Return the path to the root folder of the project.'''
     project_home = os.path.realpath(__file__)
@@ -29,6 +31,7 @@ def get_project_home():
     return project_home
 
 def add_tests_to_list (import_list, dirname, names):
+  global file_name
   # Only check directories named 'tests'.
   if os.path.basename(dirname) != 'tests':
     return
@@ -38,7 +41,8 @@ def add_tests_to_list (import_list, dirname, names):
     if ext != '.py':
       continue
     if filename.find('test_') == 0:
-      import_list.append (os.path.join(dirname, filename))
+        if file_name in filename:
+            import_list.append (os.path.join(dirname, filename))
 
 def find_modules_and_add_paths (root_path):
   import_list = []
@@ -67,6 +71,9 @@ def main():
     unittest.main(defaultTest='suite')
 
 def remove_cmd_line_arguments():
+    global file_name
+    if len(sys.argv) > 1:
+      file_name = sys.argv[1]
     del sys.argv[1:]
 
 def setup_env():

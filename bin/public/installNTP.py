@@ -28,7 +28,11 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import app, general, version, iptables
+import app
+import config
+import general
+import version
+import iptables
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -84,7 +88,6 @@ def install_ntp(ntp_server_ip = False):
     # Allow access to/from the ntp-server. You may use either a hostname or IP address
     # on the server line. You must use an IP address on the restrict line. Or do I??
     general.set_config_property("/etc/ntp.conf", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery")
-    general.set_config_property("/etc/ntp.conf", "restrict -6 " + ntp_server_ip + " kod nomodify notrap nopeer noquery", "restrict -6 " + ntp_server_ip + " kod nomodify notrap nopeer noquery")
 
     # Don't use fudge server
     general.set_config_property("/etc/ntp.conf", ".*server.*127.127.1.0.*", "#server 127.127.1.0")

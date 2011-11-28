@@ -16,6 +16,7 @@ __status__ = "Production"
 import subprocess
 
 import version
+from constant import BOLD, RESET
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -30,7 +31,7 @@ def epel_repo():
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
 
   '''
-  rpm("epel-release-6-5.noarch", "http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm")
+  rpm("epel-release-6-5.noarch", "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-5.noarch.rpm")
 
 def package(name):
   _package(name, "yum -y install " + name)
@@ -41,18 +42,22 @@ def rpm(name, url):
 def _package(name, command):
   version_obj = version.Version("package-" + name, SCRIPT_VERSION)
   if (not version_obj.is_executed()):
-    print("Install " + name)
-    if (not _is_rpm_installed(name)):
+    print("\t" + BOLD + "Command: " + RESET + command)
+    if (not is_rpm_installed(name)):
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
 
-    if (_is_rpm_installed(name)):
+    if (is_rpm_installed(name)):
       version_obj.mark_executed()
     else:
       raise Exception("Failed to install " + name + ".")
 
-def _is_rpm_installed(name):
+def is_rpm_installed(name):
+    '''
+    Check if an rpm package is installed.
+
+    '''
     stdoutdata = subprocess.Popen("rpm -q " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
-    if ("package " + name + " is not installed" in stdoutdata):
-      return False
-    else:
+    if stdoutdata.strip().find(name) == 0:
       return True
+    else:
+      return False

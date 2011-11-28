@@ -21,6 +21,7 @@ import subprocess
 import app
 import config
 import general
+from general import x
 import iptables
 import version
 import install
@@ -33,6 +34,7 @@ SCRIPT_VERSION = 3
 def build_commands(commands):
   commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
   commands.add("install-cobbler-refresh", setup_all_systems, help="Refresh settings and repo info.")
+  commands.add("install-cobbler-conf-refresh", refresh_configs, help="Refresh settings.")
 
 def install_cobbler(args):
   '''
@@ -46,6 +48,9 @@ def install_cobbler(args):
   # Initialize password.
   app.get_root_password_hash()
 
+  # Disable SELINUX it just messes with me.
+  #x("echo 0 > /selinux/enforce")
+
   _install_cobbler()
 
   iptables.add_cobbler_chain()
@@ -56,9 +61,21 @@ def install_cobbler(args):
   _import_repos()
   setup_all_systems(args)
 
+  # Start/Restart used services.
+  x("/etc/init.d/dhcpd restart")
+  x("/etc/init.d/httpd restart")
+
   version_obj.mark_executed()
 
 def setup_all_systems(args):
+  '''
+  Update cobbler with all settings in install.cfg and repos.
+
+  '''
+  _refresh_repo()
+  refresh_configs(args)
+
+def refresh_configs(args):
   '''
   Update cobbler with all settings in install.cfg.
 
@@ -66,7 +83,6 @@ def setup_all_systems(args):
   _refresh_all_profiles()
   _remove_all_systems()
   _add_all_systems()
-  _refresh_repo()
   _cobbler_sync()
 
 def _install_cobbler():
@@ -82,44 +98,45 @@ def _install_cobbler():
   install.epel_repo()
 
   # To get cobbler and kvm work correct.
-  general.shell_exec("yum -y install yum-utils cobbler koan httpd dhcp")
-  general.shell_exec("/sbin/chkconfig httpd on")
-  general.shell_exec("/sbin/chkconfig dhcpd on")
+  # dhcp is needed to get pxe-boot to work.
+  x("yum -y install yum-utils cobbler koan httpd dhcp")
+  x("/sbin/chkconfig httpd on")
+  x("/sbin/chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
-  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/lib/tftpboot/.*"')
-  general.shell_exec('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/www/cobbler/images/.*"')
-  general.shell_exec('/usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"')
-  general.shell_exec('restorecon -R -v "/var/lib/tftpboot/"')
-  general.shell_exec('restorecon -R -v "/var/www/cobbler/images"')
-  general.shell_exec('restorecon -R -v "/var/lib/cobbler/webui_sessions/"')
+  x('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/lib/tftpboot/.*"')
+  x('/usr/sbin/semanage fcontext -a -t public_content_rw_t "/var/www/cobbler/images/.*"')
+  x('/usr/sbin/semanage fcontext -a -t httpd_sys_content_rw_t "/var/lib/cobbler/webui_sessions/.*"')
+  x('restorecon -R -v "/var/lib/tftpboot/"')
+  x('restorecon -R -v "/var/www/cobbler/images"')
+  x('restorecon -R -v "/var/lib/cobbler/webui_sessions/"')
 
   # Enables cobbler to read/write public_content_rw_t
-  general.shell_exec('/usr/sbin/setsebool -P cobbler_anon_write on')
+  x('/usr/sbin/setsebool -P cobbler_anon_write on')
 
   # Enable httpd to connect to cobblerd (optional, depending on if web interface is installed)
   # Notice: If you enable httpd_can_network_connect_cobbler and you should switch httpd_can_network_connect off
-  general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect off')
-  general.shell_exec('/usr/sbin/setsebool -P httpd_can_network_connect_cobbler on')
+  x('/usr/sbin/setsebool -P httpd_can_network_connect off')
+  x('/usr/sbin/setsebool -P httpd_can_network_connect_cobbler on')
 
   #Enabled cobbler to use rsync etc.. (optional)
-  general.shell_exec('/usr/sbin/setsebool -P cobbler_can_network_connect on')
+  x('/usr/sbin/setsebool -P cobbler_can_network_connect on')
 
   #Enable cobbler to use CIFS based filesystems (optional)
-  #general.shell_exec('/usr/sbin/setsebool -P cobbler_use_cifs on')
+  #x('/usr/sbin/setsebool -P cobbler_use_cifs on')
 
   # Enable cobbler to use NFS based filesystems (optional)
-  #general.shell_exec('/usr/sbin/setsebool -P cobbler_use_nfs on')
+  #x('/usr/sbin/setsebool -P cobbler_use_nfs on')
 
   _install_custom_selinux_policy()
 
   # Double check your choices
-  general.shell_exec('getsebool -a|grep cobbler')
+  x('getsebool -a|grep cobbler')
 
   app.print_verbose("Update xinetd config files")
   general.set_config_property("/etc/xinetd.d/tftp", '[\s]*disable[\s]*[=].*', "        disable                 = no")
   general.set_config_property("/etc/xinetd.d/rsync", '[\s]*disable[\s]*[=].*', "        disable         = no")
-  general.shell_exec("/etc/init.d/xinetd restart")
+  x("/etc/init.d/xinetd restart")
 
 def _modify_cobbler_settings():
   app.print_verbose("Update cobbler config files")
@@ -136,7 +153,6 @@ def _modify_cobbler_settings():
 
   # Configure DHCP
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
-  general.shell_exec("/etc/init.d/dhcpd restart")
 
   # Config crontab to update repo automagically
   general.set_config_property2("/etc/crontab", "01 4 * * * syco install-cobbler-repo")
@@ -144,50 +160,46 @@ def _modify_cobbler_settings():
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")
 
-  general.shell_exec("/etc/init.d/httpd restart")
-
-  # TODO: Do we need no_return=True
-  # general.shell_exec("/etc/init.d/cobblerd restart", no_return=True)
-  general.shell_exec("/etc/init.d/cobblerd restart")
+  x("/etc/init.d/cobblerd restart")
 
   # Wait for cobblered to restart
   time.sleep(1)
 
   # Iptables rules need be fixed now.
-  general.shell_exec("cobbler get-loaders")
+  x("cobbler get-loaders")
 
   # Setup distro/repo for centos
-  general.shell_exec("cobbler check")
+  x("cobbler check")
 
 def _import_repos():
   if (os.access("/var/www/cobbler/ks_mirror/centos-x86_64", os.F_OK)):
     app.print_verbose("Centos-x86_64 already imported")
   else:
-    general.shell_exec('cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/os/x86_64/ --name=centos --arch=x86_64')
+    x('cobbler import --path=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/os/x86_64/ --name=centos --arch=x86_64')
 
   if (os.access("/var/www/cobbler/repo_mirror/centos-updates-x86_64", os.F_OK)):
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
-    general.shell_exec("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    general.shell_exec("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=http://download.fedora.redhat.com/pub/epel/6/x86_64")
-    general.shell_exec("cobbler reposync")
+    x("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
+    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://ftp.df.lth.se/pub/fedora-epel/6/x86_64")
+    x("cobbler reposync")
+
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
-  general.shell_exec("cobbler distro remove --name centos-xen-x86_64")
-  general.shell_exec("cobbler profile remove --name centos-x86_64")
+  x("cobbler profile remove --name centos-x86_64")
+  x("cobbler profile remove --name=centos-vm_guest")
+  x("cobbler profile remove --name=centos-vm_host")
 
   # Setup installation profiles and systems
-  general.shell_exec("cobbler profile remove --name=centos-vm_host")
-  general.shell_exec(
+  x(
     'cobbler profile add --name=centos-vm_host' +
     ' --distro=centos-x86_64' +
     ' --repos="centos-updates-x86_64 epel-x86_64"' +
     ' --kickstart=/var/lib/cobbler/kickstarts/cobbler.ks'
   )
 
-  general.shell_exec("cobbler profile remove --name=centos-vm_guest")
-  general.shell_exec(
+  x(
     'cobbler profile add --name=centos-vm_guest' +
     ' --parent=centos-vm_host' +
     ' --virt-type=qemu' +
@@ -196,9 +208,15 @@ def _refresh_all_profiles():
   )
 
 def _remove_all_systems():
-  stdout = general.shell_exec("cobbler system list")
+  '''
+  Delete all systems.
+
+  It's not needed to run this if the profiles has been deleted.
+
+  '''
+  stdout = x("cobbler system list")
   for name in stdout.rsplit():
-    general.shell_exec("cobbler system remove --name " + name)
+    x("cobbler system remove --name " + name)
 
 def _add_all_systems():
   for hostname in config.get_servers():
@@ -209,32 +227,27 @@ def _add_all_systems():
       _guest_add(hostname)
 
 def _host_add(hostname):
-  app.print_verbose("Add barmetalhost" + hostname)
+  app.print_verbose("")
+  app.print_verbose("Add baremetalhost " + hostname)
 
-  general.shell_exec(
+  x(
     "cobbler system add --profile=centos-vm_host " +
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
 
   _setup_network(hostname)
-
-  general.shell_exec(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth0" +
-    " --mac=" + str(config.host(hostname).get_back_mac()))
-
-  general.shell_exec(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth1" +
-    " --mac=" + str(config.host(hostname).get_front_mac()))
+  edit_iface_attr(hostname, 'eth0', '--mac', config.host(hostname).get_back_mac())
+  edit_iface_attr(hostname, 'eth1', '--mac', config.host(hostname).get_front_mac())
 
 def _guest_add(hostname):
-  app.print_verbose("Add guest" + hostname)
+  app.print_verbose("")
+  app.print_verbose("Add guest " + hostname)
 
-  general.shell_exec(
+  x(
     "cobbler system add --profile=centos-vm_guest"
     " --virt-path=\"/dev/VolGroup00/" + hostname + "\"" +
     " --virt-ram=" + str(config.host(hostname).get_ram()) +
@@ -242,45 +255,45 @@ def _guest_add(hostname):
     " --name=" + hostname + " --hostname=" + hostname +
     ' --name-servers="' + config.general.get_front_resolver_ip() + '"' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
-    ' boot_device=' + str(config.host(hostname).get_boot_device("hda")) + '"')
+    ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')
 
   _setup_network(hostname)
-
-  general.shell_exec(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth0" +
-    ' --virt-bridge=br0')
-
-  general.shell_exec(
-    "cobbler system edit --name=" + hostname +
-    " --interface=eth1" +
-    ' --virt-bridge=br1')
+  edit_iface_attr(hostname, 'eth0', '--virt-bridge', 'br0')
+  edit_iface_attr(hostname, 'eth1', '--virt-bridge', 'br1')
 
 def _setup_network(hostname):
+  edit_iface(
+    hostname, 'eth0',
+    config.host(hostname).get_back_ip(),
+    config.general.get_back_netmask(),
+    config.general.get_back_gateway_ip()
+  )
+
+  edit_iface(
+    hostname, 'eth1',
+    config.host(hostname).get_front_ip(),
+    config.general.get_front_netmask(),
+    config.general.get_front_gateway_ip()
+  )
+
+def edit_iface(hostname, iface, ip, netmask, gateway):
   cmd  = "cobbler system edit --name=" + hostname
-  cmd += " --interface=eth0 --static=1"
+  cmd += " --interface=%s --static=1" % iface
 
-  if config.host(hostname).get_back_ip():
-    cmd += " --ip=" + config.host(hostname).get_back_ip()
-    cmd += " --subnet=" + config.general.get_back_netmask()
+  if ip:
+    cmd += " --ip=" + ip
+    cmd += " --subnet=" + netmask
+    if gateway:
+      cmd += " --gateway=" + gateway
 
-  if config.general.get_back_gateway_ip():
-    cmd += " --gateway=" + config.general.get_back_gateway_ip()
+  x(cmd)
 
-  general.shell_exec(cmd)
-
-  cmd  = "cobbler system edit --name=" + hostname
-  cmd += " --interface=eth1 --static=1"
-
-  if config.host(hostname).get_front_ip():
-    cmd += " --ip=" + config.host(hostname).get_front_ip()
-    cmd += " --subnet=" + config.general.get_front_netmask()
-
-  if config.general.get_front_gateway_ip():
-    cmd += " --gateway=" + config.general.get_front_gateway_ip()
-
-  general.shell_exec(cmd)
+def edit_iface_attr(hostname, iface, key, value):
+  if (key and value):
+    x("cobbler system edit --name=%s --interface=%s %s=%s" %
+                  (hostname, iface,key, value))
 
 def _refresh_repo():
   '''
@@ -297,15 +310,15 @@ def _refresh_repo():
   #downloads['jdk-6u26-linux-x64-rpm.bin'] = 'http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jdk-6u26-linux-x64-rpm.bin?BundledLineItemUUID=pGSJ_hCvabIAAAEu870pGPfd&OrderID=1ESJ_hCvsh4AAAEu1L0pGPfd&ProductID=oSKJ_hCwOlYAAAEtBcoADqmS&FileName=/jdk-6u26-linux-x64-rpm.sbin'
 
   #for dst, src in downloads.items():
-  #  general.shell_exec("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
+  #  x("wget --background -O /var/www/cobbler/repo_mirror/" + dst + " "  + src)
 
   #general.wait_for_processes_to_finish('wget')
 
-  general.shell_exec("cobbler reposync --tries=3 --no-fail")
+  x("cobbler reposync --tries=3 --no-fail")
 
 def _cobbler_sync():
-  general.shell_exec("cobbler sync")
-  general.shell_exec("cobbler report")
+  x("cobbler sync")
+  x("cobbler report")
 
 def _install_custom_selinux_policy():
   '''
@@ -317,6 +330,6 @@ def _install_custom_selinux_policy():
   mod = "/tmp/cobbler.te"
   pp = "/tmp/cobbler.te"
 
-  general.shell_exec("checkmodule -M -m -o %s %s" % (mod, te))
-  general.shell_exec("semodule_package -o %s -m %s" % (pp, mod))
-  general.shell_exec("semodule -i %s" % pp)
+  x("checkmodule -M -m -o %s %s" % (mod, te))
+  x("semodule_package -o %s -m %s" % (pp, mod))
+  x("semodule -i %s" % pp)

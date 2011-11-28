@@ -65,7 +65,7 @@ class TestGeneralConfig(unittest.TestCase):
     def test_host_vh01_install(self):
         host = config.host("syco-vh01")
 
-        self.assertRaises(config.ConfigException, host.get_front_ip)
+        self.assertEqual(host.get_front_ip(), None)
         self.assertEqual(host.get_back_ip(), "10.0.0.2")
         self.assertEqual(host.get_back_mac(), "xx:xx:xx:xx:xx:xx")
         self.assertRaises(config.ConfigException, host.get_ram)

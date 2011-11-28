@@ -25,10 +25,11 @@ import time
 
 import app
 import config
-from general import set_config_property_batch, shell_exec
+from general import set_config_property_batch, x
 import net
 import nfs
 import sys
+import disk
 
 def build_commands(commands):
   commands.add(
@@ -60,7 +61,7 @@ class install_guest:
       self.hostname = args[1]
 
   def check_if_host_is_installed(self):
-    result = shell_exec("virsh list --all")
+    result = x("virsh list --all")
     if (self.hostname in result):
       raise Exception(self.hostname + " already installed")
 
@@ -87,37 +88,40 @@ class install_guest:
 
     '''
     prop = {}
-    prop['$hostname'] = self.hostname
+    prop['\$hostname'] = self.hostname
 
-    prop['$front_ip'] = config.host(self.hostname).get_front_ip()
-    prop['$front_netmask'] = config.general.get_front_netmask()
-    prop['$front_gateway'] = config.general.get_front_gateway_ip()
-    prop['$front_nameserver'] = config.general.get_front_resolver_ip()
+    prop['\$front_ip'] = config.host(self.hostname).get_front_ip()
+    prop['\$front_netmask'] = config.general.get_front_netmask()
+    prop['\$front_gateway'] = config.general.get_front_gateway_ip()
+    prop['\$front_nameserver'] = config.general.get_front_resolver_ip()
 
-    prop['$back_ip'] = config.host(self.hostname).get_back_ip()
-    prop['$back_netmask'] = config.general.get_back_netmask()
-    prop['$back_gateway'] = config.general.get_back_gateway_ip()
-    prop['$back_nameserver'] = config.general.get_back_resolver_ip()
+    prop['\$back_ip'] = config.host(self.hostname).get_back_ip()
+    prop['\$back_netmask'] = config.general.get_back_netmask()
+    prop['\$back_gateway'] = config.general.get_back_gateway_ip()
+    prop['\$back_nameserver'] = config.general.get_back_resolver_ip()
 
-    prop['$default_password_crypted'] = '"' + app.get_root_password_hash() + '"'
+    prop['\$default_password_crypted'] = app.get_root_password_hash()
 
-    prop['$disk_swap_mb'] = config.host(hostname).get_disk_swap_mb()
-    prop['$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
-    prop['$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
-    prop['$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
-    prop['$boot_device'] = config.host(hostname).get_boot_device("vda")
+    prop['\$disk_swap_mb'] = config.host(self.hostname).get_disk_swap_mb()
+    prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
+    prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
+    prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
+    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
 
     self.property_list = prop
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
-      shell_exec("mkdir /media/dvd")
+      x("mkdir /media/dvd")
 
     if (not os.path.ismount("/media/dvd")):
-      shell_exec("mount -o ro /dev/dvd /media/dvd")
+      x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
+    
+    if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
+      raise Exception("Couldn't mount dvd")    
 
   def unmount_dvd(self):
-    shell_exec("umount /media/dvd")
+    x("umount /media/dvd")
 
   def create_kickstart(self):
       '''
@@ -128,8 +132,8 @@ class install_guest:
       hostname_ks_file = ks_folder + self.hostname + ".ks"
       dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
 
-      shell_exec("mkdir -p " + ks_folder)
-      shell_exec("cp " + dvd_ks_file + " " + hostname_ks_file)
+      x("mkdir -p " + ks_folder)
+      x("cp " + dvd_ks_file + " " + hostname_ks_file)
 
       set_config_property_batch(hostname_ks_file, self.property_list, False)
 
@@ -148,7 +152,7 @@ class install_guest:
       nfs.remove_export('dvd')
 
   def create_kvm_host(self):
-      self.create_lvm_volumegroup()
+      devicename = disk.create_lvm_volumegroup(self.hostname, self.property_list['\$total_disk_gb'])
 
       cmd = "virt-install -d --connect qemu:///system"
       cmd += " --name " + self.hostname
@@ -157,28 +161,22 @@ class install_guest:
       cmd +=  " --vnc --noautoconsole"
       cmd +=  " --hvm --accelerate"
       cmd +=  " --check-cpu"
-      cmd +=  " --disk path=/dev/VolGroup00/" + self.hostname
+      cmd +=  " --disk path=" + devicename
       cmd +=  " --os-type linux --os-variant=rhel6"
       cmd +=  " --network bridge:br0"
       cmd +=  " --network bridge:br1"
       cmd +=  " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
       cmd +=  ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
       cmd +=  ' ksdevice=eth0'
-      cmd +=  ' ip=' + self.property_list['back_ip']
-      cmd +=  ' netmask=' + self.property_list['back_netmask']
+      cmd +=  ' ip=' + self.property_list['\$back_ip']
+      cmd +=  ' netmask=' + self.property_list['\$back_netmask']
       cmd +=  ' dns=' + self.kvm_host_back_ip
       cmd +=  ' gateway=' + self.kvm_host_back_ip
       cmd +=  ' "'
 
-      shell_exec(cmd)
+      x(cmd)
       self.wait_for_installation_to_complete()
       self.autostart_guests()
-
-  def create_lvm_volumegroup(self):
-    result = shell_exec("lvdisplay -v /dev/VolGroup00/" + self.hostname)
-    if ("/dev/VolGroup00/" + self.hostname not in result):
-      shell_exec("lvcreate -n " + self.hostname +
-                 " -L " + self.property_list['total_disk_gb'] + "G VolGroup00")
 
   def wait_for_installation_to_complete(self):
     '''
@@ -191,12 +189,12 @@ class install_guest:
       time.sleep(10)
       print ".",
       sys.stdout.flush()
-      result = shell_exec("virsh list", output=False)
+      result = x("virsh list", output=False)
       if (self.hostname not in result):
         print "Now installed"
         break
 
   def autostart_guests(self):
     # Autostart guests.
-    shell_exec("virsh autostart " + self.hostname)
-    shell_exec("virsh start " + self.hostname)
+    x("virsh autostart " + self.hostname)
+    x("virsh start " + self.hostname)
