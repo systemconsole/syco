@@ -28,13 +28,12 @@ require {
   class process signull;
   class rawip_socket { getopt create };
   class capability { net_admin net_raw fsetid sys_ptrace };
-  class file { rename setattr read lock create write getattr unlink open append};
   class netlink_audit_socket create;
   class sock_file { write getattr };
   class lnk_file { read create getattr };
   class unix_dgram_socket { create connect sendto };
-  class dir { rename search setattr read create write getattr rmdir remove_name open add_name };
-  class dir add_name;
+  class file { rename setattr read lock create write getattr unlink open append lock };
+  class dir { add_name rename search setattr read create write getattr rmdir remove_name open add_name };
 }
 
 #============= cobblerd_t ==============
@@ -65,9 +64,8 @@ allow cobblerd_t rpm_var_cache_t:file { rename create unlink open setattr };
 #!!!! The source type 'cobblerd_t' can write to a 'dir' of the following types:
 # var_lib_t, var_log_t, named_zone_t, cobbler_var_log_t, var_t, cobbler_var_lib_t, tftpdir_rw_t, etc_t, cobbler_cache_t, httpd_cobbler_rw_content_t, public_content_rw_t, root_t
 
-allow cobblerd_t rpm_var_lib_t:dir add_name;
-allow cobblerd_t rpm_var_lib_t:dir { write search getattr };
-allow cobblerd_t rpm_var_lib_t:file open;
+allow cobblerd_t rpm_var_lib_t:dir *;
+allow cobblerd_t rpm_var_lib_t:file *
 allow cobblerd_t security_t:dir read;
 allow cobblerd_t self:capability { net_admin net_raw fsetid sys_ptrace };
 allow cobblerd_t self:netlink_audit_socket create;
@@ -96,4 +94,3 @@ allow cobblerd_t root_t:lnk_file create;
 allow cobblerd_t self:process signull;
 
 allow cobblerd_t auditd_log_t:dir getattr;
-  
