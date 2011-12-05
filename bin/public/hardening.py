@@ -189,8 +189,9 @@ def _customize_shell():
 def _hardening():
   app.print_verbose("Hardening")
 
-  app.print_verbose("   Disable usb drives.")
-  general.set_config_property("/etc/modprobe.d/syco.conf", "^blacklist usb-storage$", "blacklist usb-storage")
+  # Currently need usb dvd reader for installation.
+  #app.print_verbose("   Disable usb drives.")
+  #general.set_config_property("/etc/modprobe.d/syco.conf", "^blacklist usb-storage$", "blacklist usb-storage")
   x("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
   # todo:
