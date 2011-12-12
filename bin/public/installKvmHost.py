@@ -65,8 +65,8 @@ def install_kvmhost(args):
         _abort_kvm_host_installation()
 
     # Install the kvm packages
-    install.package("qemu-kvm.x86_64")
-    install.package("libvirt.x86_64")
+    install.package("qemu-kvm")
+    install.package("libvirt")
     install.package("libguestfs-tools")
 
     # Provides the virt-install command for creating virtual machines.
