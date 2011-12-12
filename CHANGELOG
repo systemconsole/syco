@@ -22,6 +22,9 @@ Version 0.4
   http://alienvault.com/products/unified-siem
 * Check
   http://pve.proxmox.com/wiki/File:Screen-startpage-with-cluster.png
+* Hardening - move "yum update" to top of script to minimize the risk
+  that an updated package revert any hardening mods.
+
 
 Version 3.9 (iptables)
 ----------------------
