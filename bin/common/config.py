@@ -95,7 +95,7 @@ class Config(object):
           else:
             return value
 
-      if (default_value):
+      if (default_value is not None):
         return default_value
       else:
         raise ConfigException(
@@ -219,10 +219,10 @@ class Config(object):
     def get_cert_wild_crt(self):
       '''The hostname of the cert server.'''
       return self.get_option("cert.wild.crt")
-      
+
     def get_cert_wild_key(self):
       '''The hostname of the cert server.'''
-      return self.get_option("cert.wild.key")            
+      return self.get_option("cert.wild.key")
 
     def get_mysql_primary_master(self):
       return self.get_option("mysql.primary_master")
@@ -321,9 +321,19 @@ class Config(object):
       '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
       return str(int(self.get_disk_var_gb()) * 1024)
 
+    def get_disk_extra_lvm_gb(self):
+      '''
+      Get the extra empty size to use on the LVM physical group in GB.
+
+      This is used for a specific kvm host, if it needs to extend or snapshot
+      an existing volume group. Defined in install.cfg
+
+      '''
+      return self.get_option("disk_extra_lvm", 0)
+
     def get_total_disk_gb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_disk_var_gb()) + 16)
+      return str(int(self.get_disk_var_gb()) + int(self.get_disk_extra_lvm_gb()) + 16)
 
     def get_total_disk_mb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
