@@ -193,6 +193,7 @@ LDAP
 * Two-factor SSH with YubiKey on CentOS 5.6
   http://www.grennan.com/?p=170
   http://code.google.com/p/yubico-pam/wiki/ReadMe
+  http://www.linuxforu.com/2011/08/setip-two-factor-authentication-using-openotp/
 * 2-factor auth
   http://www.wikidsystems.com/
   http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-factor-authentication-to-openldap-and-freeradius
