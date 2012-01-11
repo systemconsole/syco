@@ -209,28 +209,21 @@ def install_dns(args):
   slave = setting upp slave server
   '''
   role  =str(args[1])
-  '''
-  Reading zone.cfg file conting
-  In zone.cfg is all config options neede for setting upp DNS Server
-  This file is readed and the the options are saved and used when generating new config files
-  '''
-  config = ConfigParser.SafeConfigParser()
-  config_zone = ConfigParser.SafeConfigParser()
-
-
-  config.read(app.SYCO_PATH + 'var/dns/zone.cfg')
-  dnsrange = config.get('config', 'range')
-  forward1 = config.get('config', 'forward1')
-  forward2 = config.get('config', 'forward2')
-  ipmaster = config.get('config', 'ipmaster')
-  ipslave = config.get('config', 'ipslave')
-  localnet = config.get('config', 'localnet')
-  data_center = config.get('config', 'data_center')
+  
+  
+  dnsrange = config.general.get_dns_range()
+  forward1 = config.general.get_dns_forward1()
+  forward2 = config.general.get_dns_forward2()
+  ipmaster = config.general.get_dns_ipmaster()
+  ipslave = config.general.get_dns_ipslave()
+  localnet = config.general.get_dns_localnet()
+  data_center = config.general.get_dns_data_center()
   #role =  config.get('config','role')
 
-  role  =str(args[1])
-  if (role != "master" or role != "slave"):
-    raise Exception("You can only enter master or slave, you entered " + role)
+  #role  ="master"
+  #str(args[1])
+  #if (role != "master" or role != "slave"):
+  #  raise Exception("You can only enter master or slave, you entered " + role)
 
   '''
   Depending if the server is an master then new rndc keys are genertaed if now old are done.
@@ -269,12 +262,10 @@ def install_dns(args):
      and creating zone file for records
      '''
 
-
-     for zone in config.options('zone'):
-                rzone = config.get('zone',zone)
-                config_zone.read(app.SYCO_PATH + 'var/dns/'+zone)
+     for zone, ip in config.general.get_dns_zones().iteritems():
                 print zone
-
+                config_zone = ConfigParser.ConfigParser()
+                config_zone.read(app.SYCO_PATH + 'var/dns/'+zone)
                 '''
                 Crating zone file and setting right settings form zone.cfg file
 
@@ -306,7 +297,7 @@ def install_dns(args):
                             print option + "." + zone+"." + "A" + config_zone.get(zone + "_arecords",option)+"."
 
                         if zone == config.general.get_resolv_domain():
-                            servers = config.get_servers()
+                            servers = config.get_servers() 
                             for hostname in servers:
                                 o.write (hostname + "." + zone + "." + "     IN     A    " + config.host(hostname).get_back_ip() + " \n")
                                 print hostname + config.host(hostname).get_back_ip()
@@ -362,16 +353,24 @@ def install_dns(args):
                 '''
                 Creating zone revers file for recursive getting if domain names.
                 '''
-                o = open("/var/named/chroot/var/named/data/" + location + "." + rzone + ".zone","w") #open for append
+                reip_array  = ip.split('.')
+                reip = reip_array[2]+"."+reip_array[1]+"."+reip_array[0]
+                o = open("/var/named/chroot/var/named/data/" + location + "." + reip + ".zone","w") #open for append
                 for line in open(app.SYCO_PATH + "var/dns/recursiv-template.zone"):
-                        line = line.replace("$IPMASTER$",ipmaster[::-1])
-                        line = line.replace("$IPSLAVE$",ipslave[::-1])
+                        line = line.replace("$IPMASTER$",ipmaster)
+                        line = line.replace("$IPSLAVE$",ipslave)
                         line = line.replace("$NAMEZONE$", zone)
-                        line = line.replace("$RZONE$" ,rzone)
+                        line = line.replace("$RZONE$" ,ip)
                         serial = p.findall (line)
                         if len(serial) > 0:
                             line = str(int(serial[0]) + 1) + "   ;   Serial\n"
                         o.write(line + "\n")
+
+                for option in config_zone.options(zone + "_arecords"):
+                      revers_ip  = config_zone.get(zone + "_arecords",option).split('.')
+                      rip = revers_ip[2]+"."+revers_ip[1]+"."+revers_ip[0]
+                      o.write (rip +".in-addr.arpa.\tIN\tPTR\t" +option + "." + zone + "."" \n")
+                      print option + "." + zone+"." + "A" + config_zone.get(zone + "_arecords",option)+"."                    
                 o.close()
 
                 '''
@@ -383,7 +382,7 @@ def install_dns(args):
                     line = line.replace("$IPMASTER$",ipmaster)
                     line = line.replace("$IPSLAVE$",ipslave)
                     line = line.replace("$NAMEZONE$",zone)
-                    line = line.replace("$RZONE$" ,rzone)
+                    line = line.replace("$RZONE$" ,reip)
                     line = line.replace("$LOCATION$" ,location)
                     o.write(line + "\n")
                 o.close()
@@ -413,7 +412,7 @@ def install_dns(args):
      line = line.replace("$FORWARD1$",forward1)
      line = line.replace("$FORWARD2$",forward2)
      line = line.replace("$LOCALNET$",localnet)
-     line = line.replace("$DOMAIN$",config.general.get_resolv_domain())
+     line = line.replace("$DOMAIN$","fareoffice.com")
      o.write(line)
   o.close()
   '''
