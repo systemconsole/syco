@@ -47,13 +47,13 @@ import iptables
 # once on the same host.
 SCRIPT_VERSION = 1
 
-MODSEC_INSTALL_FILE = "modsecurity-apache_2.6.2"
+MODSEC_INSTALL_FILE = "modsecurity-apache_2.6.3"
 MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
 MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
 MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
 
-MODSEC_RULES_FILE = "modsecurity-crs_2.2.2"
+MODSEC_RULES_FILE = "modsecurity-crs_2.2.3"
 
 def build_commands(commands):
   '''
