@@ -99,6 +99,29 @@ def get_lan_ip():
 
     return lan_ip
 
+# Cache variable for public_ip
+public_ip = ""
+
+def get_public_ip():
+    '''
+    Get one of the external ips on the computer.
+
+    Prioritize ips from interface in the following orders
+    "br1", "bond1", "eth1"
+
+    '''
+    global public_ip
+    if (public_ip == ""):
+        if public_ip == "" or (public_ip.startswith("127.") and os.name != "nt"):
+            interfaces = ["br1", "bond1", "eth1"]
+
+            interface_list = get_all_interfaces()
+            for ifname in interfaces:
+                if ifname in interface_list:
+                   public_ip = interface_list[ifname]
+                   break
+
+    return public_ip
 def reverse_ip(str):
     '''Reverse an ip from 1.2.3.4 to 4.3.2.1'''
     reverse_str=""

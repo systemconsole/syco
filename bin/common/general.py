@@ -168,7 +168,7 @@ def shell_exec(command, user="", cwd=None, events=None, output=True):
   args.append('-c ' + command)
 
   if (output):
-    app.print_verbose("Command: su " + user + " -c '" + command + "'")
+    app.print_verbose("\t" + BOLD +"Command: su " + RESET + user + " -c '" + command + "'")
 
   # Setting default events
   if events is None:
@@ -323,6 +323,7 @@ def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=Tru
   Change or add a config property to a specific value.
 
   #TODO: Optimize, do more then one change in the file at the same time.
+  #TODO: Replace with scOpen??
 
   '''
   if os.path.exists(file_name):
