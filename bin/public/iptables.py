@@ -585,10 +585,12 @@ def add_glassfish_chain():
 
 def del_openvpn_chain():
   app.print_verbose("Delete iptables chain for openvpn")
-  iptables("-D syco_input  -p ALL -j openvpn", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j openvpn", general.X_OUTPUT_CMD)
-  iptables("-F openvpn", general.X_OUTPUT_CMD)
-  iptables("-X openvpn", general.X_OUTPUT_CMD)
+  iptables("-D syco_input  -p ALL -j openvpn_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("-D syco_postrouting -p ALL -j openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("-F openvpn_input", general.X_OUTPUT_CMD)
+  iptables("-X openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("-X openvpn_postrouting", general.X_OUTPUT_CMD)
 
 def add_openvpn_chain():
   del_openvpn_chain()
@@ -601,20 +603,23 @@ def add_openvpn_chain():
   iptables("-N openvpn_input")
   iptables("-N openvpn_forward")
   iptables("-N openvpn_postrouting")
+  iptables("-t nat -N openvpn_postrouting")
+
   iptables("-A syco_input        -p ALL -j openvpn_input")
   iptables("-A syco_forward      -p ALL -j openvpn_forward")
-  iptables("-A syco_nat_postrouting -p ALL -j openvpn_postrouting")
+  iptables("-t nat -A syco_nat_postrouting -p ALL -j openvpn_postrouting")
 
-  iptables.iptables("-t nat -A syco_postrouting -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
-  iptables.iptables("-A syco_input -m state --state NEW -m tcp -p tcp --dport 1194 -j allowed_tcp")
+  #Accept connections on 1194 for vpn access from clients
+  iptables("-A openvpn_input -p udp --dport 1194 -j allowed_udp")
+  iptables("-A openvpn_input -p tcp --dport 1194 -j allowed_tcp")
 
-  # Ports to allow to use on the network.
-  iptables.iptables("-A syco_input   -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
-  iptables.iptables("-A syco_forward -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
-
-  # To protect the network.
-  iptables.iptables("-A syco_forward -i tun0 -s 10.100.10.0/24 -o eth0 -j ACCEPT")
-  iptables.iptables('-A syco_forward -i eth0 -o tun0 -m state --state "ESTABLISHED,RELATED" -j ACCEPT')
+  #Apply forwarding for OpenVPN Tunneling
+  iptables("-A openvpn_forward -m state --state RELATED,ESTABLISHED -j ACCEPT")
+  iptables("-A openvpn_forward -s 10.100.10.0/24 -j ACCEPT")
+  # iptables("-A openvpn_forward -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
+  iptables("-A openvpn_forward -j REJECT")
+  iptables("-t nat -A openvpn_postrouting -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
+  iptables("-t nat -A openvpn_postrouting -s 10.100.10.0/24 -o eth1 -j MASQUERADE")
 
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")

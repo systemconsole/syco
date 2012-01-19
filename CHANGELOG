@@ -4,8 +4,8 @@ TODO
 This is at the monent a combination of features to add and things todo. Mainly
 my (Daniel) personal to do list.
 
-Version 0.2
------------
+Version 0.2.3
+-------------
 * See syco-private step 1-6
 
 Version 0.3
@@ -88,6 +88,8 @@ Hardening
 * Add epel repo to fo-tp-install
   repo --name=lepel       --baseurl=http://10.0.0.1:81/yum-repos/epel/i386
   rpm -Uhv http://download.fedora.redhat.com/pub/epel/6/x86_64/epel-release-6-5.noarch.rpm
+* Secure SSH?
+  http://serverfault.com/questions/334448/why-is-ssh-password-authentication-a-security-risk?newsletter=1&nlcode=30229%7c0cb7
 
 Log-server
 ---------
@@ -191,6 +193,7 @@ LDAP
 * Two-factor SSH with YubiKey on CentOS 5.6
   http://www.grennan.com/?p=170
   http://code.google.com/p/yubico-pam/wiki/ReadMe
+  http://www.linuxforu.com/2011/08/setip-two-factor-authentication-using-openotp/
 * 2-factor auth
   http://www.wikidsystems.com/
   http://www.wikidsystems.com/support/wikid-support-center/how-to/how-to-add-two-factor-authentication-to-openldap-and-freeradius

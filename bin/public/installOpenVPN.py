@@ -11,7 +11,6 @@ http://www.howtoforge.com/openvpn-server-on-centos-5.2
 http://www.throx.net/2008/04/13/openvpn-and-centos-5-installation-and-configuration-guide/
 
 TODO: yum installopenvpn-auth-ldap ??
-TODO: Remove pexpect, use general.shell_exec
 
 '''
 
@@ -26,14 +25,16 @@ __status__ = "Production"
 
 import os
 import stat
-import expect
-import pexpect
 
 import app
 import config
 import general
+from general import x
 import version
+import install
 import iptables
+import net
+from scopen import scOpen
 
 
 # The version of this module, used to prevent
@@ -54,52 +55,65 @@ def install_openvpn_server(args):
   version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  general.shell_exec("yum -y install openvpn")
+  x("yum -y install openvpn")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
-    general.shell_exec("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
-    general.shell_exec("cp " + app.SYCO_PATH + "/var/openvpn/server.conf /etc/openvpn/server.conf")
+    x("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
+
+    # Install server.conf
+    serverConf = "/etc/openvpn/server.conf"
+    x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
+    scOpen(serverConf).replace('${EXTERN_IP}',  net.get_public_ip())
 
     # Prepare the ca cert generation.
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="' + config.general.get_country_name() + '"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="' + config.general.get_state() + '"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CITY.*',     'export KEY_CITY="' + config.general.get_locality() + '"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_oranization_name() + '"')
-    general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
+    fn = "/etc/openvpn/easy-rsa/vars"
+    scOpen(fn).replace('[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="' + config.general.get_country_name() + '"')
+    scOpen(fn).replace('[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="' + config.general.get_state() + '"')
+    scOpen(fn).replace('[\s]*export KEY_CITY.*',     'export KEY_CITY="' + config.general.get_locality() + '"')
+    scOpen(fn).replace('[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_organization_name() + '"')
+    scOpen(fn).replace('[\s]*export KEY_OU.*',       'export KEY_OU="' + config.general.get_organizational_unit_name() + '"')
+    scOpen(fn).replace('[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
+
+    # Can't find the current version of openssl.cnf.
+    scOpen("/etc/openvpn/easy-rsa/whichopensslcnf").replace("\[\[\:alnum\:\]\]", "[[:alnum:]]*")
 
     # Generate CA cert
     os.chdir("/etc/openvpn/easy-rsa/")
-    general.shell_exec(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-    general.shell_exec("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
+    x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
+    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
   # To be able to route trafic to internal network
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
-  general.shell_exec("echo 1 > /proc/sys/net/ipv4/ip_forward")
+  x("echo 1 > /proc/sys/net/ipv4/ip_forward")
 
   iptables.add_openvpn_chain()
   iptables.save()
 
-  general.shell_exec("/etc/init.d/openvpn restart")
-  general.shell_exec("/sbin/chkconfig openvpn on")
+  x("/etc/init.d/openvpn restart")
+  x("/sbin/chkconfig openvpn on")
 
   build_client_certs(args)
 
   version_obj.mark_executed()
 
 def build_client_certs(args):
+  install.package("zip")
   os.chdir("/etc/openvpn/easy-rsa/keys")
   general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
-  general.shell_exec("cp " + app.SYCO_PATH + "/var/openvpn/client.conf ./client.conf")
-  general.shell_exec("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
+  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf ./client.conf")
+  x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
 
   for user in os.listdir("/home"):
     cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
     valid_file="lost+found" not in user
     if valid_file and not cert_already_installed:
       os.chdir("/etc/openvpn/easy-rsa/")
+      general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CN.*',    'export KEY_CN="' + user + '"')
+      general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_NAME.*',  'export KEY_NAME="' + user + '"')
+
       general.set_config_property("/etc/openvpn/easy-rsa/build-key-pkcs12", '.*export EASY_RSA.*', 'source ./vars;export EASY_RSA="${EASY_RSA:-.}"')
 
-      out = pexpect.run("./build-key-pkcs12 --batch " + user,
+      out = general.shell_exec("./build-key-pkcs12 --batch " + user,
         cwd="/etc/openvpn/easy-rsa/",
         events={'(?i)Enter Export Password:':'\n', '(?i)Verifying - Enter Export Password:':'\n'}
       )
@@ -111,7 +125,7 @@ def build_client_certs(args):
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
 
       os.chdir("/etc/openvpn/easy-rsa/keys")
-      general.shell_exec("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")
+      x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")
       # Set permission for the user who now owns the file.
       os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
-      pexpect.run("chown " + user + ":" + user + " /home/" + user +"/openvpn_client_keys.zip ")
+      general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")

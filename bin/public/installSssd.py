@@ -85,15 +85,7 @@ def uninstall_sssd(args):
     version_obj.mark_uninstalled()
 
 def install_packages():
-    x("yum -y install openldap-clients authconfig pam_ldap")
-
-    # Pick Version 1.5.1 of sssd from the Continuous Release.
-    # This is required to get the client cert to work.
-    x("yum -y install sssd")
-    x("yum -y install centos-release-cr")
-    x("yum -y install sssd")
-    x("yum -y update sssd")
-    x("yum -y remove centos-release-cr")
+    x("yum -y install openldap-clients authconfig pam_ldap sssd")
 
 def download_cert(filename):
     '''

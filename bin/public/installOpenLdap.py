@@ -6,7 +6,6 @@ This script is based on information from at least the following links.
     http://www.openldap.org/doc/admin24/guide.html
     https://help.ubuntu.com/10.04/serverguide/C/openldap-server.html
     http://home.roadrunner.com/~computertaijutsu/ldap.html
-    http://www.salsaunited.net/blog/?p=74
     http://www.server-world.info/en/note?os=CentOS_6&p=ldap&f=3
     http://www.server-world.info/en/note?os=CentOS_6&p=ldap
     http://linux.die.net/man/5/slapd-config
@@ -67,7 +66,7 @@ def install_openldap(args):
     add_user_domain()
     create_certs()
     enable_ssl()
-    require_highest_security_from_clients()
+    #require_highest_security_from_clients()
 
     # Let clients connect to the server through the firewall. This is done after
     # everything else is done, so we are sure that the server is secure before
@@ -146,15 +145,15 @@ def install_packages():
     # Install all required packages.
     x("yum -y install openldap-servers openldap-clients")
 
-    # Update the locate database
-    x('updatedb')
-
     # Create backend database.
-    filepath = x('locate /usr/share/doc/*/DB_CONFIG.example').strip()
-    x("cp %s /var/lib/ldap/DB_CONFIG" % filepath)
+    scOpen("/var/lib/ldap/DB_CONFIG").add(
+        "set_cachesize 0 268435456 1\n" +
+        "set_lg_regionmax 262144\n" +
+        "set_lg_bsize 2097152"
+    )
     x("chown -R ldap:ldap /var/lib/ldap")
 
-    # Set password for cn=admin,cn=config (it's secret)
+    # Set password for cn=config (it's secret)
     scOpen('/etc/openldap/slapd.d/cn\=config/olcDatabase\=\{0\}config.ldif').add(
         'olcRootPW: %(ldap_password)s' %
         {'ldap_password': get_hashed_password(app.get_ldap_admin_password())}
@@ -203,19 +202,19 @@ replace: olcIdleTimeout
 olcIdleTimeout: 30
 
 # Set access for the monitor db.
-dn: olcDatabase={2}monitor,cn=config
+dn: olcDatabase={1}monitor,cn=config
 changetype: modify
 replace: olcAccess
 olcAccess: {0}to * by dn.base="cn=Manager,%(dn)s" read by * none
 
-# Set password for cn=admin,cn=config
+# Set password for cn=config
 dn: olcDatabase={0}config,cn=config
 changetype: modify
 replace: olcRootPW
 olcRootPW: %(password)s
 
 # Change LDAP-domain, password and access rights.
-dn: olcDatabase={1}bdb,cn=config
+dn: olcDatabase={2}bdb,cn=config
 changetype: modify
 replace: olcSuffix
 olcSuffix: %(dn)s
@@ -230,7 +229,7 @@ replace: olcAccess
 olcAccess: {0}to attrs=employeeType by dn="cn=sssd,%(dn)s" read by self read by * none
 olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by anonymous auth by * none
 olcAccess: {2}to dn.base="" by * none
-olcAccess: {3}to * by dn="cn=admin,cn=config" write by dn="cn=sssd,%(dn)s" read by self write by * none
+olcAccess: {3}to * by dn="cn=config" write by dn="cn=sssd,%(dn)s" read by self write by * none
 """ % {
     "dn": config.general.get_ldap_dn(),
     "password": get_hashed_password(app.get_ldap_admin_password())
@@ -249,6 +248,9 @@ def configure_sudo_in_ldap():
         http://www.sudo.ws/sudo/man/1.8.2/sudoers.ldap.man.html
 
     '''
+    # Update the locate database
+    x('updatedb')
+
     # Copy the sudo Schema into the LDAP schema repository
     filepath = x('locate /usr/share/doc/*/schema.OpenLDAP').strip()
     x("/bin/cp -f %s /etc/openldap/schema/sudo.schema" % filepath)
@@ -274,7 +276,7 @@ def configure_sudo_in_ldap():
 
     # Add index to sudoers db
     ldapadd("admin", """
-dn: olcDatabase={1}bdb,cn=config
+dn: olcDatabase={2}bdb,cn=config
 changetype: modify
 add: olcDbIndex
 olcDbIndex: sudoUser eq""")
@@ -304,7 +306,7 @@ changetype:modify
 add: olcModuleLoad
 olcModuleLoad: auditlog.la
 
-dn: olcOverlay=auditlog,olcDatabase={1}bdb,cn=config
+dn: olcOverlay=auditlog,olcDatabase={2}bdb,cn=config
 changetype: add
 objectClass: olcOverlayConfig
 objectClass: olcAuditLogConfig
@@ -327,7 +329,7 @@ changetype:modify
 add: olcModuleLoad
 olcModuleLoad: ppolicy.la
 
-dn: olcOverlay=ppolicy,olcDatabase={1}bdb,cn=config
+dn: olcOverlay=ppolicy,olcDatabase={2}bdb,cn=config
 olcOverlay: ppolicy
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
@@ -490,7 +492,7 @@ olcTLSVerifyClient: demand""")
 
     # Enable LDAPS and dispable LDAP
     scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAPS=.*', 'SLAPD_LDAPS=yes')
-    scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAP=.*', 'SLAPD_LDAPS=no')
+    scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAP=.*', 'SLAPD_LDAP=no')
     x("service slapd restart")
 
     configure_client_cert_for_ldaptools()
@@ -583,7 +585,7 @@ def ldapadd(user, value, uri="-H ldap:///"):
 
     '''
     if user == 'admin':
-        user = 'cn=admin,cn=config'
+        user = 'cn=config'
     elif user == 'manager':
         user = 'cn=Manager,' + config.general.get_ldap_dn()
     else:
@@ -653,45 +655,45 @@ def configure_client_cert_for_ldaptools():
 #         -CAfile /etc/openldap/cacerts/ca.crt \
 #         -cert /etc/openldap/cacerts/client.pem \
 #         -key /etc/openldap/cacerts/client.pem
-# ldapsearch -x -D "cn=admin,cn=config" -w secret    -v -d1
+# ldapsearch -x -D "cn=config" -w secret    -v -d1
 
 # List all info from the dc=syco,dc=net database.
 # ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret -b dc=syco,dc=net -e ppolicy
 
 # List the sudo.schema
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
+# ldapsearch -D "cn=config" -w secret -b cn={12}sudo,cn=schema,cn=config
 
 # Verify that the AuditLog is configured.
-# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config
+# ldapsearch -D "cn=config" -w secret -b olcDatabase={2}bdb,cn=config
 
 # List root DN:s, controls, featurs etc.
 # ldapsearch -LLL -x    -b "" -s base +
 
 #
-# ldapsearch -D "cn=admin,cn=config" -w secret -x -b "dc=syco,dc=net" -e ppolicy objectclass=posixAccount
+# ldapsearch -D "cn=config" -w secret -x -b "dc=syco,dc=net" -e ppolicy objectclass=posixAccount
 
 # List all relevant database options.
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config cn=config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config schema
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=schema,cn=config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={0}config
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={-1}frontend
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={1}bdb
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config olcDatabase={2}monitor
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
+# ldapsearch -D "cn=config" -w secret -b cn=config
+# ldapsearch -D "cn=config" -w secret -b cn=config cn=config
+# ldapsearch -D "cn=config" -w secret -b cn=config schema
+# ldapsearch -D "cn=config" -w secret -b cn=schema,cn=config
+# ldapsearch -D "cn=config" -w secret -b cn=config olcDatabase={0}config
+# ldapsearch -D "cn=config" -w secret -b cn=config olcDatabase={-1}frontend
+# ldapsearch -D "cn=config" -w secret -b cn=config olcDatabase={2}bdb
+# ldapsearch -D "cn=config" -w secret -b cn=config olcDatabase={2}monitor
+# ldapsearch -D "cn=config" -w secret -b cn=config 'cn=module*'
 # ldapsearch -D "cn=Manager,dc=syco,dc=net" -w secret    olcDatabase={2}monitor,cn=config
 
 
-# ldapsearch -D "cn=admin,cn=config" -w secret -b cn=config 'cn=module*'
-# ldapsearch -D "cn=admin,cn=config" -w secret -b dc=syco,dc=net cn=default
-# ldapsearch -D "cn=admin,cn=config" -w secret -b olcDatabase={1}bdb,cn=config olcOverlay=ppolicy
-# ldapsearch -D "cn=admin,cn=config" -w secret -b uid=user4,ou=people,dc=syco,dc=net
+# ldapsearch -D "cn=config" -w secret -b cn=config 'cn=module*'
+# ldapsearch -D "cn=config" -w secret -b dc=syco,dc=net cn=default
+# ldapsearch -D "cn=config" -w secret -b olcDatabase={}bdb,cn=config olcOverlay=ppolicy
+# ldapsearch -D "cn=config" -w secret -b uid=user4,ou=people,dc=syco,dc=net
 # # Return my self.
 # ldapsearch -b uid=user1,ou=people,dc=syco,dc=net -D "uid=user1,ou=people,dc=syco,dc=net" -w fratsecret
 
 # Unlock ppolicy locked account
-# ldapadd -D "cn=admin,cn=config" -W
+# ldapadd -D "cn=config" -W
 # dn: uid=danlin,ou=people,dc=fareoffice,dc=com
 # changetype: modify
 # delete: pwdAccountLockedTime
@@ -710,7 +712,7 @@ def configure_client_cert_for_ldaptools():
 # TODO: Didn't get it working.
 #
 ###########################################################
-# ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
+# ldapadd -H ldap:/// -x -D "cn=config" -w secret << EOF
 # dn: cn=module,cn=config
 # objectClass: olcModuleList
 # cn: module
