@@ -101,22 +101,6 @@ class Config(object):
         raise ConfigException(
           "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
 
-    def get_option_list(self, section):
-      '''
-      Get an option from the install.cfg file.
-
-      '''
-      value = {}
-
-      if (self.has_section(section)):
-        for option in self.options(section):
-          value[option] = self.get(section, option)
-           
-        return value
-      else:
-        raise ConfigException(
-          "Can't find section '" + section + "' in install.cfg") 
-        
   class GeneralConfig(SycoConfig):
     '''
     Access functions for the [general] part in the install.cfg.
@@ -271,34 +255,6 @@ class Config(object):
 
     def get_admin_email(self):
       return self.get_option("admin_email")
-
-    def get_dns_range(self):
-      return self.get_option("dns.range")
-    
-    def get_dns_localnet(self):
-      return self.get_option("dns.localnet")
-    
-    def get_dns_forward1(self):
-      return self.get_option("dns.forward1")
-    
-    def get_dns_forward2(self):
-      return self.get_option("dns.forward2")
-    
-    def get_dns_ipmaster(self):
-      return self.get_option("dns.ipmaster")
-
-    def get_dns_ipslave(self):
-      return self.get_option("dns.ipslave")
-    
-    def get_dns_data_center(self):
-      return self.get_option("dns.data_center")
-
-    def get_dns_zones(self):
-      '''
-      Get zones used for dns in install.cfg file
-      
-      '''
-      return self.get_option_list('zone')
 
   class HostConfig(SycoConfig):
     '''

@@ -42,8 +42,7 @@ def install_ca(args):
   Apache installation
 
   '''
-
-    
+  return
   app.print_verbose("Install CA version: %d" % script_version)
   version_obj = version.Version("InstallCa", script_version)
   version_obj.check_executed()
