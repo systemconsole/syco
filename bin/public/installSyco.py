@@ -35,9 +35,23 @@ def install_syco(args):
   else:
     app.print_verbose("   Already installed")
 
+
 def passwords(args):
   app.print_verbose("Set all passwords used by syco")
   app.init_all_passwords()
+  print "root: ", app.get_root_password()
+  print "svn: ", app.get_svn_password()
+  print "ldap_admin: ", app.get_ldap_admin_password()
+  print "ldap_sssd: ", app.get_ldap_sssd_password()
+  print "glassfish_master: ", app.get_glassfish_master_password()
+  print "glassfish_admin: ", app.get_glassfish_admin_password()
+  print "glassfish_user: ", app.get_user_password("glassfish")
+  print "mysql_root: ", app.get_mysql_root_password()
+  print "mysql_int: ", app.get_mysql_integration_password()
+  print "mysql_stable: ", app.get_mysql_stable_password()
+  print "mysql_uat: ", app.get_mysql_uat_password()
+  print "mysql_prod: ", app.get_mysql_production_password()
+
 
 def change_env(args):
   '''
