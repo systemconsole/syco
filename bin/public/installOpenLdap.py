@@ -488,7 +488,7 @@ replace: olcTLSCipherSuite
 olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
 -
 replace: olcTLSVerifyClient
-olcTLSVerifyClient: demand""")
+olcTLSVerifyClient: allow""")
 
     # Enable LDAPS and dispable LDAP
     scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAPS=.*', 'SLAPD_LDAPS=yes')
