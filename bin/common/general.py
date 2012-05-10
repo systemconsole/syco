@@ -168,7 +168,7 @@ def shell_exec(command, user="", cwd=None, events=None, output=True):
   args.append('-c ' + command)
 
   if (output):
-    app.print_verbose("\t" + BOLD +"Command: su " + RESET + user + " -c '" + command + "'")
+    app.print_verbose(BOLD +"Command: su " + RESET + user + " -c '" + command + "'")
 
   # Setting default events
   if events is None:
@@ -247,7 +247,7 @@ def shell_run(command, user="root", cwd=None, events={}):
   if (cwd == None):
     cwd = os.getcwd()
 
-  app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
+  app.print_verbose(BOLD + "Command: " + RESET + command)
   (stdout, exit_status) = pexpect.run(command,
     cwd=cwd,
     events=events,
@@ -278,11 +278,11 @@ def x(command, user = "", output = X_OUTPUT_ALL, cwd=None):
   if (cwd == None):
     cwd = os.getcwd()
   elif (output > X_OUTPUT_NONE):
-    app.print_verbose("\t" + BOLD + "Command: " + RESET + "cd " + cwd)
+    app.print_verbose(BOLD + "Command: " + RESET + "cd " + cwd)
 
 
   if (output > X_OUTPUT_NONE):
-    app.print_verbose("\t" + BOLD + "Command: " + RESET + command)
+    app.print_verbose(BOLD + "Command: " + RESET + command)
 
   p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
