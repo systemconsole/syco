@@ -33,7 +33,7 @@ import time
 import app
 import config
 import general
-from general import x
+from general import x, x_communicate
 import version
 import install
 import net
@@ -69,6 +69,7 @@ def install_kvmhost(args):
     install.package("qemu-kvm")
     install.package("libvirt")
     install.package("libguestfs-tools")
+    install.package("avahi")
 
     # Provides the virt-install command for creating virtual machines.
     install.package("python-virtinst")
@@ -93,16 +94,16 @@ def install_kvmhost(args):
     # Set selinux
     x("setenforce 1")
 
-    # # Is virsh started?
-    # result = x("virsh nodeinfo")
-    # if "CPU model:" not in result:
-    #     app.print_error("virsh not installed.")
-    #     _abort_kvm_host_installation()
+    # Is virsh started?
+    result = x("virsh nodeinfo")
+    if "CPU model:" not in result:
+        app.print_error("virsh not installed.")
+        _abort_kvm_host_installation()
 
-    # result = x("virsh -c qemu:///system list")
-    # if "Id Name" not in result:
-    #     app.print_error("virsh not installed.")
-    #     _abort_kvm_host_installation()
+    result = x("virsh -c qemu:///system list")
+    if "Id Name" not in result:
+        app.print_error("virsh not installed.")
+        _abort_kvm_host_installation()
 
     _setup_network_interfaces()
 
@@ -288,7 +289,9 @@ def _enable_ksm():
         x("service ksm start")
         x("chkconfig ksm on")
 
-        x("service ksmtuned start")
+        # 'ksmtuned start' gives a deadlock when using standard x and reading
+        # on stdout.
+        x_communicate("service ksmtuned start")
         #x("service ksmtuned retune")
         x("chkconfig ksmtuned on")
 

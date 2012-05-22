@@ -1,9 +1,3 @@
-TODO
-====
-
-This is at the monent a combination of features to add and things todo. Mainly
-my (Daniel) personal to do list.
-
 Version 0.2.3
 -------------
 * See syco-private step 1-6
@@ -24,7 +18,6 @@ Version 0.4
   http://pve.proxmox.com/wiki/File:Screen-startpage-with-cluster.png
 * Hardening - move "yum update" to top of script to minimize the risk
   that an updated package revert any hardening mods.
-
 
 Version 3.9 (iptables)
 ----------------------
@@ -47,7 +40,6 @@ Version 3.9 (iptables)
 
 Version 4
 ---------
-* Move all companies repos to git or create install-svn.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
 * Try --extra-args "console=ttyS0,115200 text headless"
