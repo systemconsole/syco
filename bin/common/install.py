@@ -31,7 +31,7 @@ def epel_repo():
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
 
   '''
-  rpm("epel-release-6-5.noarch", "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-5.noarch.rpm")
+  rpm("epel-release-6-6.noarch", "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-6.noarch.rpm")
 
 def package(name):
   _package(name, "yum -y install " + name)
