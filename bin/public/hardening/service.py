@@ -1,73 +1,64 @@
 #!/usr/bin/env python
 '''
+Disable services listed in hardening/config.cfg - part of the hardening.
 
+Turn of autostart of services that are not used, and don't need to be used on a
+default centos server.
 
-HARDENING 
--------------------------------------------------
-Script for hardneing Centos / Redhate server according 
-CIS standards.
-http://www.cisecurity.org/
+Which services are autostarted
+chkconfig  --list |grep on
 
-This is script is one of serverl scripts run to 
-hardning server.
-All scripts can be found in public/ hardening folder.
+Which services are autostarted in level 3
+chkconfig --list |grep "3:on" |awk '{print $1}' |sort
 
-To harden en server run 
------------------------
-syco harden
+What status has the services, started/stopped?
+/sbin/service --status-all
 
-To verify server status run
----------------------------
-syco harden-verify
+For more info:
+http://www.sonoracomm.com/support/18-support/114-minimal-svcs
+http://www.imminentweb.com/technologies/centos-disable-unneeded-services-boot-time
+http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/
 
-To harden SSH run
------------------
-syco harden-ssh
-
-
-Disable Service
---------------------------------------------------
-	- Chmod folder according to configfile
-    - Chmod files according to confgifiles
-    - Verfiy chmod files settings
-    - Finding rouge files on system
-    - Setting only root login from console
-    - Lock down singel boot fucntion
-    - Setting dmask on system
-    - Disabling core dumps on system
-    - Disabling su for users in wheel group (cant run sudo su)
-	
+TODO:
+Also add this to the kickstart files?
 
 '''
 
-__author__ = "mattias.hemmingsson@fareoffice.com"
+__author__ = "mattias@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
-__maintainer__ = "Mattias Hemmingsson"
-__email__ = "mattias.hemmingsson@fareoffice.com"
-__credits__ = ["Daniel Lindh"]
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+
 import ConfigParser
 import os
-from general import disable_service
+
 import app
+from general import x
 
 
+def disable_services():
+    config = ConfigParser.SafeConfigParser()
+    config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
+    for service in config.options('service'):
+    	if os.path.exists('/etc/xinetd.d/%s'  % service):
+    		app.print_verbose("Disabling service %s " % service)
+    		disable_service(service)
 
 
-def serviceOff():
-	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
-	for service in config.options('service'):
-		if os.path.exists('/etc/xinetd.d/'+service):
-			print "Disabling service"+service
-			disable_service(service)	
-		else:
-			print "Service "+service+" Was not installed on this system"
-				
+def disable_service(name):
+  '''
+  Disable autostartup of a service and stop the service
 
-		
+  '''
+  result = x('chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name)
+  if (result[0][:-1] == name):
+    x("chkconfig %s off" % name)
 
-	
+  result = x('service %s status' % name)[0][:-1]
+  if ("stopped" not in result and "not running" not in result):
+    x("/sbin/service %s stop" % name)

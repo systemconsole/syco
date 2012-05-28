@@ -1,173 +1,190 @@
 #!/usr/bin/env python
 '''
+Setup permissions - part of the hardening.
 
-
-HARDENING 
--------------------------------------------------
-Script for hardneing Centos / Redhate server according 
-CIS standards.
-http://www.cisecurity.org/
-
-This is script is one of serverl scripts run to 
-hardning server.
-All scripts can be found in public/ hardening folder.
-
-To harden en server run 
------------------------
-syco harden
-
-To verify server status run
----------------------------
-syco harden-verify
-
-To harden SSH run
------------------
-syco harden-ssh
-
-
-Host Permission setup
---------------------------------------------------
-	- Chmod folder according to configfile
-    - Chmod files according to confgifiles
-    - Verfiy chmod files settings
-    - Finding rouge files on system
-    - Setting only root login from console
-    - Lock down singel boot fucntion
-    - Setting dmask on system
-    - Disabling core dumps on system
-    - Disabling su for users in wheel group (cant run sudo su)
-	
+- Chmod folder according to configfile
+- Chmod files according to confgifiles
+- Verfiy chmod files settings
+- Finding rouge files on system
+- Set only root login from console
+- Lock down singel boot function
+- Set dmask on the server
+- Disabling core dumps on system
+- Disabling su for users in wheel group (cant run sudo su)
 
 '''
 
-__author__ = "mattias.hemmingsson@fareoffice.com"
+__author__ = "mattias@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
-__maintainer__ = "Mattias Hemmingsson"
-__email__ = "mattias.hemmingsson@fareoffice.com"
-__credits__ = ["Daniel Lindh"]
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
 
 import os
-import app
 import ConfigParser
-import stat
-import general
-from general import x
-import sys
 from shutil import copyfile
-import fileinput
+
+import app
+from general import x, grep
 from scopen import scOpen
+
+
+def setup_permissions():
+	enable_selinux()
+	chmod_folders()
+	chmod_files()
+	find_rouge_files()
+	root_console_lockdown()
+	disable_virtual_terminals()
+	disable_singel_user_mode()
+	setup_dmask()
+	disable_coredumps()
+	disable_su_for_wheel
+
+
+def enable_selinux():
+  '''
+  All machines should have selinux on by default.
+  For more info: http://www.crypt.gen.nz/selinux/disable_selinux.html
+
+  '''
+  app.print_verbose("Enable SELinux")
+  enforcing = grep("/etc/selinux/config", "SELINUX=enforcing")
+  permissive = grep("/etc/selinux/config", "SELINUX=permissive")
+  if (enforcing or permissive):
+    config = scOpen("/etc/selinux/config")
+    config.replace('^SELINUX=.*$',     "SELINUX=enforcing")
+    config.replace('^SELINUXTYPE=.*$', "SELINUXTYPE=targeted")
+  else:
+    app.print_error(
+    	"SELinux is disabled, more need to be done, read " +
+    	"http://www.crypt.gen.nz/selinux/disable_selinux.html"
+    )
+
 
 def chmod_folders():
 	'''
-	Setting chmod on folder from configfile
+	Set permissions on folders from config file.
+
 	'''
+	app.print_verbose("Set permissions on folders from config file..")
 	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
-
-	#Hardning folders
+	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 	for setting in config.options('chmod_d'):
-		cdir = config.get('chmod_d',setting)
-		if os.path.isdir(cdir):
-			x("chmod "+setting+" "+cdir)
-	app.print_verbose("Folders chmod permission has bean set")		
-
+		name = config.get('chmod_d',setting)
+		if os.path.isdir(name):
+			x("chmod %s %s" % (setting, name))
 
 
 def chmod_files():
 	'''
-	Setting chmod on files from configfile
+	Set permissions on file from config file.
+
 	'''
+	app.print_verbose("Set permissions on file from config file..")
 	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
-
-	#Hardning files
+	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 	for setting in config.options('chmod_f'):
-		fil = config.get('chmod_f',setting)
-		if os.path.isfile(fil):
-			os.chmod(fil,int(setting))
-			app.print_verbose("Setting chmod "+fil+" on file "+setting)
-        app.print_verbose("Files chmod permissions has bean set")               
+		name = config.get('chmod_f',setting)
+		if os.path.isfile(name):
+			x("chmod %s %s" % (setting, name))
+			#os.chmod(fil,int(setting))
+			#app.print_verbose("Setting chmod "+fil+" on file "+setting)
 
 
-def verify_chmod_files():
+def find_rouge_files():
 	'''
-	Verfifying chmod files from config file.
-	'''
-	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
-	for setting in config.options('chmod_f'):
-		fil = config.get('chmod_f',setting)
-		if os.path.isfile(fil):
-			app.print_verbose("%s : %s" % (fil, stat.S_IMODE(os.lstat(fil).st_mode)))
-	app.print_verbose("chmod files verifing is done")       
+	Finds and print all file and folders that are owned by users not in the
+	etc/passwd and are located in the /etc folder
 
+	TODO: Check gid.
 
-def verify_no_rouge_files():
 	'''
-	Script that will find and print all file and folders thar are own by users not in the system
-	and are located in the /etc folder
-	'''
-
+	app.print_verbose("Verify no rouge files.")
+	#
+	# Load all users from passwd
+	#
 	users = open("/etc/passwd")
 	userlist=[]
 	for line in users:
 		userid = line.split(':');
 		userlist.append(userid[2])
-	print userlist
 
+	#
+	# Look for none existing users.
+	#
 	for dirname, dirnames, filenames in os.walk('/etc'):
 		for subdirname in dirnames:
 			stat_info = os.stat(os.path.join(dirname, subdirname))
 			uid = stat_info.st_uid
-			gid = stat_info.st_gid
+			#gid = stat_info.st_gid
 			if str(uid) not in userlist:
-				print "this folder "+os.path.join(dirname, subdirname)+" has strange user "+str(uid) 
+				app.print_verbose("  Folder %s has the strange user %s" %
+					(os.path.join(dirname, subdirname), +str(uid))
+				)
 
 		for filename in filenames:
 			stat_info = os.stat(os.path.join(dirname, filename))
 			uid = stat_info.st_uid
-			gid = stat_info.st_gid
+			#gid = stat_info.st_gid
 			if str(uid) not in userlist:
-				print "this file "+os.path.join(dirname, filename)+" has strange user "+str(uid)
+				app.print_verbose("  File %s has the strange user %s" %
+					(os.path.join(dirname, filename), +str(uid))
+				)
 
-        app.print_verbose("Search for rouge files/ folders done")
 
-
-def onlyRoot_console():
+def root_console_lockdown():
 	'''
-	Setting so that only root is alloed to login 
-	with console
+	Root is only allowed to login on tty1.
+
 	'''
-	copyfile("/etc/securetty","/etc/securetty_syco_backup")
+	app.print_verbose("Root is only allowed to login on tty1.")
+	copyfile("/etc/securetty","/etc/securetty.sycobak")
 	changefile = open("/etc/securetty",'w')
 	changefile.write("tty1")
-	app.print_verbose("Lockings down /etc/securetty for ROOT login only on tty1")
+
+def disable_virtual_terminals():
+  '''
+  Minimize use of memory, and disable possiblity to forget a tty logged in
+  when leaving the machine.
+
+  '''
+  app.print_verbose("Disable virtual terminals")
+  inittab = scOpen("/etc/inittab")
+  inittab.replace("^[#]?2:2345:respawn:/sbin/mingetty tty2$", "#2:2345:respawn:/sbin/mingetty tty2")
+  inittab.replace("^[#]?3:2345:respawn:/sbin/mingetty tty3$", "#3:2345:respawn:/sbin/mingetty tty3")
+  inittab.replace("^[#]?4:2345:respawn:/sbin/mingetty tty4$", "#4:2345:respawn:/sbin/mingetty tty4")
+  inittab.replace("^[#]?5:2345:respawn:/sbin/mingetty tty5$", "#5:2345:respawn:/sbin/mingetty tty5")
+  inittab.replace("^[#]?6:2345:respawn:/sbin/mingetty tty6$", "#6:2345:respawn:/sbin/mingetty tty6")
 
 
-def lockdown_pysical():
+def disable_singel_user_mode():
 	'''
-	This locks down the singeluser mode. Witch lets an user start the server in "recoverymode" and 
-	the set an user password
+	Disable singel user mode.
+
+	Which let a user start the server in "recoverymode" and change password.
 
 	'''
 	app.print_verbose("Enable Authentication for Single-User Mode")
-	general.set_config_property("/etc/inittab","^([\#]?)id:3:initdefault:","#id:3:initdefault:")
-	general.set_config_property("/etc/inittab","^~~:S:wait:/sbin/sulogin.*","~~:S:wait:/sbin/sulogin")
+	inittab = scOpen("/etc/inittab")
+	inittab.replace("^([\#]?)id:3:initdefault:",  "#id:3:initdefault:")
+	inittab.replace("^~~:S:wait:/sbin/sulogin.*", "~~:S:wait:/sbin/sulogin")
 
 	app.print_verbose("Disable Interactive Hotkey Startup at Boot")
-	general.set_config_property("/etc/sysconfig/init","^PROMPT.*","PROMPT=no")	
+	scOpen("/etc/sysconfig/init").replace("^PROMPT.*", "PROMPT=no")
 
 
-def setting_dmask():
+def setup_dmask():
 	'''
-	Setting the defult dmask for all users and root. User can override this in private files in home folder
+	Set the defult dmask for all users and root. User can override this for
+	private files in home folder.
 
 	'''
-	#Setting umaskin system files
+	app.print_verbose("Set the defult dmask for all users.")
 	scOpen('/etc/profile').replace('002','077')
 	scOpen('/etc/profile').replace('027','077')
 
@@ -179,33 +196,50 @@ def setting_dmask():
 
 	scOpen('/etc/csh.login').replace('002','077')
 	scOpen('/etc/csh.login').replace('027','077')
-	
-	
-	#Setting emask in user files
-	general.set_config_property("/etc/skel/.bachrc","^umask.*0777.*","umask 0777")
-	general.set_config_property("/root/.bachrc","^umask.*0777.*","umask 0777")
-	general.set_config_property("/root/.cshrc","^umask.*0777.*","umask 0777")
-	general.set_config_property("/root/.tcshrc","^umask.*0777.*","umask 0777")
-	app.print_verbose("DMASK settings on server has bean set")
+
+	app.print_verbose("  Setup dmask for root.")
+	scOpen.replace("/etc/skel/.bachrc", "^umask.*0777.*", "umask 0777")
+	scOpen.replace("/root/.bachrc",     "^umask.*0777.*", "umask 0777")
+	scOpen.replace("/root/.cshrc",      "^umask.*0777.*", "umask 0777")
+	scOpen.replace("/root/.tcshrc",     "^umask.*0777.*", "umask 0777")
 
 
-def disble_coredumps():
+def disable_coredumps():
 	'''
-	Disbling su that cure dump.
-	Core dump is an file with the system memory in for error handling for developers.
+	Disable core dumps
+
+	Core dump is a file with the system memory which might include password,
+	credit card numbers and other sencetive information. This file is created
+	when something goes wrong in the kernel.
+
 	'''
-	general.set_config_property("/etc/security/limits.conf","\\*.*hard.*core.*0","* hard core 0")
-	general.set_config_property("/etc/sysctl.conf","^fs.suid_dumpable.*=.*0","fs.suid_dumpable = 0")
+	app.print_verbose("Disable core dumps.")
+	scOpen("/etc/security/limits.conf").replace(
+		"\\*.*hard.*core.*0", "* hard core 0"
+	)
+
+	scOpen("/etc/profile").replace(
+		"^ulimit.*-S.*-c.*0.*>.*/dev/null.*2>&1",
+		"ulimit -S -c 0 > /dev/null 2>&1"
+	)
+
+	scOpen("/etc/sysctl.conf").replace(
+		"^fs.suid_dumpable.*=.*0", "fs.suid_dumpable = 0"
+	)
 	x("sysctl -p")
-	general.set_config_property("/etc/profile","^ulimit.*-S.*-c.*0.*>.*/dev/null.*2>&1","ulimit -S -c 0 > /dev/null 2>&1")
-	app.print_verbose("Coredumps has bean disabled")
 
 
-def disable_wheelsu():
+def disable_su_for_wheel():
 	'''
 	Disbling su fo user not in the wheel group
+
 	'''
-	general.set_config_property("/etc/pam.d/su","^([\#]?)auth.*required.*pam_wheel.so.*use_uid","auth\t\trequired\t\tpam_wheel.so use_uid")
-	app.print_verbose("Su has bean disable for user not in wheel group")
+	app.print_verbose("Disbling su fo user not in the wheel group.")
+	scOpen("/etc/pam.d/su").replace(
+		"^([\#]?)auth.*required.*pam_wheel.so.*use_uid",
+		"auth\t\trequired\t\tpam_wheel.so use_uid"
+	)
 
-
+def _clear_login_screen():
+  '''Clear information shown on the console login screen.'''
+  x('cp %s/hardening/issue.net /etc/issue' % app.SYCO_VAR_PATH)

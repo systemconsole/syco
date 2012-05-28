@@ -1,104 +1,81 @@
 #!/usr/bin/env python
 '''
+Harden password policy - part of the hardening.
 
-HARDENING 
--------------------------------------------------
-Script for hardneing Centos / Redhate server according 
-CIS standards.
-http://www.cisecurity.org/
-
-This is script is one of serverl scripts run to 
-hardning server.
-All scripts can be found in public/ hardening folder.
-
-To harden en server run 
------------------------
-syco harden
-
-To verify server status run
----------------------------
-syco harden-verify
-
-To harden SSH run
------------------
-syco harden-ssh
-
-
-Password setup
---------------------------------------------------
-	Setting users right and locking down password settings.
-	Forcing the user to password restrictions.
-
-	- Setting login shell to /dev/null for system accounts
-	- Disabling accounts with empty passwords
-	- Locing accounds in shadow with !! instead of ! ore *
-	- Setting password expire settings 
-	- Setting password complexity
-	
-
-
-
+- Set login shell to /dev/null for system accounts
+- Disabling accounts with empty passwords
+- Locking accounts in shadow with !! instead of ! or *
+- Set password expire
+- Set password complexity
 
 '''
-__author__ = "mattias.hemmingsson@fareoffice.com"
+
+__author__ = "mattias@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
-__maintainer__ = "Mattias Hemmingsson"
-__email__ = "mattias.hemmingsson@fareoffice.com"
-__credits__ = ["Daniel Lindh"]
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os
-import ConfigParser
-import stat
-from shutil import copyfile
+
 import fileinput
 import sys
 
 import app
-import general
 from general import x
+import scOpen
 
 
-def hardenPassword():
-	app.print_verbose("Setting login shell to '/dev/null' for system accounts")
+def harden_password():
+	app.print_verbose("Harden password")
+
+	#
+	# Set login shell to /dev/null
+	#
+	app.print_verbose("Set login shell to '/dev/null' for system accounts")
 	users = open("/etc/passwd")
-	userlist=[]
 	for line in users:
 		userid = int(line.split(':')[2]);
 		username = line.split(':')[0];
 
-		if userid == 0 or userid > 499:
-			pass
-		else:
-			x("usermod -L -s /dev/null "+username)
-	
-	# Verify so that now empty passwords are in shadow file
+		if userid > 0 and userid <= 499:
+			x("usermod -L -s /dev/null %s" % username)
+
+	#
+	# Disable users with empty passwords in the shadow file.
+	#
+	app.print_verbose("Disable users with empty passwords in the shadow file.")
 	shadow = open("/etc/shadow")
 	for line in shadow:
 		shadowpass = line.split(':')[1]
 		shadowuser = line.split(':')[0]
-		if shadowpass == "" or shadowpass == " ":
+		if shadowpass.strip() == "":
 			x("usermod -L -s /dev/null " + shadowuser)
-			app.print_verbose("Diable user " + shadowuser + " hade emty password")
-	app.print_verbose("Verified so that no emty passwords is found. And if so locking that account")                
-    
-	# Repacling all lock accounts in /etc/shadow by replacing
-	# * and ! to !!
-	replaceShadow("/etc/shadow",":!:",":!!:")
-	replaceShadow("/etc/shadow",":*:",":!!:")
-	app.print_verbose("Locking accountd in shadow with !! instead of * and !")
+			app.print_verbose("Diable user %s with empty password." %  shadowuser)
 
-	# Set Account Expiration Parameters On Active Accounts
-	app.print_verbose("Set Account Expiration Parameters On Active Accounts")
-	general.set_config_property("/etc/login.defs","^PASS_MAX_DAYS.*","PASS_MAX_DAYS\t90")
-	general.set_config_property("/etc/login.defs","^PASS_MIN_DAYS.*","PASS_MIN_DAYS\t7")
-	general.set_config_property("/etc/login.defs","^PASS_WARN_AGE.*","PASS_WARN_AGE\t14")
-	general.set_config_property("/etc/login.defs","^PASS_MIN_LEN.*","PASS_MIN_LEN\t9")
-	app.print_verbose("Account Expiration Parameters On Active Accounts set")
-	
-	# Setting pam to enforce complex passwords 
+	#
+	# Modify locked accounts in /etc/shadow by replacing * and ! to !!
+	#
+	app.print_verbose(
+		"Modify locked accounts in /etc/shadow by replacing * and ! to !!"
+	)
+	replaceShadow("/etc/shadow", ":!:",":!!:")
+	replaceShadow("/etc/shadow", ":*:",":!!:")
+
+	#
+	# Set account expiration parameters on active accounts
+	#
+	app.print_verbose("Set account expiration parameters on active accounts")
+	login_defs = scOpen("/etc/login.defs")
+	login_defs.replace("^PASS_MAX_DAYS.*", "PASS_MAX_DAYS\t90")
+	login_defs.replace("^PASS_MIN_DAYS.*", "PASS_MIN_DAYS\t7")
+	login_defs.replace("^PASS_WARN_AGE.*", "PASS_WARN_AGE\t14")
+	login_defs.replace("^PASS_MIN_LEN.*",  "PASS_MIN_LEN\t9")
+
+	#
+	# Set pam to enforce complex passwords
 	# 3 tries to change password (retry=3)
 	# 9 entries mini lenght (minlen=9)
 	# 3 entries must differ from last password (difok=3)
@@ -106,13 +83,29 @@ def hardenPassword():
 	# 1 upper case letter minimum (ucredit=1)
 	# 1 digits minimu (dcredit=1)
 	# 2 other caracter (ocredit=2)
-	general.set_config_property("/etc/pam.d/system-auth","^password.*requisite.*pam_cracklib.so.*","password\trequisite\tpam_cracklib.so try_first_pass retry=3 minlen=9 difok=3 lcredit=1 ucredit=1 dcredit=1 ocredit=2")
-	app.print_verbose("Password restrections set")
-       
-	# Setting upp account lock efter 5 error login
-	# Admin must unlock account
-	general.set_config_property("/etc/pam.d/system-auth","^auth.*required.*pam_tally.so.*","auth\trequired\tpam_tally.so onerr=fail deny=5")
-	app.print_verbose("Account locked after 5 error login set")
+	#
+	app.print_verbose("Set pam to enforce complex passwords")
+	scOpen("/etc/pam.d/system-auth").replace(
+		"^password.*requisite.*pam_cracklib.so.*",
+		"password\trequisite\tpam_cracklib.so try_first_pass retry=3 " +
+		"minlen=9 difok=3 lcredit=1 ucredit=1 dcredit=1 ocredit=2"
+	)
+
+	#
+	# Lock accounts after 5 failed login attempts. Admin must unlock account.
+	#
+	app.print_verbose("Lock accounts after 5 failed login attempts.")
+	scOpen("/etc/pam.d/system-auth").replace(
+		"^auth.*required.*pam_tally.so.*",
+		"auth\trequired\tpam_tally.so onerr=fail deny=5"
+	)
+
+	#
+	# Store passwords in sha512 instead of md5
+	#
+  	app.print_verbose("   Store passwords sha512 instead of md5")
+  	x("authconfig --passalgo=sha512 --update --disablefingerprint")
+
 
 
 def replaceShadow(file,searchExp,replaceExp):

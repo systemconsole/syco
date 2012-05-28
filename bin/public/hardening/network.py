@@ -1,95 +1,101 @@
 #!/usr/bin/env python
 '''
+Apply network settings from var/hardening/config.cfg - part of the hardening.
 
-HARDENING 
--------------------------------------------------
-Script for hardneing Centos / Redhate server according 
-CIS standards.
-http://www.cisecurity.org/
-
-This is script is one of serverl scripts run to 
-hardning server.
-All scripts can be found in public/ hardening folder.
-
-To harden en server run 
------------------------
-syco harden
-
-To verify server status run
----------------------------
-syco harden-verify
-
-To harden SSH run
------------------
-syco harden-ssh
-
-
-Network setup
---------------------------------------------------
-	Setting network settings for host to deny differnt settings.
-	Exempel settnings to deny are redir traffic trow host.
-	Size of package.
-	All Settings are locate in var/hardening/config.cfg file.
-
-
-
-WARNING 
+WARNING
 ---------------------------------------------------
-This script should not be run on server acting like routers aore gatewats.
-All traffick going trow the host will be blocked.
-
-
+This script should not be executed on a server acting as a router or gateway.
+All traffic going through the host will be blocked.
 
 '''
-__author__ = "mattias.hemmingsson@fareoffice.com"
+
+__author__ = "mattias@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
-__maintainer__ = "Mattias Hemmingsson"
-__email__ = "mattias.hemmingsson@fareoffice.com"
-__credits__ = ["Daniel Lindh"]
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
 
-
-from shutil import copyfile
-import fileinput
-import sys
 import ConfigParser
-import general
+from socket import gethostname
+
+import scOpen
 import app
-from general import grep
+from general import grep, x
+from config.general import get_resolv_domain, get_resolv_search
 
 
-def network():
+def setup_network():
 	'''
-    Disabling network settings on server
+    Help kernel to prevent certain kinds of attacks
+
     '''
-        
-	app.print_verbose("Disable Network settings from CIS benchmark")
+	app.print_verbose("Setup network (Settings from CIS benchmark)")
 
+	setup_kernel()
+	disable_ip6_support()
+	configure_resolv_conf()
+	configure_localhost()
+	restart_network()
+
+
+def setup_kernel():
+	app.print_verbose("Help kernel to prevent certain kinds of attacks")
 	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
+	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 
-	#Harden network config
+	# Harden network config
 	for setting in config.options('network'):
-		general.set_config_property("/etc/sysctl.conf","^" + setting + ".*$",config.get('network',setting))
-		app.print_verbose("Server network settings " + setting + " has bean locked down")        
+		scOpen("/etc/sysctl.conf").replace(
+			"^" + setting + ".*$", config.get('network', setting)
+		)
+		app.print_verbose("Server network settings " + setting + " has been applied")
 
-	
+
+def disable_ip6_support():
+  app.print_verbose("Disable IP6 support")
+  modprobe = scOpen("/etc/modprobe.d/syco.conf")
+  modprobe.replace("^alias ipv6 off$",      "alias ipv6 off")
+  modprobe.replace("^alias net-pf-10 off$", "alias net-pf-10 off")
+
+  network = scOpen("/etc/sysconfig/network")
+  network.replace("^NETWORKING_IPV6=.*$", "NETWORKING_IPV6=no")
+
+
+def configure_resolv_conf():
+  app.print_verbose("Configure /etc/resolv.conf")
+  resolv = scOpen("/etc/resolv.conf")
+  resolv.replace("domain.*", "domain " + get_resolv_domain())
+  resolv.replace("search.*", "search " + get_resolv_search())
+
+
+def configure_localhost():
+  app.print_verbose("Configure /etc/hosts")
+  localhost =  (
+  	"127.0.0.1" +
+  	" %s.%s" % (gethostname(), get_resolv_domain()) +
+  	" localhost.localdomain localhost %s" % gethostname()
+  )
+  scOpen("/etc/hosts").replace("127.0.0.1.*", localhost)
+
+
 def verify_network():
 	'''
-    Verify that the network configsettings in the hardning config file has 
-    bean applied.
+    Verify that the network config settings in the hardning config file has
+    been applied.
+
     '''
-        
 	config = ConfigParser.SafeConfigParser()
-	config.read(app.SYCO_VAR_PATH+'/hardening/config.cfg')
+	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 	for setting in config.options('network'):
-		if grep("/etc/sysctl.conf",config.get('network',setting)):
-			#Do nothing only print if setting DONT excists in file
-			pass
-		else:
+		if not grep("/etc/sysctl.conf",config.get('network',setting)):
 			print "ERROR Setting " + setting + " are NOT in config file sysctl_config"
 
-	app.print_verbose("Network settings has bean verify")
+	app.print_verbose("Network settings has bean verified.")
+
+
+def restart_network():
+	x("service network restart")

@@ -66,9 +66,11 @@ def is_rpm_installed(name):
     else:
       return False
 
-            
+
 def rpm_remove(name):
   '''Remove rpm packages'''
-  process=subprocess.Popen('rpm -q ' + name, shell=True, stdout=subprocess.PIPE)
-  if process.communicate()[0][:-1] != "package " + name + " is not installed":
-    x("rpm -e " + name)
+  if is_rpm_installed(name):
+    command = "rpm -e %s" % name
+    print("\t" + BOLD + "Command: " + RESET + command)
+    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
+

@@ -1,3 +1,16 @@
+#
+# Config file for auditd.
+#
+
+# __author__ = "mattias@fareoffice.com"
+# __copyright__ = "Copyright 2011, The System Console project"
+# __maintainer__ = "Daniel Lindh"
+# __email__ = "syco@cybercow.se"
+# __credits__ = ["???"]
+# __license__ = "???"
+# __version__ = "1.0.0"
+# __status__ = "Production"
+
 ## This file contains the auditctl rules that are loaded
 ## whenever the audit daemon is started via the initscripts.
 ## The rules are simply the parameters that would be passed
