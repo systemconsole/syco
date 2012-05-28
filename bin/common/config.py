@@ -256,6 +256,9 @@ class Config(object):
     def get_admin_email(self):
       return self.get_option("admin_email")
 
+    def get_logserver(self):
+      return self.get_option("logserver")
+
   class HostConfig(SycoConfig):
     '''
     Access functions for the hosts in the install.cfg.

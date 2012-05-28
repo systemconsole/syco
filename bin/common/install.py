@@ -33,11 +33,14 @@ def epel_repo():
   '''
   rpm("epel-release-6-5.noarch", "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-5.noarch.rpm")
 
+
 def package(name):
   _package(name, "yum -y install " + name)
 
+
 def rpm(name, url):
   _package(name, "rpm -Uhv " + url)
+
 
 def _package(name, command):
   version_obj = version.Version("package-" + name, SCRIPT_VERSION)
@@ -51,6 +54,7 @@ def _package(name, command):
     else:
       raise Exception("Failed to install " + name + ".")
 
+
 def is_rpm_installed(name):
     '''
     Check if an rpm package is installed.
@@ -61,3 +65,10 @@ def is_rpm_installed(name):
       return True
     else:
       return False
+
+            
+def rpm_remove(name):
+  '''Remove rpm packages'''
+  process=subprocess.Popen('rpm -q ' + name, shell=True, stdout=subprocess.PIPE)
+  if process.communicate()[0][:-1] != "package " + name + " is not installed":
+    x("rpm -e " + name)

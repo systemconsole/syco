@@ -32,6 +32,9 @@ SYCO_USR_PATH = SYCO_PATH + "usr/"
 # Etc (config) files.
 SYCO_ETC_PATH = SYCO_PATH + "etc/"
 
+# Var (config) files.
+SYCO_VAR_PATH = SYCO_PATH + "var/"
+
 # Files (rpm etc.) that should be installed by syco, are temporary stored here.
 INSTALL_DIR = SYCO_PATH + "installtemp/"
 

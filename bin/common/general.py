@@ -382,6 +382,23 @@ def store_file(file_name, value):
 def set_config_property2(file_name, replace_exp):
   search_exp = r".*" + re.escape(replace_exp) + r".*"
   set_config_property(file_name, search_exp, replace_exp)
+  
+  
+def disable_service(name):
+  '''Disable autostartup of a service and stop the service'''
+  cmd = 'chkconfig --list |grep "3:on" |awk \'{print $1}\' |grep ' + name
+  process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  if (process.communicate()[0][:-1] == name):
+    subprocess.call(["chkconfig", name,  "off"])
+    app.print_verbose("   chkconfig " + name + " off")
+
+  cmd = 'service ' + name + ' status'
+  process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  result=process.communicate()[0][:-1]
+  if ("stopped" not in result and "not running" not in result):
+    subprocess.call(["/sbin/service", name, "stop"])
+    app.print_verbose("   service " + name + " stop")      
+  
 
 if __name__ == "__main__":
   command = 'echo "moo"'
