@@ -194,6 +194,13 @@ class Config(object):
     def get_ldap_dn(self):
       return self.get_option("ldap.dn")
 
+    def get_monitor_server(self):
+      '''The ip of the monitor server.'''
+      return self.get_option("monitor.server")
+
+    def get_monitor_server_hostname(self):
+      return self.get_option("monitor.hostname")
+
     def get_ntp_server(self):
       '''The hostname of the ntp server.'''
       return self.get_option("ntp.server")

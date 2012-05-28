@@ -159,6 +159,7 @@ def iptables_setup(args):
   add_openvpn_chain()
   add_mysql_chain()
   add_mail_relay_chain()
+  add_monitor_chain()
 
   _execute_private_repo_rules()
 
@@ -582,6 +583,37 @@ def add_glassfish_chain():
 
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
+
+def del_monitor_chain():
+  app.print_verbose("Delete iptables chain for Monitor")
+  iptables("-D syco_input  -p ALL -j monitor_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p ALL -j monitor_output", general.X_OUTPUT_CMD)
+  iptables("-F monitor_input", general.X_OUTPUT_CMD)
+  iptables("-X monitor_input", general.X_OUTPUT_CMD)
+  iptables("-F monitor_output", general.X_OUTPUT_CMD)
+  iptables("-X monitor_output", general.X_OUTPUT_CMD)
+
+def add_monitor_chain():
+  del_monitor_chain()
+
+  if (not os.path.exists("/etc/nagios/nrpe.cfg")):
+    return
+
+  app.print_verbose("Add iptables chain for Monitor")
+
+  iptables("-N monitor_input")
+  iptables("-N monitor_output")
+  iptables("-A syco_input  -p ALL -j monitor_input")
+  iptables("-A syco_output -p ALL -j monitor_output")
+
+  # TODO only on dev servers??
+  app.print_verbose("Monitor input rule.")
+  monitor_ports = "5666,4949"
+  print config.general.get_monitor_server_hostname()
+  iptables("-A monitor_input -p TCP -m multiport -s " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
+
+  iptables("-A monitor_output -p TCP -m multiport -d " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
+  
 
 def del_openvpn_chain():
   app.print_verbose("Delete iptables chain for openvpn")
