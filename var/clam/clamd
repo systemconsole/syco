@@ -1,0 +1,72 @@
+#!/bin/sh
+# clamav        Script to start/stop clamd.
+#
+# chkconfig:    - 63 38
+# description:  clamav antivirus daemon. http://wiki.mattrude.com/ClamAV
+#
+# processname: clamd
+# pidfile: /var/run/clamav/clamd.pid
+#
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+###########################################################################
+# CONFIGURATION
+
+# Most configuration options are found in the clamd.conf file
+# The location of configuration file
+config=/usr/local/etc/clamd.conf
+
+# The prefix clamd was installed to
+prefix=/usr/local
+
+###########################################################################
+# SCRIPT
+
+RETVAL=0
+
+start() {
+        echo -n $"Starting Clamav: "
+        daemon $prefix/sbin/clamd
+        RETVAL1=$?
+        echo
+        [ $RETVAL1 -eq 0 ] && touch /var/lock/subsys/clamd
+        return $RETVAL1
+}
+
+stop() {
+        echo -n $"Stopping Clamav: "
+        killproc clamd
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/clamd
+        return $RETVAL
+}
+
+restart() {
+        stop
+        start
+}
+
+case "$1" in
+ start)
+        start
+        ;;
+ stop)
+        stop
+        ;;
+ status)
+        status clamd
+        ;;
+ restart)
+        restart
+        ;;
+ *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 1
+
+esac
+exit $?

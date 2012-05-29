@@ -1,0 +1,71 @@
+#!/bin/sh
+# freshclam     Script to start/stop freshclam.
+#
+# chkconfig:    - 63 38
+# description:  freshclam antivirus daemon. http://wiki.mattrude.com/ClamAV
+#
+# processname: clamd
+# pidfile: /var/run/clamav/clamd.pid
+#
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+###########################################################################
+# CONFIGURATION
+
+# Most configuration options are found in the freshclam.conf file
+# The location of configuration file
+config=/etc/local/etc/freshclam.conf
+
+# The prefix freshclam was installed to
+prefix=/usr/local
+
+###########################################################################
+# SCRIPT
+
+RETVAL=0
+
+start() {
+        echo -n $"Starting Freshclam: "
+        daemon $prefix/bin/freshclam -d -p /var/run/clamav/freshclam.pid
+        RETVAL1=$?
+        echo
+        [ $RETVAL1 -eq 0 ] && touch /var/lock/subsys/freshclam
+        return $RETVAL1
+}
+
+stop() {
+        echo -n $"Stopping Freshclam: "
+        killproc freshclam
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/freshclam
+        return $RETVAL
+}
+
+restart() {
+        stop
+        start
+}
+
+case "$1" in
+ start)
+        start
+        ;;
+ stop)
+        stop
+        ;;
+ status)
+        status freshclam
+        ;;
+ restart)
+        restart
+        ;;
+ *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 1
+esac
+exit $?
