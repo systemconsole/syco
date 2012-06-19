@@ -21,60 +21,89 @@ __status__ = "Production"
 import config
 import app
 from scopen import scOpen
-from general import grep
+from general import grep, x
 import os
 
 
 def setup_syslog():
 	syslog()
-	setup_remote_logging()
+	setup_remote_loging()
 
 
 def syslog():
-	app.print_verbose("Setup rsyslog from CIS benchmark")
+	app.print_verbose("5.2 Configure rsyslog")
+
+	#
+	app.print_verbose("5.2.1 Install the rsyslog package")
+	x("yum install rsyslog")
+
+	#
+	app.print_verbose("5.2.2 Activate the rsyslog Service")
+	x("chkconfig syslog off")
+	x("chkconfig rsyslog on")
+
+	#
+	app.print_verbose("5.2.3 Configure /etc/rsyslog.conf")
+	# >> etc/rsyslog.conf
+	# auth,user.* 	/var/log/messages
+	# kern.*			/var/log/kern.log
+	# daemon.*		/var/log/daemon.log
+	# syslog.* 		/var/log/syslog
+	# lpr,news,uucp,local0,local1,local2,local3,local4,local5,local6.* /var/log/unused.log
+
+	# x("pkill -HUP rsyslogd")
+
+	#
+	app.print_verbose("5.2.4 Create and Set Permissions on rsyslog Log Files")
+	# for logfile in all_files_in_rsyslog.conf
+	# touch logfile
+	# chown root:root logfile
+	# chmod og-rwx logfile
 
 	#
 	# Enable autpriv in rsyslog.conf
 	#
-	scOpen('/etc/rsyslog.conf').remove("^authpriv\\.\\*")
-	scOpen('/etc/rsyslog.conf').add("authpriv.*\t\t\t\t/var/log/secure\n")
+	rsyslog = scOpen('/etc/rsyslog.conf')
+	rsyslog.remove("^authpriv\\.\\*")
+	rsyslog.add("authpriv.*\t\t\t\t/var/log/secure\n")
+
 
 	#
 	# Enable auth in rsyslog.conf
 	#
-	scOpen('/etc/rsyslog.conf').remove("^auth\\.\\*")
-	scOpen('/etc/rsyslog.conf').add("auth.*\t\t\t\t/var/log/messages\n")
+	rsyslog.remove("^auth\\.\\*")
+	rsyslog.add("auth.*\t\t\t\t/var/log/messages\n")
 
 	#
 	# Secure VSFTP if installed.
 	#
 	if os.path.isfile("/etc/vsftpd.conf"):
-		app.print_verbose("Enable user loggining for vsftpd.")
+		app.print_verbose("Enable user logining for vsftpd.")
 		ftp = scOpen("/etc/vsftpd.conf")
 		ftp.replace("^([\#]?)xferlog_std_format=NO.*", "xferlog_std_format=NO")
 		ftp.replace("^([\#]?)log_ftp_protocol=YES.*",  "log_ftp_protocol=YES")
 
 	if os.path.isfile("/etc/vsftpd/vsftpd.conf"):
-		app.print_verbose("Enable user loggining for vsftpd.")
+		app.print_verbose("Enable user logining for vsftpd.")
 		ftp = scOpen("/etc/vsftpd.conf")
 		ftp.replace("^([\#]?)xferlog_std_format=NO", "xferlog_std_format=NO")
 		ftp.replace("^([\#]?)log_ftp_protocol=YES",  "log_ftp_protocol=YES")
 
 
-def setup_remote_logging():
+def setup_remote_loging():
 	'''
-	Setup remote logging.
+	Setup remote loging.
 
 	All logs to this server are forwarded to remote log server.
 
 	'''
-	app.print_verbose("Setup remote logging.")
+	app.print_verbose("5.2.5 Configure rsyslog to Send Logs to a Remote Log Host.")
 	log = scOpen("/etc/rsyslog.conf")
 	log.replace("^([\#]?)\$ModLoad imudp.so", "$ModLoad imudp.so")
 	log.replace("^([\#]?)\$UDPServerRun.*",   "$UDPServerRun 514")
 	log.replace(
-		"(?#)\*.\* @"+config.general.get_loggserver()+":514",
-		"*.* @"+config.general.get_loggserver()+":514"
+		"(?#)\*.\* @"+config.general.get_log_server_hostname()+":514",
+		"*.* @"+config.general.get_log_server_hostname()+":514"
 	)
 
 
@@ -91,6 +120,6 @@ def verify_syslog():
 	if not grep("/etc/rsyslog.conf", '^\$UDPServerRun'):
 		app.print_error("UDP port are NOT in config file syslog_config")
 
-	if not grep("/etc/rsyslog.conf", ".*"+config.general.get_loggserver()):
+	if not grep("/etc/rsyslog.conf", ".*"+config.general.get_log_server_hostname()):
 		app.print_error("syslogserver are NOT in config file syslog_config")
 

@@ -17,12 +17,11 @@ import glob
 import os
 import re
 import shutil
-import stat
+import urllib
 import string
 import inspect
 import subprocess
 import time
-import sys
 from random import choice
 from socket import *
 
@@ -114,6 +113,27 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
+
+
+def urlretrive(src_url, dst_filename):
+  '''
+  Download a file using urlretrive, and place in the installation tmp folder.
+
+  urlretrive("http://www.example.com/file.gz", "file.gz")
+
+  '''
+  app.print_verbose("Download: " + src_url)
+  dst_path = "%s/%s" % (app.INSTALL_DIR, dst_filename)
+
+  create_install_dir()
+  if (not os.access(app.INSTALL_DIR + dst_filename, os.F_OK)):
+    urllib.urlretrieve (src_url, dst_path)
+
+  if (not os.access(app.INSTALL_DIR + dst_filename, os.F_OK)):
+    raise Exception("Couldn't download: " + dst_filename)
+
+  return dst_path
+
 
 def generate_password(length=8, chars=string.letters + string.digits):
   '''Generate a random password'''

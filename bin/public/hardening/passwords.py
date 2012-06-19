@@ -25,7 +25,7 @@ import sys
 
 import app
 from general import x
-import scOpen
+from scopen import scOpen
 
 
 def harden_password():
@@ -34,14 +34,14 @@ def harden_password():
 	#
 	# Set login shell to /dev/null
 	#
-	app.print_verbose("Set login shell to '/dev/null' for system accounts")
-	users = open("/etc/passwd")
-	for line in users:
+	app.print_verbose("7.1 Disable System Accounts")
+	app.print_verbose("  Set login shell to '/dev/null' for system accounts")
+	for line in open("/etc/passwd"):
 		userid = int(line.split(':')[2]);
 		username = line.split(':')[0];
 
 		if userid > 0 and userid <= 499:
-			x("usermod -L -s /dev/null %s" % username)
+			x("/usr/sbin/usermod -L -s /sbin/nologin %s" % username)
 
 	#
 	# Disable users with empty passwords in the shadow file.
@@ -69,10 +69,28 @@ def harden_password():
 	#
 	app.print_verbose("Set account expiration parameters on active accounts")
 	login_defs = scOpen("/etc/login.defs")
+
+	#
+	app.print_verbose("7.2.1 Set Password Expiration Days")
 	login_defs.replace("^PASS_MAX_DAYS.*", "PASS_MAX_DAYS\t90")
+	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --maxdays 99 {}")
+
+	#
+	app.print_verbose("7.2.2 Set Password Change Minimum Number of Days")
 	login_defs.replace("^PASS_MIN_DAYS.*", "PASS_MIN_DAYS\t7")
+	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --mindays 7 {}")
+
+	#
+	app.print_verbose("7.2.3 Set Password Expiring Warning Days")
 	login_defs.replace("^PASS_WARN_AGE.*", "PASS_WARN_AGE\t14")
+	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --warndays 7 {}")
+
+	#
 	login_defs.replace("^PASS_MIN_LEN.*",  "PASS_MIN_LEN\t9")
+
+	#
+	app.print_verbose("7.5 Lock Inactive User Accounts")
+	x("useradd -D -f 35")
 
 	#
 	# Set pam to enforce complex passwords
@@ -84,28 +102,39 @@ def harden_password():
 	# 1 digits minimu (dcredit=1)
 	# 2 other caracter (ocredit=2)
 	#
-	app.print_verbose("Set pam to enforce complex passwords")
+	app.print_verbose("6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^password.*requisite.*pam_cracklib.so.*",
-		"password\trequisite\tpam_cracklib.so try_first_pass retry=3 " +
-		"minlen=9 difok=3 lcredit=1 ucredit=1 dcredit=1 ocredit=2"
+		"password\requisite\tpam_cracklib.so try_first_pass retry=3 " +
+		"minlen=14,dcredit=-1,ucredit=-1,ocredit=-2,lcredit=-1,difok=3"
 	)
 
 	#
 	# Lock accounts after 5 failed login attempts. Admin must unlock account.
 	#
-	app.print_verbose("Lock accounts after 5 failed login attempts.")
+	app.print_verbose("6.3.3 Set Lockout for Failed Password Attempts")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^auth.*required.*pam_tally.so.*",
-		"auth\trequired\tpam_tally.so onerr=fail deny=5"
+		"auth\trequired\tpam_tally2.so onerr=fail deny=5"
 	)
 
 	#
-	# Store passwords in sha512 instead of md5
-	#
-  	app.print_verbose("   Store passwords sha512 instead of md5")
+  	app.print_verbose("6.3.5 Upgrade Password Hashing Algorithm to SHA-512")
   	x("authconfig --passalgo=sha512 --update --disablefingerprint")
 
+  	#
+  	app.print_verbose("6.3.6 Limit Password Reuse")
+  	scOpen("/etc/pam.d/system-auth").add_to_end_of_line(
+  		"password.*pam_unix.so"
+  		" remember=5"
+  	)
+
+  	#
+  	app.print_verbose("6.5 Restrict Access to the su Command")
+  	scOpen("/etc/pam.d/su").replace(
+  		"required.*pam_wheel.so"
+  		"auth		required	pam_wheel.so use_uid"
+  	)
 
 
 def replaceShadow(file,searchExp,replaceExp):

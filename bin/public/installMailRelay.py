@@ -53,9 +53,9 @@ def install_mail_server(args):
   iptables.add_mail_relay_chain()
   iptables.save()
 
-  hardening.configure_resolv_conf()
-  hardening.configure_localhost()
-  hardening.restart_network()
+  hardening.network.configure_resolv_conf()
+  hardening.network.configure_localhost()
+  hardening.network.restart_network()
 
   app.print_verbose("Configure /etc/mail/*")
 

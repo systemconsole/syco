@@ -26,7 +26,7 @@ import ConfigParser
 from general import grep, x
 import app
 from app import print_verbose
-import scOpen
+from scopen import scOpen
 
 
 def setup_ssh():

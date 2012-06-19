@@ -263,8 +263,8 @@ class Config(object):
     def get_admin_email(self):
       return self.get_option("admin_email")
 
-    def get_logserver(self):
-      return self.get_option("logserver")
+    def get_log_server_hostname(self):
+      return self.get_option("log.hostname")
 
   class HostConfig(SycoConfig):
     '''

@@ -41,7 +41,7 @@ def setup_permissions():
 	root_console_lockdown()
 	disable_virtual_terminals()
 	disable_singel_user_mode()
-	setup_dmask()
+	setup_umask()
 	disable_coredumps()
 	disable_su_for_wheel
 
@@ -142,7 +142,8 @@ def root_console_lockdown():
 	Root is only allowed to login on tty1.
 
 	'''
-	app.print_verbose("Root is only allowed to login on tty1.")
+	app.print_verbose("6.4 Restrict root Login to System Console")
+	app.print_verbose("  Root is only allowed to login on tty1.")
 	copyfile("/etc/securetty","/etc/securetty.sycobak")
 	changefile = open("/etc/securetty",'w')
 	changefile.write("tty1")
@@ -178,30 +179,27 @@ def disable_singel_user_mode():
 	scOpen("/etc/sysconfig/init").replace("^PROMPT.*", "PROMPT=no")
 
 
-def setup_dmask():
+def setup_umask():
 	'''
 	Set the defult dmask for all users and root. User can override this for
 	private files in home folder.
 
 	'''
-	app.print_verbose("Set the defult dmask for all users.")
-	scOpen('/etc/profile').replace('002','077')
-	scOpen('/etc/profile').replace('027','077')
+	app.print_verbose("7.4 Set Default umask for Users")
+	scOpen('/etc/bashrc').replace('umask 002','umask 077')
+	scOpen('/etc/bashrc').replace('umask 022','umask 077')
 
-	scOpen('/etc/bashrc').replace('002','077')
-	scOpen('/etc/bashrc').replace('027','077')
+	scOpen('/etc/profile').replace('umask 002','umask 077')
+	scOpen('/etc/profile').replace('umask 022','umask 077')
 
-	scOpen('/etc/csh.cshrc').replace('002','077')
-	scOpen('/etc/csh.cshrc').replace('027','077')
-
-	scOpen('/etc/csh.login').replace('002','077')
-	scOpen('/etc/csh.login').replace('027','077')
+	scOpen('/etc/csh.cshrc').replace('umask 002','umask 077')
+	scOpen('/etc/csh.cshrc').replace('umask 022','umask 077')
 
 	app.print_verbose("  Setup dmask for root.")
-	scOpen.replace("/etc/skel/.bachrc", "^umask.*0777.*", "umask 0777")
-	scOpen.replace("/root/.bachrc",     "^umask.*0777.*", "umask 0777")
-	scOpen.replace("/root/.cshrc",      "^umask.*0777.*", "umask 0777")
-	scOpen.replace("/root/.tcshrc",     "^umask.*0777.*", "umask 0777")
+	scOpen.replace_add("/etc/skel/.bashrc", "^umask.*0777.*", "umask 0777")
+	scOpen.replace_add("/root/.bashrc",     "^umask.*0777.*", "umask 0777")
+	scOpen.replace_add("/root/.cshrc",      "^umask.*0777.*", "umask 0777")
+	scOpen.replace_add("/root/.tcshrc",     "^umask.*0777.*", "umask 0777")
 
 
 def disable_coredumps():
@@ -241,5 +239,16 @@ def disable_su_for_wheel():
 	)
 
 def _clear_login_screen():
-  '''Clear information shown on the console login screen.'''
-  x('cp %s/hardening/issue.net /etc/issue' % app.SYCO_VAR_PATH)
+  	'''Clear information shown on the console login screen.'''
+  	app.print_verbose("8.1 Set Warning Banner for Standard Login Services")
+  	x('cp %s/hardening/issue.net /etc/motd' % app.SYCO_VAR_PATH)
+  	x('cp %s/hardening/issue.net /etc/issue' % app.SYCO_VAR_PATH)
+  	x('cp %s/hardening/issue.net /etc/issue.net' % app.SYCO_VAR_PATH)
+
+	x("chown root:root /etc/motd")
+	x("chmod 644 /etc/motd")
+	x("chown root:root /etc/issue")
+	x("chmod 644 /etc/issue")
+	x("chown root:root /etc/issue.net")
+	x("chmod 644 /etc/issue.net")
+

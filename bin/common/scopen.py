@@ -13,7 +13,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-from general import x
+from general import x, set_config_property
 
 class scOpen:
     '''
@@ -35,8 +35,17 @@ class scOpen:
         '''
         Add value to end off file with cat.
 
-        '''        
+        '''
         x("echo '%s' >> %s" % (value, self.filename))
+
+    def add_to_end_of_line(self, search, replace):
+        '''
+        Add replace string to the end of all lines matching the search string.
+
+        '''
+        search = self.esc(search)
+        replace = self.esc(replace)
+        x("sed '/%s/s|$|%s|' %s"% (search, replace, self.filename))
 
     def remove(self, search):
         '''
@@ -54,6 +63,9 @@ class scOpen:
         search = self.esc(search)
         replace = self.esc(replace)
         x("sed -i 's/%s/%s/g' %s" % (search, replace, self.filename))
+
+    def replace_add(self, search, replace):
+        set_config_property(self.filename, search, replace)
 
     def remove_eof(self, lines):
         '''

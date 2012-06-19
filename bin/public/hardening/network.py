@@ -22,10 +22,10 @@ __status__ = "Production"
 import ConfigParser
 from socket import gethostname
 
-import scOpen
 import app
 from general import grep, x
-from config.general import get_resolv_domain, get_resolv_search
+from config import general
+from scopen import scOpen
 
 
 def setup_network():
@@ -43,16 +43,20 @@ def setup_network():
 
 
 def setup_kernel():
-	app.print_verbose("Help kernel to prevent certain kinds of attacks")
-	config = ConfigParser.SafeConfigParser()
-	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
+    app.print_verbose("Help kernel to prevent certain kinds of attacks")
+    config = ConfigParser.SafeConfigParser()
+    config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 
-	# Harden network config
-	for setting in config.options('network'):
-		scOpen("/etc/sysctl.conf").replace(
-			"^" + setting + ".*$", config.get('network', setting)
-		)
-		app.print_verbose("Server network settings " + setting + " has been applied")
+    # Harden network config
+    for setting in config.options('network'):
+        scOpen("/etc/sysctl.conf").replace(
+        	"^" + setting + ".*$", config.get('network', setting)
+        )
+        app.print_verbose("Server network settings " + setting + " has been applied")
+
+    # Flush settings.
+    x("/sbin/sysctl -w net.ipv4.route.flush=1")
+    x("/sbin/sysctl -w net.ipv6.route.flush=1")
 
 
 def disable_ip6_support():
@@ -68,15 +72,15 @@ def disable_ip6_support():
 def configure_resolv_conf():
   app.print_verbose("Configure /etc/resolv.conf")
   resolv = scOpen("/etc/resolv.conf")
-  resolv.replace("domain.*", "domain " + get_resolv_domain())
-  resolv.replace("search.*", "search " + get_resolv_search())
+  resolv.replace("domain.*", "domain " + general.get_resolv_domain())
+  resolv.replace("search.*", "search " + general.get_resolv_search())
 
 
 def configure_localhost():
   app.print_verbose("Configure /etc/hosts")
   localhost =  (
   	"127.0.0.1" +
-  	" %s.%s" % (gethostname(), get_resolv_domain()) +
+  	" %s.%s" % (gethostname(), general.get_resolv_domain()) +
   	" localhost.localdomain localhost %s" % gethostname()
   )
   scOpen("/etc/hosts").replace("127.0.0.1.*", localhost)
