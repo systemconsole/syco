@@ -45,7 +45,7 @@ class scOpen:
         '''
         search = self.esc(search)
         replace = self.esc(replace)
-        x("sed '/%s/s|$|%s|' %s"% (search, replace, self.filename))
+        x("sed -i '/%s/s|$|%s|' %s"% (search, replace, self.filename))
 
     def remove(self, search):
         '''

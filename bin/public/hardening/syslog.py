@@ -21,7 +21,7 @@ __status__ = "Production"
 import config
 import app
 from scopen import scOpen
-from general import grep, x
+from general import x
 import os
 
 
@@ -31,19 +31,20 @@ def setup_syslog():
 
 
 def syslog():
-	app.print_verbose("5.2 Configure rsyslog")
+	app.print_verbose("CIS 5.2 Configure rsyslog")
 
 	#
-	app.print_verbose("5.2.1 Install the rsyslog package")
+	app.print_verbose("CIS 5.2.1 Install the rsyslog package")
 	x("yum install rsyslog")
 
 	#
-	app.print_verbose("5.2.2 Activate the rsyslog Service")
-	x("chkconfig syslog off")
+	app.print_verbose("CIS 5.2.2 Activate the rsyslog Service")
+	if os.path.exists('/etc/xinetd.d/syslog'):
+		x("chkconfig syslog off")
 	x("chkconfig rsyslog on")
 
 	#
-	app.print_verbose("5.2.3 Configure /etc/rsyslog.conf")
+	app.print_verbose("CIS 5.2.3 Configure /etc/rsyslog.conf")
 	# >> etc/rsyslog.conf
 	# auth,user.* 	/var/log/messages
 	# kern.*			/var/log/kern.log
@@ -54,7 +55,7 @@ def syslog():
 	# x("pkill -HUP rsyslogd")
 
 	#
-	app.print_verbose("5.2.4 Create and Set Permissions on rsyslog Log Files")
+	app.print_verbose("CIS 5.2.4 Create and Set Permissions on rsyslog Log Files")
 	# for logfile in all_files_in_rsyslog.conf
 	# touch logfile
 	# chown root:root logfile
@@ -97,7 +98,7 @@ def setup_remote_loging():
 	All logs to this server are forwarded to remote log server.
 
 	'''
-	app.print_verbose("5.2.5 Configure rsyslog to Send Logs to a Remote Log Host.")
+	app.print_verbose("CIS 5.2.5 Configure rsyslog to Send Logs to a Remote Log Host.")
 	log = scOpen("/etc/rsyslog.conf")
 	log.replace("^([\#]?)\$ModLoad imudp.so", "$ModLoad imudp.so")
 	log.replace("^([\#]?)\$UDPServerRun.*",   "$UDPServerRun 514")
@@ -105,21 +106,3 @@ def setup_remote_loging():
 		"(?#)\*.\* @"+config.general.get_log_server_hostname()+":514",
 		"*.* @"+config.general.get_log_server_hostname()+":514"
 	)
-
-
-def verify_syslog():
-	if not grep("/etc/rsyslog.conf", '^auth\\.\\*'):
-		app.print_error("auth are NOT in config file syslog_config")
-
-	if not grep("/etc/rsyslog.conf", '^authpriv\\.\\*'):
-		app.print_error("authpriv are NOT in config file syslog_config")
-
-	if not grep("/etc/rsyslog.conf", '^\$ModLoad'):
-		app.print_error("modload imudp are NOT in config file syslog_config")
-
-	if not grep("/etc/rsyslog.conf", '^\$UDPServerRun'):
-		app.print_error("UDP port are NOT in config file syslog_config")
-
-	if not grep("/etc/rsyslog.conf", ".*"+config.general.get_log_server_hostname()):
-		app.print_error("syslogserver are NOT in config file syslog_config")
-

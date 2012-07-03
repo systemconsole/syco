@@ -89,11 +89,9 @@ def chmod_files():
 	config = ConfigParser.SafeConfigParser()
 	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
 	for setting in config.options('chmod_f'):
-		name = config.get('chmod_f',setting)
+		name = config.get('chmod_f', setting)
 		if os.path.isfile(name):
 			x("chmod %s %s" % (setting, name))
-			#os.chmod(fil,int(setting))
-			#app.print_verbose("Setting chmod "+fil+" on file "+setting)
 
 
 def find_rouge_files():
@@ -142,7 +140,7 @@ def root_console_lockdown():
 	Root is only allowed to login on tty1.
 
 	'''
-	app.print_verbose("6.4 Restrict root Login to System Console")
+	app.print_verbose("CIS 6.4 Restrict root Login to System Console")
 	app.print_verbose("  Root is only allowed to login on tty1.")
 	copyfile("/etc/securetty","/etc/securetty.sycobak")
 	changefile = open("/etc/securetty",'w')
@@ -185,7 +183,7 @@ def setup_umask():
 	private files in home folder.
 
 	'''
-	app.print_verbose("7.4 Set Default umask for Users")
+	app.print_verbose("CIS 7.4 Set Default umask for Users")
 	scOpen('/etc/bashrc').replace('umask 002','umask 077')
 	scOpen('/etc/bashrc').replace('umask 022','umask 077')
 
@@ -196,10 +194,10 @@ def setup_umask():
 	scOpen('/etc/csh.cshrc').replace('umask 022','umask 077')
 
 	app.print_verbose("  Setup dmask for root.")
-	scOpen.replace_add("/etc/skel/.bashrc", "^umask.*0777.*", "umask 0777")
-	scOpen.replace_add("/root/.bashrc",     "^umask.*0777.*", "umask 0777")
-	scOpen.replace_add("/root/.cshrc",      "^umask.*0777.*", "umask 0777")
-	scOpen.replace_add("/root/.tcshrc",     "^umask.*0777.*", "umask 0777")
+	scOpen("/etc/skel/.bashrc").replace_add("^umask.*0777.*", "umask 0777")
+	scOpen("/root/.bashrc"    ).replace_add("^umask.*0777.*", "umask 0777")
+	scOpen("/root/.cshrc"     ).replace_add("^umask.*0777.*", "umask 0777")
+	scOpen("/root/.tcshrc"    ).replace_add("^umask.*0777.*", "umask 0777")
 
 
 def disable_coredumps():
@@ -224,7 +222,7 @@ def disable_coredumps():
 	scOpen("/etc/sysctl.conf").replace(
 		"^fs.suid_dumpable.*=.*0", "fs.suid_dumpable = 0"
 	)
-	x("sysctl -p")
+	x("sysctl -e -p")
 
 
 def disable_su_for_wheel():
@@ -240,7 +238,7 @@ def disable_su_for_wheel():
 
 def _clear_login_screen():
   	'''Clear information shown on the console login screen.'''
-  	app.print_verbose("8.1 Set Warning Banner for Standard Login Services")
+  	app.print_verbose("CIS 8.1 Set Warning Banner for Standard Login Services")
   	x('cp %s/hardening/issue.net /etc/motd' % app.SYCO_VAR_PATH)
   	x('cp %s/hardening/issue.net /etc/issue' % app.SYCO_VAR_PATH)
   	x('cp %s/hardening/issue.net /etc/issue.net' % app.SYCO_VAR_PATH)

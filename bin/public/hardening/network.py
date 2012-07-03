@@ -23,7 +23,7 @@ import ConfigParser
 from socket import gethostname
 
 import app
-from general import grep, x
+from general import x
 from config import general
 from scopen import scOpen
 
@@ -52,7 +52,6 @@ def setup_kernel():
         scOpen("/etc/sysctl.conf").replace(
         	"^" + setting + ".*$", config.get('network', setting)
         )
-        app.print_verbose("Server network settings " + setting + " has been applied")
 
     # Flush settings.
     x("/sbin/sysctl -w net.ipv4.route.flush=1")
@@ -84,21 +83,6 @@ def configure_localhost():
   	" localhost.localdomain localhost %s" % gethostname()
   )
   scOpen("/etc/hosts").replace("127.0.0.1.*", localhost)
-
-
-def verify_network():
-	'''
-    Verify that the network config settings in the hardning config file has
-    been applied.
-
-    '''
-	config = ConfigParser.SafeConfigParser()
-	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
-	for setting in config.options('network'):
-		if not grep("/etc/sysctl.conf",config.get('network',setting)):
-			print "ERROR Setting " + setting + " are NOT in config file sysctl_config"
-
-	app.print_verbose("Network settings has bean verified.")
 
 
 def restart_network():

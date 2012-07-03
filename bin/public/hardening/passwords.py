@@ -34,7 +34,7 @@ def harden_password():
 	#
 	# Set login shell to /dev/null
 	#
-	app.print_verbose("7.1 Disable System Accounts")
+	app.print_verbose("CIS 7.1 Disable System Accounts")
 	app.print_verbose("  Set login shell to '/dev/null' for system accounts")
 	for line in open("/etc/passwd"):
 		userid = int(line.split(':')[2]);
@@ -71,17 +71,17 @@ def harden_password():
 	login_defs = scOpen("/etc/login.defs")
 
 	#
-	app.print_verbose("7.2.1 Set Password Expiration Days")
+	app.print_verbose("CIS 7.2.1 Set Password Expiration Days")
 	login_defs.replace("^PASS_MAX_DAYS.*", "PASS_MAX_DAYS\t90")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --maxdays 99 {}")
 
 	#
-	app.print_verbose("7.2.2 Set Password Change Minimum Number of Days")
+	app.print_verbose("CIS 7.2.2 Set Password Change Minimum Number of Days")
 	login_defs.replace("^PASS_MIN_DAYS.*", "PASS_MIN_DAYS\t7")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --mindays 7 {}")
 
 	#
-	app.print_verbose("7.2.3 Set Password Expiring Warning Days")
+	app.print_verbose("CIS 7.2.3 Set Password Expiring Warning Days")
 	login_defs.replace("^PASS_WARN_AGE.*", "PASS_WARN_AGE\t14")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --warndays 7 {}")
 
@@ -89,7 +89,7 @@ def harden_password():
 	login_defs.replace("^PASS_MIN_LEN.*",  "PASS_MIN_LEN\t9")
 
 	#
-	app.print_verbose("7.5 Lock Inactive User Accounts")
+	app.print_verbose("CIS 7.5 Lock Inactive User Accounts")
 	x("useradd -D -f 35")
 
 	#
@@ -102,7 +102,7 @@ def harden_password():
 	# 1 digits minimu (dcredit=1)
 	# 2 other caracter (ocredit=2)
 	#
-	app.print_verbose("6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
+	app.print_verbose("CIS 6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^password.*requisite.*pam_cracklib.so.*",
 		"password\requisite\tpam_cracklib.so try_first_pass retry=3 " +
@@ -112,27 +112,27 @@ def harden_password():
 	#
 	# Lock accounts after 5 failed login attempts. Admin must unlock account.
 	#
-	app.print_verbose("6.3.3 Set Lockout for Failed Password Attempts")
+	app.print_verbose("CIS 6.3.3 Set Lockout for Failed Password Attempts")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^auth.*required.*pam_tally.so.*",
 		"auth\trequired\tpam_tally2.so onerr=fail deny=5"
 	)
 
 	#
-  	app.print_verbose("6.3.5 Upgrade Password Hashing Algorithm to SHA-512")
+  	app.print_verbose("CIS 6.3.5 Upgrade Password Hashing Algorithm to SHA-512")
   	x("authconfig --passalgo=sha512 --update --disablefingerprint")
 
   	#
-  	app.print_verbose("6.3.6 Limit Password Reuse")
+  	app.print_verbose("CIS 6.3.6 Limit Password Reuse")
   	scOpen("/etc/pam.d/system-auth").add_to_end_of_line(
-  		"password.*pam_unix.so"
+  		"password.*pam_unix.so",
   		" remember=5"
   	)
 
   	#
-  	app.print_verbose("6.5 Restrict Access to the su Command")
+  	app.print_verbose("CIS 6.5 Restrict Access to the su Command")
   	scOpen("/etc/pam.d/su").replace(
-  		"required.*pam_wheel.so"
+  		"required.*pam_wheel.so",
   		"auth		required	pam_wheel.so use_uid"
   	)
 

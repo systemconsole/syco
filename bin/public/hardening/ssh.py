@@ -23,13 +23,14 @@ __status__ = "Production"
 
 import ConfigParser
 
-from general import grep, x
+from general import x
 import app
-from app import print_verbose
 from scopen import scOpen
 
 
 def setup_ssh():
+	app.print_verbose("TODO: Do you really have a user yet? This disables root login over ssh.")
+	return
 	app.print_verbose("Harden ssh and sshd.")
 	x("cp /etc/ssh/ssh_config  /etc/ssh/ssh_config.sycobak")
 	x("cp /etc/ssh/sshd_config /etc/ssh/sshd_config.sycobak")
@@ -55,21 +56,3 @@ def setup_ssh():
 	# Set login banner.
 	#
 	x('cp %s/hardening/issue.net /etc/issue.net' % app.SYCO_VAR_PATH)
-
-
-def verify_ssh():
-	config = ConfigParser.SafeConfigParser()
-	config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
-	for setting in config.options('ssh'):
-		if not grep("/etc/ssh/sshd_config",config.get('ssh',setting)):
-			print_verbose(
-				"ERROR Setting %s are NOT in config file ssh_config" %
-				setting
-			)
-
-	for setting in config.options('sshd'):
-		if not grep("/etc/ssh/sshd_config",config.get('sshd',setting)):
-			print_verbose(
-				"ERROR Setting %s are NOT in config file sshd_config" %
-				setting
-			)

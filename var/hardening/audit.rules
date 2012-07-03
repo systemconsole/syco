@@ -57,7 +57,7 @@
 ## 5.3.8 Collect Login and Logout Events
 -w /var/log/faillog -p wa -k logins
 -w /var/log/lastlog -p wa -k logins
--w /var/log/tallylog -p -wa -k logins
+## Don't work?? -w /var/log/tallylog -p -wa -k logins
 
 ## 5.3.9 Collect Session Initiation Information
 -w /var/log/btmp -p wa -k session
@@ -96,11 +96,7 @@
 -w /sbin/insmod -p x -k modules
 -w /sbin/rmmod -p x -k modules
 -w /sbin/modprobe -p x -k modules
--a always,exit -S init_module -S delete_module -k modules
-
-## 5.3.18 Make the Audit Configuration Immutable
--e 2
-
+-a always,exit -F arch=b64 -S init_module -S delete_module -k modules
 
 ##
 ##
@@ -134,3 +130,5 @@
 ## Put your own watches after this point
 # -w /your-file -p rwxa -k mykey
 
+## 5.3.18 Make the Audit Configuration Immutable
+-e 2

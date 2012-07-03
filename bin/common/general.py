@@ -329,8 +329,12 @@ def handle_subprocess(p, output):
   if (stderr and output == X_OUTPUT_ALL):
     app.print_error(stderr.strip())
 
-  if (p.returncode and output == X_OUTPUT_ALL):
-    app.print_error("Invalid returncode %d" % p.returncode)
+  #
+  # Error messages is enough to print. A failure doesn't always mean a failure.
+  # For example [ -f '/etc/cron.allow' ] && chmod og-rwx /etc/cron.allow
+  # will return returncode 1, when the file doesn't exist.
+  # if (p.returncode and output == X_OUTPUT_ALL):
+  #   app.print_error("Invalid returncode %d" % p.returncode)
 
   # An extra line break for the looks.
   if ((stdout or stderr) and app.options.verbose >=2 and output == X_OUTPUT_ALL):

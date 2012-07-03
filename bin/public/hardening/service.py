@@ -19,9 +19,6 @@ http://www.sonoracomm.com/support/18-support/114-minimal-svcs
 http://www.imminentweb.com/technologies/centos-disable-unneeded-services-boot-time
 http://magazine.redhat.com/2007/03/09/understanding-your-red-hat-enterprise-linux-daemons/
 
-TODO:
-Also add this to the kickstart files?
-
 '''
 
 __author__ = "mattias@fareoffice.com"
@@ -45,9 +42,9 @@ def disable_services():
     config = ConfigParser.SafeConfigParser()
     config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
     for service in config.options('service'):
-    	if os.path.exists('/etc/xinetd.d/%s'  % service):
-    		app.print_verbose("Disabling service %s " % service)
-    		disable_service(service)
+      app.print_verbose("Disabling service %s " % service)
+      if os.path.exists('/etc/xinetd.d/%s'  % service):
+        disable_service(service)
 
 
 def disable_service(name):

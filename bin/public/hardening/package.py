@@ -28,4 +28,5 @@ def remove_packages():
     config = ConfigParser.SafeConfigParser()
     config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
     for package in config.options('package'):
+        app.print_verbose("  Remove %s." % package)
         install.rpm_remove(package)
