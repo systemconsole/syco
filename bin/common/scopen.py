@@ -45,7 +45,9 @@ class scOpen:
         '''
         search = self.esc(search)
         replace = self.esc(replace)
-        x("sed -i '/%s/s|$|%s|' %s"% (search, replace, self.filename))
+        x("sed -i '/%s/! { /%s/s|$| %s| }' %s" %
+            (replace, search, replace, self.filename)
+        )
 
     def remove(self, search):
         '''
@@ -63,6 +65,16 @@ class scOpen:
         search = self.esc(search)
         replace = self.esc(replace)
         x("sed -i 's/%s/%s/g' %s" % (search, replace, self.filename))
+
+    def replace_ex(self, search1, search2, replace):
+        '''
+        Replace 'search2' with 'replace' on lines containg 'search1'.
+
+        '''
+        search1 = self.esc(search1)
+        search2 = self.esc(search2)
+        replace = self.esc(replace)
+        x("sed -i '%s/s|%s|%s|' %s" % (search1, search2, replace, self.filename))
 
     def replace_add(self, search, replace):
         set_config_property(self.filename, search, replace)

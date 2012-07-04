@@ -93,6 +93,12 @@ def harden_password():
 	x("useradd -D -f 35")
 
 	#
+	# authconfig needs to be done before any other changes to system-auth
+	# or it will restore old settings.
+  	app.print_verbose("CIS 6.3.5 Upgrade Password Hashing Algorithm to SHA-512")
+  	x("authconfig --passalgo=sha512 --update --disablefingerprint")
+
+	#
 	# Set pam to enforce complex passwords
 	# 3 tries to change password (retry=3)
 	# 9 entries mini lenght (minlen=9)
@@ -105,12 +111,14 @@ def harden_password():
 	app.print_verbose("CIS 6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^password.*requisite.*pam_cracklib.so.*",
-		"password\requisite\tpam_cracklib.so try_first_pass retry=3 " +
+		"password    requisite     pam_cracklib.so.so try_first_pass retry=3 " +
 		"minlen=14,dcredit=-1,ucredit=-1,ocredit=-2,lcredit=-1,difok=3"
 	)
 
 	#
 	# Lock accounts after 5 failed login attempts. Admin must unlock account.
+	#
+
 	#
 	app.print_verbose("CIS 6.3.3 Set Lockout for Failed Password Attempts")
 	scOpen("/etc/pam.d/system-auth").replace(
@@ -118,24 +126,19 @@ def harden_password():
 		"auth\trequired\tpam_tally2.so onerr=fail deny=5"
 	)
 
-	#
-  	app.print_verbose("CIS 6.3.5 Upgrade Password Hashing Algorithm to SHA-512")
-  	x("authconfig --passalgo=sha512 --update --disablefingerprint")
-
   	#
   	app.print_verbose("CIS 6.3.6 Limit Password Reuse")
   	scOpen("/etc/pam.d/system-auth").add_to_end_of_line(
   		"password.*pam_unix.so",
-  		" remember=5"
+  		"remember=5"
   	)
 
-  	#
+  	# Disbling su for user not in the wheel group
   	app.print_verbose("CIS 6.5 Restrict Access to the su Command")
   	scOpen("/etc/pam.d/su").replace(
-  		"required.*pam_wheel.so",
+  		".*auth.*required.*pam_wheel.so.*",
   		"auth		required	pam_wheel.so use_uid"
   	)
-
 
 def replaceShadow(file,searchExp,replaceExp):
     for line in fileinput.input(file,inplace=1):

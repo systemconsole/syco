@@ -90,7 +90,7 @@
 -w /etc/sudoers -p wa -k scope
 
 ## 5.3.16 Collect System Administrator Actions (sudolog)
--w /etc/sudoers -p wa -k actions
+-w /var/log/sudo.log -p wa -k actions
 
 ## 5.3.17 Collect Kernel Module Loading and Unloading
 -w /sbin/insmod -p x -k modules

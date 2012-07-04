@@ -15,8 +15,11 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import subprocess
+
+import ConfigParser
+import os
 import re
+import subprocess
 
 from constant import BOLD, RESET
 import app
@@ -125,6 +128,7 @@ def print_status():
 
         test_status = None
 
+
 def print_total_status():
     print_status()
     global total_status
@@ -179,12 +183,16 @@ def audit_cis(args):
     section_1_6()
     section_7_8()
     section_9()
+    verify_network()
+    verify_ssh()
 
     # Print status for the last section.
     print_total_status()
 
 
 def section_1_6():
+    global test_status
+
 
     #
     print("1. Install Updates, Patches and Additional Security Software")
@@ -294,7 +302,7 @@ def section_1_6():
 
     #
     print_header("1.1.21 Disable Mounting of hfs Filesystems")
-    rows_contains("sbin/modprobe -n -v hfs", "install /bin/true")
+    rows_contains("/sbin/modprobe -n -v hfs", "install /bin/true")
     assert_empty(x("/sbin/lsmod | grep hfs"))
 
     #
@@ -415,7 +423,7 @@ def section_1_6():
 
     #
     print_header("1.5.6 Check for Unconfined Daemons")
-    assert_empty(x("ps -eZ | egrep \"initrc\" | egrep -vw \"tr|ps|egrep|bash|awk\" | tr ':' ' ' | awk '{ print $NF }'"))
+    assert_empty(x("ps -eZ | egrep 'initrc' | egrep -vw 'tr|ps|egrep|bash|awk' | tr ':' ' ' | awk '{ print $NF }'"))
 
     #
     print_header("1.6 Secure Boot Settings")
@@ -430,8 +438,8 @@ def section_1_6():
     #
     print_header("1.6.2 Set Permissions on /etc/grub.conf")
     rows_contains(
-        'stat -c "%a" /etc/grub.conf | egrep ".00"',
-        "0 0"
+        'stat -c "%a" /etc/grub.conf | egrep "600"',
+        "600"
     )
 
     #
@@ -456,12 +464,12 @@ def section_1_6():
     print_header("1.7.1 Restrict Core Dumps")
     rows_contains(
         'grep "hard core" /etc/security/limits.conf',
-        "hard core 0"
+        "* hard core 0"
     )
 
     rows_contains(
-        'sysctl fs.suid.dumpable',
-        "fs.suid.dumpable = 0"
+        'sysctl fs.suid_dumpable',
+        "fs.suid_dumpable = 0"
     )
 
     #
@@ -734,9 +742,8 @@ def section_1_6():
 
     #
     print_header("3.16 Configure Mail Transfer Agent for Local-Only Mode")
-    result = x('netstat -an | grep LIST | grep 25')
+    result = x('netstat -an | grep LIST | grep ":25"')
     assert_contains(result[0], "tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN")
-    assert_contains(result[1], "tcp        0      0 ::1:25                      :::*                        LISTEN")
     if len(result) > 2:
         test_status = "[ERROR]"
 
@@ -854,7 +861,7 @@ def section_1_6():
     #
     print_header("4.4.1 Disable IPv6")
     rows_contains(
-        "grep ipv6 /etc/modprobe.conf",
+        "grep ipv6 /etc/modprobe.d/*",
         'options ipv6 "disable=1"'
     )
 
@@ -863,22 +870,25 @@ def section_1_6():
 
     #
     print_header("4.4.2.1 Disable IPv6 Router Advertisements")
-    rows_contains(
-        "/sbin/sysctl net.ipv6.conf.default.accept_ra",
-        "net.ipv6.conf.default.accept_ra = 0"
-    )
+    print_info("We are using IPV6 on syco servers.")
+    # rows_contains(
+    #     "/sbin/sysctl net.ipv6.conf.default.accept_ra",
+    #     "net.ipv6.conf.default.accept_ra = 0"
+    # )
 
 
     #
     print_header("4.4.2.2 Disable IPv6 Redirect Acceptance")
-    rows_contains(
-        "/sbin/sysctl net.ipv6.conf.default.accept_redirects",
-        "net.ipv6.conf.default.accept_redirects = 0"
-    )
+    print_info("We are using IPV6 on syco servers.")
+    # rows_contains(
+    #     "/sbin/sysctl net.ipv6.conf.default.accept_redirects",
+    #     "net.ipv6.conf.default.accept_redirects = 0"
+    # )
 
     #
     print_header("4.5 Install TCP Wrappers")
-    rows_contains("rpm -q tcp_wrappers", "package tcp_wrappers is not installed")
+    print_info("We are using IPV6 on syco servers.")
+    #rows_contains("rpm -q tcp_wrappers", "package tcp_wrappers is not installed")
 
     #
     print_header("4.5.1 Create /etc/hosts.allow", "[WARNING]")
@@ -969,7 +979,7 @@ def section_1_6():
     print_header("5.1.4 Accept Remote syslog Messages Only on Designated Log Hosts")
     rows_contains(
         "ls /etc/sysconfig/syslog",
-        "ls: cannot access /etc/syslog.conf: No such file or directory"
+        "ls: cannot access /etc/sysconfig/syslog: No such file or directory"
     )
 
     #
@@ -977,12 +987,11 @@ def section_1_6():
 
     #
     print_header("5.2.1 Install the rsyslog package")
-    rows_contains("rpm -q rsyslog", "package rsyslog is not installed")
-
+    rows_empty('rpm -q rsyslog|grep  "package rsyslog is not installed"')
 
     #
     print_header("5.2.2 Activate the rsyslog Service")
-    assert_empty(x("chkconfig --list | grep syslog"))
+    assert_empty(x("chkconfig --list | grep ^syslog"))
     rows_contains_re(
         "chkconfig --list rsyslog",
         "rsyslog.*0:off.*1:off.*2:on.*3:on.*4:on.*5:on.*6:off"
@@ -1020,13 +1029,25 @@ def section_1_6():
     )
 
     #
+    print_header("5.2.6 - BONUS ")
+    rows_contains(
+        "grep '^auth\\.\\*' /etc/rsyslog.conf",
+        "auth.*"
+    )
+
+    rows_contains(
+        "grep '^authpriv\\.\\*' /etc/rsyslog.conf",
+        "authpriv.*"
+    )
+
+    #
     print_header("5.3 Configure System Accounting (auditd)")
 
     #
     print_header("5.3.1 Enable auditd Service")
     rows_contains_re(
         "chkconfig --list auditd",
-        "rsyslog.*0:off.*1:off.*2:on.*3:on.*4:on.*5:on.*6:off"
+        "auditd.*0:off.*1:off.*2:on.*3:on.*4:on.*5:on.*6:off"
     )
 
 
@@ -1036,25 +1057,25 @@ def section_1_6():
     #
     print_header("5.3.2.1 Configure Audit Log Storage Size")
     rows_contains(
-        "grep max_log_file /etc/audit/auditd.conf",
-        "max_log_file = 100"
+        "grep 'max_log_file[ ]*\=' /etc/audit/auditd.conf",
+        "max_log_file = 50"
     )
 
     #
     print_header("5.3.2.2 Disable System on Audit Log Full")
     rows_contains(
-        "grep space_left_action /etc/audit/auditd.conf",
+        "grep '^space_left_action[ ]*\=' /etc/audit/auditd.conf",
         "space_left_action = email"
     )
 
     rows_contains(
         "grep action_mail_acct /etc/audit/auditd.conf",
-        "action_mail_acct = email"
+        "action_mail_acct = root"
     )
 
     rows_contains(
         "grep admin_space_left_action /etc/audit/auditd.conf",
-        "admin_space_left_action = email"
+        "admin_space_left_action = halt"
     )
 
 
@@ -1067,7 +1088,10 @@ def section_1_6():
 
     #
     print_header("5.3.3 Enable Auditing for Processes That Start Prior to auditd")
-    assert_empty('grep "^[^#]*kernel" /etc/grub.conf|grep "audit = 1"')
+    rows_contains(
+        'grep "^[^#]*kernel" /etc/grub.conf|grep "audit=1"',
+        'audit=1'
+    )
 
     #
     print_header("5.3.4 Record Events That Modify Date and Time Information")
@@ -1121,7 +1145,7 @@ def section_1_6():
     else:
         assert_contains(result[0], "-w /var/log/faillog -p wa -k logins")
         assert_contains(result[1], "-w /var/log/lastlog -p wa -k logins")
-        assert_contains(result[2], "-w /var/log/tallylog -p -wa -k logins")
+        #assert_contains(result[2], "-w /var/log/tallylog -p -wa -k logins")
 
     #
     print_header("5.3.9 Collect Session Initiation Information")
@@ -1149,7 +1173,7 @@ def section_1_6():
     #
     print_header("5.3.11 Collect Unsuccessful Unauthorized Access Attempts to Files")
     result = x('grep access /etc/audit/audit.rules')
-    if len(result) != 6:
+    if len(result) != 4:
         test_status = "[ERROR]"
     else:
         assert_contains(result[0], "-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access")
@@ -1177,7 +1201,7 @@ def section_1_6():
 
     #
     print_header("5.3.14 Collect File Deletion Events by User")
-    result = x('grep delete /etc/audit/audit.rules')
+    result = x('grep delete$ /etc/audit/audit.rules')
     if len(result) != 2:
         test_status = "[ERROR]"
     else:
@@ -1207,7 +1231,7 @@ def section_1_6():
         assert_contains(result[0], "-w /sbin/insmod -p x -k modules")
         assert_contains(result[1], "-w /sbin/rmmod -p x -k modules")
         assert_contains(result[2], "-w /sbin/modprobe -p x -k modules")
-        assert_contains(result[3], "-a always,exit -S init_module -S delete_module -k modules")
+        assert_contains(result[3], "-a always,exit -F arch=b64 -S init_module -S delete_module -k modules")
 
     #
     print_header("5.3.18 Make the Audit Configuration Immutable")
@@ -1271,9 +1295,8 @@ def section_1_6():
     #
     print_header("6.1.11 Restrict at/cron to Authorized Users")
     rows_contains('ls /etc/cron.deny', "ls: cannot access /etc/cron.deny: No such file or directory")
-    rows_contains('ls /etc/at.deny', "ls: cannot access /etc/at.deny: No such file or directory")
-    rows_contains('stat -c "%a %u %g" /etc/cron.allow | egrep "600 0 0"', "600 0 0")
-    rows_contains('stat -c "%a %u %g" /etc/at.allow | egrep "600 0 0"', "600 0 0")
+    if os.path.exists("/etc/cron.allow"):
+        rows_contains('stat -c "%a %u %g" /etc/cron.allow | egrep "600 0 0"', "600 0 0")
 
     #
     print_header("6.2 Configure SSH")
@@ -1348,7 +1371,7 @@ def section_1_6():
     #
     print_header("6.2.11 Use Only Approved Ciphers in Counter Mode")
     rows_contains(
-        'grep -v "Cipher" /etc/ssh/sshd_config',
+        'grep "Cipher" /etc/ssh/sshd_config',
         "Cipher aes256-ctr"
     )
 
@@ -1357,10 +1380,6 @@ def section_1_6():
     rows_contains(
         'grep "^ClientAliveInterval" /etc/ssh/sshd_config',
         "ClientAliveInterval 900"
-    )
-    rows_contains(
-        'grep "^ClientAliveInterval" /etc/ssh/sshd_config',
-        "ClientAliveInterval 0"
     )
 
     #
@@ -1382,8 +1401,8 @@ def section_1_6():
     print_header("6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
     rows_contains(
         "grep pam_cracklib.so /etc/pam.d/system-auth",
-        "password\requisite\tpam_cracklib.so try_first_pass retry=3 " +
-        "minlen=14,dcredit=-1,ucredit=-1,ocredit=-2,lcredit=-1,difok=3"
+        "password    requisite     pam_cracklib.so.so try_first_pass " +
+        "retry=3 minlen=14,dcredit=-1,ucredit=-1,ocredit=-2,lcredit=-1,difok=3"
     )
 
     #
@@ -1412,7 +1431,7 @@ def section_1_6():
     print_header("6.3.6 Limit Password Reuse")
     rows_contains(
         "grep 'remember' /etc/pam.d/system-auth",
-        "password\tsufficient\tpam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=5"
+        "password    sufficient    pam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=5"
     )
 
     #
@@ -1426,9 +1445,9 @@ def section_1_6():
     #
     print_header("6.5 Restrict Access to the su Command")
     result = x('grep pam_wheel.so /etc/pam.d/su')
-    assert_contains(result[0], "#auth       sufficient  pam_wheel.so trust use_uid")
-    assert_contains(result[1], "auth       required    pam_wheel.so use_uid")
-    if len(result) > 2:
+    assert_contains(result[0], "#auth           sufficient      pam_wheel.so trust use_uid")
+    assert_contains(result[1], "auth\t\trequired\tpam_wheel.so use_uid")
+    if len(result) != 2:
         test_status = "[ERROR]"
 
     rows_contains(
@@ -1438,6 +1457,8 @@ def section_1_6():
 
 
 def section_7_8():
+    global test_status
+
     #
     print_header("7. User Accounts and Environment")
 
@@ -1461,12 +1482,12 @@ def section_7_8():
     #
     print_header("7.2.1 Set Password Expiration Days")
     rows_contains(
-        "grep PASS_MAX_DAYS /etc/login.defs",
-        "PASS_MAX_DAYS 90"
+        "grep ^PASS_MAX_DAYS /etc/login.defs",
+        "PASS_MAX_DAYS\t90"
     )
 
     rows_empty(
-        'awk -F: "($3 > 0) {print $1}"" /etc/passwd | xargs -I {} ' +
+        'awk -F: \'($3 > 0) {print $1}\' /etc/passwd | xargs -I {} ' +
         'chage --list {}|' +
         'grep "^Maximum number of days between password change"|'+
         'grep -v ": 99$"'
@@ -1475,12 +1496,12 @@ def section_7_8():
     #
     print_header("7.2.2 Set Password Change Minimum Number of Days")
     rows_contains(
-        "grep PASS_MIN_DAYS /etc/login.defs",
-        "PASS_MIN_DAYS 90"
+        "grep ^PASS_MIN_DAYS /etc/login.defs",
+        "PASS_MIN_DAYS\t7"
     )
 
     rows_empty(
-        'awk -F: "($3 > 0) {print $1}"" /etc/passwd | xargs -I {} ' +
+        'awk -F: \'($3 > 0) {print $1}\' /etc/passwd | xargs -I {} ' +
         'chage --list {}|' +
         'grep "^Miniumum number of days between password change"|'+
         'grep -v ": 7$"'
@@ -1489,12 +1510,12 @@ def section_7_8():
     #
     print_header("7.2.3 Set Password Expiring Warning Days")
     rows_contains(
-        "grep PASS_WARN_AGE /etc/login.defs",
-        "PASS_WARN_AGE 90"
+        "grep ^PASS_WARN_AGE /etc/login.defs",
+        "PASS_WARN_AGE\t14"
     )
 
     rows_empty(
-        'awk -F: "($3 > 0) {print $1}"" /etc/passwd | xargs -I {} ' +
+        'awk -F: \'($3 > 0) {print $1}\' /etc/passwd | xargs -I {} ' +
         'chage --list {}|' +
         'grep "^Number of days of warning before password expires"|'+
         'grep -v ": 7$"'
@@ -1535,9 +1556,9 @@ def section_7_8():
 
     #
     print_header("8.1.1 Remove OS Information from Login Warning Banners")
-    rows_empty("egrep '(\\v|\\r|\\m|\\s)' /etc/issue")
-    rows_empty("egrep '(\\v|\\r|\\m|\\s)' /etc/motd")
-    rows_empty("egrep'(\\v|\\r|\\m|\\s)' /etc/issue.net")
+    rows_empty("egrep '(\\\\v|\\\\r|\\\\m|\\\\s)' /etc/issue")
+    rows_empty("egrep '(\\\\v|\\\\r|\\\\m|\\\\s)' /etc/motd")
+    rows_empty("egrep '(\\\\v|\\\\r|\\\\m|\\\\s)' /etc/issue.net")
 
     #
     print_header("8.2 Set GNOME Warning Banner")
@@ -1545,6 +1566,8 @@ def section_7_8():
 
 
 def section_9():
+    global test_status
+
     #
     print_header("9. System Maintenance")
 
@@ -1988,5 +2011,48 @@ done
     rows_empty(cmd)
 
 
+def verify_network():
+    '''
+    Verify that the network config settings in the hardning config file has
+    been applied.
+
+    Not a CIS test.
+
+    '''
+    print_header("10 BONUS - Verify network settings")
+
+    config = ConfigParser.SafeConfigParser()
+    config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
+    counter = 0
+    for setting in config.options('network'):
+        counter += 1
+        print_header("10.%s Verify network settings - %s" %
+            (counter, config.get('network', setting)))
+        rows_not_empty("grep %s /etc/sysctl.conf" % config.get('network', setting))
 
 
+def verify_ssh():
+    '''
+    Verify that all ssh settings has been applied.
+
+    Not a CIS test.
+    '''
+    print_header("11 BONUS - Verify ssh settings")
+    config = ConfigParser.SafeConfigParser()
+    config.read('%s/hardening/config.cfg' % app.SYCO_VAR_PATH)
+    counter = 0
+    for setting in config.options('ssh'):
+        counter += 1
+        print_header("11.%s Verify ssh settings - %s" %
+            (counter, config.get('ssh', setting)))
+
+        rows_not_empty("grep %s /etc/ssh/sshd_config" % config.get('ssh', setting))
+
+    counter = 0
+    for setting in config.options('sshd'):
+        counter += 1
+
+        print_header("11.%s Verify sshd settings - %s" %
+            (counter, config.get('sshd', setting)))
+
+        rows_not_empty("grep %s /etc/ssh/sshd_config" % config.get('sshd', setting))

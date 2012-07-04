@@ -43,7 +43,7 @@ def setup_permissions():
 	disable_singel_user_mode()
 	setup_umask()
 	disable_coredumps()
-	disable_su_for_wheel
+	clear_login_screen()
 
 
 def enable_selinux():
@@ -225,18 +225,7 @@ def disable_coredumps():
 	x("sysctl -e -p")
 
 
-def disable_su_for_wheel():
-	'''
-	Disbling su fo user not in the wheel group
-
-	'''
-	app.print_verbose("Disbling su fo user not in the wheel group.")
-	scOpen("/etc/pam.d/su").replace(
-		"^([\#]?)auth.*required.*pam_wheel.so.*use_uid",
-		"auth\t\trequired\t\tpam_wheel.so use_uid"
-	)
-
-def _clear_login_screen():
+def clear_login_screen():
   	'''Clear information shown on the console login screen.'''
   	app.print_verbose("CIS 8.1 Set Warning Banner for Standard Login Services")
   	x('cp %s/hardening/issue.net /etc/motd' % app.SYCO_VAR_PATH)

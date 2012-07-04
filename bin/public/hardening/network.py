@@ -49,7 +49,7 @@ def setup_kernel():
 
     # Harden network config
     for setting in config.options('network'):
-        scOpen("/etc/sysctl.conf").replace(
+        scOpen("/etc/sysctl.conf").replace_add(
         	"^" + setting + ".*$", config.get('network', setting)
         )
 

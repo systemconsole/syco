@@ -43,27 +43,27 @@ def install_auditd():
 	auditd = scOpen("/etc/audit/auditd.conf")
 
 	app.print_verbose("CIS 5.3.2.1 Configure Audit Log Storage Size")
-	auditd.replace("^max_log_file[\s]*\=.*",       "max_log_file = 50")
+	auditd.replace_add("^max_log_file[\s]*\=.*",       "max_log_file = 50")
 
 	app.print_verbose("CIS 5.3.2.2 Disable System on Audit Log Full")
-	auditd.replace("^space_left_action[\s]*\=.*",       "space_left_action = email")
-	auditd.replace("^action_mail_acct[\s]*\=.*",        "action_mail_acct = root")
-	auditd.replace("^admin_space_left_action[\s]*\=.*", "admin_space_left_action = halt")
+	auditd.replace_add("^space_left_action[\s]*\=.*",       "space_left_action = email")
+	auditd.replace_add("^action_mail_acct[\s]*\=.*",        "action_mail_acct = root")
+	auditd.replace_add("^admin_space_left_action[\s]*\=.*", "admin_space_left_action = halt")
 
 	app.print_verbose("CIS 5.3.2.3 Keep All Auditing Information")
-	auditd.replace("^max_log_file_action[\s]*\=.*", "max_log_file_action = keep_logs")
+	auditd.replace_add("^max_log_file_action[\s]*\=.*", "max_log_file_action = keep_logs")
 
 	app.print_verbose("Extra auditd configs")
-	auditd.replace("^num_logs[\s]*\=.*",                "num_logs = 1024")
-	auditd.replace("^space_left[\s]*\=.*",              "space_left = 125")
-	auditd.replace("^admin_space_left[\s]*\=.*",        "admin_space_left = 75")
+	auditd.replace_add("^num_logs[\s]*\=.*",                "num_logs = 1024")
+	auditd.replace_add("^space_left[\s]*\=.*",              "space_left = 125")
+	auditd.replace_add("^admin_space_left[\s]*\=.*",        "admin_space_left = 75")
 
 	x("chmod 700 /etc/audit/auditd.conf")
 
 	#
 	app.print_verbose("CIS 5.3.3 Enable Auditing for Processes That Start Prior to auditd")
 	auditd = scOpen("/etc/grub.conf")
-	auditd.add_to_end_of_line("^[^#]*kernel", " audit=1")
+	auditd.add_to_end_of_line("^[^#]*kernel", "audit=1")
 
 	#
 	# Restarting service

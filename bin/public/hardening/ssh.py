@@ -29,8 +29,6 @@ from scopen import scOpen
 
 
 def setup_ssh():
-	app.print_verbose("TODO: Do you really have a user yet? This disables root login over ssh.")
-	return
 	app.print_verbose("Harden ssh and sshd.")
 	x("cp /etc/ssh/ssh_config  /etc/ssh/ssh_config.sycobak")
 	x("cp /etc/ssh/sshd_config /etc/ssh/sshd_config.sycobak")
@@ -43,14 +41,14 @@ def setup_ssh():
 	#
 	ssh = scOpen("/etc/ssh/ssh_config")
 	for setting in config.options('ssh'):
-		ssh.replace("^(?#)(?i)" + setting + ".*", config.get('ssh',setting))
+		ssh.replace_add("^(?#)(?i)" + setting + ".*", config.get('ssh',setting))
 
 	#
 	# Hardening sshd config
 	#
 	ssh = scOpen("/etc/ssh/sshd_config")
 	for setting in config.options('sshd'):
-		ssh.replace(".*(?#)(?i)" + setting + ".*", config.get('sshd',setting))
+		ssh.replace_add(".*(?#)(?i)" + setting + ".*", config.get('sshd',setting))
 
 	#
 	# Set login banner.

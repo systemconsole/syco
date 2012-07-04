@@ -77,6 +77,32 @@ def forward_root_mail():
 def general_cis():
     '''General CIS hardenings'''
     #
+    app.print_verbose("CIS 1.1.2 Set nodev option for /tmp Partition")
+    app.print_verbose("CIS 1.1.3 Set nosuid option for /tmp Partition")
+    app.print_verbose("CIS 1.1.4 Set noexec option for /tmp Partition")
+    scOpen("/etc/fstab").replace_ex(
+        "/tmp", "noexec[^0-9]*", "noexec,nodev,nosuid "
+    )
+    x("mount -o remount,noexec,nodev,nosuid /tmp")
+    x("mount -o remount,noexec,nodev,nosuid /var/tmp")
+
+    #
+    app.print_verbose("CIS 1.1.10 Add nodev Option to /home")
+    scOpen("/etc/fstab").replace_ex(
+        "/home", "noexec[^0-9]*", "noexec,nodev "
+    )
+    x("mount -o remount,noexec,nodev /home")
+
+    #
+    app.print_verbose("CIS 1.1.14 Add nodev Option to /dev/shm Partition")
+    app.print_verbose("CIS 1.1.15 Add nosuid Option to /dev/shm Partition")
+    app.print_verbose("CIS 1.1.16 Add noexec Option to /dev/shm Partition")
+    scOpen("/etc/fstab").replace_ex(
+        "/dev/shm", "defaults[^0-9]*", "defaults,nodev,nosuid,noexec "
+    )
+    x("mount -o remount,nodev,nosuid,noexec /dev/shm")
+
+    return
     app.print_verbose("CIS 1.1.17 Set Sticky Bit on All World-Writable Directories")
     x("find / -type d -perm -0002 -exec chmod a+t {} \; 2>/dev/null")
 
@@ -227,7 +253,6 @@ def general_cis():
     #
     app.print_verbose("CIS 6.1.11 Restrict at/cron to Authorized Users")
     x("/bin/rm -f /etc/cron.deny")
-    x("/bin/rm -f /etc/at.deny")
 
     x("[ -f '/etc/cron.allow' ] && chmod og-rwx /etc/cron.allow")
     x("[ -f '/etc/cron.allow' ] && chown root:root /etc/cron.allow")
