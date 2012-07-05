@@ -111,7 +111,7 @@ def harden_password():
 	app.print_verbose("CIS 6.3.1 Set Password Creation Requirement Parameters Using pam_cracklib")
 	scOpen("/etc/pam.d/system-auth").replace(
 		"^password.*requisite.*pam_cracklib.so.*",
-		"password    requisite     pam_cracklib.so.so try_first_pass retry=3 " +
+		"password    requisite     pam_cracklib.so try_first_pass retry=3 " +
 		"minlen=14,dcredit=-1,ucredit=-1,ocredit=-2,lcredit=-1,difok=3"
 	)
 
