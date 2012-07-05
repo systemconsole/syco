@@ -194,10 +194,10 @@ def setup_umask():
 	scOpen('/etc/csh.cshrc').replace('umask 022','umask 077')
 
 	app.print_verbose("  Setup dmask for root.")
-	scOpen("/etc/skel/.bashrc").replace_add("^umask.*0777.*", "umask 0777")
-	scOpen("/root/.bashrc"    ).replace_add("^umask.*0777.*", "umask 0777")
-	scOpen("/root/.cshrc"     ).replace_add("^umask.*0777.*", "umask 0777")
-	scOpen("/root/.tcshrc"    ).replace_add("^umask.*0777.*", "umask 0777")
+	scOpen("/etc/skel/.bashrc").replace_add("^umask.*", "umask 077")
+	scOpen("/root/.bashrc"    ).replace_add("^umask.*", "umask 077")
+	scOpen("/root/.cshrc"     ).replace_add("^umask.*", "umask 077")
+	scOpen("/root/.tcshrc"    ).replace_add("^umask.*", "umask 077")
 
 
 def disable_coredumps():
