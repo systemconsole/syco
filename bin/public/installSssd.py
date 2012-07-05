@@ -216,6 +216,10 @@ def configured_sudo():
         "bindpw " + app.get_ldap_sssd_password()
     )
 
+    # Needed to fix a but in Centos 6.2, will be fixed in 6.3.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=760843
+    x("cp /etc/ldap.conf /etc/nslcd.conf")
+
     # Enable debugmode
     #scOpen("/etc/ldap.conf").add("sudoers_debug 5")
 
