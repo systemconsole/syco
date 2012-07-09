@@ -154,11 +154,11 @@ def disable_virtual_terminals():
   '''
   app.print_verbose("Disable virtual terminals")
   inittab = scOpen("/etc/inittab")
-  inittab.replace("^[#]?2:2345:respawn:/sbin/mingetty tty2$", "#2:2345:respawn:/sbin/mingetty tty2")
-  inittab.replace("^[#]?3:2345:respawn:/sbin/mingetty tty3$", "#3:2345:respawn:/sbin/mingetty tty3")
-  inittab.replace("^[#]?4:2345:respawn:/sbin/mingetty tty4$", "#4:2345:respawn:/sbin/mingetty tty4")
-  inittab.replace("^[#]?5:2345:respawn:/sbin/mingetty tty5$", "#5:2345:respawn:/sbin/mingetty tty5")
-  inittab.replace("^[#]?6:2345:respawn:/sbin/mingetty tty6$", "#6:2345:respawn:/sbin/mingetty tty6")
+  inittab.replace_add("^[#]?2:2345:respawn:/sbin/mingetty tty2$", "#2:2345:respawn:/sbin/mingetty tty2")
+  inittab.replace_add("^[#]?3:2345:respawn:/sbin/mingetty tty3$", "#3:2345:respawn:/sbin/mingetty tty3")
+  inittab.replace_add("^[#]?4:2345:respawn:/sbin/mingetty tty4$", "#4:2345:respawn:/sbin/mingetty tty4")
+  inittab.replace_add("^[#]?5:2345:respawn:/sbin/mingetty tty5$", "#5:2345:respawn:/sbin/mingetty tty5")
+  inittab.replace_add("^[#]?6:2345:respawn:/sbin/mingetty tty6$", "#6:2345:respawn:/sbin/mingetty tty6")
 
 
 def disable_singel_user_mode():
@@ -170,11 +170,11 @@ def disable_singel_user_mode():
 	'''
 	app.print_verbose("Enable Authentication for Single-User Mode")
 	inittab = scOpen("/etc/inittab")
-	inittab.replace("^([\#]?)id:3:initdefault:",  "#id:3:initdefault:")
-	inittab.replace("^~~:S:wait:/sbin/sulogin.*", "~~:S:wait:/sbin/sulogin")
+	inittab.replace_add("^([\#]?)id:3:initdefault:",  "#id:3:initdefault:")
+	inittab.replace_add("^~~:S:wait:/sbin/sulogin.*", "~~:S:wait:/sbin/sulogin")
 
 	app.print_verbose("Disable Interactive Hotkey Startup at Boot")
-	scOpen("/etc/sysconfig/init").replace("^PROMPT.*", "PROMPT=no")
+	scOpen("/etc/sysconfig/init").replace_add("^PROMPT.*", "PROMPT=no")
 
 
 def setup_umask():

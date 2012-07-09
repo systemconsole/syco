@@ -61,18 +61,18 @@ def setup_kernel():
 def disable_ip6_support():
   app.print_verbose("Disable IP6 support")
   modprobe = scOpen("/etc/modprobe.d/syco.conf")
-  modprobe.replace("^alias ipv6 off$",      "alias ipv6 off")
-  modprobe.replace("^alias net-pf-10 off$", "alias net-pf-10 off")
+  modprobe.replace_add("^alias ipv6 off$",      "alias ipv6 off")
+  modprobe.replace_add("^alias net-pf-10 off$", "alias net-pf-10 off")
 
   network = scOpen("/etc/sysconfig/network")
-  network.replace("^NETWORKING_IPV6=.*$", "NETWORKING_IPV6=no")
+  network.replace_add("^NETWORKING_IPV6=.*$", "NETWORKING_IPV6=no")
 
 
 def configure_resolv_conf():
   app.print_verbose("Configure /etc/resolv.conf")
   resolv = scOpen("/etc/resolv.conf")
-  resolv.replace("domain.*", "domain " + general.get_resolv_domain())
-  resolv.replace("search.*", "search " + general.get_resolv_search())
+  resolv.replace_add("domain.*", "domain " + general.get_resolv_domain())
+  resolv.replace_add("search.*", "search " + general.get_resolv_search())
 
 
 def configure_localhost():
@@ -82,7 +82,7 @@ def configure_localhost():
   	" %s.%s" % (gethostname(), general.get_resolv_domain()) +
   	" localhost.localdomain localhost %s" % gethostname()
   )
-  scOpen("/etc/hosts").replace("127.0.0.1.*", localhost)
+  scOpen("/etc/hosts").replace_add("127.0.0.1.*", localhost)
 
 
 def restart_network():

@@ -100,8 +100,8 @@ def setup_remote_loging():
 	'''
 	app.print_verbose("CIS 5.2.5 Configure rsyslog to Send Logs to a Remote Log Host.")
 	log = scOpen("/etc/rsyslog.conf")
-	log.replace("^([\#]?)\$ModLoad imudp.so", "$ModLoad imudp.so")
-	log.replace("^([\#]?)\$UDPServerRun.*",   "$UDPServerRun 514")
+	log.replace_add("^([\#]?)\$ModLoad imudp.so", "$ModLoad imudp.so")
+	log.replace_add("^([\#]?)\$UDPServerRun.*",   "$UDPServerRun 514")
 	log.replace(
 		"(?#)\*.\* @"+config.general.get_log_server_hostname()+":514",
 		"*.* @"+config.general.get_log_server_hostname()+":514"

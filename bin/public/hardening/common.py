@@ -23,6 +23,7 @@ from general import x
 def setup_common():
     yum_update()
     customize_shell()
+    create_syco_modprobe()
     disable_usb()
     forward_root_mail()
     general_cis()
@@ -55,6 +56,11 @@ def customize_shell():
     skel.replace_add("^export GREP_COLOR=.*$",   "export GREP_COLOR='1;32'")
     skel.replace_add("^export GREP_OPTIONS=.*$", "export GREP_OPTIONS=--color=auto")
 
+def create_syco_modprobe():
+    x("touch /etc/modprobe.d/syco.conf")
+    x("chown root:root /etc/modprobe.d/syco.conf")
+    x("chmod 644 /etc/modprobe.d/syco.conf")
+    x("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
 def disable_usb():
     # TODO Currently need usb dvd reader for installation.
@@ -63,12 +69,11 @@ def disable_usb():
     scOpen("/etc/modprobe.d/syco.conf").replace_add(
         "^blacklist usb-storage$", "blacklist usb-storage"
     )
-    x("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
 
 def forward_root_mail():
     app.print_verbose("Forward all root email to " + config.general.get_admin_email())
-    scOpen("/etc/aliases").replace(
+    scOpen("/etc/aliases").replace_add(
         ".*root[:].*", "root:     " + config.general.get_admin_email()
     )
     x("/usr/bin/newaliases")

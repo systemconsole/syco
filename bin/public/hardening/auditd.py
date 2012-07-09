@@ -54,7 +54,7 @@ def install_auditd():
 	auditd.replace_add("^max_log_file_action[\s]*\=.*", "max_log_file_action = keep_logs")
 
 	app.print_verbose("Extra auditd configs")
-	auditd.replace_add("^num_logs[\s]*\=.*",                "num_logs = 1024")
+	auditd.replace_add("^num_logs[\s]*\=.*",                "num_logs = 99")
 	auditd.replace_add("^space_left[\s]*\=.*",              "space_left = 125")
 	auditd.replace_add("^admin_space_left[\s]*\=.*",        "admin_space_left = 75")
 

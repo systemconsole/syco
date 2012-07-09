@@ -72,21 +72,21 @@ def harden_password():
 
 	#
 	app.print_verbose("CIS 7.2.1 Set Password Expiration Days")
-	login_defs.replace("^PASS_MAX_DAYS.*", "PASS_MAX_DAYS\t90")
+	login_defs.replace_add("^PASS_MAX_DAYS.*", "PASS_MAX_DAYS\t90")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --maxdays 99 {}")
 
 	#
 	app.print_verbose("CIS 7.2.2 Set Password Change Minimum Number of Days")
-	login_defs.replace("^PASS_MIN_DAYS.*", "PASS_MIN_DAYS\t7")
+	login_defs.replace_add("^PASS_MIN_DAYS.*", "PASS_MIN_DAYS\t7")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --mindays 7 {}")
 
 	#
 	app.print_verbose("CIS 7.2.3 Set Password Expiring Warning Days")
-	login_defs.replace("^PASS_WARN_AGE.*", "PASS_WARN_AGE\t14")
+	login_defs.replace_add("^PASS_WARN_AGE.*", "PASS_WARN_AGE\t14")
 	x("awk -F: '($3 > 0) {print $1}' /etc/passwd | xargs -I {} chage --warndays 7 {}")
 
 	#
-	login_defs.replace("^PASS_MIN_LEN.*",  "PASS_MIN_LEN\t9")
+	login_defs.replace_add("^PASS_MIN_LEN.*",  "PASS_MIN_LEN\t9")
 
 	#
 	app.print_verbose("CIS 7.5 Lock Inactive User Accounts")
