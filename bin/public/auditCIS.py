@@ -860,10 +860,12 @@ def section_1_6():
 
     #
     print_header("4.4.1 Disable IPv6")
-    rows_contains(
-        "grep ipv6 /etc/modprobe.d/*",
-        'options ipv6 "disable=1"'
-    )
+    result = x('grep ipv6 /etc/modprobe.d/*')
+    if len(result) != 2:
+        test_status = "[ERROR]"
+    else:
+        assert_contains(result[0], "alias ipv6 off")
+        assert_contains(result[1], 'options ipv6 "disable=1"')
 
     #
     print_header("4.4.2 Configure IPv6")
@@ -942,9 +944,8 @@ def section_1_6():
     #
     print_header("4.8.2 Disable SCTP")
     result = x('/sbin/modprobe -n -v sctp')
-    #assert_contains(result[0], "insmod /lib/modules/2.6.32-220.2.1.el6.x86_64/kernel/lib/libcrc32c.ko")
-    assert_contains(result[1], "install /bin/true")
-    if len(result) > 2:
+    assert_contains(result[2], "install /bin/true")
+    if len(result) != 3:
         test_status = "[ERROR]"
     assert_empty(x("/sbin/lsmod | grep sctp"))
 
@@ -1372,7 +1373,7 @@ def section_1_6():
     print_header("6.2.11 Use Only Approved Ciphers in Counter Mode")
     rows_contains(
         'grep "Cipher" /etc/ssh/sshd_config',
-        "Cipher aes256-ctr"
+        "Ciphers aes256-ctr"
     )
 
     #
@@ -1445,7 +1446,9 @@ def section_1_6():
     #
     print_header("6.5 Restrict Access to the su Command")
     result = x('grep pam_wheel.so /etc/pam.d/su')
-    assert_contains(result[0], "#auth           sufficient      pam_wheel.so trust use_uid")
+    print result
+
+    assert_contains(result[0], "#auth\t\tsufficient\tpam_wheel.so trust use_uid")
     assert_contains(result[1], "auth\t\trequired\tpam_wheel.so use_uid")
     if len(result) != 2:
         test_status = "[ERROR]"
@@ -1881,7 +1884,7 @@ done
     #
     print_header("9.2.14 Check User Home Directory Ownership")
     cmd = """
-defUsers="bin daemon adm lp sync shutdown halt mail uucp operator games gopher ftp nobody vcsa saslauth postfix sshd ntp"
+defUsers="bin daemon adm lp sync shutdown halt mail uucp operator games gopher ftp nobody vcsa saslauth postfix sshd ntp mailnull smmsp"
 cat /etc/passwd | awk -F: '{ print $1 " " $6 }' | while read user dir
 do
     found=0
@@ -1936,7 +1939,7 @@ done
     #
     print_header("9.2.17 Check That Reserved UIDs Are Assigned to System Accounts")
     cmd = """
-defUsers=" root bin daemon adm lp sync shutdown halt mail uucp operator games gopher ftp nobody vcsa saslauth postfix sshd ntp"
+defUsers=" root bin daemon adm lp sync shutdown halt mail uucp operator games gopher ftp nobody vcsa saslauth postfix sshd ntp mailnull smmsp"
 /bin/cat /etc/passwd | /bin/awk -F: '($3 < 500) { print $1" "$3 }' |\
 while read user uid; do
     found=0

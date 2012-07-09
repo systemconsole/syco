@@ -107,7 +107,6 @@ def general_cis():
     )
     x("mount -o remount,nodev,nosuid,noexec /dev/shm")
 
-    return
     app.print_verbose("CIS 1.1.17 Set Sticky Bit on All World-Writable Directories")
     x("find / -type d -perm -0002 -exec chmod a+t {} \; 2>/dev/null")
 
