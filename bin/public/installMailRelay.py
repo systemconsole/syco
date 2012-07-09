@@ -27,6 +27,7 @@ import app
 import config
 import general
 from general import set_config_property, set_config_property2
+from net import get_public_ip
 import hardening
 import iptables
 import version
@@ -163,8 +164,10 @@ def _test_mail():
 
   email = config.general.get_admin_email()
 
-  msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n"
-       % (email, email, "Mail relay client installed on " + gethostname()))
+  msg = ("From: %s\r\nTo: %s\r\nSubject: %s %s (%s)\r\n\r\n" % (
+    email, email, "Mail relay client installed on ", gethostname(),
+    get_public_ip()
+  ))
 
   server = smtplib.SMTP('localhost')
   server.sendmail(email, email, msg)
