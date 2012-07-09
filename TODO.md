@@ -16,8 +16,6 @@ Version 0.4
   http://alienvault.com/products/unified-siem
 * Check
   http://pve.proxmox.com/wiki/File:Screen-startpage-with-cluster.png
-* Hardening - move "yum update" to top of script to minimize the risk
-  that an updated package revert any hardening mods.
 
 Version 3.9 (iptables)
 ----------------------
@@ -48,6 +46,8 @@ Version 4
 
 Monitor
 -------
+* Use aureport to read auditd log files.
+  http://dgz.dyndns.org/mediawiki/index.php/(RHEL)_HOWTO_configure_the_auditing_of_the_system_(auditd)#Using_aureport
 * Check this http://snorby.org/
 * Check cpu sensors (temp), IPMI??
 * Build report tool to check swap memory.
@@ -55,14 +55,17 @@ Monitor
   of each request beyond a point that users consider "fast enough".
 * Monitor cpu temp
 * Check that no swap exists on the kvm hosts.
-* Monitor hardware, snmp??
+* Monitors hardware, snmp??
 
 Hardening
 ---------
+* Write a script that runs syco audit-cis every day/hour and emails the diff
+  between last run and current run to sysop.
+* Setup  /etc/hosts.allow and ate /etc/hosts.deny  from iptables script.
+  # echo "ALL: ALL" >> /etc/hosts.deny
 * Read doc for centos 6
   http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/
-* installClam
-* Read http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
+  http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/index.html
 * Harden kickstart files according to
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/kickstart.template
   http://kickstart-maker.googlecode.com/svn-history/r20/trunk/post/
