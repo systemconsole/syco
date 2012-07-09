@@ -33,6 +33,7 @@ import time
 import app
 import config
 import general
+from general import x, x_communicate
 import version
 import install
 import net
@@ -68,6 +69,7 @@ def install_kvmhost(args):
     install.package("qemu-kvm")
     install.package("libvirt")
     install.package("libguestfs-tools")
+    install.package("avahi")
 
     # Provides the virt-install command for creating virtual machines.
     install.package("python-virtinst")
@@ -75,8 +77,13 @@ def install_kvmhost(args):
     # Before libvirtd starts, create a snapshot partion for qemu.
     _create_kvm_snapshot_partition()
 
+    # Start services libvirtd depends on.
+    x("service messagebus restart")
+    x("service avahi-daemon start")
+    x("chkconfig avahi-daemon on")
+
     # Start virsh
-    general.shell_exec("service libvirtd start")
+    x("service libvirtd start")
 
     _enable_ksm()
 
@@ -85,15 +92,15 @@ def install_kvmhost(args):
     time.sleep(1)
 
     # Set selinux
-    general.shell_exec("setenforce 1")
+    x("setenforce 1")
 
     # Is virsh started?
-    result = general.shell_exec("virsh nodeinfo")
+    result = x("virsh nodeinfo")
     if "CPU model:" not in result:
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
 
-    result = general.shell_exec("virsh -c qemu:///system list")
+    result = x("virsh -c qemu:///system list")
     if "Id Name" not in result:
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
@@ -106,7 +113,7 @@ def install_kvmhost(args):
     version_obj.mark_executed()
 
     # Set selinux
-    general.shell_exec("reboot")
+    x("reboot")
 
     # Wait for the reboot to be executed, so the script
     # doesn't proceed to next command in install.cfg
@@ -122,14 +129,14 @@ def _create_kvm_snapshot_partition():
     '''
     volgroup = disk.active_volgroup_name()
     devicename = "/dev/" + volgroup + "/qemu"
-    result = general.shell_exec("lvdisplay -v " + devicename, output = False)
+    result = x("lvdisplay -v " + devicename, output = False)
     if (devicename not in result):
-        general.shell_exec("lvcreate -n qemu -L 100G " + volgroup)
-        general.shell_exec("mkfs.ext4 -j " + devicename)
-        general.shell_exec("mkdir -p /var/lib/libvirt/qemu")
-        general.shell_exec("mount " + devicename + " /var/lib/libvirt/qemu")
-        general.shell_exec("chown qemu:qemu /var/lib/libvirt/qemu")
-        general.shell_exec("restorecon -R -v /var/lib/libvirt/qemu")
+        x("lvcreate -n qemu -L 100G " + volgroup)
+        x("mkfs.ext4 -j " + devicename)
+        x("mkdir -p /var/lib/libvirt/qemu")
+        x("mount " + devicename + " /var/lib/libvirt/qemu")
+        x("chown qemu:qemu /var/lib/libvirt/qemu")
+        x("restorecon -R -v /var/lib/libvirt/qemu")
 
         # Automount the new partion when rebooting.
         value = devicename + "        /var/lib/libvirt/qemu     ext4        defaults                1 2"
@@ -152,9 +159,9 @@ def _setup_network_interfaces():
     """
     # Remove the virbr0, "NAT-interface".
     # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/chap-Virtualization-Network_Configuration.html
-    general.shell_exec("virsh net-destroy default")
-    general.shell_exec("virsh net-undefine default")
-    general.shell_exec("service libvirtd restart")
+    x("virsh net-destroy default")
+    x("virsh net-undefine default")
+    x("service libvirtd restart")
 
     # Install network bridge
     install.package("bridge-utils")
@@ -279,12 +286,14 @@ def _enable_ksm():
 
     '''
     if (general.grep("/boot/config-" + os.uname()[2], "CONFIG_KSM=y")):
-        general.shell_exec("service ksm start")
-        general.shell_exec("chkconfig ksm on")
+        x("service ksm start")
+        x("chkconfig ksm on")
 
-        general.shell_exec("service ksmtuned start")
-        #general.shell_exec("service ksmtuned retune")
-        general.shell_exec("chkconfig ksmtuned on")
+        # 'ksmtuned start' gives a deadlock when using standard x and reading
+        # on stdout.
+        x_communicate("service ksmtuned start")
+        #x("service ksmtuned retune")
+        x("chkconfig ksmtuned on")
 
 def _abort_kvm_host_installation():
     '''

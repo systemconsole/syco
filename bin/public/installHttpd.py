@@ -53,7 +53,7 @@ MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE +
 MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
 MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
 
-MODSEC_RULES_FILE = "modsecurity-crs_2.2.3"
+MODSEC_RULES_FILE = "modsecurity-crs_2.2.4"
 
 def build_commands(commands):
   '''

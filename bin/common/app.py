@@ -57,13 +57,15 @@ def print_verbose(message, verbose_level=1, caption=None, new_line=True, enable_
   All print to screen done by syco should be done with this.
 
   #TODO: The caption are not always written ok when using new_line=False, see example at the bottom.
-
+  #TODO: Need a output format that can be read.
   '''
   if (caption):
     caption += " "
   else:
     caption=""
-  caption = time.strftime('%Y-%m-%d %H:%M:%S') + " - " + socket.gethostname() + " - " + caption
+
+  #caption = time.strftime('%Y-%m-%d %H:%M:%S') + " - " + socket.gethostname() + " - " + caption
+  caption = " " + caption
 
   messages = []
   if (not isinstance(message, tuple)):

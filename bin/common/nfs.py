@@ -18,11 +18,10 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import app
-import general
-from general import x
+from general import x, set_config_property
 import iptables
 
-def add_export(name, path):
+def add_export(name, path, clients="*", permissions="rw,sync,nohide"):
   '''
   Add a folder for nfs export.
 
@@ -34,17 +33,31 @@ def add_export(name, path):
   x("mkdir -p /exports/" + name)
   x("mount --bind " + path + " /exports/" + name)
 
-  general.set_config_property("/etc/exports", "^/exports/" + name + ".*$", "/exports/" + name + " *(rw,sync,nohide)")
+  set_config_property(
+    "/etc/fstab",
+    "^%s.*$" % (path),
+    "%s /exports/%s none bind 0 0" % (path, name)
+  )
+
+  # Add for example /exports/log *(rw,sync,nohide)
+  set_config_property(
+    "/etc/exports",
+    "^/exports/%s.*$" % (name),
+    "/exports/%s %s(%s)" % (name, clients, permissions)
+  )
 
   # Only needed once, but is dublicate here.
-  general.set_config_property("/etc/exports", "\/exports \*\(ro\,fsid\=0\)", "/exports *(ro,fsid=0)")
+  set_config_property("/etc/exports", "\/exports \*\(ro\,fsid\=0\)", "/exports *(ro,fsid=0)")
 
   # TODO : Using thease mount parameters?
-  #general.set_config_property("/etc/exports", "^" + name + ".*$", name + " *(rw,sync,nohide,insecure,root_squash,no_subtree_check,fsid=0)")
+  #set_config_property("/etc/exports", "^" + name + ".*$", name + " *(rw,sync,nohide,insecure,root_squash,no_subtree_check,fsid=0)")
 
 def remove_export(name):
   x("umount /exports/" + name)
-  general.set_config_property("/etc/exports", "^/exports/" + name + ".*$", "")
+  set_config_property("/etc/exports", "^/exports/" + name + ".*$", "")
+
+  set_config_property("/etc/fstab", "^.*/exports/%s.*$" % (name), "")
+
 
 def restart_services():
   x("exportfs -rv")
@@ -60,6 +73,18 @@ def stop_services():
   x("service nfs stop")
   x("service rpcbind stop")
 
+def enable_services_autostart():
+  x("chkconfig rpcsvcgssd on")
+  x("chkconfig nfslock on")
+  x("chkconfig nfs on")
+  x("chkconfig rpcbind on")
+
+def disable_services_autostart():
+  x("chkconfig --level 12345 rpcsvcgssd off")
+  x("chkconfig --level 12345 nfslock off")
+  x("chkconfig --level 12345 nfs off")
+  x("chkconfig --level 12345 rpcbind off")
+
 def configure_with_static_ip():
   '''
   http://www.cyberciti.biz/faq/centos-fedora-rhel-iptables-open-nfs-server-ports/
@@ -69,22 +94,22 @@ def configure_with_static_ip():
   '''
   app.print_verbose("Configure nfs static server ports.")
   # TCP port rpc.lockd should listen on.
-  general.set_config_property("/etc/sysconfig/nfs", ".*LOCKD_TCPPORT.*", "LOCKD_TCPPORT=32803")
+  set_config_property("/etc/sysconfig/nfs", ".*LOCKD_TCPPORT.*", "LOCKD_TCPPORT=32803")
 
   # UDP port rpc.lockd should listen on.
-  general.set_config_property("/etc/sysconfig/nfs", ".*LOCKD_UDPPORT.*", "LOCKD_UDPPORT=32769")
+  set_config_property("/etc/sysconfig/nfs", ".*LOCKD_UDPPORT.*", "LOCKD_UDPPORT=32769")
 
   # Port rpc.mountd should listen on.
-  general.set_config_property("/etc/sysconfig/nfs", ".*MOUNTD_PORT.*", "MOUNTD_PORT=892")
+  set_config_property("/etc/sysconfig/nfs", ".*MOUNTD_PORT.*", "MOUNTD_PORT=892")
 
   # Port rquotad should listen on.
-  general.set_config_property("/etc/sysconfig/nfs", ".*RQUOTAD_PORT.*", "RQUOTAD_PORT=875")
+  set_config_property("/etc/sysconfig/nfs", ".*RQUOTAD_PORT.*", "RQUOTAD_PORT=875")
 
   # Port rpc.statd should listen on.
-  general.set_config_property("/etc/sysconfig/nfs", ".*STATD_PORT.*", "STATD_PORT=662")
+  set_config_property("/etc/sysconfig/nfs", ".*STATD_PORT.*", "STATD_PORT=662")
 
   # Outgoing port statd should used. The default is port is random
-  general.set_config_property("/etc/sysconfig/nfs", ".*STATD_OUTGOING_PORT.*", "STATD_OUTGOING_PORT=2020")
+  set_config_property("/etc/sysconfig/nfs", ".*STATD_OUTGOING_PORT.*", "STATD_OUTGOING_PORT=2020")
 
 def add_iptables_rules():
   '''

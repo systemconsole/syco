@@ -30,7 +30,19 @@ import version
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
+    commands.add("ldap-dump", ldap_dump, help="Dump ldap database to file for backup.")
     commands.add("ldap-edit", ldap_edit, help="Edit ldap database.")
+
+def ldap_dump(args):
+    '''
+    Dump ldap database to file for backup in ldif format.
+
+    File will be stored in ~/dump.ldif
+
+    '''
+    print_verbose("Dump LDAP database.")
+    remove_file()
+    dump_database()
 
 def ldap_edit(args):
     '''
@@ -58,6 +70,20 @@ def filename():
     '''
     return os.path.expanduser("~/dump.ldif")
 
+def password_filename():
+    """
+    Create an ldap password file and returns it's name.
+
+    """
+    filename = os.path.expanduser("~/.ldap.password")
+    if not os.path.exists(filename):
+        print_verbose("Create %s" % filename)
+        password = app.get_ldap_admin_password()
+        open(filename, "w").write(password)
+        x("chmod 400 %s" % filename)
+
+    return filename
+
 def remove_file():
     '''
     Delete dumpfile if existing.
@@ -70,12 +96,12 @@ def dump_database():
     '''
     Dump all user/domain info in LDAP database to file.
 
-    ldapsearch -D "cn=Manager,dc=syco,dc=net" -w "password#" -b dc=syco,dc=net -LLL > ~/dump.ldif
+    ldapsearch -D "cn=Manager,dc=syco,dc=net" -Y /root/.ldap.password -b dc=syco,dc=net -LLL > ~/dump.ldif
 
     '''
-    x("ldapsearch -D '%s' -w '%s' -b %s > %s" % (
+    x("ldapsearch -D '%s' -y %s -b %s > %s" % (
         'cn=Manager,' + config.general.get_ldap_dn(),
-        app.get_ldap_admin_password(),
+        password_filename(),
         config.general.get_ldap_dn(),
         filename()
     ))
@@ -99,9 +125,9 @@ def delete_database():
         # Create backup of dump file.
         x("cp %s %s%s" % (filename(), filename(), strftime("%Y-%m-%d-%H-%M-%S", gmtime())))
 
-        x("ldapdelete -D '%s' -w '%s' -r %s" % (
+        x("ldapdelete -D '%s' -y %s -r %s" % (
             'cn=Manager,' + config.general.get_ldap_dn(),
-            app.get_ldap_admin_password(),
+            password_filename(),
             config.general.get_ldap_dn()
         ))
     else:
@@ -114,9 +140,9 @@ def restore_database():
     ldapadd -D "cn=Manager,dc=fareoffice,dc=com" -w "t3chn0RAC#" -f dump.ldif
 
     '''
-    x("ldapadd -D '%s' -w '%s' -f %s" % (
+    x("ldapadd -D '%s' -y %s -f %s" % (
         'cn=Manager,' + config.general.get_ldap_dn(),
-        app.get_ldap_admin_password(),
+        password_filename(),
         filename()
     ))
 

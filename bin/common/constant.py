@@ -21,7 +21,7 @@ version = "0.2.6-alpha"
 parser = ''
 
 # SYCO root folder.
-SYCO_PATH = os.path.abspath(sys.path[0] + "/../") + "/"
+SYCO_PATH = "/opt/syco/"
 
 # Scripts that should be availble in public repos.
 SYCO_PUBLIC_PATH = SYCO_PATH + "bin/public/"
