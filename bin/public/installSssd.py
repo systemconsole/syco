@@ -85,7 +85,7 @@ def uninstall_sssd(args):
     version_obj.mark_uninstalled()
 
 def install_packages():
-    x("yum -y install openldap-clients authconfig pam_ldap sssd")
+    x("yum -y install openldap openldap-clients authconfig pam_ldap sssd")
 
 def download_cert(filename):
     '''

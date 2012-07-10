@@ -84,6 +84,11 @@ def prepare_installation():
   x("chmod 700 /var/log/clamav")
   x("chmod 600 /var/log/clamav/*")
 
+  # Create database dir
+  x("mkdir -p /usr/local/share/clamav/")
+  x("chown clamav:clamav /usr/local/share/clamav/")
+  x("chmod 700 /usr/local/share/clamav/")
+
 
 def download_and_install():
   #
