@@ -87,7 +87,7 @@ def uninstall_openldap(args):
     x("service slapd stop")
     x("yum -y remove openldap-servers openldap-clients")
 
-    x("rm -f /etc/openldap/cacerts/*")
+    x("rm -f /etc/openldap/certs/*")
     x("rm -rf /etc/openldap/schema")
     x("rm -f /etc/openldap/slapd.conf.bak")
     x("rm -rf /etc/openldap/slapd.d")
@@ -368,10 +368,10 @@ def create_certs():
                     requests.
 
     View cert info
-    openssl x509 -text -in /etc/openldap/cacerts/ca.crt
-    openssl x509 -text -in /etc/openldap/cacerts/slapd.crt
-    openssl x509 -text -in /etc/openldap/cacerts/client.pem
-    openssl req -noout -text -in /etc/openldap/cacerts/client.csr
+    openssl x509 -text -in /etc/openldap/certs/ca.crt
+    openssl x509 -text -in /etc/openldap/certs/slapd.crt
+    openssl x509 -text -in /etc/openldap/certs/client.pem
+    openssl req -noout -text -in /etc/openldap/certs/client.csr
 
     '''
     create_ca_cert()
@@ -395,33 +395,33 @@ def get_cert_subj(commonName):
     )
 
 def create_ca_cert():
-    x("echo '00' > /etc/openldap/cacerts/ca.srl")
+    x("echo '00' > /etc/openldap/certs/ca.srl")
     x("openssl req -new -x509 -sha512 -nodes -days 3650 -newkey rsa:4096" +
-      " -out /etc/openldap/cacerts/ca.crt" +
-      " -keyout /etc/openldap/cacerts/ca.key" +
+      " -out /etc/openldap/certs/ca.crt" +
+      " -keyout /etc/openldap/certs/ca.key" +
       " -subj " + get_cert_subj(config.general.get_organization_name() + "CA"))
 
 def create_server_cert():
     x("openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096 " +
-      " -keyout /etc/openldap/cacerts/slapd.key" +
-      " -out /etc/openldap/cacerts/slapd.csr" +
+      " -keyout /etc/openldap/certs/slapd.key" +
+      " -out /etc/openldap/certs/slapd.csr" +
       " -subj " + get_cert_subj(config.general.get_ldap_hostname()))
 
     x("openssl x509 -req -sha512 -days 1095" +
-      " -in /etc/openldap/cacerts/slapd.csr" +
-      " -out /etc/openldap/cacerts/slapd.crt" +
-      " -CA /etc/openldap/cacerts/ca.crt" +
-      " -CAkey /etc/openldap/cacerts/ca.key")
+      " -in /etc/openldap/certs/slapd.csr" +
+      " -out /etc/openldap/certs/slapd.crt" +
+      " -CA /etc/openldap/certs/ca.crt" +
+      " -CAkey /etc/openldap/certs/ca.key")
 
 def create_client_cert():
     # Create a CSR (Certificate Signing Request) file for client cert
     x("openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096" +
-      " -keyout /etc/openldap/cacerts/client.key" +
-      " -out /etc/openldap/cacerts/client.csr" +
+      " -keyout /etc/openldap/certs/client.key" +
+      " -out /etc/openldap/certs/client.csr" +
       " -subj " + get_cert_subj(config.general.get_organization_name() + "client"))
 
     # Create a signed client crt.
-    x("""cat > /etc/openldap/cacerts/sign.conf << EOF
+    x("""cat > /etc/openldap/certs/sign.conf << EOF
 [ v3_req ]
 basicConstraints = critical,CA:FALSE
 keyUsage = critical,digitalSignature
@@ -431,16 +431,16 @@ EOF""")
     x("openssl x509 -req -days 1095" +
       " -sha512" +
       " -extensions v3_req" +
-      " -extfile /etc/openldap/cacerts/sign.conf" +
-      " -CA /etc/openldap/cacerts/ca.crt" +
-      " -CAkey /etc/openldap/cacerts/ca.key" +
-      " -in /etc/openldap/cacerts/client.csr" +
-      " -out /etc/openldap/cacerts/client.crt")
+      " -extfile /etc/openldap/certs/sign.conf" +
+      " -CA /etc/openldap/certs/ca.crt" +
+      " -CAkey /etc/openldap/certs/ca.key" +
+      " -in /etc/openldap/certs/client.csr" +
+      " -out /etc/openldap/certs/client.crt")
 
     # One file with both crt and key. Easier to manage the cert on client side.
-    x("cat /etc/openldap/cacerts/client.crt" +
-      " /etc/openldap/cacerts/client.key > " +
-      " /etc/openldap/cacerts/client.pem")
+    x("cat /etc/openldap/certs/client.crt" +
+      " /etc/openldap/certs/client.key > " +
+      " /etc/openldap/certs/client.pem")
 
 def add_read_permission(filename):
     if (os.path.exists(filename)):
@@ -448,19 +448,19 @@ def add_read_permission(filename):
 
 def set_permissions_on_certs():
     # Create hash and set permissions of cert
-    x("/usr/sbin/cacertdir_rehash /etc/openldap/cacerts")
-    x("chown -Rf root:root /etc/openldap/cacerts")
-    x("chmod -f 755 /etc/openldap/cacerts")
-    x("restorecon -R /etc/openldap/cacerts")
+    x("/usr/sbin/cacertdir_rehash /etc/openldap/certs")
+    x("chown -Rf root:root /etc/openldap/certs")
+    x("chmod -f 755 /etc/openldap/certs")
+    x("restorecon -R /etc/openldap/certs")
 
     # httpd need permissions to read the files.
-    x("chmod -f 700 /etc/openldap/cacerts/*")
-    add_read_permission("/etc/openldap/cacerts/ca.crt")
-    add_read_permission("/etc/openldap/cacerts/client.pem")
-    add_read_permission("/etc/openldap/cacerts/client.crt")
-    add_read_permission("/etc/openldap/cacerts/client.key")
-    add_read_permission("/etc/openldap/cacerts/slapd.crt")
-    add_read_permission("/etc/openldap/cacerts/slapd.key")
+    x("chmod -f 700 /etc/openldap/certs/*")
+    add_read_permission("/etc/openldap/certs/ca.crt")
+    add_read_permission("/etc/openldap/certs/client.pem")
+    add_read_permission("/etc/openldap/certs/client.crt")
+    add_read_permission("/etc/openldap/certs/client.key")
+    add_read_permission("/etc/openldap/certs/slapd.crt")
+    add_read_permission("/etc/openldap/certs/slapd.key")
 
 def enable_ssl():
     '''
@@ -476,13 +476,13 @@ def enable_ssl():
 dn: cn=config
 changetype:modify
 replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /etc/openldap/cacerts/slapd.key
+olcTLSCertificateKeyFile: /etc/openldap/certs/slapd.key
 -
 replace: olcTLSCertificateFile
-olcTLSCertificateFile: /etc/openldap/cacerts/slapd.crt
+olcTLSCertificateFile: /etc/openldap/certs/slapd.crt
 -
 replace: olcTLSCACertificateFile
-olcTLSCACertificateFile: /etc/openldap/cacerts/ca.crt
+olcTLSCACertificateFile: /etc/openldap/certs/ca.crt
 -
 replace: olcTLSCipherSuite
 olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
@@ -636,8 +636,8 @@ def configure_client_cert_for_ldaptools():
         "^LDAPTLS_CERT.*\|^LDAPTLS_KEY.*\|export LDAPTLS_CERT LDAPTLS_KEY.*"
     )
     scOpen("/etc/profile").add(
-        "LDAPTLS_CERT=/etc/openldap/cacerts/client.pem\n" +
-        "LDAPTLS_KEY=/etc/openldap/cacerts/client.pem\n" +
+        "LDAPTLS_CERT=/etc/openldap/certs/client.pem\n" +
+        "LDAPTLS_KEY=/etc/openldap/certs/client.pem\n" +
         "export LDAPTLS_CERT LDAPTLS_KEY"
     )
 
@@ -652,9 +652,9 @@ def configure_client_cert_for_ldaptools():
 
 # Verify the client-cert auth
 # openssl s_client -connect localhost:636 -state \
-#         -CAfile /etc/openldap/cacerts/ca.crt \
-#         -cert /etc/openldap/cacerts/client.pem \
-#         -key /etc/openldap/cacerts/client.pem
+#         -CAfile /etc/openldap/certs/ca.crt \
+#         -cert /etc/openldap/certs/client.pem \
+#         -key /etc/openldap/certs/client.pem
 # ldapsearch -x -D "cn=config" -w secret    -v -d1
 
 # List all info from the dc=syco,dc=net database.
