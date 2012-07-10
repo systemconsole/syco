@@ -42,6 +42,7 @@ def install_clam(args):
   version_obj = version.Version("InstallClamAntiVirus", SCRIPT_VERSION)
   version_obj.check_executed()
 
+  prepare_installation()
   download_and_install()
   setup_clam_and_freshclam()
   setup_crontab()
@@ -59,6 +60,29 @@ def is_user_installed(username):
     if username in line:
       return True
   return False
+
+
+def prepare_installation():
+  #
+  app.print_verbose("  Create user")
+  if not is_user_installed("clamav"):
+    x("/usr/sbin/adduser clamav --shell=/dev/null")
+
+  #
+  app.print_verbose("Make the Pid and Socket directory")
+  x("mkdir -p /var/run/clamav")
+  x("chown clamav:clamav /var/run/clamav")
+  x("chmod 700 /var/run/clamav")
+
+  #
+  app.print_verbose("  Create log diretories")
+  x("mkdir -p /var/log/clamav")
+  x("touch /var/log/clamav/freshclam.log")
+  x("touch /var/log/clamav/clamd.log")
+
+  x("chown -R clamav:clamav /var/log/clamav")
+  x("chmod 700 /var/log/clamav")
+  x("chmod 600 /var/log/clamav/*")
 
 
 def download_and_install():
@@ -129,26 +153,6 @@ def setup_clam_and_freshclam():
   freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror database.clamav.net")
   freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
 
-  #
-  app.print_verbose("  Create user")
-  if not is_user_installed("clamav"):
-    x("/usr/sbin/adduser clamav --shell=/dev/null")
-
-  #
-  app.print_verbose("Make the Pid and Socket directory")
-  x("mkdir -p /var/run/clamav")
-  x("chown clamav:clamav /var/run/clamav  ")
-
-  #
-  app.print_verbose("  Create log diretories")
-  x("mkdir -p /var/log/clamav")
-  x("touch /var/log/clamav/freshclam.log")
-  x("touch /var/log/clamav/clamd.log")
-
-  x("chown -R clamav:clamav /var/log/clamav")
-  x("chmod 700 /var/log/clamav")
-  x("chmod 600 /var/log/clamav/*")
-
 
 def setup_crontab():
   #
@@ -172,7 +176,11 @@ def setup_autostart_and_start():
   x("/sbin/chkconfig --add freshclam")
   x("/sbin/chkconfig freshclam on")
 
+  #
+  app.print_verbose("Download database")
+  x("/usr/local/bin/freshclam")
+
   # Start clamd
   app.print_verbose("Start clamd")
-  x("/etc/init.d/clamd restart")
   x("/etc/init.d/freshclam restart")
+  x("/etc/init.d/clamd restart")
