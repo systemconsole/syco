@@ -101,7 +101,7 @@ def install_kvmhost(args):
         _abort_kvm_host_installation()
 
     result = x("virsh -c qemu:///system list")
-    if "Id Name" not in result:
+    if "Id" not in result and "Name" not in result:
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
 
