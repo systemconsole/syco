@@ -63,7 +63,7 @@ def install_cobbler(args):
 
   # Start/Restart used services.
   x("/etc/init.d/dhcpd restart")
-  
+
   version_obj.mark_executed()
 
 def setup_all_systems(args):
@@ -181,7 +181,7 @@ def _import_repos():
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
     x("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://ftp.df.lth.se/pub/fedora-epel/6/x86_64")    
+    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://ftp.df.lth.se/pub/fedora-epel/6/x86_64")
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
@@ -281,7 +281,7 @@ def edit_iface(hostname, iface, ip, netmask, gateway):
   cmd += " --interface=%s --static=1" % iface
 
   if ip:
-    cmd += " --ip=" + ip
+    cmd += " --ip-address=" + ip
     cmd += " --subnet=" + netmask
     if gateway:
       cmd += " --gateway=" + gateway
