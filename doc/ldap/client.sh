@@ -41,20 +41,20 @@ yum -y remove centos-release-cr
 #
 # This is not needed to be done on the server.
 ###########################################################
-if [ ! -f /etc/openldap/certs/client.pem ];
+if [ ! -f /etc/openldap/cacerts/client.pem ];
 then
-    scp root@10.100.110.7:/etc/openldap/certs/client.pem /etc/openldap/certs/client.pem
+    scp root@10.100.110.7:/etc/openldap/cacerts/client.pem /etc/openldap/cacerts/client.pem
 fi
 
-if [ ! -f /etc/openldap/certs/ca.crt ];
+if [ ! -f /etc/openldap/cacerts/ca.crt ];
 then
-    scp root@10.100.110.7:/etc/openldap/certs/ca.crt /etc/openldap/certs/ca.crt
+    scp root@10.100.110.7:/etc/openldap/cacerts/ca.crt /etc/openldap/cacerts/ca.crt
 fi
 
-/usr/sbin/cacertdir_rehash /etc/openldap/certs
-chown -Rf root:ldap /etc/openldap/certs
-chmod -Rf 750 /etc/openldap/certs
-restorecon -R /etc/openldap/certs
+/usr/sbin/cacertdir_rehash /etc/openldap/cacerts
+chown -Rf root:ldap /etc/openldap/cacerts
+chmod -Rf 750 /etc/openldap/cacerts
+restorecon -R /etc/openldap/cacerts
 
 ###########################################################
 # Configure client authenticate against ldap.
@@ -82,8 +82,8 @@ authconfig \
 # Configure the client cert to be used by ldapsearch for user root.
 sed -i '/^TLS_CERT.*\|^TLS_KEY.*/d' /root/ldaprc
 cat >> /root/ldaprc  << EOF
-TLS_CERT /etc/openldap/certs/client.pem
-TLS_KEY /etc/openldap/certs/client.pem
+TLS_CERT /etc/openldap/cacerts/client.pem
+TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
 
 ###########################################################
@@ -102,8 +102,8 @@ cat >> /etc/sssd/sssd.conf << EOF
 enumerate=true
 
 # Configure client certificate auth.
-ldap_tls_cert = /etc/openldap/certs/client.pem
-ldap_tls_key = /etc/openldap/certs/client.pem
+ldap_tls_cert = /etc/openldap/cacerts/client.pem
+ldap_tls_key = /etc/openldap/cacerts/client.pem
 ldap_tls_reqcert = demand
 
 # Only users with this employeeType are allowed to login to this computer.
@@ -139,9 +139,9 @@ sudoers_base ou=SUDOers,dc=fareoffice,dc=com
 binddn cn=sssd,dc=fareoffice,dc=com
 bindpw secret
 ssl on
-tls_cacertdir /etc/openldap/certs
-tls_cert /etc/openldap/certs/client.pem
-tls_key /etc/openldap/certs/client.pem
+tls_cacertdir /etc/openldap/cacerts
+tls_cert /etc/openldap/cacerts/client.pem
+tls_key /etc/openldap/cacerts/client.pem
 #sudoers_debug 5
 EOF
 

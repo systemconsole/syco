@@ -93,8 +93,8 @@ class Page:
     }
 
     envvar = {
-      "LDAPTLS_CERT" : "/etc/openldap/certs/client.pem",
-      "LDAPTLS_KEY" : "/etc/openldap/certs/client.pem"
+      "LDAPTLS_CERT" : "/etc/openldap/cacerts/client.pem",
+      "LDAPTLS_KEY" : "/etc/openldap/cacerts/client.pem"
     }
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=envvar)
     stdout, stderr = p.communicate()

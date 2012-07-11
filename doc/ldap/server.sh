@@ -272,35 +272,35 @@ ldapadd  -H ldap:/// -x -D "cn=Manager,dc=syco,dc=net" -w secret  -f /opt/syco/d
 ###########################################################
 
 # Create CA
-echo "00" > /etc/openldap/certs/ca.srl
+echo "00" > /etc/openldap/cacerts/ca.srl
 openssl req -new -x509 -sha512 -nodes -days 3650 -newkey rsa:4096\
-    -out /etc/openldap/certs/ca.crt \
-    -keyout /etc/openldap/certs/ca.key \
+    -out /etc/openldap/cacerts/ca.crt \
+    -keyout /etc/openldap/cacerts/ca.key \
     -subj '/O=syco/OU=System Console Project/CN=systemconsole.github.com'
 
 # Creating server cert
 openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096 \
-    -keyout /etc/openldap/certs/slapd.key \
-    -out /etc/openldap/certs/slapd.csr \
+    -keyout /etc/openldap/cacerts/slapd.key \
+    -out /etc/openldap/cacerts/slapd.csr \
     -subj '/O=syco/OU=System Console Project/CN=ldap.syco.net'
 openssl x509 -req -sha512 -days 1095 \
-    -in /etc/openldap/certs/slapd.csr \
-    -out /etc/openldap/certs/slapd.crt \
-    -CA /etc/openldap/certs/ca.crt \
-    -CAkey /etc/openldap/certs/ca.key
+    -in /etc/openldap/cacerts/slapd.csr \
+    -out /etc/openldap/cacerts/slapd.crt \
+    -CA /etc/openldap/cacerts/ca.crt \
+    -CAkey /etc/openldap/cacerts/ca.key
 
 #
 # Customer create a CSR (Certificate Signing Request) file for client cert
 #
 openssl req -new -sha512 -nodes -days 1095 -newkey rsa:4096 \
-    -keyout /etc/openldap/certs/client.key \
-    -out /etc/openldap/certs/client.csr \
+    -keyout /etc/openldap/cacerts/client.key \
+    -out /etc/openldap/cacerts/client.csr \
     -subj '/O=syco/OU=System Console Project/CN=client.syco.net'
 
 #
 # Create a signed client crt.
 #
-cat > /etc/openldap/certs/sign.conf << EOF
+cat > /etc/openldap/cacerts/sign.conf << EOF
 [ v3_req ]
 basicConstraints = critical,CA:FALSE
 keyUsage = critical,digitalSignature
@@ -310,27 +310,27 @@ EOF
 openssl x509 -req -days 1095 \
     -sha512 \
     -extensions v3_req \
-    -extfile /etc/openldap/certs/sign.conf \
-    -CA /etc/openldap/certs/ca.crt \
-    -CAkey /etc/openldap/certs/ca.key \
-    -in /etc/openldap/certs/client.csr \
-    -out /etc/openldap/certs/client.crt
+    -extfile /etc/openldap/cacerts/sign.conf \
+    -CA /etc/openldap/cacerts/ca.crt \
+    -CAkey /etc/openldap/cacerts/ca.key \
+    -in /etc/openldap/cacerts/client.csr \
+    -out /etc/openldap/cacerts/client.crt
 
 # One file with both crt and key. Easier to manage the cert on client side.
-cat /etc/openldap/certs/client.crt /etc/openldap/certs/client.key > \
-    /etc/openldap/certs/client.pem
+cat /etc/openldap/cacerts/client.crt /etc/openldap/cacerts/client.key > \
+    /etc/openldap/cacerts/client.pem
 
 # Create hash and set permissions of cert
-/usr/sbin/cacertdir_rehash /etc/openldap/certs
-chown -Rf root:ldap /etc/openldap/certs
-chmod -Rf 750 /etc/openldap/certs
-restorecon -R /etc/openldap/certs
+/usr/sbin/cacertdir_rehash /etc/openldap/cacerts
+chown -Rf root:ldap /etc/openldap/cacerts
+chmod -Rf 750 /etc/openldap/cacerts
+restorecon -R /etc/openldap/cacerts
 
 # View cert info
-# openssl x509 -text -in /etc/openldap/certs/ca.crt
-# openssl x509 -text -in /etc/openldap/certs/slapd.crt
-# openssl x509 -text -in /etc/openldap/certs/client.pem
-# openssl req -noout -text -in /etc/openldap/certs/client.csr
+# openssl x509 -text -in /etc/openldap/cacerts/ca.crt
+# openssl x509 -text -in /etc/openldap/cacerts/slapd.crt
+# openssl x509 -text -in /etc/openldap/cacerts/client.pem
+# openssl req -noout -text -in /etc/openldap/cacerts/client.csr
 
 ###########################################################
 # Configure ssl
@@ -345,13 +345,13 @@ ldapadd -H ldap:/// -x -D "cn=admin,cn=config" -w secret << EOF
 dn: cn=config
 changetype:modify
 replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /etc/openldap/certs/slapd.key
+olcTLSCertificateKeyFile: /etc/openldap/cacerts/slapd.key
 -
 replace: olcTLSCertificateFile
-olcTLSCertificateFile: /etc/openldap/certs/slapd.crt
+olcTLSCertificateFile: /etc/openldap/cacerts/slapd.crt
 -
 replace: olcTLSCACertificateFile
-olcTLSCACertificateFile: /etc/openldap/certs/ca.crt
+olcTLSCACertificateFile: /etc/openldap/cacerts/ca.crt
 -
 replace: olcTLSCipherSuite
 olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
@@ -368,8 +368,8 @@ service slapd restart
 # Configure the client cert to be used by ldapsearch for user root.
 sed -i '/^TLS_CERT.*\|^TLS_KEY.*/d' /root/ldaprc
 cat >> /root/ldaprc  << EOF
-TLS_CERT /etc/openldap/certs/client.pem
-TLS_KEY /etc/openldap/certs/client.pem
+TLS_CERT /etc/openldap/cacerts/client.pem
+TLS_KEY /etc/openldap/cacerts/client.pem
 EOF
 
 ###########################################################
@@ -413,9 +413,9 @@ iptables -I INPUT -m state --state NEW -p tcp -s 10.100.110.7/24 --dport 636 -j 
 
 # Verify the client-cert auth
 # openssl s_client -connect localhost:636 -state \
-#     -CAfile /etc/openldap/certs/ca.crt \
-#     -cert /etc/openldap/certs/client.pem \
-#     -key /etc/openldap/certs/client.pem
+#     -CAfile /etc/openldap/cacerts/ca.crt \
+#     -cert /etc/openldap/cacerts/client.pem \
+#     -key /etc/openldap/cacerts/client.pem
 # ldapsearch -x -D "cn=admin,cn=config" -w secret  -v -d1
 
 # List all info from the dc=syco,dc=net database.

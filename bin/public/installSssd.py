@@ -95,7 +95,7 @@ def download_cert(filename):
 
     '''
     ip = config.general.get_ldap_server_ip()
-    fullpath = '/etc/openldap/certs/' + filename
+    fullpath = '/etc/openldap/cacerts/' + filename
     shell_run("scp root@%s:%s %s" % (ip, fullpath, fullpath),
         events={
             'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
@@ -153,8 +153,8 @@ def configured_sssd():
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_key.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_reqcert.*")
     scOpen("/etc/sssd/sssd.conf").add(
-        "ldap_tls_cert = /etc/openldap/certs/client.pem\n" +
-        "ldap_tls_key = /etc/openldap/certs/client.pem\n" +
+        "ldap_tls_cert = /etc/openldap/cacerts/client.pem\n" +
+        "ldap_tls_key = /etc/openldap/cacerts/client.pem\n" +
         "ldap_tls_reqcert = demand"
     )
 
@@ -208,9 +208,9 @@ def configured_sudo():
         "uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
         "base " + config.general.get_ldap_dn() + "\n" +
         "ssl on\n" +
-        "tls_cacertdir /etc/openldap/certs\n" +
-        "tls_cert /etc/openldap/certs/client.pem\n" +
-        "tls_key /etc/openldap/certs/client.pem\n" +
+        "tls_cacertdir /etc/openldap/cacerts\n" +
+        "tls_cert /etc/openldap/cacerts/client.pem\n" +
+        "tls_key /etc/openldap/cacerts/client.pem\n" +
         "sudoers_base ou=SUDOers," + config.general.get_ldap_dn() + "\n" +
         "binddn cn=sssd," + config.general.get_ldap_dn() + "\n" +
         "bindpw " + app.get_ldap_sssd_password()
