@@ -115,3 +115,4 @@ wget
 -libertas-usb8388-firmware
 -zd1211-firmware
 -xorg-x11-drv-ati-firmware
+%end

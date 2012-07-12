@@ -31,30 +31,31 @@ subnet 10.100.0.0 netmask 255.255.0.0 {
     ## or really any valid dhcpd.conf construct ... if you only use the
     ## default dhcp tag in cobbler, the group block can be deleted for a
     ## flat configuration
-# group for Cobbler DHCP tag: $dhcp_tag
-group {
-        #for mac in $dhcp_tags[$dhcp_tag].keys():
-            #set iface = $dhcp_tags[$dhcp_tag][$mac]
-    host $iface.name {
-        hardware ethernet $mac;
-        #if $iface.ip_address:
-        fixed-address $iface.ip_address;
-        #end if
-        #if $iface.hostname:
-        option host-name "$iface.hostname";
-        #end if
-        #if $iface.subnet:
-        option subnet-mask $iface.subnet;
-        #end if
-        #if $iface.gateway:
-        option routers $iface.gateway;
-        #end if
-        filename "$iface.filename";
-        ## Cobbler defaults to $next_server, but some users
-        ## may like to use $iface.system.server for proxied setups
-        next-server $next_server;
-        ## next-server $iface.next_server;
+
+    # group for Cobbler DHCP tag: $dhcp_tag
+    group {
+            #for mac in $dhcp_tags[$dhcp_tag].keys():
+                #set iface = $dhcp_tags[$dhcp_tag][$mac]
+                host $iface.name {
+                    hardware ethernet $mac;
+                    #if $iface.ip_address:
+                    fixed-address $iface.ip_address;
+                    #end if
+                    #if $iface.hostname:
+                    option host-name "$iface.hostname";
+                    #end if
+                    #if $iface.subnet:
+                    option subnet-mask $iface.subnet;
+                    #end if
+                    #if $iface.gateway:
+                    option routers $iface.gateway;
+                    #end if
+                    filename "$iface.filename";
+                    ## Cobbler defaults to $next_server, but some users
+                    ## may like to use $iface.system.server for proxied setups
+                    next-server $next_server;
+                    ## next-server $iface.next_server;
+                }
+            #end for
     }
-        #end for
-}
 #end for

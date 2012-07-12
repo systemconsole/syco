@@ -38,6 +38,7 @@ Version 3.9 (iptables)
 
 Version 4
 ---------
+* Make --verbose default and user has to use --quiet to remove some outputs.
 * Add right licence to all files. Add licence file to root folder.
 * remote-install-ssh-keys (on all syco-servers)
 * Try --extra-args "console=ttyS0,115200 text headless"

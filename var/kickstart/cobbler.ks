@@ -16,7 +16,7 @@
 #logging --host=10.100.100.200 --port=XX --level=debug
 
 # System authorization information
-auth  --useshadow  --enablemd5
+authconfig --enableshadow  --enablemd5
 
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
@@ -110,6 +110,7 @@ mlocate
 wget
 -atmel-firmware
 -b43-openfwwf
+-xorg-x11-drv-ati-firmware
 -ipw2100-firmware
 -ipw2200-firmware
 -ivtv-firmware
@@ -121,15 +122,19 @@ wget
 -iwl6000-firmware
 -iwl6050-firmware
 -libertas-usb8388-firmware
+-rt61pci-firmware
+-rt73usb-firmware
+-mysql-libs
 -zd1211-firmware
--xorg-x11-drv-ati-firmware
+%end
 
 %pre
 $SNIPPET('log_ks_pre')
-$kickstart_start
+$SNIPPET('kickstart_start')
 $SNIPPET('pre_install_network_config')
 # Enable installation monitoring
 $SNIPPET('pre_anamon')
+%end
 
 %post
 $SNIPPET('log_ks_post')
@@ -146,5 +151,6 @@ $SNIPPET('cobbler_register')
 # Enable post-install boot notification
 $SNIPPET('post_anamon')
 # Start final steps
-$kickstart_done
+$SNIPPET('kickstart_done')
 # End final steps
+%end

@@ -2,6 +2,8 @@
 '''
 Install cobbler.
 
+Read documentation at http://cobbler.github.com
+
 '''
 
 __author__ = "daniel.lindh@cybercow.se"
@@ -49,7 +51,8 @@ def install_cobbler(args):
   app.get_root_password_hash()
 
   # Disable SELINUX it just messes with me.
-  #x("echo 0 > /selinux/enforce")
+  x("echo 0 > /selinux/enforce")
+  general.set_config_property("/etc/selinux/config", '^SELINUX=.*', "SELINUX=permissive")
 
   _install_cobbler()
 
@@ -97,9 +100,18 @@ def _install_cobbler():
   install.epel_repo()
 
   # To get cobbler and kvm work correct.
-  # dhcp is needed to get pxe-boot to work.
-  x("yum -y install yum-utils cobbler koan httpd dhcp")
+  x(
+    "yum -y install cobbler koan httpd dhcp createrepo mkisofs mod_wsgi " +
+    "python-cheetah python-netaddr python-simplejson python-urlgrabber " +
+    "PyYAML rsync tftp-server yum-utils"
+  )
+
+  # Cobbler web only has one other requirement besides cobbler itself
+  x("yum -y install Django")
+
+  # Autostart services
   x("/sbin/chkconfig httpd on")
+  x("/sbin/chkconfig cobblerd on")
   x("/sbin/chkconfig dhcpd on")
 
   # This allows the Apache httpd server to connect to the network
@@ -148,6 +160,19 @@ def _modify_cobbler_settings():
   general.set_config_property("/etc/cobbler/settings", '^yum_post_install_mirror:.*', "yum_post_install_mirror: 1")
   general.set_config_property("/etc/cobbler/settings", '^manage_dhcp:.*', "manage_dhcp: 1")
 
+  # Email out a report when cobbler finishes installing a system.
+  general.set_config_property(
+    '/etc/cobbler/settings',
+    '^build_reporting_enabled:.*',
+    'build_reporting_enabled: 1'
+  )
+  general.set_config_property(
+    '/etc/cobbler/settings',
+    '^build_reporting_email::.*',
+    "build_reporting_email: [ '%' ]" % config.general.get_admin_email()
+  )
+
+  # Setup kickstart files.
   shutil.copyfile(app.SYCO_PATH + "/var/kickstart/cobbler.ks", "/var/lib/cobbler/kickstarts/cobbler.ks")
 
   # Configure DHCP
@@ -331,3 +356,5 @@ def _install_custom_selinux_policy():
   x("checkmodule -M -m -o %s %s" % (mod, te))
   x("semodule_package -o %s -m %s" % (pp, mod))
   x("semodule -i %s" % pp)
+
+  x("setsebool -P httpd_can_network_connect true")

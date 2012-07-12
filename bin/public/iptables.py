@@ -613,7 +613,7 @@ def add_monitor_chain():
   iptables("-A monitor_input -p TCP -m multiport -s " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
 
   iptables("-A monitor_output -p TCP -m multiport -d " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
-  
+
 
 def del_openvpn_chain():
   app.print_verbose("Delete iptables chain for openvpn")
