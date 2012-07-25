@@ -108,6 +108,9 @@ yum-presto
 man
 mlocate
 wget
+nss
+nspr
+nss-util
 -atmel-firmware
 -b43-openfwwf
 -xorg-x11-drv-ati-firmware
