@@ -34,7 +34,7 @@ import general
 from general import x
 import installGlassfish31
 import version
-import scOpen
+from scopen import scOpen
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
