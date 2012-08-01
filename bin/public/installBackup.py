@@ -11,7 +11,8 @@ also get a .tar.gz compressed copy, that will never be removed/rotated
 automatically.
 
 All data is stored in /opt/backup. That is also the place where you should
-mount your backup disk volume.
+mount your backup disk volume. NOTE: This is not done automatically, to prevent
+truncating old backup data when reinstalling backup server.
 
 By default /etc will be backuped. If their is anything that you
 don't like to backup, add that into a folder named NoBackup.
@@ -28,7 +29,7 @@ and crontab settings. After that it will configure all alive syco servers for
 backup, then it will wait until forever for the offline syco servers to become
 alive. This means that crontab will start backup all servers that are alive. But
 also that the offline servers will atomatically be configured for backup when
-they become alive.
+they come online.
 
 Configuration
 -------------

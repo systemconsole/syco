@@ -265,6 +265,7 @@ def _host_add(hostname):
   _setup_network(hostname)
   edit_iface_attr(hostname, 'eth0', '--mac', config.host(hostname).get_back_mac())
   edit_iface_attr(hostname, 'eth1', '--mac', config.host(hostname).get_front_mac())
+  _edit_kopts(hostname)
 
 def _guest_add(hostname):
   app.print_verbose("")
