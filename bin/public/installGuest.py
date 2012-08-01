@@ -34,6 +34,7 @@ def install_guests(args):
 
   install.epel_repo()
   install.package("koan")
+  install.package("python-ethtool")
 
   # Wait to install guests until installation server is alive.
   wait_for_installation_server_to_start()
@@ -88,7 +89,7 @@ def _install_guest(guest_name):
 
   '''
   app.print_verbose("Install " + guest_name)
-  
+
   devicename = disk.create_lvm_volumegroup(guest_name, config.host(guest_name).get_total_disk_gb())
 
   x(
