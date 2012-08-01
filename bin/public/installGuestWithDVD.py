@@ -106,7 +106,7 @@ class install_guest:
     prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
     prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
     prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
-    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("sda")
+    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
 
     self.property_list = prop
 
@@ -160,6 +160,7 @@ class install_guest:
       cmd +=  " --vcpus=" + self.cpu + " --cpuset=auto"
       cmd +=  " --vnc --noautoconsole"
       cmd +=  " --hvm --accelerate"
+      cmd +=  " --virt-type=kvm"
       cmd +=  " --check-cpu"
       cmd +=  " --disk path=" + devicename
       cmd +=  " --os-type linux --os-variant=rhel6"

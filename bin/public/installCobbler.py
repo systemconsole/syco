@@ -225,7 +225,7 @@ def _refresh_all_profiles():
   x(
     'cobbler profile add --name=centos-vm_guest' +
     ' --parent=centos-vm_host' +
-    ' --virt-type=qemu' +
+    ' --virt-type=kvm' +
     ' --virt-ram=1024 --virt-cpus=1' +
     ' --virt-bridge=br0'
   )
@@ -273,6 +273,7 @@ def _guest_add(hostname):
 
   x(
     "cobbler system add --profile=centos-vm_guest"
+    " --virt-type=kvm " +
     " --virt-path=\"/dev/VolGroup00/" + hostname + "\"" +
     " --virt-ram=" + str(config.host(hostname).get_ram()) +
     " --virt-cpus=" + str(config.host(hostname).get_cpu()) +
@@ -281,7 +282,7 @@ def _guest_add(hostname):
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
     ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
-    ' boot_device=' + str(config.host(hostname).get_boot_device("sda")) + '"')
+    ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')
 
   _setup_network(hostname)
   edit_iface_attr(hostname, 'eth0', '--virt-bridge', 'br0')
