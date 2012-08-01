@@ -286,6 +286,30 @@ def _guest_add(hostname):
   edit_iface_attr(hostname, 'eth0', '--virt-bridge', 'br0')
   edit_iface_attr(hostname, 'eth1', '--virt-bridge', 'br1')
 
+  _edit_kopts(hostname)
+
+def _edit_kopts(hostname):
+  '''
+  Set kernel options for systems used during installation.
+
+  The network interface settings are the changes from the default settings.
+  The guest don't get any network access without them, and can't find
+  kickstart files and installation files.
+
+  '''
+  x((
+    'cobbler system edit --profile=centos-vm_host --name=%s ' +
+    '--kopts="ksdevice=eth0 ip=%s netmask=%s dns=%s gateway=%s ' +
+             'lang= kssendmac text"'
+  ) % (
+    hostname,
+    config.host(hostname).get_back_ip(),
+    config.general.get_back_netmask(),
+    config.general.get_back_resolver_ip(),
+    config.general.get_back_gateway_ip()
+  ))
+
+
 def _setup_network(hostname):
   edit_iface(
     hostname, 'eth0',
