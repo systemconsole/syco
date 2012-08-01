@@ -1,0 +1,11 @@
+--- virtinstall.py_old  2012-08-01 10:47:05.570841569 +0200
++++ virtinstall.py_new  2012-08-01 10:47:41.225841931 +0200
+@@ -251,7 +251,7 @@
+     if fullvirt or is_qemu or is_import:
+         if fullvirt is not None:
+             cmd += "--hvm "
+-        else:
++        if is_qemu and extra:
+             cmd += ("--extra-args=\"%s\" " % (extra))
+         if is_xen:
+             cmd += "--pxe "

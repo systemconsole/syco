@@ -35,6 +35,7 @@ def install_guests(args):
   install.epel_repo()
   install.package("koan")
   install.package("python-ethtool")
+  _patch_bug_in_koan()
 
   # Wait to install guests until installation server is alive.
   wait_for_installation_server_to_start()
@@ -55,6 +56,19 @@ def get_hosts_to_install(args):
     raise Exception("No guests to install.")
 
   return guest_hostnames
+
+def _patch_bug_in_koan():
+  '''
+  Apply bug fix to koan, fixed in later koan version.
+  https://github.com/cobbler/cobbler/commit/0db6b7dd829cc0e9c86411390267fea927021b2f
+
+  '''
+  if "koan-2.2.3-2.el6.noarch" in x("rpm -q koan") :
+    install.package("patch")
+    x(
+      "patch -N /usr/lib/python2.6/site-packages/koan/virtinstall.py < %s/%s" %
+      (app.SYCO_VAR_PATH, "koan/virtinstall.py.patch")
+    )
 
 def start_installation(guest_hostnames):
   '''
