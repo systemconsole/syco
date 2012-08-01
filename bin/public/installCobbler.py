@@ -280,7 +280,7 @@ def _guest_add(hostname):
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
     ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
-    ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')
+    ' boot_device=' + str(config.host(hostname).get_boot_device("sda")) + '"')
 
   _setup_network(hostname)
   edit_iface_attr(hostname, 'eth0', '--virt-bridge', 'br0')

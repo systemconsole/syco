@@ -106,7 +106,7 @@ class install_guest:
     prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
     prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
     prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
-    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
+    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("sda")
 
     self.property_list = prop
 
@@ -116,9 +116,9 @@ class install_guest:
 
     if (not os.path.ismount("/media/dvd")):
       x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
-    
+
     if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
-      raise Exception("Couldn't mount dvd")    
+      raise Exception("Couldn't mount dvd")
 
   def unmount_dvd(self):
     x("umount /media/dvd")
