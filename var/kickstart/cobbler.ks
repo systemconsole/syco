@@ -3,7 +3,7 @@
 # Author: Daniel Lindh <daniel@cybercow.se>
 #
 # On kvm host run
-# cobbler profile getks --name=centos5.5-vm_guest
+# cobbler profile getks --name=centos-vm_guest
 #
 # Documentation
 # http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/ch-kickstart2.html
@@ -20,8 +20,7 @@ authconfig --enableshadow  --enablemd5
 
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
-# disable usb as per NSA 2.2.2.2.3:
-bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=$boot_device --md5pass="$default_password_crypted"
+bootloader --location=mbr --append="rhgb quiet" --driveorder=$boot_device --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
