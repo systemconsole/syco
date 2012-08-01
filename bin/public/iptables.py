@@ -33,8 +33,8 @@ import config
 import general
 from general import x
 import installGlassfish31
-import net
 import version
+import scOpen
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -359,6 +359,15 @@ def del_kvm_chain():
   iptables("-F kvm", general.X_OUTPUT_CMD)
   iptables("-X kvm", general.X_OUTPUT_CMD)
 
+  # Controls IP packet forwarding
+  scOpen("/etc/sysctl.conf").replace_add(
+    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 0"
+  )
+
+  # Flush settings.
+  x("/sbin/sysctl -w net.ipv4.route.flush=1")
+  x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
 def add_kvm_chain():
   del_kvm_chain()
 
@@ -373,6 +382,16 @@ def add_kvm_chain():
   # DHCP / TODO: Needed??
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
+
+  # Controls IP packet forwarding
+  scOpen("/etc/sysctl.conf").replace_add(
+    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 1"
+  )
+
+  # Flush settings.
+  x("/sbin/sysctl -w net.ipv4.route.flush=1")
+  x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
 
 def del_mysql_chain():
   app.print_verbose("Delete iptables chain for mysql")
