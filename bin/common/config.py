@@ -39,11 +39,23 @@ class Config(object):
                                              self.etc_path, self.usr_path)
     return self.hosts[hostname]
 
-  def get_servers(self):
-    '''A list of all servers that are defined in install.cfg.'''
+  def get_servers(self, backup = False):
+    '''
+    A list of all servers that are defined in install.cfg.
+
+    backup - Also retrive servers of type backup
+
+    '''
     servers = self.general.sections()
     servers.remove("general")
-    return servers
+
+    hosts = []
+    for hostname in servers:
+      if not self.host(hostname).is_backup() or backup:
+        hosts.append(hostname)
+
+    return sorted(hosts)
+
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
@@ -353,8 +365,18 @@ class Config(object):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
+
     def is_host(self):
       return self.get_type() == "host"
+
+
+    def is_guest(self):
+      return self.get_type() == "guest"
+
+
+    def is_backup(self):
+      return self.get_type() == "backup"
+
 
     def has_guests(self):
       if (self.has_section(self.hostname)):

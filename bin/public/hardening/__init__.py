@@ -60,9 +60,9 @@ def harden(args):
     Config file for scripts loctaed in syco/var/hardening
 
     '''
-    app.print_verbose("Harden host version: %d" % SCRIPT_VERSION)
+    app.print_verbose("Hardening version: %d" % SCRIPT_VERSION)
 
-    version_obj = version.Version("hardeningHost", SCRIPT_VERSION)
+    version_obj = version.Version("hardening", SCRIPT_VERSION)
     version_obj.check_executed()
 
     setup_common()
@@ -86,4 +86,11 @@ def harden_ssh(args):
     a chance to add new users before locking down root.
 
     '''
+    app.print_verbose("Harden host version: %d" % SCRIPT_VERSION)
+
+    version_obj = version.Version("hardeningSSH", SCRIPT_VERSION)
+    version_obj.check_executed()
+
     setup_ssh()
+
+    version_obj.mark_executed()

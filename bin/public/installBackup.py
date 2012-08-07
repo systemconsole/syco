@@ -54,9 +54,26 @@ It might delete the backup volume if we run the script when we shouldn't =)
 vgcreate vg_backup /dev/cciss/c0d1
 lvcreate -n VolBackup -l 100%FREE vg_backup
 mkfs.ext4 -j /dev/vg_backup/VolBackup
+
+# Mount on host
 mkdir /opt/backup
 mount /dev/vg_backup/VolBackup /opt/backup
 echo "/dev/vg_backup/VolBackup  /opt/backup  ext4  defaults  1 2" >> /etc/fstab
+
+# Give the new disk to the guest
+virsh edit backup-tp
+# Add this, the slot might be different. It needs to be unique amongst devices.
+    <disk type='block' device='disk'>
+      <driver name='qemu' type='raw' cache='none' io='native'/>
+      <source dev='/dev/vg_backup/VolBackup'/>
+      <target dev='vdb' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+
+# Mount in guest.
+mount /dev/vdb /opt/backup/
+ls /opt/backup/
+echo "/dev/vdb  /opt/backup  ext4  defaults  1 2" >> /etc/fstab
 
 '''
 
@@ -78,25 +95,32 @@ import app
 import config
 import general
 import install
-import nfs
 import ssh
+from scopen import scOpen
+from general import x
+
 
 def build_commands(commands):
-  commands.add("install-backup",   install_backup,   help="Install rsnapshot based backup server.")
-  commands.add("uninstall-backup", uninstall_backup, help="Uninstall rsnapshot based backup server.")
-  commands.add("tar-backup", tar_backup, help="Tar the monthly copy of the backup.")
+  commands.add("install-backup",       install_backup,       help="Install rsnapshot based backup server.")
+  commands.add("install-mysql-backup", install_mysql_backup, help="Install files to make mysql backup.")
+  commands.add("uninstall-backup",     uninstall_backup,     help="Uninstall rsnapshot based backup server.")
+  commands.add("tar-backup",           tar_backup,           help="Tar the monthly copy of the backup.")
+
 
 BACKUP_ROOT = "/opt/backup/rsnapshot/"
+
 
 def install_backup(args):
   # Get the master password in the beginning of the script.
   # Is needed when installing the ssh key.
   app.get_master_password()
 
+  install.rforge_repo()
   install.package("rsnapshot")
   _configure_rsnapshot()
   _setup_cronjob()
   _setup_backup_for_all_servers()
+
 
 def _configure_rsnapshot():
   '''
@@ -122,6 +146,11 @@ def _configure_rsnapshot():
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*etc.*localhost.*", "")
   general.set_config_property("/etc/rsnapshot.conf", ".*backup.*usr[/]local.*localhost.*", "")
 
+
+def _setup_cronjob():
+  shutil.copyfile(app.SYCO_PATH + "/var/rsnapshot/crontab", "/etc/cron.d/rsnapshot")
+
+
 def _setup_backup_for_all_servers():
   servers = config.get_servers()
   total_servers = len(servers)
@@ -133,7 +162,7 @@ def _setup_backup_for_all_servers():
     remote_server = ssh.Ssh(ip, app.get_root_password())
     if (remote_server.is_alive()):
       remote_server.install_ssh_key()
-      _configure_backup_pathes(ip, hostname)
+      _configure_backup_pathes(remote_server, ip, hostname)
     else:
       servers.insert(0, hostname)
       app.print_error("Server " + hostname + " is not alive.")
@@ -143,27 +172,90 @@ def _setup_backup_for_all_servers():
       checked_servers = 0
       time.sleep(60)
 
-def _configure_backup_pathes(ip, hostname):
+
+def _configure_backup_pathes(remote_server, ip, hostname):
   app.print_verbose("Configure rsnapshot for " + hostname + " on " + ip)
 
   # Add Caption
   general.set_config_property("/etc/rsnapshot.conf", "# " + hostname, "\n# " + hostname)
 
   for url in config.host(hostname).get_backup_pathes():
-    url = "root@" + ip + ":" + url
-    new_row = "backup\t\t" + url + "\t\t" + hostname + "/"
-    general.set_config_property("/etc/rsnapshot.conf", new_row, new_row)
+    if url == 'do-mysql-backup':
+      remote_server.ssh_exec("syco install-mysql-backup")
+      _do_mysql_backup(ip, hostname)
+    elif url == 'do-mysqldump-backup':
+      remote_server.ssh_exec("syco install-mysql-backup")
+      _do_mysqldump_backup(ip, hostname)
+    elif url == 'do-svn-backup':
+      _do_svndump_backup(ip, hostname)
+    else:
+      _do_folder_backup(ip, hostname, url)
 
-def _setup_cronjob():
-  shutil.copyfile(app.SYCO_PATH + "/var/rsnapshot/crontab", "/etc/cron.d/rsnapshot")
+
+def _do_mysql_backup(ip, hostname):
+  _do_command(ip, hostname, "/opt/syco/var/mysql/mysql-lvm-backup.py snapshot")
+  _do_folder_backup(ip, hostname, "/mnt/mysqlbackup/")
+  _do_command(ip, hostname, "/opt/syco/var/mysql/mysql-lvm-backup.py clean")
+
+
+def _do_mysqldump_backup(ip, hostname):
+  _do_command(ip, hostname, "/opt/syco/var/mysql/mysqldump-backup.sh")
+  _do_folder_backup(ip, hostname, "/var/backup/")
+
+
+def _do_svndump_backup(ip, hostname):
+  _do_command(ip, hostname, "/opt/syco/var/svn/svndump-backup.sh")
+  _do_folder_backup(ip, hostname, "/var/backup/")
+
+
+def _do_folder_backup(ip, hostname, url):
+  new_row = "backup\t\troot@%s:%s\t\t%s/" % (ip, url, hostname)
+  general.set_config_property("/etc/rsnapshot.conf", new_row, new_row)
+
+
+def _do_command(ip, hostname, cmd):
+  folder = _get_unused_folder()
+  row = 'backup_script\t/usr/bin/ssh root@%s "%s"\t%s/' % (ip, cmd, folder)
+  general.set_config_property("/etc/rsnapshot.conf", row, row)
+
+
+_unused_counter = 0
+def _get_unused_folder():
+  '''
+  Return a unique folder name that can be used by backup_script commands.
+
+  '''
+  global _unused_counter
+  _unused_counter += 1
+  return "unused%s" % _unused_counter
+
+
+def install_mysql_backup(args):
+  """
+  Create file required to login to mysql without a password.
+
+  This file is used by mysql-lvm-backup.
+
+  """
+  fn = "/root/.my.cnf"
+  contents = """
+[client]
+user=root
+password="%s"
+""" % (app.get_mysql_root_password())
+  scOpen(fn).add(contents)
+  x("chown root:root %s" % fn)
+  x("chmod 600 %s" % fn)
+
 
 def uninstall_backup(args):
-  general.shell_exec("yum -y erase rsnapshot")
-  general.shell_exec("rm /etc/cron.d/rsnapshot")
-  general.shell_exec("rm /etc/rsnapshot.conf")
-  general.shell_exec("rm /etc/rsnapshot.conf.backup")
-  general.shell_exec("rm /etc/rsnapshot.conf.rpmsave")
-  general.shell_exec("rm /var/log/rsnapshot*")
+  x("yum -y erase rsnapshot")
+  x("rm /etc/cron.d/rsnapshot")
+  x("rm /etc/rsnapshot.conf")
+  x("rm /etc/rsnapshot.conf.backup")
+  x("rm /etc/rsnapshot.conf.rpmsave")
+  x("rm /var/log/rsnapshot*")
+
 
 def tar_backup(args):
   '''
@@ -178,13 +270,13 @@ def tar_backup(args):
 
   LONGTERM_BACKUP_ROOT = BACKUP_ROOT + "longterm/" + YMD + "/"
   if (not os.access(LONGTERM_BACKUP_ROOT, os.F_OK)):
-    general.shell_exec("mkdir -p " + LONGTERM_BACKUP_ROOT)
+    x("mkdir -p " + LONGTERM_BACKUP_ROOT)
 
   app.print_verbose("Make a compressed backup of all folder in " + BACKUP_ROOT + "monthly.0/")
   for hostname in os.listdir(BACKUP_ROOT + "monthly.0/"):
     for folder in os.listdir(BACKUP_ROOT + "monthly.0/" + hostname):
 
       backup_name = LONGTERM_BACKUP_ROOT + hostname + "-" + folder + ".tar.gz "
-      general.shell_exec(
+      x(
         "tar zcf " + backup_name + " " + folder, cwd=str(BACKUP_ROOT + "monthly.0/" + hostname)
       )

@@ -246,7 +246,7 @@ def _add_all_systems():
     # Is a KVM host?
     if config.host(hostname).is_host():
       _host_add(hostname)
-    else:
+    elif config.host(hostname).is_guest():
       _guest_add(hostname)
 
 def _host_add(hostname):

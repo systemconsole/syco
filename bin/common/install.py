@@ -10,7 +10,7 @@ __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __status__ = "Production"
 
 import subprocess
@@ -23,6 +23,7 @@ from constant import BOLD, RESET
 # once on the same host.
 SCRIPT_VERSION = 2
 
+
 def epel_repo():
   '''
   Setup EPEL repository.
@@ -31,7 +32,47 @@ def epel_repo():
   http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
 
   '''
-  rpm("epel-release-6-7.noarch", "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm")
+  package = "epel-release-6-7.noarch"
+  fn = "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm"
+  rpm(package, fn)
+
+
+def rforge_repo():
+  '''
+  Install RPMForge
+
+  http://wiki.centos.org/AdditionalResources/Repositories/RPMForge/#head-f0c3ecee3dbb407e4eed79a56ec0ae92d1398e01
+
+  '''
+  package = "rpmforge-release-0.5.2-2.el6.rf.x86_64"
+  fn = "http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm"
+
+  if not is_rpm_installed(package):
+    _yum_protect_base()
+
+
+    # Install DAG's GPG key
+    x("rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt")
+
+    # Verify the package you have downloaded
+    # Security warning: The rpmforge-release package imports GPG keys into your RPM
+    # database. As long as you have verified the md5sum of the key injection package,
+    # and trust Dag, et al., then it should be as safe as your trust of them extends.
+    if "(sha1) dsa sha1 md5 gpg OK" not in x("rpm -K %s" % fn):
+      raise Exception("Invalid checksum for package %s." % fn)
+
+    # Download rpmforge packages.
+    rpm(package, fn)
+
+
+def _yum_protect_base():
+  '''
+  Enable yum protect base
+
+  http://wiki.centos.org/PackageManagement/Yum/ProtectBase/
+
+  '''
+  package("yum-plugin-protectbase")
 
 
 def package(name):
@@ -47,7 +88,7 @@ def _package(name, command):
   if (not version_obj.is_executed()):
     print("\t" + BOLD + "Command: " + RESET + command)
     if (not is_rpm_installed(name)):
-      subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
+      x(command)
 
     if (is_rpm_installed(name)):
       version_obj.mark_executed()
@@ -60,7 +101,7 @@ def is_rpm_installed(name):
     Check if an rpm package is installed.
 
     '''
-    stdoutdata = subprocess.Popen("rpm -q " + name, shell=True, stdout=subprocess.PIPE).communicate()[0]
+    stdoutdata = x("rpm -q " + name)
     if stdoutdata.strip().find(name) == 0:
       return True
     else:
@@ -71,6 +112,11 @@ def rpm_remove(name):
   '''Remove rpm packages'''
   if is_rpm_installed(name):
     command = "rpm -e %s" % name
-    print("\t" + BOLD + "Command: " + RESET + command)
-    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
+    x(command)
 
+
+def x(cmd):
+  print("\t" + BOLD + "Command: " + RESET + cmd)
+  p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  stdoutdata = p.communicate()[0]
+  return stdoutdata

@@ -9,9 +9,9 @@ database files from the snapshot mount.
 REQUIREMENTS
 ============
 
-This file needs to be created, to do it possilbe for the mysql client can login
-to mysql database without expose the mysql password on command line (ps aux) or
-in this script.
+This file needs to be created, to do it possible for the mysql client to
+login to the mysql database without exposeing the mysql password on command
+line (ps aux) or in this script.
 
 #/root/.my.cnf
 [client]
@@ -53,7 +53,7 @@ backupMountPath="/mnt/mysqlbackup"
 # ie. VolGroup00 in /dev/VolGroup00/var
 vgName = "VolGroup00"
 
-# Logical Volume where the backup is stored. (find with lvdisplay)
+# Logical Volume where the database to backup is stored. (find with lvdisplay)
 # ie. var in /dev/VolGroup00/var
 lvName = "var"
 
@@ -82,7 +82,7 @@ def main():
 	'''
 	set_global_options_and_args()
 
-	# Handle the dynamic arguments on from the command line.
+	# Handle the dynamic arguments from the command line.
 	commands = {'snapshot' : snapshot, 'clean': clean}
 	command = ARGS[0].lower()
 	if command in commands:
@@ -112,6 +112,7 @@ def snapshot():
 flush tables;
 FLUSH TABLES WITH READ LOCK;
 system lvcreate -L%s -s -n %sbackup /dev/%s/%s
+SHOW MASTER STATUS;
 UNLOCK TABLES;
 EOF""" % (snapshotSize, lvName, vgName, lvName))
 	x("mkdir -p %s" % backupMountPath)
