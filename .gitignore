@@ -1,9 +1,9 @@
-etc/passwordstore*
-etc/version.cfg
-usr/
+/etc/passwordstore*
+/etc/version.cfg
+/usr/
 *.pyc
 .DS_Store
-var/kickstart/generated
-tmp/
+/var/kickstart/generated
+/tmp/
 /nbproject/private/
 ._*
