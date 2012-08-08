@@ -194,7 +194,7 @@ def _configure_backup_pathes(remote_server, ip, hostname):
 
 def _do_mysql_backup(ip, hostname):
   _do_command(ip, hostname, "/opt/syco/var/mysql/mysql-lvm-backup.py snapshot")
-  _do_folder_backup(ip, hostname, "/mnt/mysqlbackup/")
+  _do_folder_backup(ip, hostname, "/mnt/mysqlbackup/lib/mysql")
   _do_command(ip, hostname, "/opt/syco/var/mysql/mysql-lvm-backup.py clean")
 
 

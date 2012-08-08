@@ -166,4 +166,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    print "THIS SCRIPT REQUIRES TO LOGIN TO GITHUB."
+    print "And lots of tweeking.. it should be able to download all private repos from an org."
