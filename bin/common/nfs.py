@@ -33,6 +33,7 @@ def add_export(name, path, clients="*", permissions="rw,sync,nohide"):
   x("mkdir -p /exports/" + name)
   x("chmod 755 /exports/")
   x("mount --bind " + path + " /exports/" + name)
+  x("chmod 755 " + path + " /exports/" + name)
 
   set_config_property(
     "/etc/fstab",

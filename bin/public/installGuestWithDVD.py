@@ -154,26 +154,28 @@ class install_guest:
   def create_kvm_host(self):
       devicename = disk.create_lvm_volumegroup(self.hostname, self.property_list['\$total_disk_gb'])
 
-      cmd = "virt-install -d --connect qemu:///system"
+      cmd =  " virt-install"
+      cmd += " -d --connect qemu:///system"
       cmd += " --name " + self.hostname
-      cmd +=  " --ram " + self.ram
-      cmd +=  " --vcpus=" + self.cpu + " --cpuset=auto"
-      cmd +=  " --vnc --noautoconsole"
-      cmd +=  " --hvm --accelerate"
-      cmd +=  " --virt-type=kvm"
-      cmd +=  " --check-cpu"
-      cmd +=  " --disk path=" + devicename
-      cmd +=  " --os-type linux --os-variant=rhel6"
-      cmd +=  " --network bridge:br0"
-      cmd +=  " --network bridge:br1"
-      cmd +=  " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
-      cmd +=  ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
-      cmd +=  ' ksdevice=eth0'
-      cmd +=  ' ip=' + self.property_list['\$back_ip']
-      cmd +=  ' netmask=' + self.property_list['\$back_netmask']
-      cmd +=  ' dns=' + self.kvm_host_back_ip
-      cmd +=  ' gateway=' + self.kvm_host_back_ip
-      cmd +=  ' "'
+      cmd += " --ram " + self.ram
+      cmd += " --vcpus=" + self.cpu
+      cmd += " --vnc --noautoconsole"
+      cmd += " --hvm"
+      cmd += " --virt-type=kvm"
+      cmd += " --autostart"
+      cmd += " --disk path=" + devicename
+      cmd += " --os-variant=rhel6"
+      cmd += " --arch x86_64"
+      cmd += " --network bridge:br0"
+      cmd += " --network bridge:br1"
+      cmd += " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
+      cmd += ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
+      cmd += ' ksdevice=eth0'
+      cmd += ' ip=' + self.property_list['\$back_ip']
+      cmd += ' netmask=' + self.property_list['\$back_netmask']
+      cmd += ' dns=' + config.general.get_back_resolver_ip()
+      cmd += ' gateway=' + self.kvm_host_back_ip
+      cmd += ' "'
 
       x(cmd)
       self.wait_for_installation_to_complete()

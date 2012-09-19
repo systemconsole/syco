@@ -379,6 +379,8 @@ def add_kvm_chain():
   iptables("-N kvm")
   iptables("-A syco_forward  -p ALL -j kvm")
 
+  iptables("-A kvm -m physdev --physdev-is-bridged -j ACCEPT")
+
   # DHCP / TODO: Needed??
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
@@ -391,6 +393,9 @@ def add_kvm_chain():
   # Flush settings.
   x("/sbin/sysctl -w net.ipv4.route.flush=1")
   x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
+  # Reload all settings.
+  x("service libvirtd reload")
 
 
 def del_mysql_chain():
