@@ -155,8 +155,9 @@ def get_hostname():
 
 if (__name__ == "__main__"):
     print "get_all_interfaces " + str(get_all_interfaces())
-    print "get_interface_ip " + str(get_interface_ip("eth0"))
-    print "get_interface_ip " + str(get_interface_ip("none"))
+    print "get_interface_ip eth0 " + str(get_interface_ip("eth0"))
+    print "get_interface_ip br0 " + str(get_interface_ip("br0"))
+    print "get_interface_ip none " + str(get_interface_ip("none"))
     print "get_lan_ip " + get_lan_ip()
     print "reverse_ip " + reverse_ip("1.2.3.4")
     print "get_ip_class_c " + get_ip_class_c("1.2.3.4")
