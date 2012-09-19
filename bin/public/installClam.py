@@ -104,7 +104,7 @@ def download_and_install():
   #
   # Install packages required for compiling
   #
-  x("yum -y install gcc gcc-c++ zlib-devel bzip2-devel ncurses-devel file")
+  x("yum -y install gcc make gcc-c++ zlib-devel bzip2-devel ncurses-devel file")
 
   #
   # Build and install clamav and freshclam
@@ -122,7 +122,7 @@ def download_and_install():
   x
   (
     "yum remove zlib-devel bzip2-devel ncurses-devel " +
-    "gcc cloog-ppl cpp glibc-devel glibc-headers kernel-headers "+
+    "gcc make cloog-ppl cpp glibc-devel glibc-headers kernel-headers "+
     "libgomp mpfr ppl gcc-c++ libstdc++-devel"
   )
 
