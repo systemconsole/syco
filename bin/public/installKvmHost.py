@@ -2,6 +2,13 @@
 '''
 Install the server to act as a KVM host.
 
+Requirements:
+    syco install-dhcp-server
+
+    Installation of DHCP server due to a bug in the kickstarter, anaconda
+    is always trying to get an ip from dhcp before settint the static ip.
+
+
 Read more:
 http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html-single/Virtualization/
 http://www.linuxjournal.com/article/9764
