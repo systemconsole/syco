@@ -1,6 +1,6 @@
-/usr/
-!/usr/readme.md
-!/usr/syco-template
+/usr/*
+!/usr/mod-template/
+
 /etc/install.cfg
 /etc/passwordstore*
 /etc/version.cfg
