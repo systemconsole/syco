@@ -1,9 +1,12 @@
+/etc/install.cfg
+/usr/
+!/usr/readme.md
 /etc/passwordstore*
 /etc/version.cfg
-/usr/
 *.pyc
 .DS_Store
 /var/kickstart/generated
 /tmp/
 /nbproject/private/
 ._*
+
