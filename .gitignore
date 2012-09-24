@@ -1,6 +1,7 @@
-/etc/install.cfg
 /usr/
 !/usr/readme.md
+!/usr/syco-template
+/etc/install.cfg
 /etc/passwordstore*
 /etc/version.cfg
 *.pyc
