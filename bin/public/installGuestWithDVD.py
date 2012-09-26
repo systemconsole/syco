@@ -134,6 +134,7 @@ class install_guest:
 
       x("mkdir -p " + ks_folder)
       x("cp " + dvd_ks_file + " " + hostname_ks_file)
+      x("chmod 744 %s" % hostname_ks_file)
 
       set_config_property_batch(hostname_ks_file, self.property_list, False)
 

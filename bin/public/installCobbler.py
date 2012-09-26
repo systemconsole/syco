@@ -169,7 +169,7 @@ def _modify_cobbler_settings():
   general.set_config_property(
     '/etc/cobbler/settings',
     '^build_reporting_email::.*',
-    "build_reporting_email: [ '%' ]" % config.general.get_admin_email()
+    "build_reporting_email: [ '%s' ]" % config.general.get_admin_email()
   )
 
   # Setup kickstart files.

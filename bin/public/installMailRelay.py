@@ -156,7 +156,7 @@ def _rebuild_sendmail_config():
   general.shell_exec("yum -y install sendmail-cf")
   os.chdir("/etc/mail")
   general.shell_exec('make')
-  general.shell_exec('service sendmail restart')
+  general.shell_exec('service sendmail start')
   general.shell_exec("yum -y remove sendmail-cf")
 
 def _test_mail():
