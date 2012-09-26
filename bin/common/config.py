@@ -80,11 +80,6 @@ class Config(object):
       if (os.access(file_name, os.F_OK)):
         config_dir.append(file_name)
 
-      if (usr_path):
-        for dir in os.listdir(usr_path):
-          if (os.access(usr_path + dir + "/etc/install.cfg", os.F_OK)):
-            config_dir.append(usr_path + dir + "/etc/install.cfg")
-
       if (len(config_dir) == 0):
         raise ConfigException("No install.cfg found.")
       elif (len(config_dir) > 1):
