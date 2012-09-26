@@ -54,7 +54,7 @@ JAVA_TEMP_PATH = GLASSFISH_INSTALL_PATH + "tmp"
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 JDK_INSTALL_FILE = "jdk-6u30-linux-x64-rpm.bin"
-JDK_REPO_URL     = "http://download.oracle.com/otn-pub/java/jdk/6u30-b12/" + JDK_INSTALL_FILE
+JDK_REPO_URL     = "http://%s/cobbler/fareoffice-repo/%s" % (config.general.get_installation_server_ip(), JDK_INSTALL_FILE)
 JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_30"
 
 # Mysql Connector
