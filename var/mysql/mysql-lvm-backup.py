@@ -15,8 +15,10 @@ line (ps aux) or in this script.
 
 #/root/.my.cnf
 [client]
-user=root
+user=backup
 password="<password>"
+
+grant RELOAD,SUPER,REPLICATION CLIENT on *.* TO 'backup'@'localhost' IDENTIFIED BY '<password>';
 
 RSNAPSHOT
 =========
@@ -76,17 +78,22 @@ OPTIONS = None
 ARGS = None
 
 def main():
-	'''
-	Starts the script.
+    '''
+    Starts the script.
 
-	'''
-	set_global_options_and_args()
+    '''
+    check_requirements()
+    set_global_options_and_args()
 
-	# Handle the dynamic arguments from the command line.
-	commands = {'snapshot' : snapshot, 'clean': clean}
-	command = ARGS[0].lower()
-	if command in commands:
-		commands[command]()
+    # Handle the dynamic arguments from the command line.
+    commands = {'snapshot' : snapshot, 'clean': clean}
+    command = ARGS[0].lower()
+    if command in commands:
+        commands[command]()
+
+def check_requirements():
+    if (not os.path.exists('/root/.my.cnf')):
+        raise Exception("Requires an /root/.my.cnf")
 
 def set_global_options_and_args():
     '''
@@ -108,7 +115,7 @@ def snapshot():
 	clean()
 	print "Do snapshot"
 	x("modprobe dm-snapshot")
-	x("""mysql -uroot << EOF
+	x("""mysql -ubackup << EOF
 flush tables;
 FLUSH TABLES WITH READ LOCK;
 system lvcreate -L%s -s -n %sbackup /dev/%s/%s
