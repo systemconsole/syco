@@ -1,0 +1,45 @@
+<!-- @(#) $Id$
+  -  Example of local rules for OSSEC.
+  -
+  -  Copyright (C) 2009 Trend Micro Inc.
+  -  All rights reserved.
+  -
+  -  This program is a free software; you can redistribute it
+  -  and/or modify it under the terms of the GNU General Public
+  -  License (version 2) as published by the FSF - Free Software
+  -  Foundation.
+  -
+  -  License details: http://www.ossec.net/en/licensing.html
+
+
+
+  Modified by mattias @ fareoffice to work in PCI-DSS systemes
+
+
+  -->
+
+<!-- ALERT ON NEW FILES -->
+  <rule id=”554″ level=”7″ overwrite=”yes”>
+    <category>ossec</category>
+    <decoded_as>syscheck_new_entry</decoded_as>
+    <description>File added to the system.</description>
+    <group>syscheck,</group>
+</rule>
+
+
+<!-- ALERT ON WORLD WIDE FILES -->
+<rule id=”100018″ level=”7″>
+  <if_group>syscheck,</if_group>
+  <regex>Permissions changed from ‘\D+’ to ‘\D\D\D\D\D\D\Dw\D’</regex>
+  <description>World-writable File</description>
+</rule>
+
+<rule id=”100019″ level=”0″>
+  <if_sid>100018</if_sid>
+  <regex>Permissions changed from ‘\D\D\D\D\D\D\Dw\D’ to ‘\D+’</regex>
+  <description>World-writable File</description>
+</rule>
+
+
+
+<!-- EOF -->
