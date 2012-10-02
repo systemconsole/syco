@@ -2,7 +2,7 @@
 '''
 Install the server to act as a openvpn server
 
-Will use 10.100.10.0:1194 as the vpn client net
+Will use x.x.x.0:1194 as the vpn client net taken from log.network in cfg file.
 
 More info about openvpn.
 http://openvpn.net/index.php/open-source/documentation/howto.html
@@ -64,6 +64,11 @@ def install_openvpn_server(args):
     serverConf = "/etc/openvpn/server.conf"
     x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
     scOpen(serverConf).replace('${EXTERN_IP}',  net.get_public_ip())
+    scOpen(serverConf).replace('${OPENVPN.NETWORK}',  config.general.get_openvpn_network())
+    scOpen(serverConf).replace('${FRONT.NETWORK}',  config.general.get_front_network())
+    scOpen(serverConf).replace('${FRONT.NETMASK}',  config.general.get_front_netmask())
+    scOpen(serverConf).replace('${BACK.NETWORK}',  config.general.get_back_network())
+    scOpen(serverConf).replace('${BACK.NETMASK}',  config.general.get_back_netmask())
 
     # Prepare the ca cert generation.
     fn = "/etc/openvpn/easy-rsa/vars"
@@ -119,10 +124,13 @@ def build_client_certs(args):
       )
       app.print_verbose(out)
 
-
       # Config client.crt
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
+      general.set_config_property(
+        "/etc/openvpn/easy-rsa/keys/client.conf", "${OPENVPN.HOSTNAME}",
+        config.general.get_openvpn_hostname()
+      )
 
       os.chdir("/etc/openvpn/easy-rsa/keys")
       x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")

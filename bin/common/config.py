@@ -143,6 +143,14 @@ class Config(object):
       '''The ip of the network gateway.'''
       return self.get_option("back.gateway")
 
+    def get_front_network(self):
+      '''The front network (ie. 10.100.10.0).'''
+      return self.get_option("front.network")
+
+    def get_back_network(self):
+      '''The back network (ie. 10.100.10.0).'''
+      return self.get_option("back.network")
+
     def get_front_netmask(self):
       '''The netmask of the front network.'''
       return self.get_option("front.netmask")
@@ -272,6 +280,15 @@ class Config(object):
 
     def get_log_server_hostname(self):
       return self.get_option("log.hostname")
+
+    def get_openvpn_network(self):
+      '''The network range of the ips givven to openvpn clients.'''
+      return str(self.get_option("openvpn.network"))
+
+    def get_openvpn_hostname(self):
+      '''The domain name used to access the vpn from internet.'''
+      return str(self.get_option("openvpn.hostname"))
+
 
   class HostConfig(SycoConfig):
     '''

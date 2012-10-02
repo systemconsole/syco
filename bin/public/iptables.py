@@ -642,11 +642,16 @@ def add_monitor_chain():
 def del_openvpn_chain():
   app.print_verbose("Delete iptables chain for openvpn")
   iptables("-D syco_input  -p ALL -j openvpn_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j openvpn_forward", general.X_OUTPUT_CMD)
-  iptables("-D syco_postrouting -p ALL -j openvpn_forward", general.X_OUTPUT_CMD)
-  iptables("-F openvpn_input", general.X_OUTPUT_CMD)
-  iptables("-X openvpn_forward", general.X_OUTPUT_CMD)
-  iptables("-X openvpn_postrouting", general.X_OUTPUT_CMD)
+  iptables("-D syco_forward -p ALL -j openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("-t nat -D syco_nat_postrouting -p ALL -j openvpn_postrouting", general.X_OUTPUT_CMD)
+
+  iptables("iptables -F openvpn_input", general.X_OUTPUT_CMD)
+  iptables("iptables -F openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("iptables -t nat -F openvpn_postrouting", general.X_OUTPUT_CMD)
+
+  iptables("iptables -X openvpn_input", general.X_OUTPUT_CMD)
+  iptables("iptables -X openvpn_forward", general.X_OUTPUT_CMD)
+  iptables("iptables -t nat -X openvpn_postrouting", general.X_OUTPUT_CMD)
 
 def add_openvpn_chain():
   del_openvpn_chain()
@@ -656,9 +661,10 @@ def add_openvpn_chain():
 
   app.print_verbose("Add iptables chain for openvpn")
 
+  network = config.general.get_openvpn_network()
+
   iptables("-N openvpn_input")
   iptables("-N openvpn_forward")
-  iptables("-N openvpn_postrouting")
   iptables("-t nat -N openvpn_postrouting")
 
   iptables("-A syco_input        -p ALL -j openvpn_input")
@@ -671,11 +677,11 @@ def add_openvpn_chain():
 
   #Apply forwarding for OpenVPN Tunneling
   iptables("-A openvpn_forward -m state --state RELATED,ESTABLISHED -j ACCEPT")
-  iptables("-A openvpn_forward -s 10.100.10.0/24 -j ACCEPT")
+  iptables("-A openvpn_forward -s %s/24 -j ACCEPT" % network)
   # iptables("-A openvpn_forward -p tcp -m state --state NEW -m multiport --dports 22,34,53,80,443,4848,8080,8181,6048,6080,6081,7048,7080,7081 -j allowed_tcp")
   iptables("-A openvpn_forward -j REJECT")
-  iptables("-t nat -A openvpn_postrouting -s 10.100.10.0/24 -o eth0 -j MASQUERADE")
-  iptables("-t nat -A openvpn_postrouting -s 10.100.10.0/24 -o eth1 -j MASQUERADE")
+  iptables("-t nat -A openvpn_postrouting -s %s/24 -o eth0 -j MASQUERADE" % network)
+  iptables("-t nat -A openvpn_postrouting -s %s/24 -o eth1 -j MASQUERADE" % network)
 
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")
