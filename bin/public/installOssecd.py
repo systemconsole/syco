@@ -86,9 +86,19 @@ def install_ossecd(args):
   Install OSSEC server in the server
 
   '''
+  #OSSEC DOWNLOAD URL
+  ossec_download = "http://www.ossec.net/files/ossec-hids-2.6.tar.gz"
+
+
   #Installing OSSEC
   x('yum install gcc make perl-Time-HiRes')
-  x('cp -r /opt/syco/var/ossec/ossecbuild/ /tmp/')
+  x("wget -P /tmp/ "+ossec_download)
+  x("tar -C /tmp -zxf /tmp/ossec-hids*  ")
+  x("rm -rf /tmp/ossec-hids*.tar.gz")
+  x("mv /tmp/ossec-hids* /tmp/ossecbuild")
+
+
+
   x('\cp -f /opt/syco/var/ossec/osseconf/preloaded-vars-server.conf /tmp/ossecbuild/etc/preloaded-vars.conf')
   x('/tmp/ossecbuild/install.sh')
   

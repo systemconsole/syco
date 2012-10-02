@@ -91,13 +91,21 @@ def install_ossecc(args):
 
   '''
 
+
+  #OSSEC DOWNLOAD URL
+  ossec_download = "http://www.ossec.net/files/ossec-hids-2.6.tar.gz"
+
   #Getting ossec server
   ossecserver =config.general.get_ossec_server_ip()
   hostname = socket.gethostname()
 
 
   x('yum install gcc make')
-  x('cp -r /opt/syco/var/ossec/ossecbuild/ /tmp/')
+  x("wget -P /tmp/ "+ossec_download)
+  x("tar -C /tmp -zxf /tmp/ossec-hids*  ")
+  x("rm -rf /tmp/ossec-hids*.tar.gz")
+  x("mv /tmp/ossec-hids* /tmp/ossecbuild")
+
   x('\cp -f /opt/syco/var/ossec/osseconf/preloaded-vars-agent.conf /tmp/ossecbuild/etc/preloaded-vars.conf')
 
   #Setting ossec server ip
