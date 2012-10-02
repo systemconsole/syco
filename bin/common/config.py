@@ -273,6 +273,16 @@ class Config(object):
     def get_log_server_hostname(self):
       return self.get_option("log.hostname")
 
+    def get_logg_server(self):
+      return self.get_option("logg.server")
+
+    def get_ossec_server_ip(self):
+      return self.get_option("ossec.server_ip")
+
+    def get_logg_server2(self):
+      return self.get_option("logg.server2")
+
+
   class HostConfig(SycoConfig):
     '''
     Access functions for the hosts in the install.cfg.
