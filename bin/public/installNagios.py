@@ -3,15 +3,12 @@
 Nagios installation for new data-centers at TC-Skondal and Availo.
 
 
- notes on getting nagios to actually install
- 
- Nagios has been moved to the extended repositories - what is the quality of EPEL
- Compiling isnt rocket science though
- Follow http://www.unixmen.com/how-to-install-nagios-in-rhel-centos-fedora/
- - a yum install openssl-devel was needed for plugins to compile
- - a chcon -R -t httpd_sys_content_t /usr/local/nagios was also needed, yey for SELinux
- - it won't play nice with mod security - lets just use vanilla apache + php for nowq
- http://linuxscribbles.blogspot.se/2012/06/how-to-install-nagios-on-rhel-6-centos.html another guide
+ Nagios installation notes
+
+ - Packages needed are nagios, nagios-plugins-all (and httpd etc)
+ - Located on yum epel
+ - httpuser for nagiosadmin needs to be set up
+ - nagios.conf need to be scripted (only change if object dir for now)
 
 '''
 
@@ -31,25 +28,45 @@ __status__ = "Development"
 
 
 def build_commands(commands):
-    commands.add("install-nagios", install_nagios, help="Installs a nagios poller and web-interface")
-
+    commands.add("install-nagios", install_nagios, help="Installs a nagios poller and web-interface for monitoring of remote hosts")
+    commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server")
 
 def install_nagios(args):
-    serverList = get_network_config()
+    hostList = get_host_list()
+    append_services(hostList)
     move_object_base_structure()
-    write_hosts_config(serverList)
+    write_hosts_config(hostList)
+
+def append_services(hostList):
+    for host in hostList:
+        nrpe_return = general.x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
+        if (nrpe_return.pop(0) == "OK"):
+            host.services = nrpe_return
+        else:
+            app.print_verbose(host.name + " is not running NRPE, omitted")
+    return hostList
+
+def install_nrpe(args):
+    # yum install nagios-plugins-all
+    # move nrpe.conf (only change is to only allow fron single IP)
+    # set nrpe.conf ip to installation files monitor-ex ip
+    # restart nrpe service
+    pass
 
 def write_hosts_config(serverList):
-    FILE = open("/usr/local/nagios/etc/objects/hosts/virtual_host_list.cfg", "w")
+    FILE = open("/etc/nagios/objects/hosts/virtual_host_list.cfg", "w")
     for host in serverList:
-        FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + host.type+ "\n}\n\n")
+        groups = host.services
+        groups.append(host.type)
+        hostgroups = ",".join(str(x) for x in groups)
+        FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
     FILE.close()
 
-def get_network_config():
+def get_host_list():
     serverList=[]
     app.print_verbose("Starting Nagios installation process")
     for server in config.get_servers():
-        if bool(re.search('fw', server)):
+        if bool(re.search('fw', server)) or bool(re.search('vh', server)):
             serverList.append(host(server, config.host(server).get_front_ip(),"physical_host"))
         elif bool(re.search('switch', server)): 
             serverList.append(host(server, config.host(server).get_front_ip(),"switch"))
@@ -58,8 +75,8 @@ def get_network_config():
     return serverList
 
 def move_object_base_structure():
-    general.x("rm -r /usr/local/nagios/etc/objects")
-    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /usr/local/nagios/etc/objects")
+    general.x("rm -rf /etc/nagios/objects/*")
+    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/nagios/")
 
 class host():
 
@@ -67,6 +84,7 @@ class host():
         self.name = configname
         self.ip = configip
         self.type = hosttype
+        self.services = []
 
 
 
