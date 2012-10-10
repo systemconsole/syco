@@ -2,14 +2,6 @@
 '''
 Nagios installation for new data-centers at TC-Skondal and Availo.
 
-
- Nagios installation notes
-
- - Packages needed are nagios, nagios-plugins-all (and httpd etc)
- - Located on yum epel
- - httpuser for nagiosadmin needs to be set up
- - nagios.conf need to be scripted (only change if object dir for now)
-
 '''
 
 import app
@@ -32,6 +24,13 @@ def build_commands(commands):
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server")
 
 def install_nagios(args):
+    # Everything - todo: use installhttpd and figure out stuff on mod_security.  
+    x("setenforce 0")
+    #general.x("httpd php -y")
+    #general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    # Copy password file (so we done need to mess around with expect)
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
     hostList = get_host_list()
     append_services(hostList)
     move_object_base_structure()
@@ -47,16 +46,22 @@ def append_services(hostList):
     return hostList
 
 def install_nrpe(args):
+    hostList = get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
-    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    # If script breaks here EPEL is probably not activated
+    #general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    # Move object structure and prepared conf-file
     general.x("rm -rf /etc/nagios/nrpe.d")
     general.x("rm -rf /etc/nagios/nrpe.cfg")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
     general.x("cp /opt/syco/usr/syco-private/var/nagios/nrpe.cfg /etc/nagios/")
     general.x("cp /opt/syco/usr/syco-private/var/nagios/get_services /usr/lib64/nagios/plugins/")   
-    # move nrpe.conf (only change is to only allow fron single IP)
-    # set nrpe.conf ip to installation files monitor-ex ip
-    # nrpe service
+    # Append the monitor-server IP to this conf-file
+    for host in hostList:
+        if bool(re.search('monitor', host.name)):
+            general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP", host.ip, add_if_not_exist=False)
+    # Start nrpe!
+    general.x("service nrpe start")
     pass
 
 def write_hosts_config(serverList):
