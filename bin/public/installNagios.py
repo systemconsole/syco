@@ -47,7 +47,8 @@ def append_services(hostList):
     return hostList
 
 def install_nrpe(args):
-    general.x("yum install nagios-plugins-all")
+    # Confusing that nagios-plugins-all does not really include all plugins
+    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     general.x("rm -rf /etc/nagios/nrpe.d")
     general.x("rm -rf /etc/nagios/nrpe.cfg")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
@@ -55,7 +56,7 @@ def install_nrpe(args):
     general.x("cp /opt/syco/usr/syco-private/var/nagios/get_services /usr/lib64/nagios/plugins/")   
     # move nrpe.conf (only change is to only allow fron single IP)
     # set nrpe.conf ip to installation files monitor-ex ip
-    # restart nrpe service
+    # nrpe service
     pass
 
 def write_hosts_config(serverList):
