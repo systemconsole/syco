@@ -25,9 +25,9 @@ def build_commands(commands):
 
 def install_nagios(args):
     # Everything - todo: use installhttpd and figure out stuff on mod_security.  
-    x("setenforce 0")
-    #general.x("httpd php -y")
-    #general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    general.x("setenforce 0")
+    general.x("yum install httpd php -y")
+    general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     # Copy password file (so we done need to mess around with expect)
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
@@ -35,6 +35,7 @@ def install_nagios(args):
     append_services(hostList)
     move_object_base_structure()
     write_hosts_config(hostList)
+    general.x("service httpd restart")
 
 def append_services(hostList):
     for host in hostList:
@@ -65,7 +66,7 @@ def install_nrpe(args):
     pass
 
 def write_hosts_config(serverList):
-    FILE = open("/etc/nagios/objects/hosts/virtual_host_list.cfg", "w")
+    FILE = open("/etc/nagios/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
         groups = host.services
         groups.append(host.type)
