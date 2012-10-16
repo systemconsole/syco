@@ -288,6 +288,15 @@ class Config(object):
     def get_openvpn_hostname(self):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
+    
+    def get_logg_server(self):
+      return self.get_option("logg.server")
+
+    def get_ossec_server_ip(self):
+      return self.get_option("ossec.server_ip")
+
+    def get_logg_server2(self):
+      return self.get_option("logg.server2")
 
 
   class HostConfig(SycoConfig):
