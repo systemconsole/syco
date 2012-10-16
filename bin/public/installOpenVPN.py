@@ -87,6 +87,9 @@ def install_openvpn_server(args):
     x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
     x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
+    # To prevent error "TXT_DB error number 2" when running ./build-key-pkcs12 --batch xxx"
+    scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
+
   # To be able to route trafic to internal network
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
   x("echo 1 > /proc/sys/net/ipv4/ip_forward")
