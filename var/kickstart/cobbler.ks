@@ -126,7 +126,6 @@ nss-util
 -libertas-usb8388-firmware
 -rt61pci-firmware
 -rt73usb-firmware
--mysql-libs
 -zd1211-firmware
 %end
 
