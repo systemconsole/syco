@@ -62,7 +62,7 @@ def install_mail_server(args):
 
   # Allow all servers on localdomain to relay through this server.
   set_config_property2("/etc/mail/access", "Connect:10.100                          RELAY")
-  x("/usr/sbin/makemap hash access < access")
+  x("/usr/sbin/makemap hash /etc/mail/access.db < /etc/mail/access")
 
   # Remove the loopback address restriction to accept email from the internet or intranet.
   set_config_property(
