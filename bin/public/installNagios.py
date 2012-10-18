@@ -50,7 +50,7 @@ def install_nrpe(args):
     hostList = get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
     # If script breaks here EPEL is probably not activated
-    #general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     # Move object structure and prepared conf-file
     general.x("rm -rf /etc/nagios/nrpe.d")
     general.x("rm -rf /etc/nagios/nrpe.cfg")
