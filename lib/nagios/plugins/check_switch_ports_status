@@ -4,8 +4,11 @@ import commands
 import sys
 import hashlib
 import os
+import sys
 
-digest = hashlib.md5(commands.getstatusoutput("snmpwalk -v3 -u nagios -n '' -l AuthPriv -a SHA -x AES -c public -A fo5Loogo -X fo5Loogo -m all 10.100.2.220 ifOperStatus")[1]).hexdigest()
+[status,returnString] = commands.getstatusoutput("snmpwalk -v3 -u nagios -n '' -l AuthPriv -a SHA -x AES -c public -A fo5Loogo -X fo5Loogo -m all " + sys.argv[1] + " ifOperStatus")
+
+digest = hashlib.md5(returnString).hexdigest()
 [catstatus, olddigest] = commands.getstatusoutput("cat /tmp/switchout")
 
 def w(string):
@@ -13,7 +16,15 @@ def w(string):
     f.write(string)
     f.close()
 
-if (catstatus != 0 or (digest == olddigest and olddigest != "")):
+if catstatus != 0:
+    w(digest)
+    print "I/O Issue"
+    sys.exit(3)
+elif status != 0:
+    w(digest)
+    print "SNMP problem"
+    sys.exit(3)
+elif digest == olddigest and olddigest != "":
     w(digest)
     print "OK"
     sys.exit(0)
@@ -21,8 +32,6 @@ else:
     w(digest)
     print "CRITICAL"
     sys.exit(2)
-
-
 
 
 

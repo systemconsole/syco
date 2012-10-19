@@ -29,6 +29,7 @@ def install_nagios(args):
     #general.x("yum install httpd php -y")
     #general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     # Copy password file (so we done need to mess around with expect)
+    #general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /usr/local/nagios/etc/htpasswd.users")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
     hostList = get_host_list()
@@ -40,11 +41,12 @@ def install_nagios(args):
 
 def append_services(hostList):
     for host in hostList:
-        nrpe_return = general.x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
-        if (nrpe_return.pop(0) == "OK"):
-            host.services = nrpe_return
-        else:
-            app.print_verbose(host.name + " is not running NRPE, omitted")
+        if host.type != "switch":    
+            nrpe_return = general.x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
+            if (nrpe_return.pop(0) == "OK"):
+                host.services = nrpe_return
+            else:
+                app.print_verbose(host.name + " is not running NRPE, omitted")
     return hostList
 
 def install_nrpe(args):
@@ -90,8 +92,8 @@ def get_host_list():
 def install_plugins():
     general.x("cp /opt/syco/lib/nagios/plugins/check_switch_mac_table /usr/lib64/nagios/plugins/")
     general.x("cp /opt/syco/lib/nagios/plugins/check_switch_ports_status /usr/lib64/nagios/plugins/")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status.py")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_tables.py")
+    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status")
+    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_table")
 
 def move_object_base_structure():
     general.x("rm -rf /etc/nagios/objects/*")
