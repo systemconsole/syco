@@ -8,6 +8,7 @@ import app
 import config
 import general
 import re
+import iptables
 
 __author__ = "elis.kullberg@netlight.com"
 __copyright__ = "Copyright 2012, Fareoffice Car Rental Solutions AB"
@@ -20,6 +21,7 @@ __status__ = "Development"
 
 
 def build_commands(commands):
+    commands.add("install-icinga", install_icinga, help="Installs a icinga poller and web-interface for monitoring of remote hosts")
     commands.add("install-nagios", install_nagios, help="Installs a nagios poller and web-interface for monitoring of remote hosts")
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server")
 
@@ -29,15 +31,37 @@ def install_nagios(args):
     #general.x("yum install httpd php -y")
     #general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     # Copy password file (so we done need to mess around with expect)
-    #general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /usr/local/nagios/etc/htpasswd.users")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
+    iptables.add_monitor_chain()
+    iptables.add_httpd_chain()
     hostList = get_host_list()
     append_services(hostList)
-    move_object_base_structure()
-    write_hosts_config(hostList)
+    move_object_base_structure_nagios()
+    write_hosts_config_nagios(hostList)
     install_plugins()
     general.x("service httpd restart")
+
+def install_icinga(args):
+    # Add instalation steps - sql schemas will suck to install
+    general.x("setenforce 0")
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/icinga/icinga.cfg")
+    iptables.add_monitor_chain()
+    iptables.add_httpd_chain()
+    hostList = get_host_list()
+    append_services(hostList)
+    move_object_base_structure_icinga()
+    write_hosts_config_icinga(hostList)
+    install_plugins()
+    general.x("service httpd restart")
+
+def _install_icinga_web():
+    return True
+
+def _install_icinga_core():
+    return True
+
 
 def append_services(hostList):
     for host in hostList:
@@ -68,8 +92,17 @@ def install_nrpe(args):
     general.x("service nrpe start")
     pass
 
-def write_hosts_config(serverList):
+def write_hosts_config_nagios(serverList):
     FILE = open("/etc/nagios/objects/hosts/virtual_host_list.cfg", "w+")
+    for host in serverList:
+        groups = host.services
+        groups.append(host.type)
+        hostgroups = ",".join(str(x) for x in groups)
+        FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
+    FILE.close()
+
+def write_hosts_config_icinga(serverList):
+    FILE = open("/etc/icinga/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
         groups = host.services
         groups.append(host.type)
@@ -79,7 +112,7 @@ def write_hosts_config(serverList):
 
 def get_host_list():
     serverList=[]
-    app.print_verbose("Starting Nagios installation process")
+    app.print_verbose("Starting Nagios/Icinga installation process")
     for server in config.get_servers():
         if bool(re.search('fw', server)) or bool(re.search('vh', server)):
             serverList.append(host(server, config.host(server).get_front_ip(),"physical_host"))
@@ -95,9 +128,13 @@ def install_plugins():
     general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status")
     general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_table")
 
-def move_object_base_structure():
+def move_object_base_structure_nagios():
     general.x("rm -rf /etc/nagios/objects/*")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/nagios/")
+
+def move_object_base_structure_icinga():
+    general.x("rm -rf /etc/icinga/objects/*")
+    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
 
 class host():
 
