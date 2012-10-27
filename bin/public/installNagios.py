@@ -9,6 +9,12 @@ import config
 import general
 import re
 import iptables
+import install
+import installMysql
+import version
+
+# note: perl-Time-HiRes, rrdtool-perl php-gd required for PNP
+
 
 __author__ = "elis.kullberg@netlight.com"
 __copyright__ = "Copyright 2012, Fareoffice Car Rental Solutions AB"
@@ -19,51 +25,46 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Development"
 
+SCRIPT_VERSION = 0.1
+
 
 def build_commands(commands):
     commands.add("install-icinga", install_icinga, help="Installs a icinga poller and web-interface for monitoring of remote hosts")
     commands.add("install-nagios", install_nagios, help="Installs a nagios poller and web-interface for monitoring of remote hosts")
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server")
+    commands.add("install-pnp4nagios", install_pnp4nagios, help="Install pnp4nagios")
 
-def install_nagios(args):
-    # Everything - todo: use installhttpd and figure out stuff on mod_security.  
-    general.x("setenforce 0")
-    #general.x("yum install httpd php -y")
-    #general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
-    # Copy password file (so we done need to mess around with expect)
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
-    iptables.add_monitor_chain()
-    iptables.add_httpd_chain()
-    hostList = get_host_list()
-    append_services(hostList)
-    move_object_base_structure_nagios()
-    write_hosts_config_nagios(hostList)
-    install_plugins()
-    general.x("service httpd restart")
 
 def install_icinga(args):
-    # Add instalation steps - sql schemas will suck to install
-    general.x("setenforce 0")
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/icinga/icinga.cfg")
-    iptables.add_monitor_chain()
-    iptables.add_httpd_chain()
-    hostList = get_host_list()
-    append_services(hostList)
-    move_object_base_structure_icinga()
-    write_hosts_config_icinga(hostList)
-    install_plugins()
-    general.x("service httpd restart")
+    app.print_verbose("Installing icinga")
+    version_obj = version.Version("installIcinga", SCRIPT_VERSION)
+    version_obj.check_executed()
+    _install_icinga(args)
+    version_obj.mark_executed()
 
-def _install_icinga_web():
-    return True
+def install_nagios(args):
+    app.print_verbose("Installing nagios")
+    version_obj = version.Version("installNagios", SCRIPT_VERSION)
+    version_obj.check_executed()
+    _install_nagios(args)
+    version_obj.mark_executed()
 
-def _install_icinga_core():
-    return True
+def install_nrpe(args):
+    app.print_verbose("Installing nrpe")
+    version_obj = version.Version("installNrpe", SCRIPT_VERSION)
+    version_obj.check_executed()
+    _install_nrpe(args)
+    version_obj.mark_executed()
+
+def install_pnp4nagios(args):
+    app.print_verbose("Installing pnp4nagios")
+    version_obj = version.Version("install_pnp4nagios", SCRIPT_VERSION)
+    version_obj.check_executed()
+    _install_pnp4nagios(args)
+    version_obj.mark_executed() 
 
 
-def append_services(hostList):
+def _append_services(hostList):
     for host in hostList:
         if host.type != "switch":    
             nrpe_return = general.x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
@@ -73,10 +74,85 @@ def append_services(hostList):
                 app.print_verbose(host.name + " is not running NRPE, omitted")
     return hostList
 
-def install_nrpe(args):
-    hostList = get_host_list() 
+def _get_host_list():
+    serverList=[]
+    for server in config.get_servers():
+        if bool(re.search('fw', server)) or bool(re.search('vh', server)):
+            serverList.append(host(server, config.host(server).get_front_ip(),"physical_host"))
+        elif bool(re.search('switch', server)): 
+            serverList.append(host(server, config.host(server).get_front_ip(),"switch"))
+        else : 
+            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_host"))
+    return serverList
+
+def _install_plugins():
+    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_mac_table /usr/lib64/nagios/plugins/")
+    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_ports_status /usr/lib64/nagios/plugins/")
+    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status")
+    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_table")
+
+def _install_icinga_core(args):
+    general.x("setenforce 0")
+    install.rforge_repo()
+    # Install packages
+    general.x("yum -y install icinga icinga-gui icinga-doc icinga-idoutils-libdbi-mysql nagios-plugins-all nagios-plugins-nrpe")
+    general.x("yum -y install mysql-server mysql-client libdbi1 libdbi-dev libdbd-mysql")
+    general.x("service mysqld start")
+    # Create database with icinga user
+    general.x("mysql < /opt/syco/var/icinga/icinga_db_create")
+    general.x("mysql icinga < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql")
+    # TODO: This will figure out password management in some smart way
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
+    iptables.add_monitor_chain() 
+    iptables.add_httpd_chain()
+    install_nrpe(args)
+    hostList = _get_host_list()
+    _append_services(hostList)
+    _move_object_base_structure_icinga()
+    _write_hosts_config_icinga(hostList)
+    _install_plugins()
+    return True
+
+def _install_icinga_web():
+    app.print_verbose("INSTALLING WEB")
+    general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
+    general.x("yum install -y icinga-web")
+    general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
+    general.x("mysql icinga_web  < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql")
+    return True
+
+def _install_nagios(args):
+    # Everything - todo: use installhttpd and figure out stuff on mod_security.  
+    general.x("setenforce 0")
+    general.x("yum install httpd php -y")
+    general.x("yum install nagios nagios-plugins-all nrpe nagios-plugins-nrpe -y")
+    # Copy password file (so we done need to mess around with expect)
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/nagios/")
+    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/nagios.cfg /etc/nagios/")
+    iptables.add_monitor_chain()
+    iptables.add_httpd_chain()
+    hostList = _get_host_list()
+    _append_services(hostList)
+    _move_object_base_structure_nagios()
+    _write_hosts_config_nagios(hostList)
+    _install_plugins()
+    general.x("service httpd restart")
+
+def _install_icinga(args):
+    # Install icinga.
+    # Core features the icinga poller (basically same as nagios), simple CGI GUI, and mysql-binds
+    # Web features bells-and-whitles API
+    _install_icinga_core(args)
+    _install_icinga_web()  
+    general.x("service nrpe start")
+    general.x("service icinga start")
+    general.x("service httpd start")
+    return True
+
+def _install_nrpe(args):
+    hostList = _get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
-    # If script breaks here EPEL is probably not activated
     general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
     # Move object structure and prepared conf-file
     general.x("rm -rf /etc/nagios/nrpe.d")
@@ -90,9 +166,16 @@ def install_nrpe(args):
             general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP", host.ip, add_if_not_exist=False)
     # Start nrpe!
     general.x("service nrpe start")
-    pass
 
-def write_hosts_config_nagios(serverList):
+def _move_object_base_structure_nagios():
+    general.x("rm -rf /etc/nagios/objects/*")
+    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/nagios/")
+
+def _move_object_base_structure_icinga():
+    general.x("rm -rf /etc/icinga/objects/*")
+    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
+
+def _write_hosts_config_nagios(serverList):
     FILE = open("/etc/nagios/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
         groups = host.services
@@ -101,7 +184,7 @@ def write_hosts_config_nagios(serverList):
         FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
     FILE.close()
 
-def write_hosts_config_icinga(serverList):
+def _write_hosts_config_icinga(serverList):
     FILE = open("/etc/icinga/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
         groups = host.services
@@ -109,32 +192,6 @@ def write_hosts_config_icinga(serverList):
         hostgroups = ",".join(str(x) for x in groups)
         FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
     FILE.close()
-
-def get_host_list():
-    serverList=[]
-    app.print_verbose("Starting Nagios/Icinga installation process")
-    for server in config.get_servers():
-        if bool(re.search('fw', server)) or bool(re.search('vh', server)):
-            serverList.append(host(server, config.host(server).get_front_ip(),"physical_host"))
-        elif bool(re.search('switch', server)): 
-            serverList.append(host(server, config.host(server).get_front_ip(),"switch"))
-        else : 
-            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_host"))
-    return serverList
-
-def install_plugins():
-    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_mac_table /usr/lib64/nagios/plugins/")
-    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_ports_status /usr/lib64/nagios/plugins/")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_table")
-
-def move_object_base_structure_nagios():
-    general.x("rm -rf /etc/nagios/objects/*")
-    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/nagios/")
-
-def move_object_base_structure_icinga():
-    general.x("rm -rf /etc/icinga/objects/*")
-    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
 
 class host():
 
