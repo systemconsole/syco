@@ -59,6 +59,7 @@ def install_nrpe(args):
 def install_pnp4nagios(args):
     app.print_verbose("Installing pnp4nagios")
     version_obj = version.Version("install_pnp4nagios", SCRIPT_VERSION)
+    _install_pnp4nagios(args)
     version_obj.check_executed()
     _install_pnp4nagios(args)
     version_obj.mark_executed() 
@@ -106,6 +107,7 @@ def _install_icinga_core(args):
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
     iptables.add_monitor_chain() 
     iptables.add_httpd_chain()
+    # Monitor needs to be able to check itself!
     install_nrpe(args)
     hostList = _get_host_list()
     _append_services(hostList)
@@ -115,7 +117,6 @@ def _install_icinga_core(args):
     return True
 
 def _install_icinga_web():
-    app.print_verbose("INSTALLING WEB")
     general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
     general.x("yum install -y icinga-web")
     general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
@@ -145,6 +146,7 @@ def _install_icinga(args):
     # Web features bells-and-whitles API
     _install_icinga_core(args)
     _install_icinga_web()  
+    general.x("service ido2db start")
     general.x("service nrpe start")
     general.x("service icinga start")
     general.x("service httpd start")
@@ -166,6 +168,17 @@ def _install_nrpe(args):
             general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP", host.ip, add_if_not_exist=False)
     # Start nrpe!
     general.x("service nrpe start")
+
+def _install_pnp4nagios(args):
+    install.epel_repo()
+    general.x("yum install -y pnp4nagios")
+    general.x("ln -f /etc/icinga/passwd /etc/nagios/passwd")
+    general.x("yum install -y icinga-web-module-pnp") 
+    general.x("service icinga restart")
+    general.x("service npcd start")
+    general.x("service httpd restart")
+
+
 
 def _move_object_base_structure_nagios():
     general.x("rm -rf /etc/nagios/objects/*")
