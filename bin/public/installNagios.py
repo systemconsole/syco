@@ -25,7 +25,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Development"
 
-SCRIPT_VERSION = 0.1
+SCRIPT_VERSION = 1
 
 
 def build_commands(commands):
@@ -59,7 +59,6 @@ def install_nrpe(args):
 def install_pnp4nagios(args):
     app.print_verbose("Installing pnp4nagios")
     version_obj = version.Version("install_pnp4nagios", SCRIPT_VERSION)
-    _install_pnp4nagios(args)
     version_obj.check_executed()
     _install_pnp4nagios(args)
     version_obj.mark_executed() 
@@ -153,6 +152,7 @@ def _install_icinga(args):
     return True
 
 def _install_nrpe(args):
+    install.epel_repo()
     hostList = _get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
     general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
@@ -164,16 +164,22 @@ def _install_nrpe(args):
     general.x("cp /opt/syco/usr/syco-private/lib/nagios/plugins/get_services /usr/lib64/nagios/plugins/")   
     # Append the monitor-server IP to this conf-file
     for host in hostList:
+        app.print_verbose("SEARCHING")
         if bool(re.search('monitor', host.name)):
+            app.print_verbose("FOUND")
             general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP", host.ip, add_if_not_exist=False)
     # Start nrpe!
     general.x("service nrpe start")
 
 def _install_pnp4nagios(args):
+    #Ändrade icinga till ägare av /var/lib/blaha
+    #Ändrade icinga till ägare av /var/log/pnp4nagios/* rekursivt
+    #Touchade /var/log/perfdata.log och gav till icinga
     install.epel_repo()
     general.x("yum install -y pnp4nagios")
     general.x("ln -f /etc/icinga/passwd /etc/nagios/passwd")
     general.x("yum install -y icinga-web-module-pnp") 
+    general.x("cp /opt/syco/usr/syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg")
     general.x("service icinga restart")
     general.x("service npcd start")
     general.x("service httpd restart")
