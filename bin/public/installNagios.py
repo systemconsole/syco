@@ -86,10 +86,9 @@ def _get_host_list():
     return serverList
 
 def _install_plugins():
-    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_mac_table /usr/lib64/nagios/plugins/")
-    general.x("cp /opt/syco/lib/nagios/plugins/check_switch_ports_status /usr/lib64/nagios/plugins/")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_ports_status")
-    general.x("chmod +x /usr/lib64/nagios/plugins/check_switch_mac_table")
+    # These are plugins for the ICINGA-server, no need for install on hosts. 
+    general.x("chmod +x /opt/syco/lib/nagios/plugins_snmp/*")
+    general.x("cp -p /opt/syco/lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/")
 
 def _install_icinga_core(args):
     general.x("setenforce 0")
@@ -161,20 +160,18 @@ def _install_nrpe(args):
     general.x("rm -rf /etc/nagios/nrpe.cfg")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
     general.x("cp /opt/syco/usr/syco-private/var/nagios/nrpe.cfg /etc/nagios/")
-    general.x("cp /opt/syco/usr/syco-private/lib/nagios/plugins/get_services /usr/lib64/nagios/plugins/")   
-    # Append the monitor-server IP to this conf-file
-    for host in hostList:
-        app.print_verbose("SEARCHING")
-        if bool(re.search('monitor', host.name)):
-            app.print_verbose("FOUND")
-            general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP", host.ip, add_if_not_exist=False)
-    # Start nrpe!
+    general.x("chmod +x /opt/syco/lib/nagios/plugins_nrpe/*")
+    general.x("cp -p /opt/syco/lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/")
+    app.print_verbose("Setting monitor server:" + config.general.get_monitor_server())
+    general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP" ,config.general.get_monitor_server(),False)
+    app.print_verbose("Setting front-resolver IP to:" +config.general.get_front_resolver_ip())
+    general.set_config_property("/etc/nagios/nrpe.d/common.cfg", "INTERNALDNS" ,config.general.get_front_resolver_ip(),False)
     general.x("service nrpe start")
 
 def _install_pnp4nagios(args):
-    #Ändrade icinga till ägare av /var/lib/blaha
-    #Ändrade icinga till ägare av /var/log/pnp4nagios/* rekursivt
-    #Touchade /var/log/perfdata.log och gav till icinga
+    #Set icinga as owner of /var/lib/blaha
+    #Set icinga to owner of /var/log/pnp4nagios/* rekursivt
+    #Touch /var/log/perfdata.log och gav till icinga
     install.epel_repo()
     general.x("yum install -y pnp4nagios")
     general.x("ln -f /etc/icinga/passwd /etc/nagios/passwd")
