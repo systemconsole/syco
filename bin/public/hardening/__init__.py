@@ -39,7 +39,6 @@ from hardening.package import remove_packages
 from hardening.passwords import harden_password
 from hardening.permissions import setup_permissions
 from hardening.service import disable_services
-from hardening.syslog import setup_syslog
 
 from hardening.ssh import setup_ssh
 
@@ -72,7 +71,6 @@ def harden(args):
     harden_password()
     setup_permissions()
     disable_services()
-    setup_syslog()
 
     version_obj.mark_executed()
 
