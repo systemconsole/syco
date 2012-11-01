@@ -246,19 +246,13 @@ class Config(object):
       '''The hostname of the cert server.'''
       return self.get_option("cert.wild.key")
 
-    def get_mysql_primary_master(self):
-      return self.get_option("mysql.primary_master")
-
     def get_mysql_primary_master_ip(self):
       '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_primary_master()).get_back_ip()
-
-    def get_mysql_secondary_master(self):
-      return self.get_option("mysql.secondary_master")
+      return self.get_option("mysql.primary_master_ip")
 
     def get_mysql_secondary_master_ip(self):
-      '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_secondary_master()).get_back_ip()
+      '''IP or hostname for secondary mysql server.'''
+      return self.get_option("mysql.secondary_master_ip")
 
     def get_country_name(self):
       return self.get_option("country_name")
@@ -288,7 +282,7 @@ class Config(object):
     def get_openvpn_hostname(self):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
-    
+
     def get_logg_server(self):
       return self.get_option("logg.server")
 
