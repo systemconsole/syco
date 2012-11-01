@@ -183,12 +183,6 @@ def general_cis():
     )
 
     #
-    app.print_verbose("CIS 4.4.1 Disable IPv6")
-    scOpen("/etc/modprobe.d/syco.conf").replace_add(
-        "^options ipv6.*$", 'options ipv6 "disable=1"'
-    )
-
-    #
     app.print_verbose("CIS 4.5 Install TCP Wrappers")
     x("""[ "`rpm -q tcp_wrappers`" == 'package tcp_wrappers is not installed' ]\
          && yum install -y tcp_wrappers""")
