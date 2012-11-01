@@ -66,7 +66,7 @@ def install_openldap(args):
     add_user_domain()
     create_certs()
     enable_ssl()
-    #require_highest_security_from_clients()
+    require_highest_security_from_clients()
 
     # Let clients connect to the server through the firewall. This is done after
     # everything else is done, so we are sure that the server is secure before
@@ -143,7 +143,7 @@ def install_packages():
     setup_hosts()
 
     # Install all required packages.
-    x("yum -y install openldap-servers openldap-clients")
+    x("yum -y install openldap-servers openldap-clients mlocate")
 
     # Create backend database.
     scOpen("/var/lib/ldap/DB_CONFIG").add(
@@ -350,7 +350,10 @@ def add_user_domain():
 
     # Add private domains.
     for dir in os.listdir(app.SYCO_USR_PATH):
-        filenames.append(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/domain.ldif")
+        if dir =="mod-template":
+            pass
+        else:
+            filenames.append(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/domain.ldif")
 
     # Import the files
     for filename in filenames:
@@ -384,6 +387,10 @@ def get_cert_subj(commonName):
     Return args for openssl "-subj" option.
 
     '''
+
+    #Creating certs folder
+    x("mkdir /etc/openldap/cacerts")
+
     return "'/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s/emailAddress=%s'" % (
         config.general.get_country_name(),
         config.general.get_state(),
