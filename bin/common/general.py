@@ -85,7 +85,7 @@ def create_install_dir():
   else:
     raise Exception("Can't create install dir.")
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -104,6 +104,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
     if (remote_password):
       cmd += " --password=\"" + remote_password + "\""
+
+    if (cookie):
+      cmd += ' --no-cookies --header "Cookie: %s"' % cookie
 
     shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
