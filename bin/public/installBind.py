@@ -48,8 +48,8 @@ data_center:nsg
 # Zone to be used
 # Create a file called exempel.org in the folder that contains dns records.
 [zone]
-fareonline.net:100.100.10
-farepayment.com:192.168.0.0
+syco.net:100.100.10
+syco.com:192.168.0.0
 
 ZONE Config
 -----------
@@ -58,14 +58,23 @@ To edit zones to the dns name create one file with the same name as the dns name
 For exempel fareonline.net create the file called fareonline.net.
 In that file the create two blocks
 
-[fareonline.net_arecords]
+[syco.net_arecords]
 www:178.78.197.210
 
-[fareonline.net_cname]
+[syco.net_cname]
 webb:www
 
 The first one is for A records and the second one is for cnames.
 The script will generate dns files from the enteries.
+
+
+Private ZONE
+in folder var/dns/ are exempel configs.
+Put your correct zone.cfg ands one files in sycoprivare/var/dns.
+Syco will always look in your sycoprivare/var/dns folder for file zone.cfg and zone files syco.com.
+
+
+
 
 INTERNAL VIEW
 -------------
@@ -77,10 +86,10 @@ specify in the zone file the differt name.
 
 To add internal ip to be used add in you configfile for you dns name
 
-[internal_fareonline.net_arecords]
+[internal_syco.net_arecords]
 www:10.100.0.4
 
-[internal_fareonline.net_cname]
+[internal_syco.net_cname]
 mail:fo-tp-mail
 
 The script will then generate this config to be used for internal view and the
@@ -95,8 +104,8 @@ By in the configfile setting
 data_center:nsg the datacenter named nsg will be used.
 
 1. Setup an a record to both locations
-nsg-server.fareonline.net:10.100.0.1
-tc-server.fareonline.net:99.100.100.1
+nsg-server.syco.net:10.100.0.1
+tc-server.syco.net:99.100.100.1
 
 2. Setup a cname to the a record
 server:nsg-server
@@ -122,10 +131,12 @@ __email__ = "syco@cybercow.se"
 import ConfigParser
 import os
 import re
-
+import sys
 import app
 import config
 import general
+from general import x
+from ssh import scp_from
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -137,7 +148,8 @@ def build_commands(commands):
   Defines the commands that can be executed through the fosh.py shell script.
 
   '''
-  commands.add("install-dns",   install_dns,  help="Install DNS server use command 'install-dns master/slave' ")
+  commands.add("install-bind",   install_dns,  help="Install Bind server use command 'install-dns master/slave' ")
+  commands.add("uninstall-bind",   uninstall_dns,  help="Install Bind server use command 'install-dns master/slave' ")
 
 def _copy_rndc():
     '''
@@ -208,29 +220,38 @@ def install_dns(args):
   master = setting upp master server
   slave = setting upp slave server
   '''
-  role  =str(args[1])
+
+  if len(args) == 2:
+    role = args[1]
+    if (role != "master" and role !="slave"):
+      raise Exception("You can only enter master or slave, you entered " + args[1])
+  else:    
+    role  ="master"  
+
+  
   '''
   Reading zone.cfg file conting
   In zone.cfg is all config options neede for setting upp DNS Server
   This file is readed and the the options are saved and used when generating new config files
   '''
-  config = ConfigParser.SafeConfigParser()
+  config_f = ConfigParser.SafeConfigParser()
   config_zone = ConfigParser.SafeConfigParser()
 
 
-  config.read(app.SYCO_PATH + 'var/dns/zone.cfg')
-  dnsrange = config.get('config', 'range')
-  forward1 = config.get('config', 'forward1')
-  forward2 = config.get('config', 'forward2')
-  ipmaster = config.get('config', 'ipmaster')
-  ipslave = config.get('config', 'ipslave')
-  localnet = config.get('config', 'localnet')
-  data_center = config.get('config', 'data_center')
-  #role =  config.get('config','role')
+  config_f.read(app.SYCO_PATH + 'usr/syco-private/var/dns/zone.cfg')
+  dnsrange = config_f.get('config', 'range')
+  forward1 = config_f.get('config', 'forward1')
+  forward2 = config_f.get('config', 'forward2')
+  ipmaster = config_f.get('config', 'ipmaster')
+  ipslave = config_f.get('config', 'ipslave')
+  localnet = config_f.get('config', 'localnet')
+  data_center = config_f.get('config', 'data_center')
+    
 
-  role  =str(args[1])
-  if (role != "master" or role != "slave"):
-    raise Exception("You can only enter master or slave, you entered " + role)
+
+  #Creating data dir
+  x("mkdir  /var/named/chroot/var/named/data")
+
 
   '''
   Depending if the server is an master then new rndc keys are genertaed if now old are done.
@@ -246,7 +267,7 @@ def install_dns(args):
         _copy_rndc()
       else:
           os.chdir("/var/named/chroot/etc")
-          os.system("scp root@" + ipmaster + ":/var/named/chroot/etc/rndc_new.key ." )
+          scp_from(ipmaster,"/var/named/chroot/etc/rndc_new.key","/var/named/chroot/etc/")
 
 
 
@@ -256,7 +277,7 @@ def install_dns(args):
      if location == "internal":
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
           o.write("view 'internt' {\n")
-          o.write("match-clients { " + localnet + "; };\n")
+          o.write("match-clients { 127.0.0.1;" + localnet + "; };\n")
           o.close()
      else:
           o = open("/var/named/chroot/etc/named.conf","a") #open for append
@@ -270,9 +291,9 @@ def install_dns(args):
      '''
 
 
-     for zone in config.options('zone'):
-                rzone = config.get('zone',zone)
-                config_zone.read(app.SYCO_PATH + 'var/dns/'+zone)
+     for zone in config_f.options('zone'):
+                rzone = config_f.get('zone',zone)
+                config_zone.read(app.SYCO_PATH + 'usr/syco-private/var/dns/'+zone)
                 print zone
 
                 '''
@@ -309,7 +330,7 @@ def install_dns(args):
                             servers = config.get_servers()
                             for hostname in servers:
                                 o.write (hostname + "." + zone + "." + "     IN     A    " + config.host(hostname).get_back_ip() + " \n")
-                                print hostname + config.host(hostname).get_back_ip()
+                                print "INTERNAL"+hostname + config.host(hostname).get_back_ip()
 
                     else:
                          for option in config_zone.options("internal_" + zone + "_arecords"):
@@ -405,6 +426,7 @@ def install_dns(args):
   '''
   Setting upp named.conf with right settings
   '''
+
   o = open("/var/named/chroot/etc/named.conf","a") #open for append
   for line in open(app.SYCO_PATH + "var/dns/" + role + "-named.conf"):
      line = line.replace("$IPSLAVE$",ipslave)
@@ -434,10 +456,16 @@ def install_dns(args):
   _add_serial("recursiv-template")
   _add_serial("template")
 
-
-
+  x("chown named:named /var/named/chroot/etc/named.conf")
+  x("chmod 770 /var/named/chroot/etc/named.conf")
+  x("chown named:named -R /var/named/chroot/var/named/data")
+  x("chmod 770 -R /var/named/chroot/var/named/data")
   '''
   Restaring DNS server for action to be loaded
   '''
   general.shell_exec("/etc/init.d/named restart")
 
+def uninstall_dns(args):
+  print "Uninstalling DNS Server"
+  x("yum erase bind bind-chroot bind-libs bind-utils caching-nameserver -y")
+  x("rm -rf /var/named")
