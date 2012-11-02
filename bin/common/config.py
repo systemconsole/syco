@@ -218,6 +218,16 @@ class Config(object):
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
 
+
+    def get_switch_front_ip(self):
+      return self.get_option("switch.frontip")
+
+    def get_switch_back_ip(self):
+      return self.get_option("switch.backip")
+
+    def get_switch_snmpversion(self):
+      return self.get_option("switch.snmpversion")
+
     def get_cert_server(self):
       '''The hostname of the cert server.'''
       return self.get_option("cert.server")

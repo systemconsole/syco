@@ -30,6 +30,7 @@ SCRIPT_VERSION = 1
 
 def build_commands(commands):
     commands.add("install-icinga", install_icinga, help="Installs a icinga poller and web-interface for monitoring of remote hosts")
+    commands.add("reload-icinga", reload_icinga, help="Reloads the icinga object structure.")
     commands.add("install-nagios", install_nagios, help="Installs a nagios poller and web-interface for monitoring of remote hosts")
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server")
     commands.add("install-pnp4nagios", install_pnp4nagios, help="Install pnp4nagios")
@@ -41,6 +42,11 @@ def install_icinga(args):
     version_obj.check_executed()
     _install_icinga(args)
     version_obj.mark_executed()
+
+def reload_icinga(args):
+    # No verson checking since its not an install/uninstall
+    app.print_verbose("Reloading icinga")
+    _reload_icinga(args)
 
 def install_nagios(args):
     app.print_verbose("Installing nagios")
@@ -77,12 +83,14 @@ def _append_services(hostList):
 def _get_host_list():
     serverList=[]
     for server in config.get_servers():
-        if bool(re.search('fw', server)) or bool(re.search('vh', server)):
-            serverList.append(host(server, config.host(server).get_front_ip(),"physical_host"))
+        if bool(re.search('fw', server)):
+            serverList.append(host(server, config.host(server).get_front_ip(),"firewall"))
+        elif  bool(re.search('vh', server)):
+            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_host"))
         elif bool(re.search('switch', server)): 
             serverList.append(host(server, config.host(server).get_front_ip(),"switch"))
         else : 
-            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_host"))
+            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_guest"))
     return serverList
 
 def _install_plugins():
@@ -91,6 +99,7 @@ def _install_plugins():
     general.x("cp -p /opt/syco/lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/")
 
 def _install_icinga_core(args):
+    # Disable SELinux, will mess up httpd aliases toward /usr/lib/
     general.x("setenforce 0")
     install.rforge_repo()
     # Install packages
@@ -100,7 +109,7 @@ def _install_icinga_core(args):
     # Create database with icinga user
     general.x("mysql < /opt/syco/var/icinga/icinga_db_create")
     general.x("mysql icinga < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql")
-    # TODO: This will figure out password management in some smart way
+    # TODO: Figure out password management in some smart way
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
     iptables.add_monitor_chain() 
@@ -108,7 +117,17 @@ def _install_icinga_core(args):
     # Monitor needs to be able to check itself!
     install_nrpe(args)
     hostList = _get_host_list()
-    _append_services(hostList)
+    #_append_services(hostList)
+    _move_object_base_structure_icinga()
+    _write_hosts_config_icinga(hostList)
+    _install_plugins()
+    return True
+
+def _reload_icinga(args):
+    # Disable SELinux, will mess up httpd aliases toward /usr/lib/
+    general.x("setenforce 0")
+    hostList = _get_host_list()
+    #_append_services(hostList)
     _move_object_base_structure_icinga()
     _write_hosts_config_icinga(hostList)
     _install_plugins()
@@ -119,6 +138,7 @@ def _install_icinga_web():
     general.x("yum install -y icinga-web")
     general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
     general.x("mysql icinga_web  < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql")
+    general.x("mysql < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql")
     return True
 
 def _install_nagios(args):
@@ -154,8 +174,8 @@ def _install_nrpe(args):
     install.epel_repo()
     hostList = _get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
-    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe -y")
-    # Move object structure and prepared conf-file
+    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc -y")
+    # Move object structure and prepare conf-file
     general.x("rm -rf /etc/nagios/nrpe.d")
     general.x("rm -rf /etc/nagios/nrpe.cfg")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
@@ -169,14 +189,23 @@ def _install_nrpe(args):
     general.x("service nrpe start")
 
 def _install_pnp4nagios(args):
-    #Set icinga as owner of /var/lib/blaha
-    #Set icinga to owner of /var/log/pnp4nagios/* rekursivt
-    #Touch /var/log/perfdata.log och gav till icinga
+    # Using bulk mode, see http://docs.pnp4nagios.org/_detail/bulk.png?id=pnp-0.6%3Aconfig
+    # Get packages from epel repo
     install.epel_repo()
     general.x("yum install -y pnp4nagios")
+    # Pnp4 uses the nagios password file, just link it over (easier then messing around with all the CGI-bins and httpd-confs)
+    # TODO: mess around with the CGI's and httpd-conf in future release
     general.x("ln -f /etc/icinga/passwd /etc/nagios/passwd")
     general.x("yum install -y icinga-web-module-pnp") 
     general.x("cp /opt/syco/usr/syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg")
+    # Package-maker forgot to create a log for process-perfdata. Goes bonkers if it can't find it
+    general.x("touch /var/log/pnp4nagios/perfdata.log")
+    # Since we are using icinga we need to change permissions. 
+    # Option would be to change group, but then some permissions would still be lost
+    general.x("chown -R icinga:icinga /var/log/pnp4nagios")
+    general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
+    general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
+    # Restart everything
     general.x("service icinga restart")
     general.x("service npcd start")
     general.x("service httpd restart")
@@ -200,6 +229,8 @@ def _write_hosts_config_nagios(serverList):
         FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
     FILE.close()
 
+
+
 def _write_hosts_config_icinga(serverList):
     FILE = open("/etc/icinga/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
@@ -208,6 +239,8 @@ def _write_hosts_config_icinga(serverList):
         hostgroups = ",".join(str(x) for x in groups)
         FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
     FILE.close()
+    general.set_config_property("/etc/icinga/objects/hosts/switch_list.cfg", "SWITCHIP" ,config.general.get_switch_back_ip(),False)
+
 
 class host():
 

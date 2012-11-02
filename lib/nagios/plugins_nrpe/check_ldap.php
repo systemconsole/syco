@@ -2,6 +2,7 @@
 <?php
 // Checks if a user can bind with ldap (only tested on Active Directory 2003)
 // Exit Errorlevels: 0=OK, 1=Warning, 2=Critical, 3=Unknown
+error_reporting(E_ERROR | E_PARSE);
 
 // Help information
 $help = "LDAP Bind check plugin for nagios\n" .
