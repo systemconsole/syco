@@ -140,12 +140,12 @@ def _install_icinga_web():
     # Configure apache to use icinga-directory as document root
     # Let apache read .htacces-files in /usr/share/icinga-web allowoverride for documentroot (but not globally for server, i.e PNP-dir etc)
     # This will might break your http-confg if run twice or on machine with virtualhosts (hence the backup)
-    general.x("awk '/AllowOverride None/{c++;if(c==2){sub(\"AllowOverride None","AllowOverride All\");c=0}}1' /etc/httpd/conf/httpd.conf > /tmp/httpd.conf")
-    config.set_config_property("/tmp/httpd.conf","/var/www/html/","/usr/share/icinga-web/pub")
+    general.x("awk '/AllowOverride None/{c++;if(c==2){sub(\"AllowOverride None\",\"AllowOverride All\");c=0}}1' /etc/httpd/conf/httpd.conf > /tmp/httpd.conf")
+    general.set_config_property("/tmp/httpd.conf","/var/www/html","/usr/share/icinga-web/pub", False)
     general.x("mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.sycobackup")
     general.x("mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf")
     # Let icinga know its cgi-dir has changed externally
-    config.set_config_property("/usr/share/icinga-web/app/config/icinga.xml","<setting name=\"appkit.web_path\">/icinga-web</setting>","<setting name=\"appkit.web_path\">/</setting>")
+    general.set_config_property("/usr/share/icinga-web/app/config/icinga.xml","<setting name=\"appkit.web_path\">/icinga-web</setting>","<setting name=\"appkit.web_path\">/</setting>", False)
     # Harden with iptables
     iptables.add_httpd_chain()
 
