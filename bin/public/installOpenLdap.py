@@ -377,6 +377,9 @@ def create_certs():
     openssl req -noout -text -in /etc/openldap/cacerts/client.csr
 
     '''
+    # Creating certs folder
+    x("mkdir /etc/openldap/cacerts")
+
     create_ca_cert()
     create_server_cert()
     create_client_cert()
@@ -387,10 +390,6 @@ def get_cert_subj(commonName):
     Return args for openssl "-subj" option.
 
     '''
-
-    #Creating certs folder
-    x("mkdir /etc/openldap/cacerts")
-
     return "'/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s/emailAddress=%s'" % (
         config.general.get_country_name(),
         config.general.get_state(),
