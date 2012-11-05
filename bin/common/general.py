@@ -85,6 +85,18 @@ def create_install_dir():
   else:
     raise Exception("Can't create install dir.")
 
+
+def get_install_dir():
+  '''
+  Create and return the installtion tmp dir.
+
+  This dir will automatically be deleted when the script ends.
+
+  '''
+  create_install_dir()
+  return app.INSTALL_DIR
+
+
 def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
