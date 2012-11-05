@@ -112,8 +112,8 @@ def _install_icinga_core(args):
     # TODO: Figure out password management in some smart way
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
+    # Harden with iptables
     iptables.add_monitor_chain() 
-    iptables.add_httpd_chain()
     # Monitor needs to be able to check itself!
     install_nrpe(args)
     hostList = _get_host_list()
@@ -124,8 +124,6 @@ def _install_icinga_core(args):
     return True
 
 def _reload_icinga(args):
-    # Disable SELinux, will mess up httpd aliases toward /usr/lib/
-    general.x("setenforce 0")
     hostList = _get_host_list()
     #_append_services(hostList)
     _move_object_base_structure_icinga()
@@ -139,6 +137,19 @@ def _install_icinga_web():
     general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
     general.x("mysql icinga_web  < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql")
     general.x("mysql < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql")
+    # Configure apache to use icinga-directory as document root
+    # Let apache read .htacces-files in /usr/share/icinga-web allowoverride for documentroot (but not globally for server, i.e PNP-dir etc)
+    # This will might break your http-confg if run twice or on machine with virtualhosts (hence the backup)
+    general.x("awk '/AllowOverride None/{c++;if(c==2){sub(\"AllowOverride None","AllowOverride All\");c=0}}1' /etc/httpd/conf/httpd.conf > /tmp/httpd.conf")
+    config.set_config_property("/tmp/httpd.conf","/var/www/html/","/usr/share/icinga-web/pub")
+    general.x("mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.sycobackup")
+    general.x("mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf")
+    # Let icinga know its cgi-dir has changed externally
+    config.set_config_property("/usr/share/icinga-web/app/config/icinga.xml","<setting name=\"appkit.web_path\">/icinga-web</setting>","<setting name=\"appkit.web_path\">/</setting>")
+    # Harden with iptables
+    iptables.add_httpd_chain()
+
+
     return True
 
 def _install_nagios(args):
@@ -194,8 +205,10 @@ def _install_pnp4nagios(args):
     install.epel_repo()
     general.x("yum install -y pnp4nagios")
     # Pnp4 uses the nagios password file, just link it over (easier then messing around with all the CGI-bins and httpd-confs)
-    # TODO: mess around with the CGI's and httpd-conf in future release
-    general.x("ln -f /etc/icinga/passwd /etc/nagios/passwd")
+    # TODO: mess around with the CGI's and httpd-conf
+    general.x("mv /etc/nagios/passwd /etc/nagios/passwd.sycobackup")
+    general.x("rm -f /etc/nagios/passwd")
+    general.x("ln -s /etc/icinga/passwd /etc/nagios/passwd")
     general.x("yum install -y icinga-web-module-pnp") 
     general.x("cp /opt/syco/usr/syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg")
     # Package-maker forgot to create a log for process-perfdata. Goes bonkers if it can't find it
