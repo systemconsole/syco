@@ -108,7 +108,12 @@ def build_client_certs(args):
   install.package("zip")
   os.chdir("/etc/openvpn/easy-rsa/keys")
   general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
-  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf ./client.conf")
+
+  # Create client.conf
+  clientConf = "/etc/openvpn/easy-rsa/keys/client.conf"
+  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf %s" % clientConf)
+  scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
+
   x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
 
   for user in os.listdir("/home"):
