@@ -145,7 +145,7 @@ def _install_icinga_web():
     general.x("mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.sycobackup")
     general.x("mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf")
     # Let icinga know its cgi-dir has changed externally
-    general.set_config_property("/usr/share/icinga-web/app/config/icinga.xml","<setting name=\"appkit.web_path\">/icinga-web</setting>","<setting name=\"appkit.web_path\">/</setting>", False)
+    general.set_config_property("/etc/icinga-web/conf.d/icinga.xml","<setting name=\"appkit.web_path\">/icinga-web</setting>","<setting name=\"appkit.web_path\">/</setting>", False)
     # Harden with iptables
     iptables.add_httpd_chain()
 
@@ -197,6 +197,7 @@ def _install_nrpe(args):
     general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP" ,config.general.get_monitor_server(),False)
     app.print_verbose("Setting front-resolver IP to:" +config.general.get_front_resolver_ip())
     general.set_config_property("/etc/nagios/nrpe.d/common.cfg", "INTERNALDNS" ,config.general.get_front_resolver_ip(),False)
+    general.x("/sbin/chkconfig --level 3 nrpe on")
     general.x("service nrpe start")
 
 def _install_pnp4nagios(args):
@@ -218,11 +219,11 @@ def _install_pnp4nagios(args):
     general.x("chown -R icinga:icinga /var/log/pnp4nagios")
     general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
     general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
+    general.x(" /sbin/chkconfig --level 3 npcd on")
     # Restart everything
     general.x("service icinga restart")
-    general.x("service npcd start")
     general.x("service httpd restart")
-
+    general.x("service npcd restart")
 
 
 def _move_object_base_structure_nagios():
