@@ -155,7 +155,7 @@ class RemoteInstall:
 
     '''
     for hostname in self._servers:
-      if (not config.host(hostname).get_back_ip()):
+      if (not config.host(hostname).get_front_ip()):
         self._invalid_config[hostname] = "No"
         app.print_verbose("In install.cfg, cant find ip for " + hostname)
       else:
@@ -217,7 +217,7 @@ class RemoteInstall:
 
     '''
     try:
-      server = config.host(hostname).get_back_ip()
+      server = config.host(hostname).get_front_ip()
       app.print_verbose("Try to install " + hostname + " (" + server + ")", 2)
 
       obj = ssh.Ssh(server, app.get_root_password())
@@ -308,7 +308,7 @@ class RemoteInstall:
     for hostname in self._servers:
       app.print_verbose("   " +
         hostname.ljust(30) +
-        config.host(hostname).get_back_ip().ljust(15) +
+        config.host(hostname).get_front_ip().ljust(15) +
         self._get_alive(hostname).ljust(6) +
         self._get_invalid_config(hostname).ljust(13) +
         self._get_installed(hostname).ljust(10) +

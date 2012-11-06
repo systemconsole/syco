@@ -133,7 +133,7 @@ class Config(object):
 
     def get_installation_server_ip(self):
       '''The ip of the installation server.'''
-      return self.host(self.get_installation_server()).get_back_ip()
+      return self.host(self.get_installation_server()).get_front_ip()
 
     def get_front_gateway_ip(self):
       '''The ip of the network gateway.'''
@@ -180,7 +180,10 @@ class Config(object):
       Ip list of all dns resolvers that are configured on all servers.
 
       '''
-      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
+      resolvers = "{0} {1} {2}".format(
+        self.get_front_resolver_ip(), self.get_back_resolver_ip(),
+        self.get_resolv_nameserver_server_ip()
+      )
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
@@ -196,12 +199,18 @@ class Config(object):
     def get_resolv_search(self):
       return self.get_option("resolv.search")
 
+    def get_resolv_nameserver_server(self):
+      return self.get_option("resolv.nameserver.server")
+
+    def get_resolv_nameserver_server_ip(self):
+      return self.host(self.get_resolv_nameserver_server()).get_front_ip()
+
     def get_ldap_server(self):
       '''The hostname of the ldap server.'''
       return self.get_option("ldap.server")
 
     def get_ldap_server_ip(self):
-      return self.host(self.get_ldap_server()).get_back_ip()
+      return self.host(self.get_ldap_server()).get_front_ip()
 
     def get_ldap_hostname(self):
       return self.get_option("ldap.hostname")
@@ -221,7 +230,7 @@ class Config(object):
       return self.get_option("ntp.server")
 
     def get_ntp_server_ip(self):
-      return self.host(self.get_ntp_server()).get_back_ip()
+      return self.host(self.get_ntp_server()).get_front_ip()
 
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
