@@ -454,3 +454,14 @@ if __name__ == "__main__":
   download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
   os.chdir("/tmp/install")
   print shell_exec("ls -alvh")
+
+
+def md5checksum(filePath):
+    fh = open(filePath, 'rb')
+    m = hashlib.md5()
+    while True:
+        data = fh.read(8192)
+        if not data:
+            break
+        m.update(data)
+    return m.hexdigest()

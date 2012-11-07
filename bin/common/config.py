@@ -284,6 +284,9 @@ class Config(object):
     def get_log_server_hostname(self):
       return self.get_option("log.hostname")
 
+    def get_log_server_hostname2(self):
+       return self.get_option("log.hostname2")
+
     def get_openvpn_network(self):
       '''The network range of the ips givven to openvpn clients.'''
       return str(self.get_option("openvpn.network"))
@@ -292,14 +295,8 @@ class Config(object):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
 
-    def get_logg_server(self):
-      return self.get_option("logg.server")
-
     def get_ossec_server_ip(self):
       return self.get_option("ossec.server_ip")
-
-    def get_logg_server2(self):
-      return self.get_option("logg.server2")
 
 
   class HostConfig(SycoConfig):
