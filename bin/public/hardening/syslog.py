@@ -6,6 +6,8 @@ Setup syslog - part of the hardening.
 - If vsftp is installed set to log user actions.
 - Connect syslog to send all logs to syslog server.
 
+
+@TODO: Move to install-rsyslogd.
 '''
 
 __author__ = "mattias@fareoffice.com"

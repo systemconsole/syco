@@ -133,7 +133,7 @@ class Config(object):
 
     def get_installation_server_ip(self):
       '''The ip of the installation server.'''
-      return self.host(self.get_installation_server()).get_back_ip()
+      return self.host(self.get_installation_server()).get_front_ip()
 
     def get_front_gateway_ip(self):
       '''The ip of the network gateway.'''
@@ -142,6 +142,14 @@ class Config(object):
     def get_back_gateway_ip(self):
       '''The ip of the network gateway.'''
       return self.get_option("back.gateway")
+
+    def get_front_network(self):
+      '''The front network (ie. 10.100.10.0).'''
+      return self.get_option("front.network")
+
+    def get_back_network(self):
+      '''The back network (ie. 10.100.10.0).'''
+      return self.get_option("back.network")
 
     def get_front_netmask(self):
       '''The netmask of the front network.'''
@@ -172,7 +180,10 @@ class Config(object):
       Ip list of all dns resolvers that are configured on all servers.
 
       '''
-      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
+      resolvers = "{0} {1} {2}".format(
+        self.get_front_resolver_ip(), self.get_back_resolver_ip(),
+        self.get_resolv_nameserver_server_ip()
+      )
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
@@ -188,12 +199,18 @@ class Config(object):
     def get_resolv_search(self):
       return self.get_option("resolv.search")
 
+    def get_resolv_nameserver_server(self):
+      return self.get_option("resolv.nameserver.server")
+
+    def get_resolv_nameserver_server_ip(self):
+      return self.host(self.get_resolv_nameserver_server()).get_front_ip()
+
     def get_ldap_server(self):
       '''The hostname of the ldap server.'''
       return self.get_option("ldap.server")
 
     def get_ldap_server_ip(self):
-      return self.host(self.get_ldap_server()).get_back_ip()
+      return self.host(self.get_ldap_server()).get_front_ip()
 
     def get_ldap_hostname(self):
       return self.get_option("ldap.hostname")
@@ -213,7 +230,7 @@ class Config(object):
       return self.get_option("ntp.server")
 
     def get_ntp_server_ip(self):
-      return self.host(self.get_ntp_server()).get_back_ip()
+      return self.host(self.get_ntp_server()).get_front_ip()
 
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
@@ -248,19 +265,13 @@ class Config(object):
       '''The hostname of the cert server.'''
       return self.get_option("cert.wild.key")
 
-    def get_mysql_primary_master(self):
-      return self.get_option("mysql.primary_master")
-
     def get_mysql_primary_master_ip(self):
       '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_primary_master()).get_back_ip()
-
-    def get_mysql_secondary_master(self):
-      return self.get_option("mysql.secondary_master")
+      return self.get_option("mysql.primary_master_ip")
 
     def get_mysql_secondary_master_ip(self):
-      '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_secondary_master()).get_back_ip()
+      '''IP or hostname for secondary mysql server.'''
+      return self.get_option("mysql.secondary_master_ip")
 
     def get_country_name(self):
       return self.get_option("country_name")
@@ -282,6 +293,21 @@ class Config(object):
 
     def get_log_server_hostname(self):
       return self.get_option("log.hostname")
+
+    def get_log_server_hostname2(self):
+       return self.get_option("log.hostname2")
+
+    def get_openvpn_network(self):
+      '''The network range of the ips givven to openvpn clients.'''
+      return str(self.get_option("openvpn.network"))
+
+    def get_openvpn_hostname(self):
+      '''The domain name used to access the vpn from internet.'''
+      return str(self.get_option("openvpn.hostname"))
+
+    def get_ossec_server_ip(self):
+      return self.get_option("ossec.server_ip")
+
 
   class HostConfig(SycoConfig):
     '''

@@ -53,9 +53,9 @@ GLASSFISH_DOMAINS_PATH = GLASSFISH_INSTALL_PATH + "glassfish/domains/"
 JAVA_TEMP_PATH = GLASSFISH_INSTALL_PATH + "tmp"
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-6u30-linux-x64-rpm.bin"
-JDK_REPO_URL     = "http://%s/cobbler/fareoffice-repo/%s" % (config.general.get_installation_server_ip(), JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_30"
+JDK_INSTALL_FILE = "jdk-6u37-linux-x64-rpm.bin"
+JDK_REPO_URL     = "http://download.oracle.com/otn-pub/java/jdk/6u37-b06/%s" % (JDK_INSTALL_FILE)
+JDK_INSTALL_PATH = "/usr/java/jdk1.6.0_37"
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
@@ -254,7 +254,8 @@ def _install_jdk():
   if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.download_file(JDK_REPO_URL, user="glassfish")
+      general.download_file(JDK_REPO_URL, user="glassfish", cookie="gpw_e24=http%3A%2F%2Fwww.oracle.com%2F")
+
       x("chmod u+rx " + JDK_INSTALL_FILE)
 
     if (os.access(JDK_INSTALL_FILE, os.F_OK)):

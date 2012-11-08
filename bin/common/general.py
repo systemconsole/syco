@@ -59,6 +59,7 @@ def delete_install_dir():
   Delete the folder where installation files are stored during installation.
 
   '''
+  return
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
     os.chdir("/tmp")
@@ -85,7 +86,19 @@ def create_install_dir():
   else:
     raise Exception("Can't create install dir.")
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
+
+def get_install_dir():
+  '''
+  Create and return the installtion tmp dir.
+
+  This dir will automatically be deleted when the script ends.
+
+  '''
+  create_install_dir()
+  return app.INSTALL_DIR
+
+
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -104,6 +117,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
     if (remote_password):
       cmd += " --password=\"" + remote_password + "\""
+
+    if (cookie):
+      cmd += ' --no-cookies --header "Cookie: %s"' % cookie
 
     shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
@@ -134,8 +150,10 @@ def urlretrive(src_url, dst_filename):
 
   return dst_path
 
-
-def generate_password(length=8, chars=string.letters + string.digits):
+# Restricted version of string.punctuation, has removed some "dangerous" chars,
+# that might crash some scripts if not properly escaped.
+punctuation = '!#$%()*+,-./:;<=>?@[\]^_{|}~'
+def generate_password(length=8, chars=string.letters + string.digits + punctuation):
   '''Generate a random password'''
   return ''.join([choice(chars) for i in range(length)])
 
@@ -439,3 +457,14 @@ if __name__ == "__main__":
   download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
   os.chdir("/tmp/install")
   print shell_exec("ls -alvh")
+
+
+def md5checksum(filePath):
+    fh = open(filePath, 'rb')
+    m = hashlib.md5()
+    while True:
+        data = fh.read(8192)
+        if not data:
+            break
+        m.update(data)
+    return m.hexdigest()

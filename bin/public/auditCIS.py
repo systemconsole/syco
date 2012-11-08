@@ -861,11 +861,8 @@ def section_1_6():
     #
     print_header("4.4.1 Disable IPv6")
     result = x('grep ipv6 /etc/modprobe.d/*')
-    if len(result) != 2:
-        test_status = "[ERROR]"
-    else:
-        assert_contains(result[0], "alias ipv6 off")
-        assert_contains(result[1], 'options ipv6 "disable=1"')
+    rows_contains('grep ipv6 /etc/modprobe.d/*', 'options ipv6 disable=1')
+    rows_contains('grep net-pf-10 /etc/modprobe.d/*', 'alias net-pf-10 off')
 
     #
     print_header("4.4.2 Configure IPv6")
