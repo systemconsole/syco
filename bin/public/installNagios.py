@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Installation procedures for the data-centers at Availo and Telecity Sköndal. 
+Installation procedures for the data-centers at Availo and Telecity Skondal. 
 
 Icinga is a fork of nagios which features a nicer web-interface, and some incremental functionality.
 Icinga new web is the "bells and whistles" front end to icinga. 
@@ -111,11 +111,6 @@ def _get_host_list():
             serverList.append(host(server, config.host(server).get_front_ip(),"virtual_guest"))
     return serverList
 
-def _install_plugins():
-    # These are plugins for the Icinga-server, no need for install on hosts. 
-    general.x("chmod +x /opt/syco/lib/nagios/plugins_snmp/*")
-    general.x("cp -p /opt/syco/lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/")
-
 def _install_icinga_core(args):
     """
     Core installation is decently straightforward. Icinga-bins are downloaded from the EPEL-repo and and SQL-db is created
@@ -144,7 +139,7 @@ def _install_icinga_core(args):
     #_append_services(hostList)
     _move_object_base_structure_icinga()
     _write_hosts_config_icinga(hostList)
-    _install_plugins()
+    _install_server_plugins()
     return True
 
 def _reload_icinga(args):
@@ -152,10 +147,13 @@ def _reload_icinga(args):
     #_append_services(hostList)
     _move_object_base_structure_icinga()
     _write_hosts_config_icinga(hostList)
-    _install_plugins()
+    _install_server_plugins()
     return True
 
 def _install_icinga_web():
+    """
+    This installs the icinga web module. Only source of complexity is moking icinga accessible frmo the document root. 
+    """
     general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
     general.x("yum install -y icinga-web")
     general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
@@ -208,38 +206,45 @@ def _install_nrpe(args):
     general.x("rm -rf /etc/nagios/nrpe.cfg")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
     general.x("cp /opt/syco/usr/syco-private/var/nagios/nrpe.cfg /etc/nagios/")
-    general.x("chmod +x /opt/syco/lib/nagios/plugins_nrpe/*")
     # Extra plugins installed
-    general.x("cp -p /opt/syco/lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/")
+    _install_nrpe_plugins()
     app.print_verbose("Setting monitor server:" + config.general.get_monitor_server())
+    # Allow only monitor to query NRPE
     general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP" ,config.general.get_monitor_server(),False)
     app.print_verbose("Setting front-resolver IP to:" +config.general.get_front_resolver_ip())
+    # Figure out what servers to query. 
     general.set_config_property("/etc/nagios/nrpe.d/common.cfg", "INTERNALDNS" ,config.general.get_front_resolver_ip(),False)
     general.x("/sbin/chkconfig --level 3 nrpe on")
     general.x("service nrpe start")
 
+def _install_server_plugins():
+    # These are plugins for the Icinga-server, no need for install on hosts. 
+    general.x("chmod +x /opt/syco/lib/nagios/plugins_snmp/*")
+    general.x("cp -p /opt/syco/lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/")
+
+
 def _install_pnp4nagios(args):
     '''
     PNP4Nagios is design to work with Nagios - some hacking is needed to make it play nice with icinga, especially with file permissions
-    creating files that the EPEL-package has missed. PNP4Nagios uses the NPCD-daemon to spool data from Icinga to Round Robin Databases. 
+    creating files that the EPEL-package has missed. PNP4Nagios uses the NPCD-daemon to spool data from Icinga to Round Robin Databases. I.e 
+    using bulk mode, see http://docs.pnp4nagios.org/_detail/bulk.png
+
     '''
-    # Using bulk mode, see http://docs.pnp4nagios.org/_detail/bulk.png?id=pnp-0.6%3Aconfig
     # Get packages from epel repo
     install.epel_repo()
-    general.x("yum install -y pnp4nagios")
-    # Pnp4 uses the nagios password file, so we symlink it to the icinga htpassword file for now. 
-    # TODO: mess around with the CGI's and httpd-conf so this is reolved in a better manner. 
-    general.x("mv /etc/nagios/passwd /etc/nagios/passwd.sycobackup")
-    general.x("ln -s /etc/icinga/passwd /etc/nagios/passwd")
-    general.x("yum install -y icinga-web-module-pnp") 
+    general.x("yum install -y pnp4nagios icinga-web-module-pnp")
+    # Pnp4 uses the nagios password file, which will not exist
+    general.set_config_property("/etc/httpd/conf.d/pnp4nagios.conf","AuthName \"Nagios Access\"","AuthName \"Icinga Access\"", False)
+    general.set_config_property("/etc/httpd/conf.d/pnp4nagios.conf","AuthUserFile /etc/nagios/passwd","AuthUserFile /etc/icinga/passwd",False)
+    # NPCD config prepped to work with icinga instead of nagios
     general.x("cp /opt/syco/usr/syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg")
     # Package-maker forgot to create a log for process-perfdata. PBP goes bonkers if it can't find it
     general.x("touch /var/log/pnp4nagios/perfdata.log")
-    # Since we are using icinga we need to change permissions. 
-    # Todo: skip this and just 
-    general.x("chown -R icinga:icinga /var/log/pnp4nagios")
-    general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
-    general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
+    # Since we are using icinga (not nagios) we need to change permissions. 
+    general.x("usermod -a -G nagios icinga")
+    #general.x("chown -R icinga:icinga /var/log/pnp4nagios")
+    #general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
+    #general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
     # Set npcd (bulk parser/spooler) to auto-start 
     general.x(" /sbin/chkconfig --level 3 npcd on")
     # Restart everything
@@ -247,12 +252,24 @@ def _install_pnp4nagios(args):
     general.x("service httpd restart")
     general.x("service npcd restart")
 
+
+def _install_nrpe_plugins():
+    general.x("chmod +x /opt/syco/lib/nagios/plugins_nrpe/*")
+    general.x("cp -p /opt/syco/lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/")
+
+
 def _move_object_base_structure_icinga():
+    """
+    Clear the icinga example object fiels. Move the icinga prepped icinga base structure from syco-private to /etc/icinga/ . 
+    """
     general.x("rm -rf /etc/icinga/objects/*")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
 
 
 def _write_hosts_config_icinga(serverList):
+    """
+    We open the nagios host-config file and formatted string for every host in the serverList that has been prepped previously. 
+    """
     FILE = open("/etc/icinga/objects/hosts/virtual_host_list.cfg", "w+")
     for host in serverList:
         groups = host.services
