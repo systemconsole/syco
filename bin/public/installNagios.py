@@ -14,11 +14,14 @@ PNP4Nagios handles graphing of Nagios/Icinga performance data and is integrated 
 import app
 import config
 import general
+from general import generate_password, get_install_dir
 import re
+import os
 import iptables
 import install
-import installMysql
 import version
+import mysqlUtils
+from installMysql import install_mysql, mysql_exec
 
 
 __author__ = "elis.kullberg@netlight.com"
@@ -38,7 +41,6 @@ def build_commands(commands):
     commands.add("reload-icinga", reload_icinga, help="Reloads the icinga object structure.")
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
     commands.add("install-pnp4nagios", install_pnp4nagios, help="Install PNP4Nagios.")
-
 
 def install_icinga(args):
     '''
@@ -123,14 +125,22 @@ def _install_icinga_core(args):
     install.rforge_repo()
     # Install packages
     general.x("yum -y install icinga icinga-gui icinga-doc icinga-idoutils-libdbi-mysql nagios-plugins-all nagios-plugins-nrpe")
-    general.x("yum -y install mysql-server mysql-client libdbi1 libdbi-dev libdbd-mysql")
-    general.x("service mysqld start")
+    #general.x("yum -y install mysql-server mysql-client libdbi1 libdbi-dev libdbd-mysql")
+    #general.x("service mysqld start")
     # Create database with icinga user
-    general.x("mysql < /opt/syco/var/icinga/icinga_db_create")
-    general.x("mysql icinga < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql")
-    # TODO: Figure out password management in some smart way
+    app.init_mysql_passwords()
+    if not os.path.exists('/etc/init.d/mysqld'):
+        install_mysql(["","1","1G"])
+    sqlpassword = generate_password(20)
+    mysqlUtils.drop_user('icinga')
+    mysqlUtils.create_user('icinga', sqlpassword, 'icinga')
+    general.x("mysql icinga --user={0} --password={1} -e 'CREATE DATABASE icinga'".format("icinga",sqlpassword))
+    general.x("mysql icinga --user={0} --password={1} < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql".format("icinga",sqlpassword))
+    general.set_config_property("/etc/icinga/ido2db.cfg","db_pass=icinga","db_pass={0}".format(sqlpassword), False)
+    # TODO: Password management for legacy GUI
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
+    
     # Harden with iptables
     iptables.add_monitor_chain() 
     # Monitor needs to be able to check itself!
@@ -156,9 +166,16 @@ def _install_icinga_web():
     """
     general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
     general.x("yum install -y icinga-web")
-    general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
-    general.x("mysql icinga_web  < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql")
-    general.x("mysql < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql")
+    #general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
+    sqlpassword = generate_password(20)
+    mysqlUtils.create_user('icinga-web', sqlpassword, 'icinga_web')
+    general.x("mysql --user={0} --password={1} -e 'CREATE DATABASE icinga_web'".format("icinga-web",sqlpassword))
+    general.x("mysql icinga_web  --user={0} --password={1} < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql".format("icinga-web",sqlpassword))
+    general.x("mysql --user={0} --password={1} < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql".format("icinga-web",sqlpassword))
+    general.set_config_property("/tmp/httpd.conf","/var/www/html","/usr/share/icinga-web/pub", False)
+    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga_web:icinga_web","mysql://icinga-web:{0}".format(sqlpassword), False)
+    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga:icinga","mysql://icinga:{0}".format(sqlpassword), False)
+    general.x("/usr/bin/icinga-web-clearcache")
     # Configure apache to use icinga-directory as document root
     # Let apache read .htacces-files in /usr/share/icinga-web allowoverride for documentroot (but not globally for server, i.e PNP-dir etc)
     # This will might break your http-confg if run twice or on machine with virtualhosts (hence the backup)
@@ -172,6 +189,7 @@ def _install_icinga_web():
     general.set_config_property("/etc/sysconfig/selinux", "SELINUX=enforcing", "SELINUX=permissive")
     general.x("/sbin/chkconfig --level 3 httpd on")
     general.x("/sbin/chkconfig --level 3 mysqld on")
+    general.x("/sbin/chkconfig --level 3 ido2db on")
     # Harden with iptables-chain
     iptables.add_httpd_chain()
     return True
@@ -185,10 +203,10 @@ def _install_icinga(args):
     '''
     _install_icinga_core(args)
     _install_icinga_web()  
-    general.x("service ido2db start")
-    general.x("service nrpe start")
-    general.x("service icinga start")
-    general.x("service httpd start")
+    general.x("service ido2db restart")
+    general.x("service nrpe restart")
+    general.x("service icinga restart")
+    general.x("service httpd restart")
     return True
 
 def _install_nrpe(args):
