@@ -59,6 +59,7 @@ def delete_install_dir():
   Delete the folder where installation files are stored during installation.
 
   '''
+  return
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
     os.chdir("/tmp")
@@ -149,8 +150,10 @@ def urlretrive(src_url, dst_filename):
 
   return dst_path
 
-
-def generate_password(length=8, chars=string.letters + string.digits):
+# Restricted version of string.punctuation, has removed some "dangerous" chars,
+# that might crash some scripts if not properly escaped.
+punctuation = '!#$%()*+,-./:;<=>?@[\]^_{|}~'
+def generate_password(length=8, chars=string.letters + string.digits + punctuation):
   '''Generate a random password'''
   return ''.join([choice(chars) for i in range(length)])
 

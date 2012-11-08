@@ -2,32 +2,34 @@
 '''
 Install of rsyslog server with mysql backend
 
-Install rsyslog server and set up tls server on tcp port 514 and unecrypted loggnin on udp 514.
+Install rsyslog server and set up tls server on tcp port 514 and unecrypted
+logning on udp 514.
 
-[Logging to]
-Loggs are the saved to an mysql database Syslog.
-And to files strukture in /var/log/remote/year/month/day/servername
+NOTE: Client certs need to be regenerated once year.
 
-[Newcerts]
-installation can generat certs for rsyslog clinet if run with the newcerts arguments.
-Certs are saved in /etc/pki/rsyslog folder.
+LOGGING TO
+Logs are saved to an mysql database Syslog. And to files structure in
+/var/log/remote/year/month/day/servername
 
-Clients can then collect their certs from that location.
+NEW CERTS
+$ syco install-rsyslogd-newcerts
+Installation can generate certs for rsyslog client. Certs are stored in
+/etc/pki/rsyslog folder.
 
-[Configfiles]
-rsyslog.d config files are located in syco/var/rsyslog/ folder
-template used for generating certs are located in /syco/var/rsyslog/template.ca and templat.server
+Clients can then get their certs from that location.
 
+CONFIG FILES
+rsyslog.d config files are located in syco/var/rsyslog/ folder. Template used
+for generating certs are located in /syco/var/rsyslog/template.ca and
+template.server
 
-[More reading]
+READING
 http://www.rsyslog.com/doc/rsyslog_tls.html
 http://www.rsyslog.com/doc/rsyslog_mysql.html
 
-
-
 '''
 
-__author__ = "matte@elino.se"
+__author__ = "matte@elino.se, daniel@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
@@ -37,164 +39,196 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import shutil
-import stat
-import sys
-import time
-import traceback
-import config
-from installMysql import install_mysql
-from config import get_servers, host
-import socket
 
-
-
-import app
+from config import get_servers
+from general import generate_password, get_install_dir
 from general import x
-from general import generate_password
+from installMysql import install_mysql, mysql_exec
+from scopen import scOpen
+import app
+import config
 import general
-import version
+import mysqlUtils
 import net
+import version
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
-script_version = 2
+
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
+SCRIPT_VERSION = 2
+
 
 def build_commands(commands):
-  '''
-  Defines the commands that can be executed through the syco.py shell script.
+    '''
+    Defines the commands that can be executed through the syco.py shell script.
 
-  '''
-  commands.add("install-rsyslogd", install_rsyslogd, help="Install Rsyslog server")
-  commands.add("uninstall-rsyslogd", uninstall_rsyslogd, help="uninstall rsyslog server and all certs on the server.")
-  commands.add("install-rsyslogd-newcerts", rsyslog_newcerts, help="Generats new cert for rsyslogd")
+    '''
+    commands.add("install-rsyslogd",          install_rsyslogd,   help="Install Rsyslog server.")
+    commands.add("uninstall-rsyslogd",        uninstall_rsyslogd, help="Uninstall rsyslog server and all certs on the server.")
+    commands.add("install-rsyslogd-newcerts", rsyslog_newcerts,   help="Generats new cert for rsyslogd clients.")
+
 
 def install_rsyslogd(args):
-  '''
-  Install rsyslog serverin the server
+    '''
+    Install rsyslogd on the server.
 
-  '''
-  #Setting upp syco dependis
-  args=["","1","2G"]
-  print args
+    '''
+    app.print_verbose("Install rsyslogd.")
+    version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
+    version_obj.check_executed()
 
-  #install_mysql(args)
+    # Initialize all passwords used by the script
+    app.init_mysql_passwords()
 
+    # Setup syco dependencies.
+    if not os.path.exists('/etc/init.d/mysqld'):
+        install_mysql(["","1","1G"])
 
+    # Installing packages
+    if not os.path.exists('/etc/init.d/rsyslog'):
+        x("yum install rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils -y")
 
-  # Installing packages
-  x("yum install rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils -y")
+    # Autostart rsyslog at boot
+    x("chkconfig rsyslog on")
 
-  #Making them start at boot
-  x("chkconfig --add rsyslog")
-  x("chkconfig --add mysqld")
-  x("chkconfig rsyslog on")
-  x("chkconfig mysqld on")
+    # Generation new certs if no certs exsists
+    if not os.path.exists('/etc/pki/rsyslog/ca.crt'):
+        rsyslog_newcerts(args)
 
-  #Getting argument from command line
-  #master = setting upp master server
-  #slave = setting upp slave server
+    sql_password = generate_password(20)
+    _setup_database(sql_password)
+    _setup_rsyslogd(sql_password)
 
-
-  #Generation new certs if no certs exsists
-  if not os.path.exists('/etc/pki/rsyslog/ca.pem'):
-    rsyslog_newcerts()
-
-  #Setting upp install dirs
-  general.create_install_dir()
-
-  #Coping config files
-  x("\cp -f /opt/syco/var/rsyslog/initdb.sql "+app.INSTALL_DIR+"initdb.sql")
-  x("\cp -f /opt/syco/var/rsyslog/rsyslogd.conf "+app.INSTALL_DIR+"rsyslog.conf" )
-
-  # Initialize all passwords used by the script
-  app.init_mysql_passwords()
-
-  #Generating syslog user mysql passwors
-  sqlpassword=generate_password(10,"jkshdkuiyuiwehdpooads8979878378yedhjcjsdgfdsjhgchjdsj")
-
-  #applying sql password
-  x("sed -i 's/SQLPASSWORD/"+sqlpassword+"/g' "+app.INSTALL_DIR+"initdb.sql")
-  x("sed -i 's/SQLPASSWORD/"+sqlpassword+"/g' "+app.INSTALL_DIR+"rsyslog.conf")
-  x("sed -i 's/SERVERNAME/"+net.get_hostname()+"."+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"rsyslog.conf")
-  x("sed -i 's/DOMAIN/"+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"rsyslog.conf")
-
-  # Setting upp Databas connections and rsyslog config
-  x("mysql -h127.0.0.1 -u root -p'"+app.get_mysql_root_password()+"' -e 'CREATE DATABASE Syslog;'"  )
-  x("mysql -u root -p'"+app.get_mysql_root_password()+"' Syslog< "+app.INSTALL_DIR+"initdb.sql")
-  x("\cp -f "+app.INSTALL_DIR+"rsyslog.conf /etc/rsyslog.conf")
-
-  #Fix up
-  x("mkdir /var/log/remote")
+    # Restarting service
+    x("/etc/init.d/rsyslog restart")
+    version_obj.mark_executed()
 
 
-  #Restarting service
-  x("/etc/init.d/mysqld restart")
-  x("/etc/init.d/rsyslog restart")
+def _setup_database(sql_password):
+    '''
+    Configure database for rsyslog
+
+    '''
+    mysqlUtils.drop_user('rsyslogd')
+    mysqlUtils.create_user('rsyslogd', sql_password, 'syslog')
+
+    mysql_exec("\. {0}rsyslog/initdb.sql".format(app.SYCO_VAR_PATH), 'root')
 
 
+def _setup_rsyslogd(sql_password):
+    '''
+    Setup rsyslogd config files.
+
+    '''
+    x("cp -f /opt/syco/var/rsyslog/rsyslogd.conf /etc/rsyslog.conf")
+    sc = scOpen("/etc/rsyslog.conf")
+    sc.replace('${SQLPASSWORD}', sql_password)
+    sc.replace('${SERVERNAME}', '{0}.{1}'.format(
+        net.get_hostname(), config.general.get_resolv_domain())
+    )
+    sc.replace('${DOMAIN}', config.general.get_resolv_domain())
+
+    # Setup folder to store logs from clients.
+    x("mkdir /var/log/remote")
+    x("restorecon /var/log/remote")
 
 
 def rsyslog_newcerts(args):
-  '''
-  Script to generate new tls certs for rsyslog server and all klients.
-  got to run one every year.
-  Will get servers name from install.cfg and generat tls certs for eatch server listed.
-  '''
-  x("mkdir /etc/pki/rsyslog")
-  hostname = net.get_hostname()+"."+config.general.get_resolv_domain()
+    '''
+    Generate new tls certs for rsyslog server and all clients defined in install.cfg.
 
-  #Coping certs templatet
-  x("\cp -f /opt/syco/var/rsyslog/template.ca "+app.INSTALL_DIR+"template.ca" )
-  x("sed -i 's/SERVERNAME/"+net.get_hostname()+"."+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"template.ca")
-  x("sed -i 's/DOMAIN/"+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"template.ca")
+    NOTE: This needs to be executed once a year.
 
+    '''
+    x("mkdir -p /etc/pki/rsyslog")
 
-  #Making CA
-  x("certtool --generate-privkey --outfile /etc/pki/rsyslog/ca-key.pem")
-  x("certtool --generate-self-signed --load-privkey /etc/pki/rsyslog/ca-key.pem --outfile /etc/pki/rsyslog/ca.pem --template "+app.INSTALL_DIR+"template.ca")
+    # Copy certs template
+    template_ca = "{0}template.ca".format(get_install_dir())
+    x("cp -f /opt/syco/var/rsyslog/template.ca {0}".format(template_ca))
 
+    hostname = "{0}.{1}".format(net.get_hostname(), config.general.get_resolv_domain())
+    _replace_tags(template_ca, hostname)
 
-  #Making rsyslog SERVER cert
-  x("\cp -f /opt/syco/var/rsyslog/template.server "+app.INSTALL_DIR+"template."+hostname)
-  x("sed -i 's/SERVERNAME/"+hostname+"/g' "+app.INSTALL_DIR+"template."+hostname)
-  x("sed -i 's/SERIAL/1/g' "+app.INSTALL_DIR+"template."+hostname)
-  x("sed -i 's/DOMAIN/"+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"template."+hostname)
+    # Making CA
+    x("certtool --generate-privkey --outfile /etc/pki/rsyslog/ca.key")
+    x("certtool --generate-self-signed --load-privkey /etc/pki/rsyslog/ca.key "+
+      "--outfile /etc/pki/rsyslog/ca.crt " +
+      "--template {0}".format(template_ca)
+    )
 
-
-
-
-  x("certtool --generate-privkey --outfile /etc/pki/rsyslog/"+hostname+"-key.pem")
-  x("certtool --generate-request --load-privkey /etc/pki/rsyslog/"+hostname+"-key.pem --outfile /etc/pki/rsyslog/"+hostname+"-req.pem --template "+app.INSTALL_DIR+"template."+hostname)
-  x("certtool --generate-certificate --load-request /etc/pki/rsyslog/"+hostname+"-req.pem --outfile /etc/pki/rsyslog/"+hostname+"-cert.pem \
-    --load-ca-certificate /etc/pki/rsyslog/ca.pem --load-ca-privkey /etc/pki/rsyslog/ca-key.pem --template "+app.INSTALL_DIR+"template."+hostname)
-
-  #Making serialgenerate_password
-  serial=2
-  for server in get_servers():
-
-    app.print_verbose("Generating tls certs for rsyslog client "+server)
-    x("\cp -f /opt/syco/var/rsyslog/template.server "+app.INSTALL_DIR+"/template."+server)
-    x("sed -i 's/SERVERNAME/"+server+"."+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"template."+server)
-    x("sed -i 's/SERIAL/"+str(serial)+"/g' "+app.INSTALL_DIR+"template."+server)
-    x("sed -i 's/DOMAIN/"+config.general.get_resolv_domain()+"/g' "+app.INSTALL_DIR+"template."+server)
-
-    x("certtool --generate-privkey --outfile /etc/pki/rsyslog/"+server+"."+config.general.get_resolv_domain()+"-key.pem")
-    x("certtool --generate-request --load-privkey /etc/pki/rsyslog/"+server+"."+config.general.get_resolv_domain()+"-key.pem --outfile /etc/pki/rsyslog/"+server+"."+config.general.get_resolv_domain()+"-req.pem --template "+app.INSTALL_DIR+"template."+server)
-    x("certtool --generate-certificate --load-request /etc/pki/rsyslog/"+server+"."+config.general.get_resolv_domain()+"-req.pem --outfile /etc/pki/rsyslog/"+server+"."+config.general.get_resolv_domain()+"-cert.pem \
-        --load-ca-certificate /etc/pki/rsyslog/ca.pem --load-ca-privkey /etc/pki/rsyslog/ca-key.pem --template "+app.INSTALL_DIR+"template."+server)
-    serial=serial+1
+    #
+    # Create rsyslog SERVER cert
+    #
+    for server in get_servers():
+        _create_cert(server)
 
 
+def _create_cert(hostname):
+    '''
+    Create certificate for one rsyslog client.
+
+    '''
+    fqdn = "{0}.{1}".format(hostname, config.general.get_resolv_domain())
+    app.print_verbose("Create cert for host: {0}".format(fqdn))
+
+    template_server = "{0}template.{1}".format(get_install_dir(), fqdn)
+    x("cp -f /opt/syco/var/rsyslog/template.server {0}".format(template_server))
+    _replace_tags(template_server, fqdn)
+
+    # Create key
+    x("certtool --generate-privkey " +
+      "--outfile /etc/pki/rsyslog/{0}.key".format(fqdn)
+    )
+
+    # Create cert
+    x("certtool --generate-request " +
+      "--load-privkey /etc/pki/rsyslog/{0}.key ".format(fqdn) +
+      "--outfile /etc/pki/rsyslog/{0}.csr ".format(fqdn) +
+      "--template {0}".format(template_server)
+    )
+
+    # Sign cert
+    x("certtool --generate-certificate " +
+      "--load-request /etc/pki/rsyslog/{0}.csr ".format(fqdn) +
+      "--outfile /etc/pki/rsyslog/{0}.crt ".format(fqdn) +
+      "--load-ca-certificate /etc/pki/rsyslog/ca.crt " +
+      "--load-ca-privkey /etc/pki/rsyslog/ca.key " +
+      "--template {0}".format(template_server)
+    )
+
+
+def _replace_tags(filename, fqdn):
+    '''
+    Replace all tags in template files with apropriate values.
+
+    '''
+    sc = scOpen(filename)
+    sc.replace('${ORGANIZATION}', config.general.get_organization_name())
+    sc.replace('${UNIT}', config.general.get_organizational_unit_name())
+    sc.replace('${LOCALITY}', config.general.get_locality())
+    sc.replace('${STATE}', config.general.get_state())
+    sc.replace('${COUNTRY}', config.general.get_country_name())
+    sc.replace('${CN}', fqdn)
+    sc.replace('${DNS_NAME}', fqdn)
+    sc.replace('${EMAIL}', config.general.get_admin_email())
+    sc.replace('${SERIAL}', _get_serial())
+
+
+def _get_serial():
+    '''
+    Return a unique (autoinc) serial number that are used in template files.
+
+    '''
+    _get_serial.serial = _get_serial.serial + 1
+    return str(_get_serial.serial)
+_get_serial.serial = 0
 
 
 def uninstall_rsyslogd(args):
-  '''
-  Remove Rsyslogd server from the server
+    '''
+    Remove Rsyslogd server from the server
 
-  '''
-  return
-  app.print_verbose("Uninstall Rsyslogd SERVER")
-  x("yum erase rsyslog")
-  x("rm -rf /etc/pki/rsyslog")
+    '''
+    app.print_verbose("Uninstall Rsyslogd SERVER")
+    x("yum erase rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils")
+    x("rm -rf /etc/pki/rsyslog")

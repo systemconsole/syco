@@ -1,5 +1,7 @@
-CREATE DATABASE IF NOT EXISTS Syslog;
-USE Syslog;
+CREATE DATABASE IF NOT EXISTS syslog;
+
+USE syslog;
+
 CREATE TABLE IF NOT EXISTS SystemEvents
 (
         ID int unsigned not null auto_increment primary key,
@@ -35,14 +37,3 @@ CREATE TABLE IF NOT EXISTS SystemEventsProperties
         ParamName varchar(255) NULL ,
         ParamValue text NULL
 );
-
-
-delete from mysql.user where user="rsyslogd";
-delete from mysql.db where User="rsyslogd";
-
-FLUSH PRIVILEGES;
-CREATE USER 'rsyslogd'@'localhost' IDENTIFIED BY 'sagdtgghgs6gs';
-GRANT ALL PRIVILEGES ON Syslog.* TO 'rsyslogd'@'localhost';
-FLUSH PRIVILEGES;
-
-
