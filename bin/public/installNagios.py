@@ -167,7 +167,7 @@ def _install_icinga_web():
     general.x("mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.sycobackup")
     general.x("mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf")
     # Let icinga know its cgi-dir has changed externally
-    general.set_config_property("/etc/icinga-web/conf.d/icinga.xml","<!--","<setting name=\"appkit.web_path\">/</setting><!--", False)
+    #general.set_config_property("/etc/icinga-web/conf.d/icinga.xml","<!--","<setting name=\"appkit.web_path\">/</setting><!--", False)
     # Make install stateful
     general.set_config_property("/etc/sysconfig/selinux", "SELINUX=enforcing", "SELINUX=permissive")
     general.x("/sbin/chkconfig --level 3 httpd on")
@@ -241,10 +241,10 @@ def _install_pnp4nagios(args):
     # Package-maker forgot to create a log for process-perfdata. PBP goes bonkers if it can't find it
     general.x("touch /var/log/pnp4nagios/perfdata.log")
     # Since we are using icinga (not nagios) we need to change permissions. 
-    general.x("usermod -a -G nagios icinga")
-    #general.x("chown -R icinga:icinga /var/log/pnp4nagios")
-    #general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
-    #general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
+    # Tried just adding icinga to nagios group but creates a dependency on PNP/Nagios package states which is not good. 
+    general.x("chown -R icinga:icinga /var/log/pnp4nagios")
+    general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
+    general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
     # Set npcd (bulk parser/spooler) to auto-start 
     general.x(" /sbin/chkconfig --level 3 npcd on")
     # Restart everything
