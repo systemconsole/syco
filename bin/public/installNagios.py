@@ -131,11 +131,12 @@ def _install_icinga_core(args):
     app.init_mysql_passwords()
     if not os.path.exists('/etc/init.d/mysqld'):
         install_mysql(["","1","1G"])
-    sqlpassword = generate_password(20)
+    #sqlpassword = generate_password(20)
+    sqlpassword = "fareoffice"
     mysqlUtils.drop_user('icinga')
     mysqlUtils.create_user('icinga', sqlpassword, 'icinga')
-    general.x("mysql icinga --user={0} --password={1} -e 'CREATE DATABASE icinga'".format("icinga",sqlpassword))
-    general.x("mysql icinga --user={0} --password={1} < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql".format("icinga",sqlpassword))
+    general.x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga'".format("icinga",sqlpassword))
+    general.x("mysql icinga --user='{0}' --password='{1}' < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql".format("icinga",sqlpassword))
     general.set_config_property("/etc/icinga/ido2db.cfg","db_pass=icinga","db_pass={0}".format(sqlpassword), False)
     # TODO: Password management for legacy GUI
     general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
@@ -167,11 +168,12 @@ def _install_icinga_web():
     general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
     general.x("yum install -y icinga-web")
     #general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
-    sqlpassword = generate_password(20)
+    #sqlpassword = generate_password(20)
+    sqlpassword = "fareoffice"
     mysqlUtils.create_user('icinga-web', sqlpassword, 'icinga_web')
-    general.x("mysql --user={0} --password={1} -e 'CREATE DATABASE icinga_web'".format("icinga-web",sqlpassword))
-    general.x("mysql icinga_web  --user={0} --password={1} < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql".format("icinga-web",sqlpassword))
-    general.x("mysql --user={0} --password={1} < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql".format("icinga-web",sqlpassword))
+    general.x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga_web'".format("icinga-web",sqlpassword))
+    general.x("mysql icinga_web  --user='{0}' --password='{1}' < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql".format("icinga-web",sqlpassword))
+    general.x("mysql --user='{0}' --password='{1}' < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql".format("icinga-web",sqlpassword))
     general.set_config_property("/tmp/httpd.conf","/var/www/html","/usr/share/icinga-web/pub", False)
     general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga_web:icinga_web","mysql://icinga-web:{0}".format(sqlpassword), False)
     general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga:icinga","mysql://icinga:{0}".format(sqlpassword), False)
@@ -282,6 +284,7 @@ def _move_object_base_structure_icinga():
     """
     general.x("rm -rf /etc/icinga/objects/*")
     general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
+    general.x("chmod -R 755 /etc/icinga/objects")
 
 
 def _write_hosts_config_icinga(serverList):
