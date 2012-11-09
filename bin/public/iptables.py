@@ -28,13 +28,14 @@ __status__ = "Production"
 import os
 import sys
 
+from config import get_servers
+from general import x
+from scopen import scOpen
 import app
 import config
 import general
-from general import x
 import installGlassfish31
 import version
-from scopen import scOpen
 
 
 # The version of this module, used to prevent
@@ -169,6 +170,7 @@ def iptables_setup(args):
   add_mysql_chain()
   add_mail_relay_chain()
   add_bind_chain()
+  add_rsyslog_chain()
 
   _execute_private_repo_rules()
 
@@ -764,6 +766,56 @@ def add_bind_chain():
     iptables("-A bind_input -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
     iptables("-A bind_output -m state --state NEW -p udp --dport 53 -j allowed_udp")
     iptables("-A bind_output -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
+
+
+def del_rsyslog_chain():
+  app.print_verbose("Delete iptables chain for rsyslog")
+  iptables("-D syco_input -p tcp -j rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-F rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-X rsyslog_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p tcp -j rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-F rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-X rsyslog_out", general.X_OUTPUT_CMD)
+
+
+def add_rsyslog_chain():
+  '''
+  Rsyslog IPtables rules
+
+  Rsyslog Server
+  Servers in network -> IN -> tcp -> 514 -> Rsyslog Server
+
+  Rsyslog Client
+  Rsyslog Server <- OUT <- tcp <- 514 <- OSSEC Client
+
+  '''
+  del_rsyslog_chain()
+
+  if (os.path.exists('/etc/rsyslog.conf')):
+    app.print_verbose("Add iptables chain for rsyslog")
+    iptables("-N rsyslog_in")
+    iptables("-N rsyslog_out")
+    iptables("-A syco_input  -p tcp -j rsyslog_in")
+    iptables("-A syco_output -p tcp -j rsyslog_out")
+
+    # On rsyslog server
+    if (os.path.exists('/var/log/rsyslog')):
+      for server in get_servers():
+        iptables(
+          " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+          config.host(server).get_front_ip()
+        )
+    # On rsyslog client
+    else:
+      iptables(
+        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        config.general.get_log_server_hostname1()
+      )
+      iptables(
+        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        config.general.get_log_server_hostname2()
+      )
 
 
 def _execute_private_repo_rules():

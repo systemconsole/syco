@@ -1,31 +1,26 @@
 #!/usr/bin/env python
 '''
-Install of rsyslog client to connect to rsyslog server
+Install rsyslog client tghat connect to a rsyslogd server.
 
-Install rsyslog client and set up tls to server on tcp port 514 and unecrypted loggnin on udp 514.
+The connection will be done through tls on port 514 and unencrypted on udp 514.
 
-[Logging to]
-Loggs are the saved local on server
-And sent to rsyslog server to store on strukture in /var/log/remote/year/month/day/servername and mysql server
+LOGING TO
+Logs are the saved local on server, and then sent to rsyslogd server to
+store in structure /var/log/remote/year/month/day/servername and mysql server.
 
-[Newcerts]
-Clients will collect their certs from the rsyslog server
+NEW CERTS
+Clients will copy their certs from the rsyslog server.
 
-[Configfiles]
+CONFIG FILES
 rsyslog.d config files are located in syco/var/rsyslog/ folder
-template used for generating certs are located in /syco/var/rsyslog/template.ca and templat.client
 
-
-[More reading]
-http://www.rsyslog.com/doc/rsyslog_tls.html
-http://www.rsyslog.com/doc/rsyslog_mysql.html
-
-
+SEE
+installRsyslogd.py for more info.
 
 '''
 
-__author__ = "matte@elino.se"
-__copyright__ = "Copyright 2011, The System Console project"
+__author__ = "daniel@cybercow.se, matte@elino.se, "
+__copyright__ = "Copyright 2012, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["Daniel LIndh"]
@@ -33,77 +28,112 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+
 import os
-import shutil
-import stat
-import sys
-import time
-import traceback
-import config
-from ssh import scp_from
-from config import get_servers, host
 import socket
-import net
 
-
-
-import app
+from config import get_servers, host
 from general import x
+from scopen import scOpen
+from ssh import scp_from
+import app
+import config
+import net
 import version
+import iptables
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
-script_version = 1
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
+SCRIPT_VERSION = 1
+
 
 def build_commands(commands):
-  '''
-  Defines the commands that can be executed through the syco.py shell script.
+    '''
+    Defines the commands that can be executed through the syco.py shell script.
 
-  '''
-  commands.add("install-rsyslog", install_rsyslog, help="Install rsyslog client on the server.")
-  commands.add("uninstall-rsyslog", uninstall_rsyslog, help="uninstall rsyslog client and all certs on the server.")
-
-
+    '''
+    commands.add("install-rsyslogd-client", install_rsyslogd_client, help="Install rsyslog client on the server.")
+    commands.add("uninstall-rsyslogd-client", uninstall_rsyslogd_client, help="uninstall rsyslog client and all certs from the server.")
 
 
-def install_rsyslog(args):
-  '''
-  Install rsyslog client the server
-  and set upp configfiles to use rsyslog server and collect server tls cert
+def install_rsyslogd_client(args):
+    '''
+    Install rsyslog client the server
 
-  '''
-  hostname = socket.gethostname()
-  x("yum install rsyslog rsyslog-gnutls -y")
-  x("chkconfig --add rsyslog")
-  x("chkconfig rsyslog on")
+    '''
+    app.print_verbose("Install rsyslog client.")
+    version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
+    version_obj.check_executed()
 
-  #Getting loggservers server
-  logserver =config.general.get_log_server_hostname()
-  logserver2 =config.general.get_log_server_hostname2()
+    # Initialize all passwords used by the script
+    app.init_mysql_passwords()
 
-  x("\cp -f /opt/syco/var/rsyslog/rsyslog.conf /tmp/rsyslog.conf" )
-  x("sed -i 's/SERVERNAME/"+net.get_hostname()+"."+config.general.get_resolv_domain()+"/g' /tmp/rsyslog.conf")
-  x("sed -i 's/DOMAIN/"+config.general.get_resolv_domain()+"/g' /tmp/rsyslog.conf")
-  x("sed -i 's/MASTER/"+logserver+"/g' /tmp/rsyslog.conf")
-  x("sed -i 's/SLAVE/"+logserver2+"/g' /tmp/rsyslog.conf")
+    app.print_verbose("CIS 5.2 Configure rsyslog")
 
-  x("\cp -f /tmp/rsyslog.conf /etc/rsyslog.conf" )
+    if not os.path.exists('/etc/init.d/rsyslog'):
+        app.print_verbose("CIS 5.2.1 Install the rsyslog package")
+        x("yum install rsyslog rsyslog-gnutls -y")
+
+    app.print_verbose("CIS 5.2.2 Activate the rsyslog Service")
+    if os.path.exists('/etc/xinetd.d/syslog'):
+        x("chkconfig syslog off")
+    x("chkconfig rsyslog on")
+
+    _configure_rsyslog_conf()
+    _copy_cert()
+
+    iptables.add_rsyslog_chain()
+
+    # Restaring rsyslog
+    x("/etc/init.d/rsyslog restart")
+
+    version_obj.mark_executed()
 
 
-  #coping certs for tls from rsyslog server
-  x("mkdir /etc/pki/rsyslog")
-  scp_from(logserver,"/etc/pki/rsyslog/%s*" % net.get_hostname(),"/etc/pki/rsyslog")
-  scp_from(logserver,"/etc/pki/rsyslog/ca.pem","/etc/pki/rsyslog")
-  
-  #Restaring rsyslog
-  x("/etc/init.d/rsyslog restart")
+def _configure_rsyslog_conf():
+    '''
+    Create/configure the rsyslog.conf file.
+
+    '''
+    app.print_verbose("CIS 5.2.3 Configure /etc/rsyslog.conf")
+    x("cp -f /opt/syco/var/rsyslog/rsyslog.conf /etc/rsyslog.conf")
+    _replace_tags()
+    x("chmod 640 /etc/rsyslog.conf")
 
 
+def _replace_tags():
+    '''
+    Replace all tags in template files with apropriate values.
 
-def uninstall_rsyslog(args):
+    '''
+    sc = scOpen("/etc/rsyslog.conf")
+    sc.replace('${MASTER}', config.general.get_log_server_hostname1())
+    sc.replace('${SLAVE}',  config.general.get_log_server_hostname2())
+    sc.replace('${DOMAIN}', config.general.get_resolv_domain())
+
+    fqdn = "{0}.{1}".format(net.get_hostname(), config.general.get_resolv_domain())
+    sc.replace('${SERVERNAME}', fqdn)
+
+
+def _copy_cert():
+    '''
+    Coping certs for tls from rsyslog server
+
+    '''
+    crt_dir ="/etc/pki/rsyslog"
+    x("mkdir -p {0}".format(crt_dir))
+    srv = config.general.get_log_server_hostname1()
+    scp_from(srv, "/etc/pki/rsyslog/{0}*".format(net.get_hostname()), crt_dir)
+    scp_from(srv, "/etc/pki/rsyslog/ca.crt", crt_dir)
+    x("restorecon -r /etc/pki/rsyslog")
+    x("chmod 600 /etc/pki/rsyslog/*")
+    x("chown root:root /etc/pki/rsyslog/*")
+
+
+def uninstall_rsyslogd_client(args):
   '''
   Unistall rsyslog and erase all files
   '''
   x("yum erase rsyslog -y")
   x("rm -rf /etc/pki/rsyslog")
+

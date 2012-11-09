@@ -111,12 +111,12 @@ def drop_user(username):
     mysql_exec('drop user "{0}";'.format(username), 'root')
 
 
-def create_user(username, password, database):
+def create_user(username, password, database, privileges = "ALL PRIVILEGES"):
     '''
     Create a user and give it "resular" privileges.
 
     '''
-    mysql_exec("GRANT ALL PRIVILEGES ON {0}.* TO".format(database) +
+    mysql_exec("GRANT {0} ON {1}.* TO".format(privileges, database) +
         "'{0}'@'127.0.0.1' IDENTIFIED BY '{1}', ".format(username, password) +
         "'{0}'@'localhost' IDENTIFIED BY '{1}' ".format(username, password),
         'root'

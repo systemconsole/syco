@@ -24,13 +24,17 @@ for generating certs are located in /syco/var/rsyslog/template.ca and
 template.server
 
 READING
+http://www.rsyslog.com/doc
+http://www.rsyslog.com/doc/rsyslog_conf.html
 http://www.rsyslog.com/doc/rsyslog_tls.html
 http://www.rsyslog.com/doc/rsyslog_mysql.html
 
+https://access.redhat.com/knowledge/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Viewing_and_Managing_Log_Files.html
+
 '''
 
-__author__ = "matte@elino.se, daniel@cybercow.se"
-__copyright__ = "Copyright 2011, The System Console project"
+__author__ = "daniel@cybercow.se, matte@elino.se"
+__copyright__ = "Copyright 2012, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["Daniel LIndh"]
@@ -39,6 +43,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
+import string
 
 from config import get_servers
 from general import generate_password, get_install_dir
@@ -51,6 +56,7 @@ import general
 import mysqlUtils
 import net
 import version
+import iptables
 
 
 # The version of this module, used to prevent the same script version to be
@@ -95,12 +101,15 @@ def install_rsyslogd(args):
     if not os.path.exists('/etc/pki/rsyslog/ca.crt'):
         rsyslog_newcerts(args)
 
-    sql_password = generate_password(20)
+    sql_password = generate_password(20, string.letters + string.digits)
     _setup_database(sql_password)
     _setup_rsyslogd(sql_password)
 
+    iptables.add_rsyslog_chain()
+
     # Restarting service
     x("/etc/init.d/rsyslog restart")
+
     version_obj.mark_executed()
 
 
@@ -110,9 +119,17 @@ def _setup_database(sql_password):
 
     '''
     mysqlUtils.drop_user('rsyslogd')
-    mysqlUtils.create_user('rsyslogd', sql_password, 'syslog')
+    mysqlUtils.create_user('rsyslogd', sql_password, 'Syslog', 'INSERT')
 
-    mysql_exec("\. {0}rsyslog/initdb.sql".format(app.SYCO_VAR_PATH), 'root')
+    mysql_exec("\. {0}".format(get_create_db_path()), 'root')
+
+
+def get_create_db_path():
+    '''
+    Get the path to the sql file that creates the mysql database.
+
+    '''
+    return "{0}/rsyslog/createDB.sql".format(app.SYCO_VAR_PATH)
 
 
 def _setup_rsyslogd(sql_password):
@@ -121,6 +138,8 @@ def _setup_rsyslogd(sql_password):
 
     '''
     x("cp -f /opt/syco/var/rsyslog/rsyslogd.conf /etc/rsyslog.conf")
+    x("chmod 640 /etc/rsyslog.conf")
+
     sc = scOpen("/etc/rsyslog.conf")
     sc.replace('${SQLPASSWORD}', sql_password)
     sc.replace('${SERVERNAME}', '{0}.{1}'.format(
@@ -129,8 +148,12 @@ def _setup_rsyslogd(sql_password):
     sc.replace('${DOMAIN}', config.general.get_resolv_domain())
 
     # Setup folder to store logs from clients.
-    x("mkdir /var/log/remote")
-    x("restorecon /var/log/remote")
+    app.print_verbose("CIS 5.2.4 Create and Set Permissions on rsyslog Log Files")
+    app.print_verbose("  Will not create individual files.")
+    x("mkdir -p /var/log/rsyslog/")
+    x("chown root:root /var/log/rsyslog/")
+    x("chmod 700 /var/log/rsyslog/")
+    x("restorecon /var/log/rsyslog/")
 
 
 def rsyslog_newcerts(args):

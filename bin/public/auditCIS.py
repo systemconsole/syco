@@ -1008,7 +1008,7 @@ def section_1_6():
 
     #
     print_header("5.2.5 Configure rsyslog to Send Logs to a Remote Log Host")
-    expect = "*.* @%s:514" % config.general.get_log_server_hostname()
+    expect = "*.* @%s:514" % config.general.get_log_server_hostname1()
     rows_contains(
         "grep '%s' /etc/rsyslog.conf" % expect,
         expect

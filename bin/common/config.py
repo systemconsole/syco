@@ -281,8 +281,8 @@ class Config(object):
     def get_admin_email(self):
       return self.get_option("admin_email")
 
-    def get_log_server_hostname(self):
-      return self.get_option("log.hostname")
+    def get_log_server_hostname1(self):
+      return self.get_option("log.hostname1")
 
     def get_log_server_hostname2(self):
        return self.get_option("log.hostname2")
