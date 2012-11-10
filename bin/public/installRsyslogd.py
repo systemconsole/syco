@@ -53,11 +53,11 @@ from scopen import scOpen
 import app
 import config
 import general
+import installLogrotate
+import iptables
 import mysqlUtils
 import net
 import version
-import iptables
-
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -112,6 +112,9 @@ def install_rsyslogd(args):
 
     install_purge_db()
     install_compress_logs()
+
+    # Configure logrotate
+    installLogrotate.install_logrotate(args)
 
     version_obj.mark_executed()
 

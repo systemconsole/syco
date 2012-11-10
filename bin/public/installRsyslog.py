@@ -38,9 +38,10 @@ from scopen import scOpen
 from ssh import scp_from
 import app
 import config
+import installLogrotate
+import iptables
 import net
 import version
-import iptables
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -86,6 +87,9 @@ def install_rsyslogd_client(args):
 
     # Restaring rsyslog
     x("/etc/init.d/rsyslog restart")
+
+    # Configure logrotate
+    installLogrotate.install_logrotate(args)
 
     version_obj.mark_executed()
 
