@@ -255,3 +255,5 @@ def uninstall_rsyslogd(args):
     app.print_verbose("Uninstall Rsyslogd SERVER")
     x("yum erase rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils")
     x("rm -rf /etc/pki/rsyslog")
+    version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
+    version_obj.mark_uninstalled()

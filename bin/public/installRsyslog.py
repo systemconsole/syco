@@ -62,7 +62,7 @@ def install_rsyslogd_client(args):
 
     '''
     app.print_verbose("Install rsyslog client.")
-    version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
+    version_obj = version.Version("InstallRsyslogdClient", SCRIPT_VERSION)
     version_obj.check_executed()
 
     # Initialize all passwords used by the script
@@ -131,9 +131,10 @@ def _copy_cert():
 
 
 def uninstall_rsyslogd_client(args):
-  '''
-  Unistall rsyslog and erase all files
-  '''
-  x("yum erase rsyslog -y")
-  x("rm -rf /etc/pki/rsyslog")
-
+    '''
+    Unistall rsyslog and erase all files
+    '''
+    x("yum erase rsyslog -y")
+    x("rm -rf /etc/pki/rsyslog")
+    version_obj = version.Version("InstallRsyslogdClient", SCRIPT_VERSION)
+    version_obj.mark_uninstalled()
