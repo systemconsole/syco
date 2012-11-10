@@ -26,31 +26,31 @@
 	*
 	* A copy of the GPL can be found in the file "COPYING" in this
 	* distribution.
-	* 
+	*
 	* Adiscon LogAnalyzer is also available under a commercial license.
 	* For details, contact info@adiscon.com or visit
 	* http://loganalyzer.adiscon.com/commercial
 	*********************************************************************
 */
 
-// --- Avoid directly accessing this file! 
+// --- Avoid directly accessing this file!
 if ( !defined('IN_PHPLOGCON') )
 {
 	die('Hacking attempt');
 	exit;
 }
-// --- 
+// ---
 
 // --- UserDB options
-/*	If UserDB is enabled, all options will and have to be configured in the database. 
+/*	If UserDB is enabled, all options will and have to be configured in the database.
 *	All Options below the UserDB options here will not be used, unless a setting
-*	is missing in the database. 
+*	is missing in the database.
 */
 $CFG['UserDBEnabled'] = false;
 $CFG['UserDBServer'] = 'localhost';
 $CFG['UserDBPort'] = 3306;
-$CFG['UserDBName'] = 'loganalyzer'; 
-$CFG['UserDBPref'] = 'logcon_'; 
+$CFG['UserDBName'] = 'loganalyzer';
+$CFG['UserDBPref'] = 'logcon_';
 $CFG['UserDBUser'] = 'root';
 $CFG['UserDBPass'] = '';
 $CFG['UserDBLoginRequired'] = false;
@@ -66,7 +66,7 @@ $CFG['LDAPUidAttribute'] = 'sAMAccountName';		// The LDAP attribute used in the 
 													// DN of the privileged user for the search
 $CFG['LDAPBindDN'] = 'CN=Searchuser,CN=Users,DC=domain,DC=local'; // "Searchuser" = the privilegied user used to query LDAP Directory
 $CFG['LDAPBindPassword'] = 'Password';				// Password of the privilegied user
-// --- 
+// ---
 
 // --- Misc Options
 $CFG['MiscShowDebugMsg'] = 0;				// if enabled, you will get additional output on certain places
@@ -74,52 +74,52 @@ $CFG['MiscDebugToSyslog'] = 0;				// if enabled, debug messages from LogAnalyzer
 $CFG['MiscShowDebugGridCounter'] = 0;		// Only for debugging purposes, will add a counter column into the grid!
 $CFG["MiscShowPageRenderStats"] = 1;		// If enabled, you will see Pagerender Settings
 $CFG['MiscEnableGzipCompression'] = 1;		// If enabled, LogAnalyzer will use gzip compression for output, we recommend
-											// to have this option enabled, it will highly reduce bandwith usage. 
+											// to have this option enabled, it will highly reduce bandwith usage.
 $CFG['MiscMaxExecutionTime'] = 30;			// LogAnalyzer will try to overwrite the default script timeout with this value during runtime!
-											// This can of course only work if LogAnalyzer is allowed to changed the script timeout. 
+											// This can of course only work if LogAnalyzer is allowed to changed the script timeout.
 $CFG['DebugUserLogin'] = 0;					// if enabled, you will see additional informations on failed logins
-// --- 
+// ---
 
-// --- Default Frontend Options 
+// --- Default Frontend Options
 $CFG['PrependTitle'] = "";					// If set, this	text will be prepended withint the title tag
 $CFG['ViewUseTodayYesterday'] = 1;			// If enabled, the date from today and yesterday is displayed as "today" and "yesterday"
 $CFG['ViewMessageCharacterLimit'] = 80;		// Default character limit for the message gets trunscated! 0 means NO trunscation.
 $CFG['ViewStringCharacterLimit'] = 30;		// Default character limit for all other string type fields before they get trunscated! 0 means NO trunscation.
 $CFG['ViewEntriesPerPage'] = 50;			// Default number of syslog entries shown per page
-$CFG['ViewEnableDetailPopups'] = 1;			// If enabled, you will see additional Details for each syslog message on mouse over. 
-$CFG['ViewDefaultTheme'] = "default";		// This sets the default theme the user is going to see when he opens LogAnalyzer the first time. 
-											// Currently only "default" and "dark" are available. 
+$CFG['ViewEnableDetailPopups'] = 0;			// If enabled, you will see additional Details for each syslog message on mouse over.
+$CFG['ViewDefaultTheme'] = "default";		// This sets the default theme the user is going to see when he opens LogAnalyzer the first time.
+											// Currently only "default" and "dark" are available.
 $CFG['ViewDefaultLanguage'] = "en";			// Sets the default display language
-$CFG['ViewEnableAutoReloadSeconds'] = 0;	// If "ViewEnableAutoReloadSeconds" is set to anything higher the 0 (which means disabled), this means auto reload is enabled by default. 
+$CFG['ViewEnableAutoReloadSeconds'] = 0;	// If "ViewEnableAutoReloadSeconds" is set to anything higher the 0 (which means disabled), this means auto reload is enabled by default.
 
 $CFG['SearchCustomButtonCaption'] = "I'd like to feel sad";	// Default caption for the custom fast search button
 $CFG['SearchCustomButtonSearch'] = "error";					// Default search string for the custom search button
 
-$CFG['EnableContextLinks'] = 1;				// if enabled, context links within the messages will automatically be created and added. Set this to 0 to disable all context links. 
+$CFG['EnableContextLinks'] = 1;				// if enabled, context links within the messages will automatically be created and added. Set this to 0 to disable all context links.
 $CFG['EnableIPAddressResolve'] = 1;			// If enabled, IP Addresses inline messages are automatically resolved and the result is added in brackets {} behind the IP Address
-$CFG['SuppressDuplicatedMessages'] = 0;		// If enabled, duplicated messages will be suppressed in the main display. 
-$CFG['TreatNotFoundFiltersAsTrue'] = 0;		// If you filter / search for messages, and the fields you are filtering for is not found, the filter result is treaten as TRUE! 
+$CFG['SuppressDuplicatedMessages'] = 0;		// If enabled, duplicated messages will be suppressed in the main display.
+$CFG['TreatNotFoundFiltersAsTrue'] = 0;		// If you filter / search for messages, and the fields you are filtering for is not found, the filter result is treaten as TRUE!
 $CFG['PopupMenuTimeout'] = 3000;			// This variable defines the default timeout value for popup menus in milliseconds. (those menus which popup when you click on the value of a field.
 $CFG['PhplogconLogoUrl'] = "";				// Put an Url to a custom toplogo you want to use.
 $CFG['InlineOnlineSearchIcons'] = 1;		// Show online search icons
-$CFG['UseProxyServerForRemoteQueries'] = "";// If empty no proxy server will be used. If set to a proxy server url like 127.0.0.1:8080, LogAnalyzer will use this server for url queries like the updatecheck. 
+$CFG['UseProxyServerForRemoteQueries'] = "";// If empty no proxy server will be used. If set to a proxy server url like 127.0.0.1:8080, LogAnalyzer will use this server for url queries like the updatecheck.
 $CFG['HeaderDefaultEncoding'] = ENC_ISO_8859_1;	// Set default character encoding
 // ---
 
-// --- Custom HTML Code 
+// --- Custom HTML Code
 $CFG['InjectHtmlHeader'] = "";				// Use this variable to inject custom html into the html <head> area!
 $CFG['InjectBodyHeader'] = "";				// Use this variable to inject custom html into the begin of the <body> area!
 $CFG['InjectBodyFooter'] = "";				// Use this variable to inject custom html into the end of the <body> area!
 // ---
 
-// --- Define which fields you want to see 
+// --- Define which fields you want to see
 //$CFG['ShowMessage'] = true;					// If enabled, the Message column will be appended to the columns list.
 //Eventlog based fields: $CFG['Columns'] = array ( SYSLOG_DATE, SYSLOG_HOST, SYSLOG_EVENT_LOGTYPE, SYSLOG_EVENT_SOURCE, /*SYSLOG_EVENT_CATEGORY, */SYSLOG_EVENT_ID, SYSLOG_MESSAGE );
 //$CFG['Columns'] = array ( SYSLOG_DATE, SYSLOG_FACILITY, SYSLOG_SEVERITY, SYSLOG_HOST, SYSLOG_SYSLOGTAG, SYSLOG_MESSAGETYPE, SYSLOG_MESSAGE );
 $CFG['DefaultViewsID'] = "";
 // ---
 
-// --- Predefined Searches! 
+// --- Predefined Searches!
 $CFG['Search'][] = array ( "DisplayName" => "Syslog Warnings and Errors", "SearchQuery" => "filter=severity%3A0%2C1%2C2%2C3%2C4&search=Search" );
 $CFG['Search'][] = array ( "DisplayName" => "Syslog Errors", "SearchQuery" => "filter=severity%3A0%2C1%2C2%2C3&search=Search" );
 $CFG['Search'][] = array ( "DisplayName" => "All messages from the last hour", "SearchQuery" => "filter=datelastx%3A1&search=Search" );
@@ -138,7 +138,7 @@ $CFG['Charts'][] = array ( "DisplayName" => "Usage by Day", "chart_type" => CHAR
 // ---
 
 // --- Configure allowed directories for File base logstream sources
-$CFG['DiskAllowed'][] = "/var/log/"; 
+$CFG['DiskAllowed'][] = "/var/log/";
 // ---
 
 // --- Source Options
@@ -176,13 +176,13 @@ $CFG['Sources']['Source1']['ViewID'] = 'SYSLOG';
 $CFG['Sources']['Source1']['SourceType'] = SOURCE_DB;
 $CFG['Sources']['Source1']['DBTableType'] = 'monitorware';
 $CFG['Sources']['Source1']['DBType'] = DB_MYSQL;
-$CFG['Sources']['Source1']['DBServer'] = 'localhost';
-$CFG['Sources']['Source1']['DBName'] = 'syslog';
-$CFG['Sources']['Source1']['DBUser'] = '${mysql_user}';
-$CFG['Sources']['Source1']['DBPassword'] = '${mysql_password}';
+$CFG['Sources']['Source1']['DBServer'] = '127.0.0.1';
+$CFG['Sources']['Source1']['DBName'] = 'Syslog';
+$CFG['Sources']['Source1']['DBUser'] = 'loganalyzer';
+$CFG['Sources']['Source1']['DBPassword'] = '${MYSQL_PASSWORD}';
 $CFG['Sources']['Source1']['DBTableName'] = 'SystemEvents';
 $CFG['Sources']['Source1']['DBEnableRowCounting'] = true;
 
-// --- 
+// ---
 
 ?>
