@@ -4,6 +4,9 @@ Install and configure adiscon.com loganalyzer.
 
 It connects to the rsyslogd mysql database.
 
+READ MORE
+http://loganalyzer.adiscon.com/
+
 '''
 
 __author__ = "daniel@cybercow.se, anders@televerket.net"

@@ -15,12 +15,15 @@ echo $CMD
 /usr/bin/env mysql -u"purgelogdb" -p"${MYSQL_PASSWORD}" Syslog -e"$CMD"
 OUT=$?
 if [ $OUT -ne 0 ]; then
-	echo "[SYCO ERROR] purge rsyslgd mysql database failed."
+    txt="[ERROR] purge rsyslgd mysql database failed."
+	echo $txt
 	echo
-    logger -p user.crit "[SYCO ERROR] purge rsyslgd mysql database failed."
+    logger -t syco -p user.crit $txt
 else
-	echo "[SYCO NOTICE] purged 100 days old rows from rsyslogd mysql database."
-    logger "[SYCO NOTICE] purged 100 days old rows from rsyslogd mysql database."
+    $txt="[NOTICE] purged 100 days old rows from rsyslogd mysql database."
+	echo
+    echo
+    logger -t syco $txt
 fi
 exit $OUT
 

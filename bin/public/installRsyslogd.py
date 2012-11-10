@@ -111,6 +111,7 @@ def install_rsyslogd(args):
     x("/etc/init.d/rsyslog restart")
 
     install_purge_db()
+    install_compress_logs()
 
     version_obj.mark_executed()
 
@@ -271,10 +272,21 @@ def install_purge_db():
     mysqlUtils.drop_user('purgelogdb')
     mysqlUtils.create_user('purgelogdb', sql_password, 'Syslog', 'SELECT, DELETE')
 
-    # Script should be executed once every day.
+    # Script should be executed once every hour.
     fn = "/etc/cron.hourly/purge-db.sh"
     x("cp -f {0}var/rsyslog/purge-db.sh {1}".format(app.SYCO_PATH, fn))
     x("chmod +x {0}".format(fn))
     logSql = scOpen(fn)
     logSql.replace("${MYSQL_PASSWORD}", sql_password)
+
+
+def install_compress_logs():
+    '''
+    Install a script that compresses all 1 day old remote logs.
+
+    '''
+    # Script should be executed once every day.
+    fn = "/etc/cron.daily/compress-logs.sh"
+    x("cp -f {0}var/rsyslog/compress-logs.sh {1}".format(app.SYCO_PATH, fn))
+    x("chmod +x {0}".format(fn))
 

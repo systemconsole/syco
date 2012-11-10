@@ -108,7 +108,9 @@ def drop_user(username):
     Drop a user and its privileges.
 
     '''
-    mysql_exec('drop user "{0}";'.format(username), True)
+    mysql_exec('DELETE FROM mysql.user where user="{0}";'.format(username), True)
+    mysql_exec('DELETE FROM mysql.db where db="{0}";'.format(username), True)
+    mysql_exec('flush privileges', True)
 
 
 def create_user(username, password, database, privileges = "ALL PRIVILEGES"):
