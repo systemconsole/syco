@@ -1,6 +1,0 @@
-#!/bin/sh
-/var/lib/logmgmt/compress_logs.sh 2>&1 | tee -a /var/log/backup | mailx -s "Log compressing failed" ${alert_email}
-/var/lib/logmgmt/remove_sql.sh 90 2>&1 | tee -a /var/log/backup | mailx -s "Log cleanup failed" ${alert_email}
-
-
-
