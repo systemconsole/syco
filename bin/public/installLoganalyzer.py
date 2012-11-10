@@ -6,7 +6,7 @@ It connects to the rsyslogd mysql database.
 
 '''
 
-__author__ = "anders@televerket.net"
+__author__ = "daniel@cybercow.se, anders@televerket.net"
 __copyright__ = "Copyright 2012, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"

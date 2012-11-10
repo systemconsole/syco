@@ -110,6 +110,8 @@ def install_rsyslogd(args):
     # Restarting service
     x("/etc/init.d/rsyslog restart")
 
+    install_purge_db()
+
     version_obj.mark_executed()
 
 
@@ -121,7 +123,7 @@ def _setup_database(sql_password):
     mysqlUtils.drop_user('rsyslogd')
     mysqlUtils.create_user('rsyslogd', sql_password, 'Syslog', 'INSERT')
 
-    mysql_exec("\. {0}".format(get_create_db_path()), 'root')
+    mysql_exec("\. {0}".format(get_create_db_path()), True)
 
 
 def get_create_db_path():
@@ -257,3 +259,22 @@ def uninstall_rsyslogd(args):
     x("rm -rf /etc/pki/rsyslog")
     version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
+
+
+def install_purge_db():
+    '''
+    Install a script that purges mysql from old rows every hour.
+
+    '''
+    # Setup user for purge script.
+    sql_password = generate_password(20, string.letters + string.digits)
+    mysqlUtils.drop_user('purgelogdb')
+    mysqlUtils.create_user('purgelogdb', sql_password, 'Syslog', 'SELECT, DELETE')
+
+    # Script should be executed once every day.
+    fn = "/etc/cron.hourly/purge-db.sh"
+    x("cp -f {0}var/rsyslog/purge-db.sh {1}".format(app.SYCO_PATH, fn))
+    x("chmod +x {0}".format(fn))
+    logSql = scOpen(fn)
+    logSql.replace("${MYSQL_PASSWORD}", sql_password)
+

@@ -108,7 +108,7 @@ def drop_user(username):
     Drop a user and its privileges.
 
     '''
-    mysql_exec('drop user "{0}";'.format(username), 'root')
+    mysql_exec('drop user "{0}";'.format(username), True)
 
 
 def create_user(username, password, database, privileges = "ALL PRIVILEGES"):
@@ -119,5 +119,5 @@ def create_user(username, password, database, privileges = "ALL PRIVILEGES"):
     mysql_exec("GRANT {0} ON {1}.* TO".format(privileges, database) +
         "'{0}'@'127.0.0.1' IDENTIFIED BY '{1}', ".format(username, password) +
         "'{0}'@'localhost' IDENTIFIED BY '{1}' ".format(username, password),
-        'root'
+        True
     )
