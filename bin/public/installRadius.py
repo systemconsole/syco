@@ -98,14 +98,14 @@ def _configure_ldap():
     )
     ldapconf.replace(
         '\\t#identity = .*',
-        '\\tidentity = "cn=sssd,{0}"'.format(
+        '\\tidentity = "cn=Manager,{0}"'.format(
             config.general.get_ldap_dn()
         )
     )
     ldapconf.replace(
         '\\t#password = .*',
         '\\tpassword = "{0}"'.format(
-            re.escape(app.get_ldap_sssd_password())
+            re.escape(app.get_ldap_admin_password())
         )
     )
     ldapconf.replace(
