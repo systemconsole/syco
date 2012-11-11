@@ -73,7 +73,7 @@ logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
 logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
 logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
+logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=$disk_log_mb --fsoptions=noexec, nosuid, nodev
 logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
 
 services --disabled=smartd --enabled=acpid

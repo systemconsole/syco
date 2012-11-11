@@ -345,11 +345,21 @@ class Config(object):
       return self.get_option("cpu")
 
     def get_disk_swap_gb(self):
-      '''Get the size of the swap partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+
+      '''
       return self.get_option("disk_swap", "4")
 
     def get_disk_swap_mb(self):
-      '''Get the size of the swap partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4096 GB
+
+      '''
       return str(int(self.get_disk_swap_gb()) * 1024)
 
     def get_disk_var(self):
@@ -357,12 +367,38 @@ class Config(object):
       return self.get_option("disk_var")
 
     def get_disk_var_gb(self):
-      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
-      return self.get_option("disk_var")
+      '''
+      Size of the /var partion in GB, as it is defined in install.cfg
+
+      Defaut: 10 GB
+
+      '''
+      return self.get_option("disk_var", "10")
 
     def get_disk_var_mb(self):
-      '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the /var partion in MB, as it is defined in install.cfg
+
+      Defaut: 10240 MB
+
+      '''
       return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_disk_log_gb(self):
+      '''
+      Size of the /var/log partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+      '''
+      return self.get_option("disk_log", "4")
+
+    def get_disk_log_mb(self):
+      '''
+      Size of the /var/log partion in MB, as it is defined in install.cfg
+
+      Defaut: 4096 MB
+      '''
+      return str(int(self.get_disk_log_gb()) * 1024)
 
     def get_disk_extra_lvm_gb(self):
       '''
@@ -375,8 +411,12 @@ class Config(object):
       return self.get_option("disk_extra_lvm", 0)
 
     def get_total_disk_gb(self):
-      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_disk_var_gb()) + int(self.get_disk_extra_lvm_gb()) + 16)
+      '''Total size of all partions, the size of the lvm volume on the host.'''
+      return str(
+        int(self.get_disk_var_gb()) +
+        int(self.get_disk_log_gb()) +
+        int(self.get_disk_extra_lvm_gb()) + 12
+      )
 
     def get_total_disk_mb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
