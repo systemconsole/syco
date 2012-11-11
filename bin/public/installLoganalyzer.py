@@ -62,7 +62,7 @@ def install_loganalyzer(args):
     # Initialize all passwords used by the script
     app.init_mysql_passwords()
 
-    _install_packages()
+    _install_packages(args)
     _download_loganalyzer()
 
     sql_password = general.generate_password(20, string.letters + string.digits)
@@ -75,7 +75,7 @@ def install_loganalyzer(args):
     version_obj.mark_executed()
 
 
-def _install_packages():
+def _install_packages(args):
     '''
     Install depencency packages.
 

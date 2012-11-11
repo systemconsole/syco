@@ -71,9 +71,8 @@ def install_rsyslogd_client(args):
 
     app.print_verbose("CIS 5.2 Configure rsyslog")
 
-    if not os.path.exists('/etc/init.d/rsyslog'):
-        app.print_verbose("CIS 5.2.1 Install the rsyslog package")
-        x("yum install rsyslog rsyslog-gnutls -y")
+    app.print_verbose("CIS 5.2.1 Install the rsyslog package")
+    x("yum install rsyslog rsyslog-gnutls -y")
 
     app.print_verbose("CIS 5.2.2 Activate the rsyslog Service")
     if os.path.exists('/etc/xinetd.d/syslog'):

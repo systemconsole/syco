@@ -99,8 +99,7 @@ def install_rsyslogd(args):
         install_mysql(["","1","1G"])
 
     # Installing packages
-    if not os.path.exists('/etc/init.d/rsyslog'):
-        x("yum install rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils -y")
+    x("yum install rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils -y")
 
     # Autostart rsyslog at boot
     x("chkconfig rsyslog on")
@@ -144,7 +143,7 @@ def get_create_db_path():
     Get the path to the sql file that creates the mysql database.
 
     '''
-    return "{0}/rsyslog/createDB.sql".format(app.SYCO_VAR_PATH)
+    return "{0}rsyslog/createDB.sql".format(app.SYCO_VAR_PATH)
 
 
 def _setup_rsyslogd(sql_password):

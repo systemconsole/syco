@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS SystemEventsProperties
 #
 
 # Only displays relevant information.
-CREATE VIEW IF NOT EXISTS view_SystemEvents_compact AS
+CREATE VIEW view_SystemEvents_compact AS
 SELECT
     DeviceReportedTime,
     FromHost,
@@ -70,7 +70,7 @@ ORDER BY
 
 
 # How many log messages has been received per day and host.
-CREATE VIEW IF NOT EXISTS view_SystemEvents_host_sum AS
+CREATE VIEW view_SystemEvents_host_sum AS
 SELECT
     date(DeviceReportedTime) as day,
     FromHost,
