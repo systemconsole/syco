@@ -2,8 +2,16 @@
 '''
 Install of rsyslog server with mysql backend
 
-Install rsyslog server and set up tls server on tcp port 514 and unecrypted
-logning on udp 514.
+Install rsyslog server and setup tls server on tcp port 514 and unencrypted
+loggning on udp 514.
+
+SOME ROUTINES
+* All logs from all servers/clients are stored on file and to mysql.
+* Logs on file are compressed everyday with bzip for best compression. Those
+  files are supposed to be stored forever.
+* Mysql with the web tool loganalyzer are used for locking on logs.
+* All files stored to mysql are deleted after 90 days.
+
 
 NOTE: Client certs need to be regenerated once year.
 
@@ -106,6 +114,7 @@ def install_rsyslogd(args):
     _setup_rsyslogd(sql_password)
 
     iptables.add_rsyslog_chain()
+    iptables.save()
 
     # Restarting service
     x("/etc/init.d/rsyslog restart")

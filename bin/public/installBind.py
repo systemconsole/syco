@@ -137,6 +137,7 @@ def install_bind(args):
     _prepare_chroot()
     _copy_all_configs(active_dc)
     iptables.add_bind_chain()
+    iptables.save()
 
     # Restarting bind to load new settings.
     x("/etc/init.d/named restart")

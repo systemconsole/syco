@@ -84,6 +84,7 @@ def install_rsyslogd_client(args):
     _copy_cert()
 
     iptables.add_rsyslog_chain()
+    iptables.save()
 
     # Restaring rsyslog
     x("/etc/init.d/rsyslog restart")

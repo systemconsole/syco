@@ -171,6 +171,7 @@ def iptables_setup(args):
   add_mail_relay_chain()
   add_bind_chain()
   add_rsyslog_chain()
+  add_freeradius_chain()
 
   _execute_private_repo_rules()
 
@@ -816,6 +817,26 @@ def add_rsyslog_chain():
         "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
         config.general.get_log_server_hostname2()
       )
+
+
+def del_freeradius_chain():
+  app.print_verbose("Delete iptables chain for FreeRadius")
+  iptables("-D syco_input  -p ALL -j freeradius_input", general.X_OUTPUT_CMD)
+  iptables("-F freeradius_input", general.X_OUTPUT_CMD)
+  iptables("-X freeradius_input", general.X_OUTPUT_CMD)
+
+
+def add_freeradius_chain():
+  del_freeradius_chain()
+
+  if (not os.path.exists('/etc/init.d/radiusd')):
+    return
+
+  app.print_verbose("Add iptables chain for FreeRadius")
+  iptables("-N freeradius_input")
+  iptables("-A syco_input  -p ALL -j freeradius_input")
+
+  iptables("-A freeradius_input -p TCP -m multiport --dports 1812,1813 -j allowed_udp")
 
 
 def _execute_private_repo_rules():

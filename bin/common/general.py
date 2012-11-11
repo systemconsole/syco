@@ -59,7 +59,6 @@ def delete_install_dir():
   Delete the folder where installation files are stored during installation.
 
   '''
-  return
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
     app.print_verbose("Delete " + app.INSTALL_DIR + " used during installation.")
     os.chdir("/tmp")
@@ -468,3 +467,26 @@ def md5checksum(filePath):
             break
         m.update(data)
     return m.hexdigest()
+
+
+def use_original_file(filename):
+    '''
+    Backup original file, and restore if backup exist.
+
+    With this procedure it's possible to have script makeing changes to a file
+    with sed/awk, and then run the script again to to make the same changes
+    to the original data.
+
+    '''
+    if not filename.startswith('/'):
+        raise Exeption("Filename {0} must start with /.".format(filename))
+    syco_bak_folder = '/tmp/syco_bak'
+    bak_file = '{0}{1}'.format(syco_bak_folder, filename)
+
+    if os.path.exists(bak_file):
+        x("cp -f {0} {1}".format(bak_file, filename))
+    else:
+        bak_folder = bak_file.rsplit('/', 1)[0]
+        x("mkdir -p {0}".format(bak_folder))
+        x("cp -f {0} {1}".format(filename, bak_file))
+
