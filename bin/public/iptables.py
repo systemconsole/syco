@@ -172,6 +172,7 @@ def iptables_setup(args):
   add_bind_chain()
   add_rsyslog_chain()
   add_freeradius_chain()
+  add_openvas_chain()
 
   _execute_private_repo_rules()
 
@@ -837,6 +838,31 @@ def add_freeradius_chain():
   iptables("-A syco_input  -p ALL -j freeradius_input")
 
   iptables("-A freeradius_input -p TCP -m multiport --dports 1812,1813 -j allowed_udp")
+
+
+def del_openvas_chain():
+  app.print_verbose("Delete iptables chain for openvas")
+  iptables("-D syco_input  -p ALL -j openvas_input", general.X_OUTPUT_CMD)
+  iptables("-F openvas_input", general.X_OUTPUT_CMD)
+  iptables("-X openvas_input", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p ALL -j openvas_output", general.X_OUTPUT_CMD)
+  iptables("-F openvas_output", general.X_OUTPUT_CMD)
+  iptables("-X openvas_output", general.X_OUTPUT_CMD)
+
+def add_openvas_chain():
+  del_openvas_chain()
+
+  if (not os.path.exists('/usr/sbin/openvassd')):
+    return
+
+  app.print_verbose("Add iptables chain for openvas")
+  iptables("-N openvas_input")
+  iptables("-N openvas_output")
+  iptables("-A syco_input  -p ALL -j openvas_input")
+  iptables("-A syco_output -p ALL -j openvas_output")
+  iptables("-A openvas_input -p TCP --dport 9392 -j allowed_tcp")
+  iptables("-A openvas_output -p ALL -j ACCEPT")
 
 
 def _execute_private_repo_rules():
