@@ -1,0 +1,39 @@
+#!/bin/bash
+
+PACKAGES=$(rpm -qa)
+SERVICES="OK dns-server http-server"
+
+###################################################################
+# Services that are installed via rpm/yum (easy peasy to find)
+###################################################################
+
+# Is mysql-server installed?
+if [[ $PACKAGES =~ .*mysql-server.* ]]; then SERVICES="$SERVICES mysql-server"; fi
+# Is openldap installed?
+if [[ $PACKAGES =~ .*openldap-servers.* ]]; then SERVICES="$SERVICES ldap-server"; fi
+# Is a backup server installed?
+if [[ $PACKAGES =~ .*rsnapshot.* ]]; then SERVICES="$SERVICES backup-server"; fi
+# Is mailrelay instllaed
+if [[ $PACKAGES =~ .*mysql-server.* ]]; then SERVICES="$SERVICES mail-server"; fi
+# Is httpd instllaed
+if [[ $PACKAGES =~ .*httpd.* ]]; then SERVICES="$SERVICES http-server"; fi
+
+
+###################################################################
+# Services without rpm-treatment (not as straightforward)
+###################################################################
+
+# Is syslog server installed? Seems standard that we do not blank out comments from CFGs. 
+(cat /etc/rsyslog.conf | grep -q \#\$UDPServerRun) > /dev/null
+if [ $? -eq 1 ] ; then SERVICES="$SERVICES log-server"; fi
+(cat /etc/rsyslog.conf | grep -q \#\$InputTCPServerRun) > /dev/null
+if [ $? -eq 1 ] && ! [[ $SERVICES =~ .*log-server.* ]] ; then SERVICES="$SERVICES log-server"; fi
+# Is glassfish installed? If so the service needs a user!
+id glassfish 2> /dev/null
+if [ $? -eq 0 ]; then SERVICES="$SERVICES glassfish-server"; fi
+# Is firewall installed? Only the firewall should be forwarding packets!
+if [ $(cat /proc/sys/net/ipv4/ip_forward) == "1" ]; then SERVICES="$SERVICES firewall"; fi
+
+echo "$SERVICES"
+exit 0
+#echo "$SERVICES"
