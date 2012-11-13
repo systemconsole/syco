@@ -1,0 +1,2 @@
+#!/bin/sh
+/var/lib/nmap/do_nmap_scan.sh 2>&1 | mailx -s "NMAP Network scan" ${alert_email}
