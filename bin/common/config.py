@@ -287,6 +287,10 @@ class Config(object):
     def get_log_server_hostname2(self):
        return self.get_option("log.hostname2")
 
+    def get_subnet(self):
+      '''The subnet of the data center'''
+      return self.get_option("network.subnet")
+
     def get_openvpn_network(self):
       '''The network range of the ips givven to openvpn clients.'''
       return str(self.get_option("openvpn.network"))
