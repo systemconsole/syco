@@ -19,24 +19,30 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import fileinput, shutil, os
-import app
-import general
-from general import x
-import version
-import iptables
-import config
+import fileinput
+import os
+import re
+import shutil
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
+from general import x
+import app
+import config
+import general
+import iptables
+import version
+
+
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
 SCRIPT_VERSION = 1
+
 
 def build_commands(commands):
   commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]", help="Install mysql server on the current server.")
   commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")
   commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master.")
   commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
+
 
 def install_mysql(args):
   '''
@@ -195,18 +201,15 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
   todo: Don't send password on command line.
 
   '''
-  command = command.replace('\\', '\\\\')
-  command = command.replace('"', r'\"')
-
   cmd="mysql "
 
   if (host):
     cmd+= "-h" + host + " "
 
   if (with_user):
-    cmd+='-uroot -p"' + app.get_mysql_root_password() + '" '
+    cmd+='-uroot -p"{0}" '.format(re.escape(app.get_mysql_root_password()))
 
-  return x(cmd + '-e "' + command + '"')
+  return x(cmd + '-e "{0}"'.format(re.escape(command)))
 
 def install_mysql_client():
   '''
