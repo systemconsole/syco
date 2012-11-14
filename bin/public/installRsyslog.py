@@ -76,6 +76,9 @@ def install_rsyslogd_client(args):
     # Initialize all passwords used by the script
     app.init_mysql_passwords()
 
+    # Wating for rsyslog Server to start
+    general.wait_for_server_to_start(config.general.get_log_server_hostname1(), "636")
+
     app.print_verbose("CIS 5.2 Configure rsyslog")
 
     app.print_verbose("CIS 5.2.1 Install the rsyslog package")
