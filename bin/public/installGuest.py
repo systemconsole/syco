@@ -109,7 +109,7 @@ def _install_guest(guest_name):
   x(
     "koan --server=" + config.general.get_installation_server_ip() +
     " --system=" + guest_name +
-    " --virt -v --static-interface=eth0")
+    " --virt -v --static-interface=eth1")
 
   x("virsh autostart " + guest_name)
 
