@@ -321,8 +321,10 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest']:
+      if hosttype in ['host', 'guest', 'backup', 'switch', 'firewall']:
         return hosttype
+      else:
+        raise Exception("Unknown type {0}".format(hosttype))
 
     def get_front_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
@@ -339,6 +341,15 @@ class Config(object):
     def get_back_mac(self):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.mac")
+
+    def get_any_ip(self):
+      ''' Get any ip (front preferred, back second hand, otherwise error'''
+      if self.has_option(self.hostname, "front.ip"):
+        return(self.get_front_ip())
+      elif self.has_option(self.hostname, "back.ip"):
+        return(self.get_back_ip())
+      else:
+        raise Exception("No IP defined for host {0}".format(self.hostname))
 
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
@@ -442,6 +453,11 @@ class Config(object):
     def is_backup(self):
       return self.get_type() == "backup"
 
+    def is_switch(self):
+      return self.get_type() == "switch"
+
+    def is_firewall(self):
+      return self.get_type() == "firewall"
 
     def has_guests(self):
       if (self.has_section(self.hostname)):

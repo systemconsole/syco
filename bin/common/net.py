@@ -163,3 +163,75 @@ if (__name__ == "__main__"):
     print "get_ip_class_c " + get_ip_class_c("1.2.3.4")
     print "num_of_eth_interfaces " + str(num_of_eth_interfaces())
     print "get_hostname " + get_hostname()
+
+def setup_bond(bond, bridge):
+    """
+    Setup a bondX device.
+
+    Will use mode: active-backup or 1
+    - Sets an active-backup policy for fault tolerance. Transmissions are
+    received and sent out via the first available bonded slave interface.
+    Another bonded slave interface is only used if the active bonded slave
+    interface fails.
+
+    """
+    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond,
+"""DEVICE=%s
+BRIDGE=%s
+BONDING_OPTS="miimon=100 mode=1"
+ONBOOT=yes
+USERCTL=no
+ONPARENT=yes
+BOOTPROTO=none
+""" % (bond, bridge))
+
+def setup_eth(eth, bond):
+    '''
+    Setup the eth interface to be included in a bond.
+
+    '''
+    filename = "/etc/sysconfig/network-scripts/ifcfg-" + eth
+    mac = general.get_config_value(filename, "HWADDR")
+    general.store_file(filename,
+"""DEVICE="%s"
+HWADDR=%s
+MASTER=%s
+SLAVE=yes
+NM_CONTROLLED="no"
+ONBOOT=yes
+USERCTL=no
+HOTPLUG=no
+BOOTPROTO=none
+""" % (eth, mac, bond))
+
+def setup_bridge(bridge, ip, netmask, gateway, resolver):
+    '''
+    Bridge the bond network with the KVM guests.
+
+    Can work both with and without IP.
+
+    '''
+    content = """DEVICE=%s
+TYPE=Bridge
+ONBOOT=yes
+USERCTL=no
+DELAY=0
+BOOTPROTO=none
+""" % (bridge)
+
+    if ip:
+        broadcast = net.get_ip_class_c(ip) + ".255"
+        network = net.get_ip_class_c(ip) + ".0"
+
+        content = content + """IPADDR=%s
+NETMASK=%s
+NETWORK=%s
+BROADCAST=%s""" % (ip, netmask, network, broadcast)
+
+    if gateway:
+        content += "\nGATEWAY=" + gateway
+
+    if resolver:
+        content += "\nDNS=" + resolver
+
+    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, content)

@@ -840,6 +840,11 @@ def add_freeradius_chain():
   iptables("-A freeradius_input -p TCP -m multiport --dports 1812,1813 -j allowed_udp")
 
 
+def add_freeradius_client(ip):
+  iptables("-A freeradius_input -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
+  iptables("-A freeradius_output -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
+
+
 def del_openvas_chain():
   app.print_verbose("Delete iptables chain for openvas")
   iptables("-D syco_input  -p ALL -j openvas_input", general.X_OUTPUT_CMD)
@@ -849,6 +854,7 @@ def del_openvas_chain():
   iptables("-D syco_output -p ALL -j openvas_output", general.X_OUTPUT_CMD)
   iptables("-F openvas_output", general.X_OUTPUT_CMD)
   iptables("-X openvas_output", general.X_OUTPUT_CMD)
+
 
 def add_openvas_chain():
   del_openvas_chain()
@@ -865,11 +871,6 @@ def add_openvas_chain():
   iptables("-A openvas_output -p ALL -j ACCEPT")
 
 
-def add_freeradius_client(ip):
-  iptables("-A freeradius_input -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
-  iptables("-A freeradius_output -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
-
-
 def del_ossec_chain():
   app.print_verbose("Delete iptables chain for Ossec")
   iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
@@ -879,7 +880,6 @@ def del_ossec_chain():
   iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
   iptables("-F ossec_out", general.X_OUTPUT_CMD)
   iptables("-X ossec_out", general.X_OUTPUT_CMD)
-
 
 def add_ossec_chain():
   '''
@@ -918,7 +918,6 @@ def add_ossec_chain():
         "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
         config.general.get_ossec_server_ip()
       )
-
 
 
   if (os.path.exists('/var/ossec/bin/manage_agents')):

@@ -185,6 +185,7 @@ def install_mysql_replication(args):
 
   version_obj.mark_executed()
 
+
 def test_mysql(args):
   '''
   Run all mysql unittests, to test the MySQL daemon on the current hardware.
@@ -194,13 +195,19 @@ def test_mysql(args):
   x("perl /usr/share/mysql-test/mysql-test-run.pl")
   x("yum -y remove mysql-test")
 
-def mysql_exec(command, with_user=False, host="127.0.0.1"):
+
+def mysql_exec(command, with_user=False, host="127.0.0.1", escape=True):
   '''
   Execute a MySQL query, through the command line mysql console.
 
   todo: Don't send password on command line.
 
   '''
+
+  if escape:
+    command = command.replace('\\', '\\\\')
+    command = command.replace('"', r'\"')
+
   cmd="mysql "
 
   if (host):
@@ -209,7 +216,8 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
   if (with_user):
     cmd+='-uroot -p"{0}" '.format(re.escape(app.get_mysql_root_password()))
 
-  return x(cmd + '-e "{0}"'.format(re.escape(command)))
+  return x(cmd + '-e "{0}"'.format(command))
+
 
 def install_mysql_client():
   '''

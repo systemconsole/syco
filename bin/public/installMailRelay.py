@@ -49,7 +49,7 @@ def install_mail_server(args):
 
   general.shell_exec("yum -y install sendmail")
 
-  # Tell iptables that this server is configured as a mail-relay server.
+  # Tell iptables and nrpe that this server is configured as a mail-relay server.
   general.shell_exec("touch /etc/mail/syco_mail_relay_server")
   iptables.add_mail_relay_chain()
   iptables.save()
