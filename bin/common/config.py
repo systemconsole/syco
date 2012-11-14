@@ -23,6 +23,7 @@ class ConfigException(Exception):
   '''
   pass
 
+
 class Config(object):
   etc_path = None
   usr_path = None
@@ -34,16 +35,19 @@ class Config(object):
     self.general = self.GeneralConfig(etc_path, usr_path)
 
   def host(self, hostname):
+    '''
+    Return HostConfig object for hostname.
+
+    '''
     if hostname not in self.hosts:
-      self.hosts[hostname] = self.HostConfig(hostname,
-                                             self.etc_path, self.usr_path)
+      self.hosts[hostname] = self.HostConfig(
+        hostname, self.etc_path, self.usr_path
+      )
     return self.hosts[hostname]
 
-  def get_servers(self, backup = False):
+  def get_servers(self):
     '''
     A list of all servers that are defined in install.cfg.
-
-    backup - Also retrive servers of type backup
 
     '''
     servers = self.general.sections()
@@ -51,11 +55,9 @@ class Config(object):
 
     hosts = []
     for hostname in servers:
-      if not self.host(hostname).is_backup() or backup:
-        hosts.append(hostname)
+      hosts.append(hostname)
 
     return sorted(hosts)
-
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
@@ -65,6 +67,16 @@ class Config(object):
       if self.host(hostname).is_host():
         hosts.append(hostname)
     return sorted(hosts)
+
+  def get_switch(self):
+    '''Get the hostname of all switches.'''
+    switch = []
+
+    for hostname in self.get_servers():
+      if self.host(hostname).is_switch():
+        switch.append(hostname)
+    return sorted(switch)
+
 
   class SycoConfig(ConfigParser.RawConfigParser):
 
@@ -321,7 +333,7 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest', 'backup', 'switch', 'firewall']:
+      if hosttype in ['host', 'guest', 'switch', 'firewall']:
         return hosttype
       else:
         raise Exception("Unknown type {0}".format(hosttype))
@@ -441,17 +453,11 @@ class Config(object):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
-
     def is_host(self):
       return self.get_type() == "host"
 
-
     def is_guest(self):
       return self.get_type() == "guest"
-
-
-    def is_backup(self):
-      return self.get_type() == "backup"
 
     def is_switch(self):
       return self.get_type() == "switch"
@@ -529,3 +535,6 @@ def get_servers():
 
 def get_hosts():
   return config.get_hosts()
+
+def get_switch():
+  return config.get_switch()
