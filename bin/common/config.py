@@ -68,7 +68,7 @@ class Config(object):
         hosts.append(hostname)
     return sorted(hosts)
 
-  def get_switch(self):
+  def get_switches(self):
     '''Get the hostname of all switches.'''
     switch = []
 
@@ -536,5 +536,5 @@ def get_servers():
 def get_hosts():
   return config.get_hosts()
 
-def get_switch():
-  return config.get_switch()
+def get_switches():
+  return config.get_switches()
