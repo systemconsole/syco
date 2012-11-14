@@ -744,8 +744,8 @@ def add_mail_relay_chain():
 
 def del_bind_chain():
   app.print_verbose("Delete iptables chain for bind")
-  iptables("-D syco_input -p tcp -j bind_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p tcp -j bind_output", general.X_OUTPUT_CMD)
+  iptables("-D syco_input -j bind_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -j bind_output", general.X_OUTPUT_CMD)
 
   iptables("-F bind_input", general.X_OUTPUT_CMD)
   iptables("-F bind_output", general.X_OUTPUT_CMD)
@@ -761,8 +761,8 @@ def add_bind_chain():
     app.print_verbose("Add iptables chain for bind")
     iptables("-N bind_input")
     iptables("-N bind_output")
-    iptables("-A syco_input -p udp -j bind_input")
-    iptables("-A syco_output -p udp -j bind_output")
+    iptables("-A syco_input -j bind_input")
+    iptables("-A syco_output -j bind_output")
 
     iptables("-A bind_input -m state --state NEW -p udp --dport 53 -j allowed_udp")
     iptables("-A bind_input -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
