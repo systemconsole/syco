@@ -865,6 +865,83 @@ def add_openvas_chain():
   iptables("-A openvas_output -p ALL -j ACCEPT")
 
 
+def add_freeradius_client(ip):
+  iptables("-A freeradius_input -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
+  iptables("-A freeradius_output -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
+
+
+def del_ossec_chain():
+  app.print_verbose("Delete iptables chain for Ossec")
+  iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
+  iptables("-F ossec_in", general.X_OUTPUT_CMD)
+  iptables("-X ossec_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
+  iptables("-F ossec_out", general.X_OUTPUT_CMD)
+  iptables("-X ossec_out", general.X_OUTPUT_CMD)
+
+
+def add_ossec_chain():
+  '''
+  OSSEC IPtables rules
+
+  OSSEC Server
+  Servers in network -> IN -> udp -> 1514 -> OSSEC Server
+  Servers in network <- OUT <- udp <- 1514 <- OSSEC Server
+
+  OSSEC Client
+  OSSEC Server -> IN -> udp -> 1514 -> OSSEC Client
+  OSSEC Server <- OUT <- udp <- 1514 <- OSSEC Client
+
+  '''
+  del_ossec_chain()
+  app.print_verbose("Add iptables chain for OSSEC")
+
+
+  #OSSEC
+  if (os.path.exists('/var/ossec/bin/manage_agents')):
+    iptables("-N ossec_in")
+    iptables("-A syco_input  -p udp -j ossec_in")
+
+    #Ossec Server
+    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+      app.print_verbose("apllying iptables rule for OSSEC Server")
+      for server in get_servers():
+        iptables(
+          "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+          config.host(server).get_front_ip()
+        )
+    #Ossec client
+    else:
+      app.print_verbose("apllying iptables rule for OSSEC Client")
+      iptables(
+        "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+        config.general.get_ossec_server_ip()
+      )
+
+
+
+  if (os.path.exists('/var/ossec/bin/manage_agents')):
+    iptables("-N ossec_out")
+    iptables("-A syco_output -p udp -j ossec_out")
+
+    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+      app.print_verbose("apllying iptables utgoing rule for OSSEC Server")
+      #Ossec Server
+      for server in get_servers():
+        iptables(
+          "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+          config.host(server).get_front_ip()
+        )
+    #Ossec Client
+    else:
+      app.print_verbose("apllying iptables utgoing rule for OSSEC Client")
+      iptables(
+        "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+        config.general.get_ossec_server_ip()
+      )
+
+
 def _execute_private_repo_rules():
   '''
   Execute the function iptables_setup in all sub projects.
