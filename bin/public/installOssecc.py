@@ -101,7 +101,7 @@ def install_ossecc(args):
 
 
   x('yum install gcc make')
-  x("wget -P /tmp/ "+ossec_download)
+  x("wget -P /tmp/ {0}".format(ossec_download))
   x("tar -C /tmp -zxf /tmp/ossec-hids*  ")
   x("rm -rf /tmp/ossec-hids*.tar.gz")
   x("mv /tmp/ossec-hids* /tmp/ossecbuild")
@@ -109,18 +109,18 @@ def install_ossecc(args):
   x('\cp -f /opt/syco/var/ossec/osseconf/preloaded-vars-agent.conf /tmp/ossecbuild/etc/preloaded-vars.conf')
 
   #Setting ossec server ip
-  x("sed -i 's/OSSECSERVER/"+ossecserver+"/g' /tmp/ossecbuild/etc/preloaded-vars.conf")
+  x("sed -i 's/OSSECSERVER/{0}/g' /tmp/ossecbuild/etc/preloaded-vars.conf".format(ossecserver))
   
   #Start installation
   x('/tmp/ossecbuild/install.sh')
 
   #Getting OOSEC clinet key from OSSEC server.
-  scp_from(ossecserver,"/var/ossec/etc/"+hostname+"_client.keys","/var/ossec/etc/client.keys")
+  scp_from(ossecserver,"/var/ossec/etc/{0}_client.keys","/var/ossec/etc/client.keys".format(hostname))
   x('chown root:ossec  /var/ossec/etc/client.keys')
 
   #Setting upp client config from syco
   x('\cp -f /opt/syco/var/ossec/osseconf/ossec_agent.conf /var/ossec/etc/ossec.conf')
-  x("sed -i 's/OSSECSERVER/"+ossecserver+"/g' /var/ossec/etc/ossec.conf")
+  x("sed -i 's/OSSECSERVER/{0}/g' /var/ossec/etc/ossec.conf".format(ossecserver))
   x('chown root:ossec  /var/ossec/etc/ossec.conf')
 
   #Restaring OSSEC client
