@@ -77,6 +77,11 @@ def install_mail_server(args):
 
 def install_mail_client(args):
   app.print_verbose("Install mail-relay-server version: %d" % SCRIPT_VERSION)
+
+  # If mail-relay-server is installed, raise exception.
+  version_obj = version.Version("Install-mail-relay-server", SCRIPT_VERSION)
+  version_obj.check_executed()
+
   version_obj = version.Version("Install-mail-relay-client", SCRIPT_VERSION)
   version_obj.check_executed()
 
@@ -157,7 +162,7 @@ def _rebuild_sendmail_config():
   general.shell_exec("yum -y install sendmail-cf")
   os.chdir("/etc/mail")
   general.shell_exec('make')
-  general.shell_exec('service sendmail start')
+  general.shell_exec('service sendmail restart')
   general.shell_exec("yum -y remove sendmail-cf")
 
 def _test_mail():

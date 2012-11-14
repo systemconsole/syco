@@ -23,6 +23,7 @@ import app
 from app import print_verbose
 from general import x
 from installMysql import mysql_exec
+import re
 import version
 
 # The version of this module, used to prevent
@@ -108,8 +109,8 @@ def drop_user(username):
     Drop a user and its privileges.
 
     '''
-    mysql_exec('DELETE FROM mysql.user where user="{0}";'.format(username), True)
-    mysql_exec('DELETE FROM mysql.db where db="{0}";'.format(username), True)
+    mysql_exec('DELETE FROM mysql.user where user="{0}@127.0.0.1";'.format(username), True)
+    mysql_exec('DELETE FROM mysql.db where db="{0}@localhost";'.format(username), True)
     mysql_exec('flush privileges', True)
 
 

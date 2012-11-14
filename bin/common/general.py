@@ -156,12 +156,18 @@ def generate_password(length=8, chars=string.letters + string.digits + punctuati
   '''Generate a random password'''
   return ''.join([choice(chars) for i in range(length)])
 
-def is_server_alive(server, port):
+def is_server_alive(server, port, proto='tcp'):
   '''
   Check if port on a server is responding, this assumes the server is alive.
 
   '''
   try:
+    if proto=='udp':
+      s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    elif proto=='tcp':
+      s = socket(AF_INET, SOCK_STREAM)
+    else:
+      raise Exception("Invalid proto")
     s = socket(AF_INET, SOCK_STREAM)
     s.settimeout(5)
     result = s.connect_ex((server, int(port)))

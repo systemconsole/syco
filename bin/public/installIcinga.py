@@ -13,8 +13,9 @@ PNP4Nagios handles graphing of Nagios/Icinga performance data and is integrated 
 
 import app
 import config
+import constant
 import general
-from general import generate_password, get_install_dir
+from general import generate_password, get_install_dir, x
 import re
 import os
 import iptables
@@ -22,6 +23,8 @@ import install
 import version
 import mysqlUtils
 from installMysql import install_mysql, mysql_exec
+import string
+import scopen
 
 
 __author__ = "elis.kullberg@netlight.com"
@@ -40,7 +43,6 @@ def build_commands(commands):
     commands.add("install-icinga", install_icinga, help="Installs a icinga poller and web-interface for monitoring of remote hosts.")
     commands.add("reload-icinga", reload_icinga, help="Reloads the icinga object structure.")
     commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
-    commands.add("install-pnp4nagios", install_pnp4nagios, help="Install PNP4Nagios.")
 
 def install_icinga(args):
     '''
@@ -70,17 +72,6 @@ def install_nrpe(args):
     _install_nrpe(args)
     version_obj.mark_executed()
 
-def install_pnp4nagios(args):
-    '''
-    PNP4Nagios is used to store Nagios plugin performance data in an intelligen manner, and present nice graphs that integrated
-    with the Icinga GUI. 
-    '''
-    app.print_verbose("Installing pnp4nagios")
-    version_obj = version.Version("install_pnp4nagios", SCRIPT_VERSION)
-    version_obj.check_executed()
-    _install_pnp4nagios(args)
-    version_obj.mark_executed() 
-
 
 def _append_services(hostList):
     """
@@ -89,7 +80,7 @@ def _append_services(hostList):
     """
     for host in hostList:
         if host.type != "switch":    
-            nrpe_return = general.x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
+            nrpe_return = x("/usr/lib64/nagios/plugins/check_nrpe -H " + host.ip + " -c get_services").split()
             if (nrpe_return.pop(0) == "OK"):
                 host.services = nrpe_return
             else:
@@ -103,15 +94,22 @@ def _get_host_list():
     """
     serverList=[]
     for server in config.get_servers():
-        if bool(re.search('fw', server)):
-            serverList.append(host(server, config.host(server).get_front_ip(),"firewall"))
-        elif  bool(re.search('vh', server)):
-            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_host"))
-        elif bool(re.search('switch', server)): 
-            serverList.append(host(server, config.host(server).get_front_ip(),"switch"))
-        else : 
-            serverList.append(host(server, config.host(server).get_front_ip(),"virtual_guest"))
+        if config.host(server).is_guest():
+            serverList.append(host(server, config.host(server).get_any_ip(),"guest"))
+        elif config.host(server).is_host():
+            serverList.append(host(server, config.host(server).get_any_ip(),"host"))
+        elif config.host(server).is_firewall():
+            serverList.append(host(server, config.host(server).get_any_ip(),"firewall"))
+        elif config.host(server).is_switch():
+            serverList.append(host(server, config.host(server).get_any_ip(),"switch"))
     return serverList
+
+def _get_icinga_version():
+    ''' Checks what package version of icinga is installed (package version comes after "-" i) '''
+    icingaversion = x("yum list installed | grep icinga.x").split()[1].split("-")[0]
+    app.print_verbose(icingaversion)
+    return icingaversion
+
 
 def _install_icinga_core(args):
     """
@@ -120,81 +118,76 @@ def _install_icinga_core(args):
 
     The "hard" part is setting up the object base, which is done in via helper functions. 
     """
-    # Disable SELinux, will mess up httpd aliases toward /usr/lib/
-    general.x("setenforce 0")
-    install.rforge_repo()
+    # Disable SELinux, will mess up httpd aliases toward /usr/lib/. Done statefully later. 
+    x("setenforce 0")
     # Install packages
-    general.x("yum -y install icinga icinga-gui icinga-doc icinga-idoutils-libdbi-mysql nagios-plugins-all nagios-plugins-nrpe")
-    #general.x("yum -y install mysql-server mysql-client libdbi1 libdbi-dev libdbd-mysql")
-    #general.x("service mysqld start")
+    install.rforge_repo()
+    x("yum -y install icinga icinga-idoutils-libdbi-mysql nagios-plugins-all nagios-plugins-nrpe")
     # Create database with icinga user
     app.init_mysql_passwords()
     if not os.path.exists('/etc/init.d/mysqld'):
         install_mysql(["","1","1G"])
-    #sqlpassword = generate_password(20)
-    sqlpassword = "fareoffice"
+    sqlpassword = generate_password(40,chars=string.letters+string.digits)
     mysqlUtils.drop_user('icinga')
     mysqlUtils.create_user('icinga', sqlpassword, 'icinga')
-    general.x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga'".format("icinga",sqlpassword))
-    general.x("mysql icinga --user='{0}' --password='{1}' < /usr/share/doc/icinga-idoutils-libdbi-mysql-1.7.2/db/mysql/mysql.sql".format("icinga",sqlpassword))
-    general.set_config_property("/etc/icinga/ido2db.cfg","db_pass=icinga","db_pass={0}".format(sqlpassword), False)
-    # TODO: Password management for legacy GUI
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/passwd /etc/icinga/")
-    general.x("cp -f /opt/syco/usr/syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg")
-    
+    x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga'".format("icinga",re.escape(sqlpassword)))
+    x("mysql icinga --user='{0}' --password='{1}' < /usr/share/doc/icinga-idoutils-libdbi-mysql-{2}/db/mysql/mysql.sql".format("icinga",re.escape(sqlpassword), _get_icinga_version()))
+    # Let ido2db know password has changed
+    general.use_original_file("/etc/icinga/ido2db.cfg")
+    general.set_config_property("/etc/icinga/ido2db.cfg","db_pass=icinga","db_pass={0}".format(sqlpassword, False))
+    x("cp -p --remove-destination {0}syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg".format(constant.SYCO_USR_PATH))
     # Harden with iptables
     iptables.add_monitor_chain() 
     # Monitor needs to be able to check itself!
     install_nrpe(args)
+    # Configure object structure
     hostList = _get_host_list()
-    #_append_services(hostList)
+    _append_services(hostList)
     _move_object_base_structure_icinga()
     _write_hosts_config_icinga(hostList)
+    # Install SNMP plugins
     _install_server_plugins()
-    return True
+    return sqlpassword
 
 def _reload_icinga(args):
     hostList = _get_host_list()
-    #_append_services(hostList)
+    _append_services(hostList)
     _move_object_base_structure_icinga()
     _write_hosts_config_icinga(hostList)
     _install_server_plugins()
-    return True
 
-def _install_icinga_web():
+def _install_icinga_web(icinga_db_pass):
     """
     This installs the icinga web module. Only source of complexity is moking icinga accessible frmo the document root. 
     """
-    general.x("yum install -y  php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
-    general.x("yum install -y icinga-web")
-    #general.x("mysql < /opt/syco/var/icinga/icinga-web_db_create")
-    #sqlpassword = generate_password(20)
-    sqlpassword = "fareoffice"
-    mysqlUtils.create_user('icinga-web', sqlpassword, 'icinga_web')
-    general.x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga_web'".format("icinga-web",sqlpassword))
-    general.x("mysql icinga_web  --user='{0}' --password='{1}' < /usr/share/doc/icinga-web-1.7.2/schema/mysql.sql".format("icinga-web",sqlpassword))
-    general.x("mysql --user='{0}' --password='{1}' < /opt/syco/usr/syco-private/var/nagios/icinga_password.sql".format("icinga-web",sqlpassword))
-    general.set_config_property("/tmp/httpd.conf","/var/www/html","/usr/share/icinga-web/pub", False)
-    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga_web:icinga_web","mysql://icinga-web:{0}".format(sqlpassword), False)
-    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga:icinga","mysql://icinga:{0}".format(sqlpassword), False)
-    general.x("/usr/bin/icinga-web-clearcache")
-    # Configure apache to use icinga-directory as document root
-    # Let apache read .htacces-files in /usr/share/icinga-web allowoverride for documentroot (but not globally for server, i.e PNP-dir etc)
-    # This will might break your http-confg if run twice or on machine with virtualhosts (hence the backup)
-    general.x("awk '/AllowOverride None/{c++;if(c==2){sub(\"AllowOverride None\",\"AllowOverride All\");c=0}}1' /etc/httpd/conf/httpd.conf > /tmp/httpd.conf")
-    general.set_config_property("/tmp/httpd.conf","/var/www/html","/usr/share/icinga-web/pub", False)
-    general.x("mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.sycobackup")
-    general.x("mv /tmp/httpd.conf /etc/httpd/conf/httpd.conf")
-    # Let icinga know its cgi-dir has changed externally
-    #general.set_config_property("/etc/icinga-web/conf.d/icinga.xml","<!--","<setting name=\"appkit.web_path\">/</setting><!--", False)
+    x("yum install -y icinga-web php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
+    web_sqlpassword = generate_password(40,chars=string.letters+string.digits)
+    mysqlUtils.create_user('icinga-web', web_sqlpassword, 'icinga_web')
+    x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga_web'".format("icinga-web",re.escape(web_sqlpassword)))
+    x("mysql icinga_web  --user='{0}' --password='{1}' < /usr/share/doc/icinga-web-{2}/schema/mysql.sql".format("icinga-web",re.escape(web_sqlpassword),_get_icinga_version()))
+    # Append every plugin-defined passowrd to mysql-table. 
+    x("mysql --user='{0}' --password='{1}' < {2}syco-private/var/nagios/{3}".format("icinga-web",re.escape(web_sqlpassword), constant.SYCO_USR_PATH,"icinga_password.sql"))
+    general.use_original_file("/usr/share/icinga-web/app/config/databases.xml")
+    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga_web:icinga_web","mysql://icinga-web:{0}".format(web_sqlpassword), False)
+    general.set_config_property("/usr/share/icinga-web/app/config/databases.xml","mysql://icinga:icinga","mysql://icinga:{0}".format(icinga_db_pass), False)
+    # Allow icinga-web to issue icinga commands
+    x("useradd -G icingacmd apache")
+    # Clear any icinga cache that has alreaedy acumulated
+    general.use_original_file("/etc/httpd/conf.d/icinga-web.conf ")
+    x("rm -f /etc/httpd/conf.d/icinga-web.conf ")
+    x("cp -p {0}icinga/icinga-web.conf /etc/httpd/conf.d/".format(constant.SYCO_VAR_PATH))
+    htconf = scopen.scOpen("/etc/httpd/conf.d/icinga-web.conf ")
+    htconf.replace("${BIND_DN}","cn=sssd,%s" % config.general.get_ldap_dn() )
+    htconf.replace("${BIND_PASSWORD}","%s" % app.get_ldap_sssd_password() )
+    htconf.replace("${LDAP_URL}","ldaps://%s:636/%s?uid" % (config.general.get_ldap_hostname(),config.general.get_ldap_dn()) )
+    x("/usr/bin/icinga-web-clearcache")
     # Make install stateful
     general.set_config_property("/etc/sysconfig/selinux", "SELINUX=enforcing", "SELINUX=permissive")
-    general.x("/sbin/chkconfig --level 3 httpd on")
-    general.x("/sbin/chkconfig --level 3 mysqld on")
-    general.x("/sbin/chkconfig --level 3 ido2db on")
+    x("/sbin/chkconfig --level 3 httpd on")
+    x("/sbin/chkconfig --level 3 mysqld on")
+    x("/sbin/chkconfig --level 3 ido2db on")
     # Harden with iptables-chain
     iptables.add_httpd_chain()
-    return True
 
 def _install_icinga(args):
     '''
@@ -203,13 +196,13 @@ def _install_icinga(args):
     in case the fancier GUI goes down for any reason. Icinga-web is the "bells and whistles" GUI which is heavier, with "improved" looks 
     and more functionality. 
     '''
-    _install_icinga_core(args)
-    _install_icinga_web()  
-    general.x("service ido2db restart")
-    general.x("service nrpe restart")
-    general.x("service icinga restart")
-    general.x("service httpd restart")
-    return True
+    icinga_db_pass = _install_icinga_core(args)
+    _install_icinga_web(icinga_db_pass)
+    _install_pnp4nagios()
+    x("service ido2db restart")
+    x("service nrpe restart")
+    x("service icinga restart")
+    x("service httpd restart")
 
 def _install_nrpe(args):
     '''
@@ -220,30 +213,28 @@ def _install_nrpe(args):
     install.epel_repo()
     hostList = _get_host_list() 
     # Confusing that nagios-plugins-all does not really include all plugins
-    general.x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc -y")
+    x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc -y")
     # Move object structure and prepare conf-file
-    general.x("rm -rf /etc/nagios/nrpe.d")
-    general.x("rm -rf /etc/nagios/nrpe.cfg")
-    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/nrpe.d /etc/nagios/")
-    general.x("cp /opt/syco/usr/syco-private/var/nagios/nrpe.cfg /etc/nagios/")
+    x("rm -rf /etc/nagios/nrpe.d")
+    x("rm -rf /etc/nagios/nrpe.cfg")
+    x("cp -r {0}syco-private/var/nagios/nrpe.d /etc/nagios/".format(constant.SYCO_USR_PATH))
+    x("cp {0}syco-private/var/nagios/nrpe.cfg /etc/nagios/".format(constant.SYCO_USR_PATH))
     # Extra plugins installed
     _install_nrpe_plugins()
     app.print_verbose("Setting monitor server:" + config.general.get_monitor_server())
     # Allow only monitor to query NRPE
-    general.set_config_property("/etc/nagios/nrpe.cfg", "MONITORIP" ,config.general.get_monitor_server(),False)
-    app.print_verbose("Setting front-resolver IP to:" +config.general.get_front_resolver_ip())
+    general.set_config_property("/etc/nagios/nrpe.cfg", "$(MONITORIP)" ,config.general.get_monitor_server(),False)
     # Figure out what servers to query. 
-    general.set_config_property("/etc/nagios/nrpe.d/common.cfg", "INTERNALDNS" ,config.general.get_front_resolver_ip(),False)
-    general.x("/sbin/chkconfig --level 3 nrpe on")
-    general.x("service nrpe start")
+    x("/sbin/chkconfig --level 3 nrpe on")
+    x("service nrpe restart")
 
 def _install_server_plugins():
     # These are plugins for the Icinga-server, no need for install on hosts. 
-    general.x("chmod +x /opt/syco/lib/nagios/plugins_snmp/*")
-    general.x("cp -p /opt/syco/lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/")
+    x("chmod +x {0}lib/nagios/plugins_snmp/*".format(constant.SYCO_PATH))
+    x("cp -p {0}lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/".format(constant.SYCO_PATH))
 
 
-def _install_pnp4nagios(args):
+def _install_pnp4nagios():
     '''
     PNP4Nagios is design to work with Nagios - some hacking is needed to make it play nice with icinga, especially with file permissions
     creating files that the EPEL-package has missed. PNP4Nagios uses the NPCD-daemon to spool data from Icinga to Round Robin Databases. I.e 
@@ -252,53 +243,73 @@ def _install_pnp4nagios(args):
     '''
     # Get packages from epel repo
     install.epel_repo()
-    general.x("yum install -y pnp4nagios icinga-web-module-pnp")
+    x("yum install -y pnp4nagios icinga-web-module-pnp")
     # Pnp4 uses the nagios password file, which will not exist
+    general.use_original_file("/etc/httpd/conf.d/pnp4nagios.conf")
     general.set_config_property("/etc/httpd/conf.d/pnp4nagios.conf","AuthName \"Nagios Access\"","AuthName \"Icinga Access\"", False)
     general.set_config_property("/etc/httpd/conf.d/pnp4nagios.conf","AuthUserFile /etc/nagios/passwd","AuthUserFile /etc/icinga/passwd",False)
     # NPCD config prepped to work with icinga instead of nagios
-    general.x("cp /opt/syco/usr/syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg")
+    x("cp {0}syco-private/var/nagios/npcd.cfg /etc/pnp4nagios/npcd.cfg".format(constant.SYCO_USR_PATH))
     # Package-maker forgot to create a log for process-perfdata. PBP goes bonkers if it can't find it
-    general.x("touch /var/log/pnp4nagios/perfdata.log")
+    x("touch /var/log/pnp4nagios/perfdata.log")
     # Since we are using icinga (not nagios) we need to change permissions. 
     # Tried just adding icinga to nagios group but creates a dependency on PNP/Nagios package states which is not good. 
-    general.x("chown -R icinga:icinga /var/log/pnp4nagios")
-    general.x("chown -R icinga:icinga /var/spool/pnp4nagios")
-    general.x("chown -R icinga:icinga /var/lib/pnp4nagios")
+    x("chown -R icinga:icinga /var/log/pnp4nagios")
+    x("chown -R icinga:icinga /var/spool/pnp4nagios")
+    x("chown -R icinga:icinga /var/lib/pnp4nagios")
     # Set npcd (bulk parser/spooler) to auto-start 
-    general.x(" /sbin/chkconfig --level 3 npcd on")
+    x(" /sbin/chkconfig --level 3 npcd on")
+    general.use_original_file("/etc/httpd/conf.d/pnp4nagios.conf")
+    x("rm -f /etc/httpd/conf.d/pnp4nagios.conf")
+    x("cp -p {0}icinga/pnp4nagios.conf /etc/httpd/conf.d/".format(constant.SYCO_VAR_PATH))
+    htconf = scopen.scOpen("/etc/httpd/conf.d/pnp4nagios.conf")
+    htconf.replace("${BIND_DN}","cn=sssd,%s" % config.general.get_ldap_dn() )
+    htconf.replace("${BIND_PASSWORD}","%s" % app.get_ldap_sssd_password() )
+    htconf.replace("${LDAP_URL}","ldaps://%s:636/%s?uid" % (config.general.get_ldap_hostname(),config.general.get_ldap_dn()) )
     # Restart everything
-    general.x("service icinga restart")
-    general.x("service httpd restart")
-    general.x("service npcd restart")
+    x("service icinga restart")
+    x("service httpd restart")
+    x("service npcd restart")
 
 
 def _install_nrpe_plugins():
-    general.x("chmod +x /opt/syco/lib/nagios/plugins_nrpe/*")
-    general.x("cp -p /opt/syco/lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/")
+    x("chmod +x {0}lib/nagios/plugins_nrpe/*".format(constant.SYCO_PATH))
+    x("cp -p {0}lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/".format(constant.SYCO_PATH))
 
 
 def _move_object_base_structure_icinga():
     """
     Clear the icinga example object fiels. Move the icinga prepped icinga base structure from syco-private to /etc/icinga/ . 
+    User is responsible for object definitions not overlapping for now. 
     """
-    general.x("rm -rf /etc/icinga/objects/*")
-    general.x("cp -r /opt/syco/usr/syco-private/var/nagios/objects/ /etc/icinga/")
-    general.x("chmod -R 755 /etc/icinga/objects")
+    x("rm -rf /etc/icinga/objects/*")
+    object_path_list = list_plugin_files("/var/nagios/objects")
+    for path in object_path_list:
+        x("cp -r {0}/ /etc/icinga/".format(path))
+    x("chown -R icinga:icinga /etc/icinga/objects")
+    x("chmod -R 750 /etc/icinga/objects")
+
 
 
 def _write_hosts_config_icinga(serverList):
     """
     We open the nagios host-config file and formatted string for every host in the serverList that has been prepped previously. 
     """
-    FILE = open("/etc/icinga/objects/hosts/virtual_host_list.cfg", "w+")
+    FILE = scopen.scOpen("/etc/icinga/objects/hosts/host_list.cfg")
     for host in serverList:
         groups = host.services
         groups.append(host.type)
         hostgroups = ",".join(str(x) for x in groups)
-        FILE.writelines("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
-    FILE.close()
-    general.set_config_property("/etc/icinga/objects/hosts/switch_list.cfg", "SWITCHIP" ,config.general.get_switch_back_ip(),False)
+        FILE.add("define host{\nhost_name  " + host.name + "\nalias " + host.name + "\naddress " + host.ip + "\nuse " + host.type +"\nhostgroups " + hostgroups + "\n}\n\n")
+
+
+def list_plugin_files(path):
+    '''Returns a full file-path for every plugin with the arg-0 sub-path defined'''
+    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+        for plugin in os.listdir(app.SYCO_USR_PATH):
+            plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + path)
+            if (os.access(plugin_path, os.F_OK)):
+                yield plugin_path
 
 
 class host():

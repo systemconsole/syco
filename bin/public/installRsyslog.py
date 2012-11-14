@@ -39,6 +39,7 @@ from ssh import scp_from
 import app
 import config
 import installLogrotate
+import installRsyslogd
 import iptables
 import net
 import version
@@ -63,6 +64,12 @@ def install_rsyslogd_client(args):
 
     '''
     app.print_verbose("Install rsyslog client.")
+
+    # If rsyslogd is installed, raise exception.
+    version_obj = version.Version("InstallRsyslogd", installRsyslogd.SCRIPT_VERSION)
+    version_obj.check_executed()
+
+    #
     version_obj = version.Version("InstallRsyslogdClient", SCRIPT_VERSION)
     version_obj.check_executed()
 

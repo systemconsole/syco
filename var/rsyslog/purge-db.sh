@@ -21,7 +21,7 @@ if [ $OUT -ne 0 ]; then
     logger -t syco -p user.crit $txt
 else
     $txt="[NOTICE] purged 100 days old rows from rsyslogd mysql database."
-	echo
+	echo $txt
     echo
     logger -t syco $txt
 fi

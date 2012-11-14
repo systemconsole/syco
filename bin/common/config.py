@@ -235,16 +235,6 @@ class Config(object):
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
 
-
-    def get_switch_front_ip(self):
-      return self.get_option("switch.frontip")
-
-    def get_switch_back_ip(self):
-      return self.get_option("switch.backip")
-
-    def get_switch_snmpversion(self):
-      return self.get_option("switch.snmpversion")
-
     def get_cert_server(self):
       '''The hostname of the cert server.'''
       return self.get_option("cert.server")
@@ -297,6 +287,10 @@ class Config(object):
     def get_log_server_hostname2(self):
        return self.get_option("log.hostname2")
 
+    def get_subnet(self):
+      '''The subnet of the data center'''
+      return self.get_option("network.subnet")
+
     def get_openvpn_network(self):
       '''The network range of the ips givven to openvpn clients.'''
       return str(self.get_option("openvpn.network"))
@@ -327,7 +321,7 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest']:
+      if hosttype in ['host', 'guest', 'backup', 'switch', 'firewall']:
         return hosttype
 
     def get_front_ip(self):
@@ -345,6 +339,16 @@ class Config(object):
     def get_back_mac(self):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.mac")
+
+    def get_any_ip(self):
+      ''' Get any ip (front preferred, back second hand, otherwise error'''
+      #Config.SycoConfig.get_option(self, self.hostname, option, default_value)
+      if self.has_option(self.hostname,"front.ip"):
+        return(self.get_front_ip())
+      elif self.has_option(self.hostname, "back.ip"):
+        return(self.get_back_ip())
+      else:
+        raise Exception("No IP defined for host {0}".format(self.hostname))
 
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
@@ -448,6 +452,11 @@ class Config(object):
     def is_backup(self):
       return self.get_type() == "backup"
 
+    def is_switch(self):
+      return self.get_type() == "switch"
+
+    def is_firewall(self):
+      return self.get_type() == "firewall"
 
     def has_guests(self):
       if (self.has_section(self.hostname)):

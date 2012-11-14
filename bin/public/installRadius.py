@@ -68,6 +68,9 @@ def install_freeradius(args):
 
     x("/etc/init.d/radiusd restart")
 
+    # Setp new clients
+    setup_radius_client("localhost","127.0.0.1")
+    
     version_obj.mark_executed()
 
 
@@ -150,6 +153,24 @@ def _enable_ldap():
     )
     x("cp -f /etc/raddb/sites-enabled/default.tmp /etc/raddb/sites-enabled/default")
     x("rm -f /etc/raddb/sites-enabled/default.tmp")
+
+
+def setup_radius_client(name,ip):
+  '''
+  Setup radius client config file.
+  And generating password and iptables rules
+  
+  '''
+
+  o = open("/etc/raddb/clients.conf","a")
+  o.write (name +" {" "\n")
+  o.write ("\tipaddr = "+ip + "\n")
+  o.write ("\tsecret = "+generate_password(10,"jkshdkuiyuiwehdpooads8979878378yedhjcjsdgfdsjhgchjdsj") + "\n")
+  o.write ("\tnastype = other\n")
+  o.write ("\t}\n\n")
+  o.close()
+
+  iptables.add_freeradius_client(ip)
 
 
 def uninstall_freeradius(args):
