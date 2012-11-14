@@ -23,8 +23,10 @@ __status__ = "Production"
 
 import os
 import re
+import string
 
-from general import x, use_original_file
+from config import get_switch
+from general import x, use_original_file, generate_password
 from scopen import scOpen
 import app
 import config
@@ -65,12 +67,10 @@ def install_freeradius(args):
 
     _configure_ldap()
     _enable_ldap()
+    _setup_radius_clients()
 
     x("/etc/init.d/radiusd restart")
 
-    # Setp new clients
-    setup_radius_client("localhost","127.0.0.1")
-    
     version_obj.mark_executed()
 
 
@@ -155,22 +155,38 @@ def _enable_ldap():
     x("rm -f /etc/raddb/sites-enabled/default.tmp")
 
 
-def setup_radius_client(name,ip):
+def _setup_radius_clients():
+    '''
+    Create client config/certs for all radius clients.
+
+    Currently only switches and localhost can act as clients to radius.
+
+    '''
+    # Deleting all clients
+    x("rm /etc/raddb/clients.conf")
+
+    # Adding localhost
+    setup_radius_client("localhost", "127.0.0.1")
+
+    # Adding switches
+    for switch_name in get_switches():
+        _setup_radius_client(switch, config.host(switch_name).get_back_ip())
+
+
+def _setup_radius_client(name, ip):
   '''
   Setup radius client config file.
   And generating password and iptables rules
-  
+
   '''
 
   o = open("/etc/raddb/clients.conf","a")
   o.write (name +" {" "\n")
-  o.write ("\tipaddr = "+ip + "\n")
-  o.write ("\tsecret = "+generate_password(10,"jkshdkuiyuiwehdpooads8979878378yedhjcjsdgfdsjhgchjdsj") + "\n")
+  o.write ("\tipaddr = {0}\n".format(ip))
+  o.write ("\tsecret = {0}\n".format(generate_password(20, string.letters + string.digits)))
   o.write ("\tnastype = other\n")
   o.write ("\t}\n\n")
   o.close()
-
-  iptables.add_freeradius_client(ip)
 
 
 def uninstall_freeradius(args):

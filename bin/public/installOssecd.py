@@ -61,12 +61,11 @@ import sys
 import time
 import traceback
 import config
-import iptables
 from config import get_servers, host
 
 
 import app
-from general import x, download_file, md5checksum
+from general import x
 import version
 
 # The version of this module, used to prevent
@@ -89,40 +88,33 @@ def install_ossecd(args):
   '''
   #OSSEC DOWNLOAD URL
   ossec_download = "http://www.ossec.net/files/ossec-hids-2.6.tar.gz"
-  ossec_md5 = "f4140ecf25724b8e6bdcaceaf735138a"
 
 
-  #Downloading and md5 checking
-  x('yum install gcc make perl-Time-HiRes -y')
-  download_file(ossec_download, "ossec-hids.tar.gz")
-  if md5checksum(app.INSTALL_DIR+"ossec-hids.tar.gz") != ossec_md5:
-    raise Exception("Mmd5 Checksum dont match")
+  #Installing OSSEC
+  x('yum install gcc make perl-Time-HiRes')
+  x("wget -P /tmp/ {0}".format(ossec_download))
+  x("tar -C /tmp -zxf /tmp/ossec-hids*  ")
+  x("rm -rf /tmp/ossec-hids*.tar.gz")
+  x("mv /tmp/ossec-hids* /tmp/ossecbuild")
 
-  #Preparing OSSEC for building
-  x("tar -C "+app.INSTALL_DIR+" -zxf "+app.INSTALL_DIR+"ossec-hids.tar.gz  ")
-  x("mv "+app.INSTALL_DIR+"ossec-hids-* "+app.INSTALL_DIR+"ossecbuild")
 
-  #Coping in ossec settings before build
-  x('\cp -f /opt/syco/var/ossec/osseconf/preloaded-vars-server.conf '+app.INSTALL_DIR+'ossecbuild/etc/preloaded-vars.conf')
+
+  x('\cp -f /opt/syco/var/ossec/osseconf/preloaded-vars-server.conf /tmp/ossecbuild/etc/preloaded-vars.conf')
+  x('/tmp/ossecbuild/install.sh')
   
-  #Building OSSEC
-  x(app.INSTALL_DIR+'ossecbuild/install.sh')
-  
-  #Generating keys for ossec all klients
+  #Generating keys for ossec all klients to work
   for server in get_servers():
 
-    x(app.INSTALL_DIR+'/ossecbuild/contrib/ossec-batch-manager.pl -a -n '+server+'.'+config.general.get_resolv_domain()+' -p '+config.host(server).get_front_ip())
-    x("grep "+server+"."+config.general.get_resolv_domain()+" /var/ossec/etc/client.keys > /var/ossec/etc/"+server+"."+config.general.get_resolv_domain()+"_client.keys")
+    x("/tmp/ossecbuild/contrib/ossec-batch-manager.pl -a -n {0}.fareoffice.com -p {1}".format(server,config.host(server).get_back_ip()))
+    x("grep {0}.fareoffice.com /var/ossec/etc/client.keys > /var/ossec/etc/{0}.fareoffice.com_client.keys".format(server))
 
 
   #Setting upp server config and local rules from syco
-  x('\cp -f /opt/syco/var/ossec/osseconf/ossec_server.conf /var/ossec/etc/ossec.conf')
+  ('\cp -f /opt/syco/var/ossec/osseconf/ossec_server.conf /var/ossec/etc/ossec.conf')
   x('\cp -f /opt/syco/var/ossec/osseconf/local_rules.xml /var/ossec/rules/local_rules.xml')
   x('chown root:ossec  /var/ossec/rules/local_rules.xml')
   x('chmod 550  /var/ossec/rules/local_rules.xml')
   x('chown root:ossec  /var/ossec/etc/ossec.conf')
-  x('chmod 550  /var/ossec/etc/client.keys')
-  x('chown ossec:ossec  /var/ossec/etc/client.keys')
 
   #Enabling syslog logging
   x('/var/ossec/bin/ossec-control enable client-syslog')
@@ -131,15 +123,9 @@ def install_ossecd(args):
   x('/var/ossec/bin/ossec-control restart')
   x('/var/ossec/bin/ossec-remoted start')
 
-
-  # Let clients connect to the server through the firewall. This is done after
-  # everything else is done, so we are sure that the server is secure before
-  # letting somebody in.
-  iptables.add_ossec_chain()
-  iptables.save()
-
   #Cleaning upp install
-  x('yum remove gcc make perl-Time-HiRes -y')
+  x('rm -rf /tmp/ossecbuild')
+  x('yum remove gcc make perl-Time-HiRes')
 
 def uninstall_ossecd(args):
   '''
