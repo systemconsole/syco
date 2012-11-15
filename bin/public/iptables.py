@@ -28,22 +28,26 @@ __status__ = "Production"
 import os
 import sys
 
+from config import get_servers
+from general import x
+from scopen import scOpen
 import app
 import config
 import general
-from general import x
 import installGlassfish31
 import version
-from scopen import scOpen
+
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
+
 
 def build_commands(commands):
   commands.add("iptables-clear", iptables_clear, help="Clear all iptables rules.")
   commands.add("iptables-setup", iptables_setup, help="Setup an iptable firewall, customized for installed services.")
+
 
 def iptables(args, output = True):
   '''
@@ -51,6 +55,7 @@ def iptables(args, output = True):
 
   '''
   x("/sbin/iptables " + args, output=output)
+
 
 def del_module(name):
   '''
@@ -72,6 +77,7 @@ def del_module(name):
     '" /etc/sysconfig/iptables-config')
   x("modprobe -r " + name)
 
+
 def add_module(name):
   '''
   Add module to the beginning of IPTABLES_MODULES in /etc/sysconfig/iptables-config
@@ -83,6 +89,7 @@ def add_module(name):
     '" /etc/sysconfig/iptables-config')
   x("modprobe " + name)
 
+
 def iptables_clear(args):
   '''
   Remove all iptables rules.
@@ -91,9 +98,9 @@ def iptables_clear(args):
   app.print_verbose("Clear all iptables rules.")
 
   # reset the default policies in the filter table.
-  iptables("-P INPUT ACCEPT")
-  iptables("-P FORWARD ACCEPT")
-  iptables("-P OUTPUT ACCEPT")
+  iptables("-t filter -P INPUT ACCEPT")
+  iptables("-t filter -P FORWARD ACCEPT")
+  iptables("-t filter -P OUTPUT ACCEPT")
 
   # reset the default policies in the nat table.
   iptables("-t nat -P PREROUTING ACCEPT")
@@ -122,6 +129,7 @@ def iptables_clear(args):
   iptables("-Z -t nat")
   iptables("-Z -t mangle")
 
+
 def save():
   '''
   Save all current iptable rules to file, so it will be reloaded after reboot.
@@ -129,6 +137,7 @@ def save():
   '''
   app.print_verbose("Save current iptables rules to /etc/sysconfig/iptables.")
   x("/sbin/iptables-save > /etc/sysconfig/iptables")
+
 
 def iptables_setup(args):
   '''
@@ -156,21 +165,27 @@ def iptables_setup(args):
   add_kvm_chain()
   add_ldap_chain()
   add_ntp_chain()
+  add_monitor_chain()
   add_openvpn_chain()
   add_mysql_chain()
   add_mail_relay_chain()
-  add_monitor_chain()
+  add_bind_chain()
+  add_rsyslog_chain()
+  add_freeradius_chain()
+  add_openvas_chain()
 
   _execute_private_repo_rules()
 
   save()
   version_obj.mark_executed()
 
+
 def _drop_all():
   app.print_verbose("Drop all traffic to/from/forwarded by this server..")
   iptables("-P INPUT DROP")
   iptables("-P FORWARD DROP")
   iptables("-P OUTPUT DROP")
+
 
 def _create_chains():
   # All drops are going through LOGDROP so it's easy to turn on logging
@@ -226,6 +241,7 @@ def _create_chains():
   iptables("-N syco_forward")
   iptables("-t nat -N syco_nat_postrouting")
 
+
 def _setup_general_rules():
   app.print_verbose("From Localhost interface to Localhost IP's.")
   iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
@@ -266,6 +282,7 @@ def _setup_general_rules():
   #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
   #iptables("-t nat -A POSTROUTING -o eth0 -j MASQUERADE")
 
+
 def _setup_ssh_rules():
   '''
   Can SSH to this and any other computer internal and/or external.
@@ -283,6 +300,7 @@ def _setup_ssh_rules():
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --set -j ACCEPT
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j LOGDROP
 
+
 def _setup_mail_rules():
   '''
   Can SMTP from this computer.
@@ -290,6 +308,7 @@ def _setup_mail_rules():
   '''
   app.print_verbose("Setup mail OUTPUT rule.")
   iptables("-A syco_output -p tcp -m multiport --dports 25 -j allowed_tcp")
+
 
 def _setup_dns_resolver_rules():
   '''
@@ -304,6 +323,7 @@ def _setup_dns_resolver_rules():
       iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_tcp")
       iptables("-A syco_input  -p tcp -s " + resolver_ip + " --sport 53  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_tcp")
 
+
 def _setup_gpg_rules():
   '''
   Allow GPG to talk to keyserver.ubuntu.com:11371
@@ -311,6 +331,7 @@ def _setup_gpg_rules():
   '''
   app.print_verbose("Setup GPG output rule.")
   iptables("-A syco_output -p tcp -d keyserver.ubuntu.com --dport 11371 -j allowed_tcp")
+
 
 def _setup_installation_server_rules():
   '''
@@ -326,12 +347,14 @@ def _setup_installation_server_rules():
   # Need to have this, until all repos are on the installation server.
   iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
 
+
 def del_ntp_chain():
   app.print_verbose("Delete iptables chain for ntp")
   iptables("-D syco_input  -p UDP -j ntp", general.X_OUTPUT_CMD)
   iptables("-D syco_output -p UDP -j ntp", general.X_OUTPUT_CMD)
   iptables("-F ntp", general.X_OUTPUT_CMD)
   iptables("-X ntp", general.X_OUTPUT_CMD)
+
 
 def add_ntp_chain():
   '''
@@ -367,6 +390,7 @@ def del_kvm_chain():
   # Flush settings.
   x("/sbin/sysctl -w net.ipv4.route.flush=1")
   x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
 
 def add_kvm_chain():
   del_kvm_chain()
@@ -408,6 +432,7 @@ def del_mysql_chain():
   iptables("-F mysql_output", general.X_OUTPUT_CMD)
   iptables("-X mysql_output", general.X_OUTPUT_CMD)
 
+
 def add_mysql_chain():
   del_mysql_chain()
 
@@ -426,6 +451,7 @@ def add_mysql_chain():
   iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
+
 def del_httpd_chain():
   app.print_verbose("Delete iptables chain for httpd")
   iptables("-D syco_input  -p ALL -j httpd_input", general.X_OUTPUT_CMD)
@@ -435,6 +461,7 @@ def del_httpd_chain():
   iptables("-D syco_output  -p ALL -j httpd_output", general.X_OUTPUT_CMD)
   iptables("-F httpd_output", general.X_OUTPUT_CMD)
   iptables("-X httpd_output", general.X_OUTPUT_CMD)
+
 
 def add_httpd_chain():
   del_httpd_chain()
@@ -456,12 +483,14 @@ def add_httpd_chain():
   iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
+
 def del_nfs_chain():
   app.print_verbose("Delete iptables chain for nfs")
   iptables("-D syco_input  -p ALL -j nfs_export", general.X_OUTPUT_CMD)
   iptables("-D syco_output -p ALL -j nfs_export", general.X_OUTPUT_CMD)
   iptables("-F nfs_export", general.X_OUTPUT_CMD)
   iptables("-X nfs_export", general.X_OUTPUT_CMD)
+
 
 def add_nfs_chain():
   del_nfs_chain()
@@ -489,6 +518,7 @@ def add_nfs_chain():
   iptables("-A nfs_export -m state --state NEW -p udp --dport 2049 -j allowed_udp")
   iptables("-A nfs_export -m state --state NEW -p udp --dport 111 -j allowed_udp")
 
+
 def del_ldap_chain():
   app.print_verbose("Delete iptables chain for ldap")
   iptables("-D syco_input -p tcp -j ldap_in", general.X_OUTPUT_CMD)
@@ -498,6 +528,7 @@ def del_ldap_chain():
   iptables("-D syco_output -p tcp -j ldap_out", general.X_OUTPUT_CMD)
   iptables("-F ldap_out", general.X_OUTPUT_CMD)
   iptables("-X ldap_out", general.X_OUTPUT_CMD)
+
 
 def add_ldap_chain():
   del_ldap_chain()
@@ -521,6 +552,7 @@ def add_ldap_chain():
       config.general.get_ldap_hostname()
     )
 
+
 def del_cobbler_chain():
   app.print_verbose("Delete iptables chain for cobbler")
   iptables("-D syco_input  -p ALL -j cobbler", general.X_OUTPUT_CMD)
@@ -533,6 +565,7 @@ def del_cobbler_chain():
   iptables("-X cobbler_output", general.X_OUTPUT_CMD)
 
   del_module("nf_conntrack_tftp")
+
 
 def add_cobbler_chain():
   del_cobbler_chain()
@@ -578,6 +611,7 @@ def add_cobbler_chain():
   # RSYNC
   iptables("-A cobbler_output -m state --state NEW -m tcp -p tcp --dport 873 -j allowed_tcp")
 
+
 def del_glassfish_chain():
   app.print_verbose("Delete iptables chain for glassfish")
   iptables("-D syco_input  -p ALL -j glassfish_input", general.X_OUTPUT_CMD)
@@ -586,6 +620,7 @@ def del_glassfish_chain():
   iptables("-X glassfish_input", general.X_OUTPUT_CMD)
   iptables("-F glassfish_output", general.X_OUTPUT_CMD)
   iptables("-X glassfish_output", general.X_OUTPUT_CMD)
+
 
 def add_glassfish_chain():
   del_glassfish_chain()
@@ -608,6 +643,7 @@ def add_glassfish_chain():
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
+
 def del_monitor_chain():
   app.print_verbose("Delete iptables chain for Monitor")
   iptables("-D syco_input  -p ALL -j monitor_input", general.X_OUTPUT_CMD)
@@ -616,6 +652,7 @@ def del_monitor_chain():
   iptables("-X monitor_input", general.X_OUTPUT_CMD)
   iptables("-F monitor_output", general.X_OUTPUT_CMD)
   iptables("-X monitor_output", general.X_OUTPUT_CMD)
+
 
 def add_monitor_chain():
   del_monitor_chain()
@@ -653,6 +690,7 @@ def del_openvpn_chain():
   iptables("iptables -X openvpn_forward", general.X_OUTPUT_CMD)
   iptables("iptables -t nat -X openvpn_postrouting", general.X_OUTPUT_CMD)
 
+
 def add_openvpn_chain():
   del_openvpn_chain()
 
@@ -683,11 +721,13 @@ def add_openvpn_chain():
   iptables("-t nat -A openvpn_postrouting -s %s/24 -o eth0 -j MASQUERADE" % network)
   iptables("-t nat -A openvpn_postrouting -s %s/24 -o eth1 -j MASQUERADE" % network)
 
+
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")
   iptables("-D syco_input -p tcp -j mail_relay", general.X_OUTPUT_CMD)
   iptables("-F mail_relay", general.X_OUTPUT_CMD)
   iptables("-X mail_relay", general.X_OUTPUT_CMD)
+
 
 def add_mail_relay_chain():
   del_mail_relay_chain()
@@ -700,6 +740,210 @@ def add_mail_relay_chain():
 
     # mail_relay with none TLS and with TLS
     iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
+
+
+def del_bind_chain():
+  app.print_verbose("Delete iptables chain for bind")
+  iptables("-D syco_input -j bind_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -j bind_output", general.X_OUTPUT_CMD)
+
+  iptables("-F bind_input", general.X_OUTPUT_CMD)
+  iptables("-F bind_output", general.X_OUTPUT_CMD)
+
+  iptables("-X bind_input", general.X_OUTPUT_CMD)
+  iptables("-X bind_output", general.X_OUTPUT_CMD)
+
+
+def add_bind_chain():
+  del_bind_chain()
+
+  if (os.path.exists('/etc/init.d/named')):
+    app.print_verbose("Add iptables chain for bind")
+    iptables("-N bind_input")
+    iptables("-N bind_output")
+    iptables("-A syco_input -j bind_input")
+    iptables("-A syco_output -j bind_output")
+
+    iptables("-A bind_input -m state --state NEW -p udp --dport 53 -j allowed_udp")
+    iptables("-A bind_input -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
+    iptables("-A bind_output -m state --state NEW -p udp --dport 53 -j allowed_udp")
+    iptables("-A bind_output -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
+
+
+def del_rsyslog_chain():
+  app.print_verbose("Delete iptables chain for rsyslog")
+  iptables("-D syco_input -p tcp -j rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-F rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-X rsyslog_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p tcp -j rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-F rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-X rsyslog_out", general.X_OUTPUT_CMD)
+
+
+def add_rsyslog_chain():
+  '''
+  Rsyslog IPtables rules
+
+  Rsyslog Server
+  Servers in network -> IN -> tcp -> 514 -> Rsyslog Server
+
+  Rsyslog Client
+  Rsyslog Server <- OUT <- tcp <- 514 <- OSSEC Client
+
+  '''
+  del_rsyslog_chain()
+
+  if (os.path.exists('/etc/rsyslog.conf')):
+    app.print_verbose("Add iptables chain for rsyslog")
+    iptables("-N rsyslog_in")
+    iptables("-N rsyslog_out")
+    iptables("-A syco_input  -p tcp -j rsyslog_in")
+    iptables("-A syco_output -p tcp -j rsyslog_out")
+
+    # On rsyslog server
+    if (os.path.exists('/var/log/rsyslog')):
+      for server in get_servers():
+        iptables(
+          " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+          config.host(server).get_front_ip()
+        )
+    # On rsyslog client
+    else:
+      iptables(
+        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        config.general.get_log_server_hostname1()
+      )
+      iptables(
+        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        config.general.get_log_server_hostname2()
+      )
+
+
+def del_freeradius_chain():
+  app.print_verbose("Delete iptables chain for FreeRadius")
+  iptables("-D syco_input  -p ALL -j freeradius_input", general.X_OUTPUT_CMD)
+  iptables("-F freeradius_input", general.X_OUTPUT_CMD)
+  iptables("-X freeradius_input", general.X_OUTPUT_CMD)
+
+
+def add_freeradius_chain():
+  del_freeradius_chain()
+
+  if (not os.path.exists('/etc/init.d/radiusd')):
+    return
+
+  app.print_verbose("Add iptables chain for FreeRadius")
+  iptables("-N freeradius_input")
+  iptables("-A syco_input  -p ALL -j freeradius_input")
+
+  # Localhost are allowed to talk to radius
+  iptables("-A freeradius_input -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
+  iptables("-A freeradius_output -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
+
+  # Switches are allowed to talk to radius
+  for switch_name in get_switches():
+    ip = config.host(switch_name).get_back_ip()
+    iptables("-A freeradius_input -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
+    iptables("-A freeradius_output -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
+
+
+
+def del_openvas_chain():
+  app.print_verbose("Delete iptables chain for openvas")
+  iptables("-D syco_input  -p ALL -j openvas_input", general.X_OUTPUT_CMD)
+  iptables("-F openvas_input", general.X_OUTPUT_CMD)
+  iptables("-X openvas_input", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p ALL -j openvas_output", general.X_OUTPUT_CMD)
+  iptables("-F openvas_output", general.X_OUTPUT_CMD)
+  iptables("-X openvas_output", general.X_OUTPUT_CMD)
+
+
+def add_openvas_chain():
+  del_openvas_chain()
+
+  if (not os.path.exists('/usr/sbin/openvassd')):
+    return
+
+  app.print_verbose("Add iptables chain for openvas")
+  iptables("-N openvas_input")
+  iptables("-N openvas_output")
+  iptables("-A syco_input  -p ALL -j openvas_input")
+  iptables("-A syco_output -p ALL -j openvas_output")
+  iptables("-A openvas_input -p TCP --dport 9392 -j allowed_tcp")
+  iptables("-A openvas_output -p ALL -j ACCEPT")
+
+
+def del_ossec_chain():
+  app.print_verbose("Delete iptables chain for Ossec")
+  iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
+  iptables("-F ossec_in", general.X_OUTPUT_CMD)
+  iptables("-X ossec_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
+  iptables("-F ossec_out", general.X_OUTPUT_CMD)
+  iptables("-X ossec_out", general.X_OUTPUT_CMD)
+
+def add_ossec_chain():
+  '''
+  OSSEC IPtables rules
+
+  OSSEC Server
+  Servers in network -> IN -> udp -> 1514 -> OSSEC Server
+  Servers in network <- OUT <- udp <- 1514 <- OSSEC Server
+
+  OSSEC Client
+  OSSEC Server -> IN -> udp -> 1514 -> OSSEC Client
+  OSSEC Server <- OUT <- udp <- 1514 <- OSSEC Client
+
+  '''
+  del_ossec_chain()
+  app.print_verbose("Add iptables chain for OSSEC")
+
+
+  #OSSEC
+  if (os.path.exists('/var/ossec/bin/manage_agents')):
+    iptables("-N ossec_in")
+    iptables("-A syco_input  -p udp -j ossec_in")
+
+    #Ossec Server
+    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+      app.print_verbose("apllying iptables rule for OSSEC Server")
+      for server in get_servers():
+        iptables(
+          "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+          config.host(server).get_front_ip()
+        )
+    #Ossec client
+    else:
+      app.print_verbose("apllying iptables rule for OSSEC Client")
+      iptables(
+        "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+        config.general.get_ossec_server_ip()
+      )
+
+
+  if (os.path.exists('/var/ossec/bin/manage_agents')):
+    iptables("-N ossec_out")
+    iptables("-A syco_output -p udp -j ossec_out")
+
+    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+      app.print_verbose("apllying iptables utgoing rule for OSSEC Server")
+      #Ossec Server
+      for server in get_servers():
+        iptables(
+          "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+          config.host(server).get_front_ip()
+        )
+    #Ossec Client
+    else:
+      app.print_verbose("apllying iptables utgoing rule for OSSEC Client")
+      iptables(
+        "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+        config.general.get_ossec_server_ip()
+      )
+
 
 def _execute_private_repo_rules():
   '''

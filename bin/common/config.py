@@ -23,6 +23,7 @@ class ConfigException(Exception):
   '''
   pass
 
+
 class Config(object):
   etc_path = None
   usr_path = None
@@ -34,16 +35,19 @@ class Config(object):
     self.general = self.GeneralConfig(etc_path, usr_path)
 
   def host(self, hostname):
+    '''
+    Return HostConfig object for hostname.
+
+    '''
     if hostname not in self.hosts:
-      self.hosts[hostname] = self.HostConfig(hostname,
-                                             self.etc_path, self.usr_path)
+      self.hosts[hostname] = self.HostConfig(
+        hostname, self.etc_path, self.usr_path
+      )
     return self.hosts[hostname]
 
-  def get_servers(self, backup = False):
+  def get_servers(self):
     '''
     A list of all servers that are defined in install.cfg.
-
-    backup - Also retrive servers of type backup
 
     '''
     servers = self.general.sections()
@@ -51,11 +55,9 @@ class Config(object):
 
     hosts = []
     for hostname in servers:
-      if not self.host(hostname).is_backup() or backup:
-        hosts.append(hostname)
+      hosts.append(hostname)
 
     return sorted(hosts)
-
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
@@ -65,6 +67,16 @@ class Config(object):
       if self.host(hostname).is_host():
         hosts.append(hostname)
     return sorted(hosts)
+
+  def get_switches(self):
+    '''Get the hostname of all switches.'''
+    switch = []
+
+    for hostname in self.get_servers():
+      if self.host(hostname).is_switch():
+        switch.append(hostname)
+    return sorted(switch)
+
 
   class SycoConfig(ConfigParser.RawConfigParser):
 
@@ -133,7 +145,7 @@ class Config(object):
 
     def get_installation_server_ip(self):
       '''The ip of the installation server.'''
-      return self.host(self.get_installation_server()).get_back_ip()
+      return self.host(self.get_installation_server()).get_front_ip()
 
     def get_front_gateway_ip(self):
       '''The ip of the network gateway.'''
@@ -180,7 +192,10 @@ class Config(object):
       Ip list of all dns resolvers that are configured on all servers.
 
       '''
-      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
+      resolvers = "{0} {1} {2}".format(
+        self.get_front_resolver_ip(), self.get_back_resolver_ip(),
+        self.get_resolv_nameserver_server_ip()
+      )
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
@@ -196,12 +211,18 @@ class Config(object):
     def get_resolv_search(self):
       return self.get_option("resolv.search")
 
+    def get_resolv_nameserver_server(self):
+      return self.get_option("resolv.nameserver.server")
+
+    def get_resolv_nameserver_server_ip(self):
+      return self.host(self.get_resolv_nameserver_server()).get_front_ip()
+
     def get_ldap_server(self):
       '''The hostname of the ldap server.'''
       return self.get_option("ldap.server")
 
     def get_ldap_server_ip(self):
-      return self.host(self.get_ldap_server()).get_back_ip()
+      return self.host(self.get_ldap_server()).get_front_ip()
 
     def get_ldap_hostname(self):
       return self.get_option("ldap.hostname")
@@ -221,7 +242,7 @@ class Config(object):
       return self.get_option("ntp.server")
 
     def get_ntp_server_ip(self):
-      return self.host(self.get_ntp_server()).get_back_ip()
+      return self.host(self.get_ntp_server()).get_front_ip()
 
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
@@ -246,19 +267,13 @@ class Config(object):
       '''The hostname of the cert server.'''
       return self.get_option("cert.wild.key")
 
-    def get_mysql_primary_master(self):
-      return self.get_option("mysql.primary_master")
-
     def get_mysql_primary_master_ip(self):
       '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_primary_master()).get_back_ip()
-
-    def get_mysql_secondary_master(self):
-      return self.get_option("mysql.secondary_master")
+      return self.get_option("mysql.primary_master_ip")
 
     def get_mysql_secondary_master_ip(self):
-      '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_secondary_master()).get_back_ip()
+      '''IP or hostname for secondary mysql server.'''
+      return self.get_option("mysql.secondary_master_ip")
 
     def get_country_name(self):
       return self.get_option("country_name")
@@ -278,8 +293,15 @@ class Config(object):
     def get_admin_email(self):
       return self.get_option("admin_email")
 
-    def get_log_server_hostname(self):
-      return self.get_option("log.hostname")
+    def get_log_server_hostname1(self):
+      return self.get_option("log.hostname1")
+
+    def get_log_server_hostname2(self):
+       return self.get_option("log.hostname2")
+
+    def get_subnet(self):
+      '''The subnet of the data center'''
+      return self.get_option("network.subnet")
 
     def get_openvpn_network(self):
       '''The network range of the ips givven to openvpn clients.'''
@@ -288,15 +310,9 @@ class Config(object):
     def get_openvpn_hostname(self):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
-    
-    def get_logg_server(self):
-      return self.get_option("logg.server")
 
     def get_ossec_server_ip(self):
       return self.get_option("ossec.server_ip")
-
-    def get_logg_server2(self):
-      return self.get_option("logg.server2")
 
 
   class HostConfig(SycoConfig):
@@ -317,8 +333,10 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest']:
+      if hosttype in ['host', 'guest', 'switch', 'firewall']:
         return hosttype
+      else:
+        raise Exception("Unknown type {0}".format(hosttype))
 
     def get_front_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
@@ -336,6 +354,15 @@ class Config(object):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.mac")
 
+    def get_any_ip(self):
+      ''' Get any ip (front preferred, back second hand, otherwise error'''
+      if self.has_option(self.hostname, "front.ip"):
+        return(self.get_front_ip())
+      elif self.has_option(self.hostname, "back.ip"):
+        return(self.get_back_ip())
+      else:
+        raise Exception("No IP defined for host {0}".format(self.hostname))
+
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
       return self.get_option("ram")
@@ -345,11 +372,21 @@ class Config(object):
       return self.get_option("cpu")
 
     def get_disk_swap_gb(self):
-      '''Get the size of the swap partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+
+      '''
       return self.get_option("disk_swap", "4")
 
     def get_disk_swap_mb(self):
-      '''Get the size of the swap partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4096 GB
+
+      '''
       return str(int(self.get_disk_swap_gb()) * 1024)
 
     def get_disk_var(self):
@@ -357,12 +394,38 @@ class Config(object):
       return self.get_option("disk_var")
 
     def get_disk_var_gb(self):
-      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
-      return self.get_option("disk_var")
+      '''
+      Size of the /var partion in GB, as it is defined in install.cfg
+
+      Defaut: 10 GB
+
+      '''
+      return self.get_option("disk_var", "10")
 
     def get_disk_var_mb(self):
-      '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the /var partion in MB, as it is defined in install.cfg
+
+      Defaut: 10240 MB
+
+      '''
       return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_disk_log_gb(self):
+      '''
+      Size of the /var/log partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+      '''
+      return self.get_option("disk_log", "4")
+
+    def get_disk_log_mb(self):
+      '''
+      Size of the /var/log partion in MB, as it is defined in install.cfg
+
+      Defaut: 4096 MB
+      '''
+      return str(int(self.get_disk_log_gb()) * 1024)
 
     def get_disk_extra_lvm_gb(self):
       '''
@@ -375,8 +438,12 @@ class Config(object):
       return self.get_option("disk_extra_lvm", 0)
 
     def get_total_disk_gb(self):
-      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_disk_var_gb()) + int(self.get_disk_extra_lvm_gb()) + 16)
+      '''Total size of all partions, the size of the lvm volume on the host.'''
+      return str(
+        int(self.get_disk_var_gb()) +
+        int(self.get_disk_log_gb()) +
+        int(self.get_disk_extra_lvm_gb()) + 12
+      )
 
     def get_total_disk_mb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
@@ -386,18 +453,17 @@ class Config(object):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
-
     def is_host(self):
       return self.get_type() == "host"
-
 
     def is_guest(self):
       return self.get_type() == "guest"
 
+    def is_switch(self):
+      return self.get_type() == "switch"
 
-    def is_backup(self):
-      return self.get_type() == "backup"
-
+    def is_firewall(self):
+      return self.get_type() == "firewall"
 
     def has_guests(self):
       if (self.has_section(self.hostname)):
@@ -469,3 +535,6 @@ def get_servers():
 
 def get_hosts():
   return config.get_hosts()
+
+def get_switches():
+  return config.get_switches()

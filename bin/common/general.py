@@ -85,7 +85,19 @@ def create_install_dir():
   else:
     raise Exception("Can't create install dir.")
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
+
+def get_install_dir():
+  '''
+  Create and return the installtion tmp dir.
+
+  This dir will automatically be deleted when the script ends.
+
+  '''
+  create_install_dir()
+  return app.INSTALL_DIR
+
+
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -104,6 +116,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
     if (remote_password):
       cmd += " --password=\"" + remote_password + "\""
+
+    if (cookie):
+      cmd += ' --no-cookies --header "Cookie: %s"' % cookie
 
     shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
@@ -134,17 +149,25 @@ def urlretrive(src_url, dst_filename):
 
   return dst_path
 
-
-def generate_password(length=8, chars=string.letters + string.digits):
+# Restricted version of string.punctuation, has removed some "dangerous" chars,
+# that might crash some scripts if not properly escaped.
+punctuation = '!#$%()*+,-./:;<=>?@[\]^_{|}~'
+def generate_password(length=8, chars=string.letters + string.digits + punctuation):
   '''Generate a random password'''
   return ''.join([choice(chars) for i in range(length)])
 
-def is_server_alive(server, port):
+def is_server_alive(server, port, proto='tcp'):
   '''
   Check if port on a server is responding, this assumes the server is alive.
 
   '''
   try:
+    if proto=='udp':
+      s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    elif proto=='tcp':
+      s = socket(AF_INET, SOCK_STREAM)
+    else:
+      raise Exception("Invalid proto")
     s = socket(AF_INET, SOCK_STREAM)
     s.settimeout(5)
     result = s.connect_ex((server, int(port)))
@@ -439,3 +462,37 @@ if __name__ == "__main__":
   download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
   os.chdir("/tmp/install")
   print shell_exec("ls -alvh")
+
+
+def md5checksum(filePath):
+    fh = open(filePath, 'rb')
+    m = hashlib.md5()
+    while True:
+        data = fh.read(8192)
+        if not data:
+            break
+        m.update(data)
+    return m.hexdigest()
+
+
+def use_original_file(filename):
+    '''
+    Backup original file, and restore if backup exist.
+
+    With this procedure it's possible to have script makeing changes to a file
+    with sed/awk, and then run the script again to to make the same changes
+    to the original data.
+
+    '''
+    if not filename.startswith('/'):
+        raise Exeption("Filename {0} must start with /.".format(filename))
+    syco_bak_folder = '/tmp/syco_bak'
+    bak_file = '{0}{1}'.format(syco_bak_folder, filename)
+
+    if os.path.exists(bak_file):
+        x("cp -f {0} {1}".format(bak_file, filename))
+    else:
+        bak_folder = bak_file.rsplit('/', 1)[0]
+        x("mkdir -p {0}".format(bak_folder))
+        x("cp -f {0} {1}".format(filename, bak_file))
+

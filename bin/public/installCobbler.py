@@ -246,6 +246,8 @@ def _add_all_systems():
     # Is a KVM host?
     if config.host(hostname).is_host():
       _host_add(hostname)
+    elif config.host(hostname).is_firewall():
+      _host_add(hostname)
     elif config.host(hostname).is_guest():
       _guest_add(hostname)
 
@@ -258,6 +260,7 @@ def _host_add(hostname):
     "--name=" + hostname + " --hostname=" + hostname + " " +
     '--name-servers="' + config.general.get_front_resolver_ip() + '" ' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' disk_log_mb=' + str(config.host(hostname).get_disk_log_mb()) +
     ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("cciss/c0d0")) + '"')
@@ -280,6 +283,7 @@ def _guest_add(hostname):
     " --name=" + hostname + " --hostname=" + hostname +
     ' --name-servers="' + config.general.get_front_resolver_ip() + '"' +
     ' --ksmeta="disk_var_mb=' + str(config.host(hostname).get_disk_var_mb()) +
+    ' disk_log_mb=' + str(config.host(hostname).get_disk_log_mb()) +
     ' total_disk_mb=' + str(config.host(hostname).get_total_disk_mb()) +
     ' disk_swap_mb=' + str(config.host(hostname).get_disk_swap_mb()) +
     ' boot_device=' + str(config.host(hostname).get_boot_device("vda")) + '"')

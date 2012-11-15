@@ -92,7 +92,7 @@ def install_ossecd(args):
 
   #Installing OSSEC
   x('yum install gcc make perl-Time-HiRes')
-  x("wget -P /tmp/ "+ossec_download)
+  x("wget -P /tmp/ {0}".format(ossec_download))
   x("tar -C /tmp -zxf /tmp/ossec-hids*  ")
   x("rm -rf /tmp/ossec-hids*.tar.gz")
   x("mv /tmp/ossec-hids* /tmp/ossecbuild")
@@ -105,8 +105,8 @@ def install_ossecd(args):
   #Generating keys for ossec all klients to work
   for server in get_servers():
 
-    x('/tmp/ossecbuild/contrib/ossec-batch-manager.pl -a -n '+server+'.fareoffice.com -p '+config.host(server).get_back_ip())
-    x("grep "+server+".fareoffice.com /var/ossec/etc/client.keys > /var/ossec/etc/"+server+".fareoffice.com_client.keys")
+    x("/tmp/ossecbuild/contrib/ossec-batch-manager.pl -a -n {0}.fareoffice.com -p {1}".format(server,config.host(server).get_back_ip()))
+    x("grep {0}.fareoffice.com /var/ossec/etc/client.keys > /var/ossec/etc/{0}.fareoffice.com_client.keys".format(server))
 
 
   #Setting upp server config and local rules from syco

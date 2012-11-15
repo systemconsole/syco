@@ -94,6 +94,9 @@ def download_cert(filename):
     This is not needed to be done on the server.
 
     '''
+    #Creating certs folder
+    x("mkdir /etc/openldap/cacerts")
+
     ip = config.general.get_ldap_server_ip()
     fullpath = '/etc/openldap/cacerts/' + filename
     shell_run("scp root@%s:%s %s" % (ip, fullpath, fullpath),
@@ -146,13 +149,14 @@ def configured_sssd():
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
     scOpen("/etc/sssd/sssd.conf").remove("^enumerate=true")
-    scOpen("/etc/sssd/sssd.conf").add("enumerate=true")
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]","\[domain/default\]\nenumerate=true")
 
     # Configure client certificate auth.
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_cert.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_key.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_reqcert.*")
-    scOpen("/etc/sssd/sssd.conf").add(
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
+        "\[domain/default\]\n" +
         "ldap_tls_cert = /etc/openldap/cacerts/client.pem\n" +
         "ldap_tls_key = /etc/openldap/cacerts/client.pem\n" +
         "ldap_tls_reqcert = demand"
@@ -161,7 +165,8 @@ def configured_sssd():
     # Only users with this employeeType are allowed to login to this computer.
     scOpen("/etc/sssd/sssd.conf").remove("^access_provider.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_access_filter.*")
-    scOpen("/etc/sssd/sssd.conf").add(
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
+        "\[domain/default\]\n" +
         "access_provider = ldap\n" +
         "ldap_access_filter = (employeeType=Sysop)"
     )
@@ -170,13 +175,16 @@ def configured_sssd():
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_bind_dn.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_authtok_type.*")
     scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_authtok.*")
-    scOpen("/etc/sssd/sssd.conf").add(
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
+        "\[domain/default\]\n" +
         "ldap_default_bind_dn = cn=sssd," + config.general.get_ldap_dn()
     )
-    scOpen("/etc/sssd/sssd.conf").add(
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
+        "\[domain/default\]\n" +
         "ldap_default_authtok_type = password"
     )
-    scOpen("/etc/sssd/sssd.conf").add(
+    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
+        "\[domain/default\]\n" +
         "ldap_default_authtok = " + app.get_ldap_sssd_password()
     )
 
