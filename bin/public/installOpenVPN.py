@@ -55,7 +55,7 @@ def install_openvpn_server(args):
   version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  x("yum -y install openvpn")
+  x("yum -y install openvpn openvpn-auth-ldap")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
     x("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
@@ -94,6 +94,8 @@ def install_openvpn_server(args):
   general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
   x("echo 1 > /proc/sys/net/ipv4/ip_forward")
 
+  _setup_ldap()
+
   iptables.add_openvpn_chain()
   iptables.save()
 
@@ -103,6 +105,31 @@ def install_openvpn_server(args):
   build_client_certs(args)
 
   version_obj.mark_executed()
+
+
+def _setup_ldap():
+  '''
+  Configure openvpn to authenticate through LDAP.
+
+  '''
+  ldapconf = scOpen("/etc/openvpn/auth/ldap.conf")
+  ldapconf.replace("^\\s*URL\s*.*","\\tURL\\tldaps://%s" % config.general.get_ldap_hostname())
+  ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_admin_password())
+  ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=Manager,%s" % config.general.get_ldap_dn())
+  ldapconf.replace("^\s*TLSEnable\s*.*","\\t# TLSEnable\\t YES")
+
+  # Deal with certs
+  ldapconf.replace("^\s*TLSCACertFile\s*.*","\\tTLSCACertFile\\t /etc/openldap/cacerts/ca.crt")
+  ldapconf.replace("^\s*TLSCACertDir\s*.*","\\tTLSCACertDir\\t /etc/openldap/cacerts/")
+  ldapconf.replace("^\s*TLSCertFile\s*.*","\\tTLSCertFile\\t /etc/openldap/cacerts/client.crt")
+  ldapconf.replace("^\s*TLSKeyFile\s*.*","\\tTLSKeyFile\\t /etc/openldap/cacerts/client.key")
+
+  # Auth
+  ldapconf.replace("^\s*BaseDN\s*.*","\\BaseDN\\t \"%s\"" % config.general.get_ldap_dn() )
+  ldapconf.replace("^\s*SearchFilter\s*.*","\\tSearchFilter\\t \"(\\&(uid=%u)(employeeType=Sysop))\"")
+
+  x('echo "plugin /usr/lib64/openvpn/plugin/lib/openvpn-auth-ldap.so /etc/openvpn/auth/ldap.conf" >> /etc/openvpn/server.conf ')
+
 
 def build_client_certs(args):
   install.package("zip")
