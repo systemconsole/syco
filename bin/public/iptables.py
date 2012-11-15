@@ -744,8 +744,8 @@ def add_mail_relay_chain():
 
 def del_bind_chain():
   app.print_verbose("Delete iptables chain for bind")
-  iptables("-D syco_input -p tcp -j bind_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p tcp -j bind_output", general.X_OUTPUT_CMD)
+  iptables("-D syco_input -j bind_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -j bind_output", general.X_OUTPUT_CMD)
 
   iptables("-F bind_input", general.X_OUTPUT_CMD)
   iptables("-F bind_output", general.X_OUTPUT_CMD)
@@ -761,8 +761,8 @@ def add_bind_chain():
     app.print_verbose("Add iptables chain for bind")
     iptables("-N bind_input")
     iptables("-N bind_output")
-    iptables("-A syco_input -p udp -j bind_input")
-    iptables("-A syco_output -p udp -j bind_output")
+    iptables("-A syco_input -j bind_input")
+    iptables("-A syco_output -j bind_output")
 
     iptables("-A bind_input -m state --state NEW -p udp --dport 53 -j allowed_udp")
     iptables("-A bind_input -m state --state NEW -p tcp --dport 53 -j allowed_tcp")
@@ -837,12 +837,16 @@ def add_freeradius_chain():
   iptables("-N freeradius_input")
   iptables("-A syco_input  -p ALL -j freeradius_input")
 
-  iptables("-A freeradius_input -p TCP -m multiport --dports 1812,1813 -j allowed_udp")
+  # Localhost are allowed to talk to radius
+  iptables("-A freeradius_input -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
+  iptables("-A freeradius_output -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
 
+  # Switches are allowed to talk to radius
+  for switch_name in get_switches():
+    ip = config.host(switch_name).get_back_ip()
+    iptables("-A freeradius_input -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
+    iptables("-A freeradius_output -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
 
-def add_freeradius_client(ip):
-  iptables("-A freeradius_input -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
-  iptables("-A freeradius_output -p TCP -m multiport -d "+ip+" --dports 1812,1813 -j allowed_tcp")
 
 
 def del_openvas_chain():

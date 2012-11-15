@@ -98,6 +98,7 @@ import app
 import version
 import iptables
 import config
+import general
 from general import x
 from scopen import scOpen
 
@@ -309,6 +310,8 @@ def install_bind_client(args):
     version_obj.check_executed()
 
     # Iptables is already configured with iptables._setup_dns_resolver_rules
+
+    general.wait_for_server_to_start(ip, "53")
 
     # Set what resolver to user.
     resolv = scOpen("/etc/resolv.conf")
