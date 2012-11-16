@@ -789,7 +789,7 @@ def add_rsyslog_chain():
   Servers in network -> IN -> tcp -> 514 -> Rsyslog Server
 
   Rsyslog Client
-  Rsyslog Server <- OUT <- tcp <- 514 <- OSSEC Client
+  Rsyslog Server <- OUT <- tcp <- 514 <- Rsyslog Client
 
   '''
   del_rsyslog_chain()
@@ -877,6 +877,7 @@ def add_openvas_chain():
 
 def del_ossec_chain():
   app.print_verbose("Delete iptables chain for Ossec")
+
   iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
   iptables("-F ossec_in", general.X_OUTPUT_CMD)
   iptables("-X ossec_in", general.X_OUTPUT_CMD)
@@ -884,6 +885,7 @@ def del_ossec_chain():
   iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
   iptables("-F ossec_out", general.X_OUTPUT_CMD)
   iptables("-X ossec_out", general.X_OUTPUT_CMD)
+
 
 def add_ossec_chain():
   '''
@@ -901,48 +903,41 @@ def add_ossec_chain():
   del_ossec_chain()
   app.print_verbose("Add iptables chain for OSSEC")
 
+  if not os.path.exists('/etc/init.d/ossec-hids'):
+    return
 
-  #OSSEC
-  if (os.path.exists('/var/ossec/bin/manage_agents')):
-    iptables("-N ossec_in")
-    iptables("-A syco_input  -p udp -j ossec_in")
+  # Create chains.
+  iptables("-N ossec_in")
+  iptables("-N ossec_out")
+  iptables("-A syco_input -p udp -j ossec_in")
+  iptables("-A syco_output -p udp -j ossec_out")
 
-    #Ossec Server
-    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
-      app.print_verbose("apllying iptables rule for OSSEC Server")
-      for server in get_servers():
+  # Ossec Server
+  if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+    for server in get_servers():
+      try:
         iptables(
-          "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+          "-A ossec_in -p udp -s %s --dport 1514 -j allowed_udp" %
           config.host(server).get_front_ip()
         )
-    #Ossec client
-    else:
-      app.print_verbose("apllying iptables rule for OSSEC Client")
-      iptables(
-        "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
-        config.general.get_ossec_server_ip()
-      )
 
-
-  if (os.path.exists('/var/ossec/bin/manage_agents')):
-    iptables("-N ossec_out")
-    iptables("-A syco_output -p udp -j ossec_out")
-
-    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
-      app.print_verbose("apllying iptables utgoing rule for OSSEC Server")
-      #Ossec Server
-      for server in get_servers():
         iptables(
-          "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+          "-A ossec_out -p udp -d %s --dport 1514 -j allowed_udp" %
           config.host(server).get_front_ip()
         )
-    #Ossec Client
-    else:
-      app.print_verbose("apllying iptables utgoing rule for OSSEC Client")
-      iptables(
-        "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
-        config.general.get_ossec_server_ip()
-      )
+      except Exception, e:
+        pass
+
+  # Ossec client
+  else:
+    iptables(
+      "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+      config.general.get_ossec_server_ip()
+    )
+    iptables(
+      "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+      config.general.get_ossec_server_ip()
+    )
 
 
 def _execute_private_repo_rules():

@@ -311,9 +311,13 @@ class Config(object):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
 
-    def get_ossec_server_ip(self):
-      return self.get_option("ossec.server_ip")
+    def get_ossec_server(self):
+      '''The hostname of the ossec server.'''
+      return self.get_option("ossec.server")
 
+    def get_ossec_server_ip(self):
+      '''The ip of the ossec server.'''
+      return self.host(self.get_ossec_server()).get_front_ip()
 
   class HostConfig(SycoConfig):
     '''
