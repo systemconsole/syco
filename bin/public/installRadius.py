@@ -25,7 +25,7 @@ import os
 import re
 import string
 
-from config import get_switch
+from config import get_switches
 from general import x, use_original_file, generate_password
 from scopen import scOpen
 import app
