@@ -169,16 +169,19 @@ def setup_bond(bond, bridge):
     Setup a bondX device.
 
     Will use mode: active-backup or 1
-    - Sets an active-backup policy for fault tolerance. Transmissions are
+    - Sets an   policy for fault tolerance. Transmissions are
     received and sent out via the first available bonded slave interface.
     Another bonded slave interface is only used if the active bonded slave
     interface fails.
+
+    READ MORE
+    http://www.kernel.org/doc/Documentation/networking/bonding.txt
 
     """
     general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond,
 """DEVICE=%s
 BRIDGE=%s
-BONDING_OPTS="miimon=100 mode=1"
+BONDING_OPTS="miimon=100 mode=active-backup"
 ONBOOT=yes
 USERCTL=no
 ONPARENT=yes

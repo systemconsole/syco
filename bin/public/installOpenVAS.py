@@ -77,26 +77,9 @@ def _install_packages():
     Install all required packages and repositories.
 
     '''
-    _atomic_repo()
+    install.atomic_repo()
     install.package("sqlite")
     install.package("openvas")
-
-
-def _atomic_repo():
-    '''
-    Setup ATOMIC repository.
-
-    openvas is in this repo.
-
-    '''
-    app.print_verbose("Adding atomic repo for yum.")
-    general.shell_exec(
-        "wget -q -O - http://www.atomicorp.com/installers/atomic | sh",
-        events={'(?i)\[Default: yes\]':'\n'}
-    )
-
-    if (not os.access("/etc/yum.repos.d/atomic.repo", os.F_OK)):
-        raise Exception("You need to install the atomic repo first.")
 
 
 def _disable_selinux():

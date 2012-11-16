@@ -118,7 +118,8 @@ class Config(object):
         return default_value
       else:
         raise ConfigException(
-          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
+          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg"
+        )
 
   class GeneralConfig(SycoConfig):
     '''
@@ -247,6 +248,14 @@ class Config(object):
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
 
+    def get_mail_relay_server(self):
+      '''The hostname of the mail_relay server.'''
+      return self.get_option("mail_relay.server")
+
+    def get_mail_relay_server_ip(self):
+      '''The ip of the cert server.'''
+      return self.host(self.get_mail_relay_server()).get_back_ip()
+
     def get_cert_server(self):
       '''The hostname of the cert server.'''
       return self.get_option("cert.server")
@@ -311,9 +320,13 @@ class Config(object):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
 
-    def get_ossec_server_ip(self):
-      return self.get_option("ossec.server_ip")
+    def get_ossec_server(self):
+      '''The hostname of the ossec server.'''
+      return self.get_option("ossec.server")
 
+    def get_ossec_server_ip(self):
+      '''The ip of the ossec server.'''
+      return self.host(self.get_ossec_server()).get_front_ip()
 
   class HostConfig(SycoConfig):
     '''

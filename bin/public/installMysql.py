@@ -126,6 +126,17 @@ def install_mysql(args):
     "WITH GRANT OPTION "
   )
 
+  # Used by monitor services (icingas nrpe plugin etc.)
+  mysql_exec("GRANT REPLICATION CLIENT ON *.* " +
+    "TO 'monitor'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_monitor_password() + "'"
+  )
+
+  # Used by backup scripts to flush master and check slave status etc. when
+  # doing an lvm backup.
+  mysql_exec("GRANT RELOAD,SUPER,REPLICATION CLIENT  *.* " +
+    "TO 'backup'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_backup_password() + "'"
+  )
+
   mysql_exec("DROP DATABASE test;")
   mysql_exec("SELECT host,user FROM mysql.db;")
   mysql_exec("SELECT host,user FROM mysql.user;")

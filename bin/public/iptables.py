@@ -150,15 +150,77 @@ def iptables_setup(args):
   # Rules that will be added on all server.
   iptables_clear(args)
   _drop_all()
-  _create_chains()
+  create_chains()
   _setup_general_rules()
-  _setup_ssh_rules()
-  _setup_mail_rules()
-  _setup_dns_resolver_rules()
+  setup_ssh_rules()
+  setup_dns_resolver_rules()
   _setup_gpg_rules()
-  _setup_installation_server_rules()
+  setup_installation_server_rules()
 
-  # Rules that will only be added on servers that has a specific service installed.
+  add_service_chains()
+
+  _execute_private_repo_rules()
+
+  save()
+  version_obj.mark_executed()
+
+
+def _drop_all():
+  app.print_verbose("Drop all traffic to/from/forwarded by this server..")
+  iptables("-P INPUT DROP")
+  iptables("-P FORWARD DROP")
+  iptables("-P OUTPUT DROP")
+
+
+def setup_syco_chains(device=False):
+  '''
+  Setup input/output/forward chains that are used by all syco installed services.
+
+  This is so it's easier to remove/rebuild iptables rules for a specific
+  service. And easier to trace what rules that are used for a specific service.
+
+  '''
+  app.print_verbose("Create syco input, output, forward chain")
+
+  # Input chain
+  iptables("-N syco_input")
+  input_device = (" -i " + str(device) if device else "")
+  iptables("-A INPUT {0} -p ALL -j syco_input".format(input_device))
+
+  # Output chain
+  output_device = (" -o " + str(device) if device else "")
+  iptables("-N syco_output")
+  iptables("-A OUTPUT {0} -p ALL -j syco_output".format(output_device))
+
+  # Forward chain should not be installed on main firewall.
+  if not device:
+    iptables("-N syco_forward")
+    iptables("-A FORWARD {0} -p ALL -j syco_forward".format(forward_device))
+
+    iptables("-t nat -N syco_nat_postrouting")
+    iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
+
+
+def setup_icmp_chains():
+  app.print_verbose("Create ICMP chain.")
+  iptables("-N icmp_packets")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-request -j ACCEPT")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-reply -j ACCEPT")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type destination-unreachable -j ACCEPT")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type source-quench -j ACCEPT")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type time-exceeded -j ACCEPT")
+  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type parameter-problem -j ACCEPT")
+
+  app.print_verbose("Standard icmp_packets from anywhere.")
+  iptables("-A INPUT  -p ICMP -j icmp_packets")
+  iptables("-A OUTPUT -p ICMP -j icmp_packets")
+
+
+def add_service_chains():
+  '''
+  Rules that will only be added on servers that has a specific service installed.
+
+  '''
   add_cobbler_chain()
   add_glassfish_chain()
   add_httpd_chain()
@@ -174,26 +236,66 @@ def iptables_setup(args):
   add_freeradius_chain()
   add_openvas_chain()
 
-  _execute_private_repo_rules()
 
-  save()
-  version_obj.mark_executed()
-
-
-def _drop_all():
-  app.print_verbose("Drop all traffic to/from/forwarded by this server..")
-  iptables("-P INPUT DROP")
-  iptables("-P FORWARD DROP")
-  iptables("-P OUTPUT DROP")
-
-
-def _create_chains():
+def create_chains():
   # All drops are going through LOGDROP so it's easy to turn on logging
   # when debugging is needed.
   app.print_verbose("Create LOGDROP chain.")
   iptables("-N LOGDROP")
   #iptables("-A LOGDROP -j LOG --log-prefix 'IPT-LOGDROP:'")
   iptables("-A LOGDROP -j DROP")
+
+  app.print_verbose("Create allowed tcp chain.")
+  iptables("-N allowed_tcp")
+  iptables("-A allowed_tcp -p TCP --syn -j ACCEPT")
+  iptables("-A allowed_tcp -p TCP -m state --state ESTABLISHED,RELATED -j ACCEPT")
+  iptables("-A allowed_tcp -p TCP -j LOGDROP")
+
+  app.print_verbose("Create allowed udp chain.")
+  iptables("-N allowed_udp")
+  iptables("-A allowed_udp -p UDP -j ACCEPT")
+  # TODO: Possible to restrict more?
+  #iptables("-A allowed_udp -p UDP --syn -j ACCEPT")
+  #iptables("-A allowed_udp -p UDP -m state --state ESTABLISHED,RELATED -j ACCEPT")
+  iptables("-A allowed_udp -p UDP -j LOGDROP")
+
+
+def _setup_general_rules():
+  '''
+  Rules are in the order of expected volume.
+
+  For example, we expect more ESTABLISHED packages than ICMP packages
+
+  '''
+  app.print_verbose("From Localhost interface to Localhost IP's.")
+  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
+  iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT")
+
+  setup_bad_tcp_packets()
+
+  app.print_verbose("Allow all established and related packets incoming from anywhere.")
+  iptables("-A INPUT -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
+  iptables("-A OUTPUT -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
+  iptables("-A FORWARD -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
+
+  setup_syco_chains()
+  setup_icmp_chains()
+
+  app.print_verbose("Log weird packets that don't match the above.")
+  iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: INPUT packet died: '")
+  iptables("-A OUTPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: OUTPUT packet died: '")
+  iptables("-A FORWARD -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: FORWARD packet died: '")
+
+  iptables("-A INPUT -j LOGDROP")
+  iptables("-A OUTPUT -j LOGDROP")
+  iptables("-A FORWARD -j LOGDROP")
+
+
+def setup_bad_tcp_packets():
+  app.print_verbose("Bad TCP packets we don't want.")
+  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
+  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
+  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
 
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
@@ -212,85 +314,15 @@ def _create_chains():
   # Drop NULL packets
   iptables("-A bad_tcp_packets -p tcp --tcp-flags ALL NONE -j LOGDROP")
 
-  app.print_verbose("Create allowed tcp chain.")
-  iptables("-N allowed_tcp")
-  iptables("-A allowed_tcp -p TCP --syn -j ACCEPT")
-  iptables("-A allowed_tcp -p TCP -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A allowed_tcp -p TCP -j LOGDROP")
 
-  app.print_verbose("Create allowed udp chain.")
-  iptables("-N allowed_udp")
-  iptables("-A allowed_udp -p UDP -j ACCEPT")
-  # TODO: Possible to restrict more?
-  #iptables("-A allowed_udp -p UDP --syn -j ACCEPT")
-  #iptables("-A allowed_udp -p UDP -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A allowed_udp -p UDP -j LOGDROP")
-
-  app.print_verbose("Create ICMP chain.")
-  iptables("-N icmp_packets")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-request -j ACCEPT")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type echo-reply -j ACCEPT")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type destination-unreachable -j ACCEPT")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type source-quench -j ACCEPT")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type time-exceeded -j ACCEPT")
-  iptables("-A icmp_packets -p ICMP -s 0/0 --icmp-type parameter-problem -j ACCEPT")
-
-  app.print_verbose("Create syco input, output, forward chain")
-  iptables("-N syco_input")
-  iptables("-N syco_output")
-  iptables("-N syco_forward")
-  iptables("-t nat -N syco_nat_postrouting")
-
-
-def _setup_general_rules():
-  app.print_verbose("From Localhost interface to Localhost IP's.")
-  iptables("-A INPUT -p ALL -i lo -s 127.0.0.1 -j ACCEPT")
-  iptables("-A OUTPUT -p ALL -o lo -d 127.0.0.1 -j ACCEPT")
-
-  app.print_verbose("Bad TCP packets we don't want.")
-  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
-  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
-  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
-
-  iptables("-A INPUT   -p ALL -j syco_input")
-  iptables("-A OUTPUT  -p ALL -j syco_output")
-  iptables("-A FORWARD -p ALL -j syco_forward")
-  iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
-
-  # ICMP is checked after all syco rules, we don't expect to get
-  # as many ICMP as syco rules. This is a small optimization.
-  app.print_verbose("Standard icmp_packets from anywhere.")
-  iptables("-A INPUT  -p ICMP -j icmp_packets")
-  iptables("-A OUTPUT -p ICMP -j icmp_packets")
-
-  app.print_verbose("Allow all established and related packets incoming from anywhere.")
-  iptables("-A INPUT -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A OUTPUT -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
-  iptables("-A FORWARD -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT")
-
-  app.print_verbose("Log weird packets that don't match the above.")
-  iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: INPUT packet died: '")
-  iptables("-A OUTPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: OUTPUT packet died: '")
-  iptables("-A FORWARD -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: FORWARD packet died: '")
-
-  iptables("-A INPUT -j LOGDROP")
-  iptables("-A OUTPUT -j LOGDROP")
-  iptables("-A FORWARD -j LOGDROP")
-
-  # TODO: Do anything about this?
-  #app.print_verbose("Enable simple IP Forwarding and Network Address Translation.")
-  #iptables("-t nat -A POSTROUTING -o $INET_IFACE -j SNAT --to-source $inet_ip")
-  #iptables("-t nat -A POSTROUTING -o eth0 -j MASQUERADE")
-
-
-def _setup_ssh_rules():
+def setup_ssh_rules():
   '''
   Can SSH to this and any other computer internal and/or external.
 
   '''
   app.print_verbose("Setup ssh INPUT/OUTPUT rule.")
-  iptables("-A syco_input -p tcp  -m multiport --dports 22,34 -j allowed_tcp")
-  iptables("-A syco_output -p tcp -m multiport --dports 22,34 -j allowed_tcp")
+  iptables("-A syco_input -p tcp  -m multiport --dports 22,34,8022 -j allowed_tcp")
+  iptables("-A syco_output -p tcp -m multiport --dports 22,34,8022 -j allowed_tcp")
 
 # TODO:
 #  ################################################################
@@ -301,16 +333,7 @@ def _setup_ssh_rules():
 #  iptables -I INPUT -p tcp -i eth0 --dport 22 -m state --state NEW -m recent --name sshprobe --update --seconds 60 --hitcount 3 --rttl -j LOGDROP
 
 
-def _setup_mail_rules():
-  '''
-  Can SMTP from this computer.
-
-  '''
-  app.print_verbose("Setup mail OUTPUT rule.")
-  iptables("-A syco_output -p tcp -m multiport --dports 25 -j allowed_tcp")
-
-
-def _setup_dns_resolver_rules():
+def setup_dns_resolver_rules():
   '''
   Allow this server to communicate with all syco approved dns resolvers.
 
@@ -318,10 +341,9 @@ def _setup_dns_resolver_rules():
   app.print_verbose("Setup DNS resolver INPUT/OUTPUT rule.")
   for resolver_ip in config.general.get_dns_resolvers().split(" "):
     if resolver_ip.lower() != "none":
-      iptables("-A syco_output -p udp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_udp")
-      iptables("-A syco_input  -p udp -s " + resolver_ip + " --sport 53 --dport 1024:65535 -m state --state ESTABLISHED -j allowed_udp")
-      iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW,ESTABLISHED -j allowed_tcp")
-      iptables("-A syco_input  -p tcp -s " + resolver_ip + " --sport 53  --dport 1024:65535 -m state --state ESTABLISHED -j allowed_tcp")
+      iptables("-A syco_output -p udp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_udp")
+      iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_tcp")
+
 
 
 def _setup_gpg_rules():
@@ -333,7 +355,7 @@ def _setup_gpg_rules():
   iptables("-A syco_output -p tcp -d keyserver.ubuntu.com --dport 11371 -j allowed_tcp")
 
 
-def _setup_installation_server_rules():
+def setup_installation_server_rules():
   '''
   Open http access to the installation server.
 
@@ -372,8 +394,7 @@ def add_ntp_chain():
   iptables("-A syco_input  -p UDP -j ntp")
   iptables("-A syco_output -p UDP -j ntp")
 
-  app.print_verbose("Setup NTP input/output rule.")
-  iptables("-A ntp -p UDP --dport 123 -j allowed_udp")
+  iptables("-A ntp -p UDP --dport 123 -d {0} -j allowed_udp".format(config.general.get_ntp_server_ip()))
 
 
 def del_kvm_chain():
@@ -584,7 +605,7 @@ def add_cobbler_chain():
   iptables("-A syco_output -p ALL -j cobbler_output")
 
   # DNS - TCP/UDP
-  iptables("-A cobbler_input -m state --state NEW -m udp -p udp --dport 53 -j allowed_tcp")
+  iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 53 -j allowed_tcp")
   iptables("-A cobbler_input -m state --state NEW -m tcp -p tcp --dport 53 -j allowed_udp")
 
   # TFTP - TCP/UDP
@@ -734,12 +755,19 @@ def add_mail_relay_chain():
 
   app.print_verbose("Add iptables chain for mail relay")
 
-  if (os.path.exists('/etc/mail/syco_mail_relay_server')):
-    iptables("-N mail_relay")
-    iptables("-A syco_input -p tcp -j mail_relay")
+  iptables("-N mail_relay")
+  iptables("-A syco_input -p tcp -j mail_relay")
 
+  if (os.path.exists('/etc/mail/syco_mail_relay_server')):
     # mail_relay with none TLS and with TLS
+    # Let mailrelay-server access smtp servers on internet.
     iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
+  else:
+    # mailrelay clients should access mailrelay server
+    iptables(
+      "-A mail_relay -m state --state NEW -p tcp --dport 25 -d {0} -j allowed_tcp".format(
+        config.general.get_mail_relay_server_ip)
+    )
 
 
 def del_bind_chain():
@@ -789,7 +817,7 @@ def add_rsyslog_chain():
   Servers in network -> IN -> tcp -> 514 -> Rsyslog Server
 
   Rsyslog Client
-  Rsyslog Server <- OUT <- tcp <- 514 <- OSSEC Client
+  Rsyslog Server <- OUT <- tcp <- 514 <- Rsyslog Client
 
   '''
   del_rsyslog_chain()
@@ -877,6 +905,7 @@ def add_openvas_chain():
 
 def del_ossec_chain():
   app.print_verbose("Delete iptables chain for Ossec")
+
   iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
   iptables("-F ossec_in", general.X_OUTPUT_CMD)
   iptables("-X ossec_in", general.X_OUTPUT_CMD)
@@ -884,6 +913,7 @@ def del_ossec_chain():
   iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
   iptables("-F ossec_out", general.X_OUTPUT_CMD)
   iptables("-X ossec_out", general.X_OUTPUT_CMD)
+
 
 def add_ossec_chain():
   '''
@@ -901,48 +931,40 @@ def add_ossec_chain():
   del_ossec_chain()
   app.print_verbose("Add iptables chain for OSSEC")
 
+  if not os.path.exists('/etc/init.d/ossec-hids'):
+    return
 
-  #OSSEC
-  if (os.path.exists('/var/ossec/bin/manage_agents')):
-    iptables("-N ossec_in")
-    iptables("-A syco_input  -p udp -j ossec_in")
+  # Create chains.
+  iptables("-N ossec_in")
+  iptables("-N ossec_out")
+  iptables("-A syco_input -p udp -j ossec_in")
+  iptables("-A syco_output -p udp -j ossec_out")
 
-    #Ossec Server
-    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
-      app.print_verbose("apllying iptables rule for OSSEC Server")
-      for server in get_servers():
+  # Ossec Server
+  if (os.path.exists('/var/ossec/bin/ossec-remoted')):
+    for server in get_servers():
+      try:
         iptables(
-          "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+          "-A ossec_in -p udp -s %s --dport 1514 -j allowed_udp" %
           config.host(server).get_front_ip()
         )
-    #Ossec client
-    else:
-      app.print_verbose("apllying iptables rule for OSSEC Client")
-      iptables(
-        "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
-        config.general.get_ossec_server_ip()
-      )
-
-
-  if (os.path.exists('/var/ossec/bin/manage_agents')):
-    iptables("-N ossec_out")
-    iptables("-A syco_output -p udp -j ossec_out")
-
-    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
-      app.print_verbose("apllying iptables utgoing rule for OSSEC Server")
-      #Ossec Server
-      for server in get_servers():
         iptables(
-          "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+          "-A ossec_out -p udp -d %s --dport 1514 -j allowed_udp" %
           config.host(server).get_front_ip()
         )
-    #Ossec Client
-    else:
-      app.print_verbose("apllying iptables utgoing rule for OSSEC Client")
-      iptables(
-        "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
-        config.general.get_ossec_server_ip()
-      )
+      except Exception, e:
+        pass
+
+  # Ossec client
+  else:
+    iptables(
+      "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
+      config.general.get_ossec_server_ip()
+    )
+    iptables(
+      "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
+      config.general.get_ossec_server_ip()
+    )
 
 
 def _execute_private_repo_rules():

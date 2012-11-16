@@ -419,9 +419,11 @@ def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=Tru
     w.write(replace_exp + "\n")
     w.close()
 
+
 def set_config_property_batch(file_name, key_value_dict, add_if_not_exist=True):
   for key, value in key_value_dict.iteritems():
     set_config_property(file_name, key, value, add_if_not_exist)
+
 
 def get_config_value(file_name, config_name):
     '''
@@ -434,6 +436,7 @@ def get_config_value(file_name, config_name):
         if m:
             return m.group(1)
     return False
+
 
 def store_file(file_name, value):
     '''
@@ -449,19 +452,6 @@ def store_file(file_name, value):
 def set_config_property2(file_name, replace_exp):
   search_exp = r".*" + re.escape(replace_exp) + r".*"
   set_config_property(file_name, search_exp, replace_exp)
-
-
-if __name__ == "__main__":
-  command = 'echo "moo"'
-  command = command.replace('\\', '\\\\')
-  command = command.replace('"', r'\"')
-  command = 'su -c"' + command + '"'
-  print command
-  print shell_exec(command)
-
-  download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
-  os.chdir("/tmp/install")
-  print shell_exec("ls -alvh")
 
 
 def md5checksum(filePath):
@@ -496,3 +486,15 @@ def use_original_file(filename):
         x("mkdir -p {0}".format(bak_folder))
         x("cp -f {0} {1}".format(filename, bak_file))
 
+
+if __name__ == "__main__":
+  command = 'echo "moo"'
+  command = command.replace('\\', '\\\\')
+  command = command.replace('"', r'\"')
+  command = 'su -c"' + command + '"'
+  print command
+  print shell_exec(command)
+
+  download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
+  os.chdir("/tmp/install")
+  print shell_exec("ls -alvh")
