@@ -118,7 +118,8 @@ class Config(object):
         return default_value
       else:
         raise ConfigException(
-          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
+          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg"
+        )
 
   class GeneralConfig(SycoConfig):
     '''
@@ -246,6 +247,14 @@ class Config(object):
 
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
+
+    def get_mail_relay_server(self):
+      '''The hostname of the mail_relay server.'''
+      return self.get_option("mail_relay.server")
+
+    def get_mail_relay_server_ip(self):
+      '''The ip of the cert server.'''
+      return self.host(self.get_mail_relay_server()).get_back_ip()
 
     def get_cert_server(self):
       '''The hostname of the cert server.'''
