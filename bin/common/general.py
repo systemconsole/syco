@@ -22,6 +22,7 @@ import string
 import inspect
 import subprocess
 import time
+import hashlib
 from random import choice
 from socket import *
 
@@ -97,7 +98,7 @@ def get_install_dir():
   return app.INSTALL_DIR
 
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None):
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -128,6 +129,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
+
+  if md5checksum(app.INSTALL_DIR + dst) != md5:
+    raise Exception("MD5 Checksum dont match for " + dst)
 
 
 def urlretrive(src_url, dst_filename):

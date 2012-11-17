@@ -2,24 +2,20 @@
 '''
 Install of Snort
 
-Snort in an NIDS that lissen on network interface.
-and if network traffic matches rule in snort rules databas an alert in triggerd.
+Snort is a NIDS that listens on network interface and if network traffic
+matches any rule in the snort rules databas an alert in triggerd.
 
-Snort is downloaded and bulid fron snort homepage.
-Snortrules that contains all the rules nedded for snort to work are downloaded with key.
+Snort is downloaded and bulid fron snort homepage. Snort rules that contains
+all the rules nedded for snort to work are downloaded with key.
 
-Workflow
-- Download snort and daq
-- Installing depenises
-- Buildning daq and snort
-- Installing snort and daq.
-- Setting upp snort config and rules
-- Making snort start at boot.
-- Removing not needed rules from config.
-- Enabling host relevant rules to snort.
+READ MORE
+http://www.snort.org/assets/202/snort2931_CentOS63.pdf
+http://wiki.aanval.com/wiki/Community:Snort_2.9.3.1_Installation_Guide_for_CentOS_6.3
 
 '''
-__author__ = "matte@elino.se"
+
+
+__author__ = "daniel@cybercowse, matte@elino.se"
 __copyright__ = "Copyright 2011, The System Console project"
 __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
@@ -29,148 +25,163 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import shutil
-import stat
-import sys
-import time
-import traceback
-import config
-from config import get_servers, host
-from ssh import scp_from
-import socket
 
-
-import app
-from general import x, download_file, md5checksum
-import version
+from general import x
 from scopen import scOpen
+import app
+import general
+import version
 
+SNORT_FILENAME="snort-2.9.3.1.tar.gz"
+SNORT_URL="http://www.snort.org/downloads/1862"
+SNORT_MD5="b2102605a7ca023ad6a2429821061c29"
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
+DAQ_FILENAME="daq-1.1.1.tar.gz"
+DAQ_URL="http://www.snort.org/downloads/1850"
+DAQ_MD5="bc204ea09165b4ecbb1bb49c7c1a2ad4"
+
+RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
+RULE_URL="http://www.snort.org/sub-rules/snortrules-snapshot-2931.tar.gz/6f1a1622979dec80485a8d8a2acc7b0c8149ddc2"
+RULE_MD5="1254317ba5c51a6b8f2b5ba711eecfeb"
+
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
 script_version = 1
 
+
 def build_commands(commands):
-  '''
-  Defines the commands that can be executed through the syco.py shell script.
+    '''
+    Defines the commands that can be executed through the syco.py shell script.
 
-  '''
-  commands.add("install-snort", install_snort, help="Install Snort.")
-  commands.add("uninstall-snort", uninstall_snort, help="uninstall Snort.")
-
+    '''
+    commands.add("install-snort",  install_snort, help="Install Snort.")
 
 
+def download():
+    '''
+    Download all files required by snort.
 
+    Note: Should be modified to download files to install server.
+
+    '''
+    general.download_file(SNORT_URL, SNORT_FILENAME, md5=SNORT_MD5)
+    general.download_file(DAQ_URL, DAQ_FILENAME, md5=DAQ_MD5)
+    general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
 
 
 def install_snort(args):
-  '''
-  Install and setup snort in client.
-  And conencts the snort loggs 
-  '''
-  snort_url="http://www.snort.org/downloads/1862"
-  daq_url="http://www.snort.org/downloads/1850"
+    '''
+    Install and setup snort in client.
+    And conencts the snort loggs
 
-  snort_rule_url="wget http://www.snort.org/sub-rules/snortrules-snapshot-2931.tar.gz/6f1a1622979dec80485a8d8a2acc7b0c8149ddc2"
-  
+    '''
+    download()
+    _install_dependencies()
+    _compile_snort()
+    _create_user()
+    _setup_config_and_rules()
+    _setup_sysconfig()
+    _setup_start_scripts()
+    _setup_snort_bin()
+    _setup_log_dir()
 
-  snort_md5="b2102605a7ca023ad6a2429821061c29"
-  daq_md5="bc204ea09165b4ecbb1bb49c7c1a2ad4"
+    x("mkdir -p /usr/local/lib/snort_dynamicrules")
+    x('chown -R snort:snort /usr/local/lib/snort*')
+    x('chmod -R 700 /usr/local/lib/snort*')
 
-  #x('yum install gcc flex bison zlib zlib-devel libpcap libpcap-devel pcre pcre-devel libdnet libdnet-devel tcpdump -y')
-  
-  download_make(snort_url, snort_md5)
-  download_make(daq_url, daq_md5)
-
-  #Remeoving content /etc/snort-rules
-  x("rm -rf /etc/snort/*")
-
-  #Setting up snort config and rules DISABLED 
-  #download_file(snort_rule_url,"snort-rules.tar")
-  #x("mv "+app.INSTALL_DIR+"snort-rules.tar /etc/snort")
-  #x("tar -C /etc/snort -zxvf /etc/snort/snort-rules.tar")
-  
-  
-  x("\cp -f /opt/syco/var/snort/snortrules-snapshot.tar.gz /etc/snort")
-  x("tar -C /etc/snort -zxvf /etc/snort/snortrules-snapshot.tar.gz")
-  x("rm -rf /etc/snort/snort-rules.tar")
+    #
+    x("/etc/init.d/snort restart")
 
 
-  #Setting upp start and syscong scripts.
-  x('\cp -f /opt/syco/var/snort/snort_init.d /etc/init.d/snort')
-  x('\cp -f /opt/syco/var/snort/snort_sysconfig /etc/sysconfig/snort')  
-  #Setting upp extra config
-
-  x("useradd snort -d /var/log/snort -s /sbin/nologin -c SNORT_IDS")
-  x("chown snort:snort /etc/snort/ -R")
-
-  #Setting upp inid. start up
-  x("chmod 700 /etc/init.d/snort")
-
-  #enabling at start up
-  x("chkconfig --add snort")
-
-  #snort bin
-  x("ln -s /usr/local/bin/snort /usr/bin/snort")
-  x("ln -s /usr/local/bin/snort /usr/sbin/snort")
-  x("chmod 700 /usr/bin/snort")
-  x("chmod 700 /usr/sbin/snort")
-
-  #sysconfig
-  x("chown snort:snort /etc/sysconfig/snort")
-  x("chmod 700 /etc/sysconfig/snort")
-
-  #Making log folders
-  x("mkdir /var/log/snort/")
-  x("chmod 700 /var/log/snort/")
-  x("chown snort:snort /var/log/snort/")
+def _install_dependencies():
+    x('yum install -y gcc flex bison zlib zlib-devel libpcap libpcap-devel ' +
+      'pcre pcre-devel libdnet libdnet-devel tcpdump libtool'
+    )
 
 
-  x("mkdir -p /usr/local/lib/snort_dynamicrules")
-  x("chown snort:snort /usr/local/lib/snort_dynamic* -R")
-  x("chown snort:snort /usr/local/lib/snort* -R")
-  x("chmod -R 700 /usr/local/lib/snort* ")
-
-  
-  #Coping in snort syco rules to config file
-  x("\cp -f /opt/syco/var/snort/snort.conf /etc/snort/etc")
-  x("echo '#whitlist' >/etc/snort/rules/black_list.rules")
-  x("echo '#whitlist' >/etc/snort/rules/white_list.rules")
+def _compile_snort():
+    _make('daq/', DAQ_FILENAME)
+    _make('snort/', SNORT_FILENAME, '--enable-sourcefire')
+    x("libtool --finish /usr/local/lib/snort_dynamicpreprocessor")
 
 
-  x("/etc/init.d/snort restart")
+def _make(build_dir, filename, compile_flags=""):
+    '''
+    Extract files from tar file defined by filename, and compile.
+
+    '''
+    compile_dir = app.INSTALL_DIR + build_dir
+
+    x("rm -rf " + compile_dir)
+    x("mkdir -p " + compile_dir)
+    x("tar -C " + compile_dir + " -zxf " + app.INSTALL_DIR + filename)
+    x("chown -R root:root %s" % compile_dir)
+
+    # Move contents of extraxted folder to build folder.
+    x("mv {0}/* {1}".format(_get_folder(compile_dir), compile_dir))
+
+    x("./configure {0}".format(compile_flags), cwd=compile_dir)
+    x("make", cwd=compile_dir)
+    x("make install", cwd=compile_dir)
 
 
-def download_make(url,md5):
-  '''
-  Takes an url and download and hash.
-  Download the file checks md5 and then download and build the package. 
-  '''
+def _get_folder(folder):
+    only_folder = None
+    for dir in os.listdir(folder):
+        if only_folder == None:
+            only_folder = dir
+        else:
+            raise Exception("Folder {0} already found.".format(only_folder))
+    return folder + only_folder
 
 
-  download_file(url,"download.tar")
-  compile_dir=app.INSTALL_DIR+"build" 
-
-  if md5checksum(app.INSTALL_DIR+"download.tar") != md5:
-    raise Exception("Mmd5 Checksum dont match") 
-
-  x("mkdir "+app.INSTALL_DIR+"download")
-  x("tar -C "+app.INSTALL_DIR+"download -zxf "+app.INSTALL_DIR+"download.tar")
-  x("mv "+app.INSTALL_DIR+"download/* "+app.INSTALL_DIR+"build")
-  x("chown -R root:root %s" % compile_dir)
-  x("./configure --enable-debug --enable-debug-msgs", cwd=compile_dir)
-  x("make", cwd=compile_dir)
-  x("make install", cwd=compile_dir)
-  x("rm -rf "+app.INSTALL_DIR+"build")
-  x("rm -rf "+app.INSTALL_DIR+"download")
-  x("rm -rf "+app.INSTALL_DIR+"download.tar")
+def _create_user():
+    x("useradd snort -d /var/log/snort -s /sbin/nologin -c SNORT_IDS")
+    x("groupadd snort")
 
 
+def _setup_config_and_rules():
+    # Removing content /etc/snort-rules
+    x("mkdir -p /etc/snort/")
+    x("rm -rf /etc/snort/*")
+
+    # Setup snort config and rules
+    x("cp {0}/etc/* /etc/snort".format(app.INSTALL_DIR + 'snort'))
+    x("tar -C /etc/snort -zxvf {0}{1}".format(app.INSTALL_DIR, RULE_FILENAME))
+
+    x("cp -f {0}var/snort/snort.conf /etc/snort/".format(app.SYCO_PATH))
+    x("echo '#Black list' > /etc/snort/rules/black_list.rules")
+    x("echo '#White list' > /etc/snort/rules/white_list.rules")
+
+    x("chown -R snort:snort /etc/snort/")
+    x("find /etc/snort/ -type d -print0 | xargs -0 chmod 700")
+    x("find /etc/snort/ -type f -print0 | xargs -0 chmod 600")
 
 
-def uninstall_snort(args):
-  '''
-  uninstall snort
-  '''
-  print "Removing snort"
+def _setup_start_scripts():
+    x('cp -f {0}var/snort/snort-init.d /etc/init.d/snort'.format(app.SYCO_PATH))
+    x("chown snort:snort /etc/init.d/snort")
+    x("chmod 700 /etc/init.d/snort")
+
+    # Setup init.d and autostart
+    x("chkconfig --add snort")
+
+
+def _setup_sysconfig():
+    x('cp -f {0}var/snort/snort-sysconfig /etc/sysconfig/snort'.format(app.SYCO_PATH))
+    x("chown snort:snort /etc/sysconfig/snort")
+    x("chmod 700 /etc/sysconfig/snort")
+
+
+def _setup_snort_bin():
+    x("ln -s /usr/local/bin/snort /usr/bin/snort")
+    x("ln -s /usr/local/bin/snort /usr/sbin/snort")
+    x("chmod 700 /usr/bin/snort")
+    x("chmod 700 /usr/sbin/snort")
+
+
+def _setup_log_dir():
+    # Create log dir
+    x('mkdir -p /var/log/snort')
+    x('chown snort:snort /var/log/snort')
+    x('chmod 700 /var/log/snort')
