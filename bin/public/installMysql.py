@@ -225,7 +225,7 @@ def mysql_exec(command, with_user=False, host="127.0.0.1", escape=True):
     cmd+= "-h" + host + " "
 
   if (with_user):
-    cmd+='-uroot -p"{0}" '.format(re.escape(app.get_mysql_root_password()))
+    cmd+='-uroot -p"{0}" '.format(app.get_mysql_root_password())
 
   return x(cmd + '-e "{0}"'.format(command))
 
