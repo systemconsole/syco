@@ -142,6 +142,10 @@ def get_mysql_production_password():
   '''A user password for the mysql service.'''
   return _get_password("mysql", "production")
 
+def get_switch_icmp_password():
+  '''The password for read-only SNMP switch access.'''
+  return _get_password("switch", "snmp")
+
 def init_mysql_passwords():
   get_mysql_root_password()
   get_mysql_integration_password()

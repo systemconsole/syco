@@ -33,7 +33,7 @@ filename = "/tmp/syco-switch-macs"
 [status, returnString] = commands.getstatusoutput(
     "snmpwalk -v3 -u nagios -n '' -l AuthPriv -a SHA -x AES -c public " +
     "-A {0} -X {0} -m all {1} dot1dTpFdbAddress".format(
-        "${PASSWORD}", sys.argv[1]
+        sys.argv[1], sys.argv[2]
     )
 )
 
