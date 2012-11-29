@@ -27,12 +27,13 @@ __status__ = "Production"
 
 import os
 import sys
+from net import get_hostname
 
 from config import get_servers
 from general import x
 from scopen import scOpen
 import app
-import config
+from config import *
 import general
 import installGlassfish31
 import version
@@ -193,9 +194,11 @@ def setup_syco_chains(device=False):
   iptables("-A OUTPUT {0} -p ALL -j syco_output".format(output_device))
 
   # Forward chain should not be installed on main firewall.
+  # Cant use a single device for forward
   if not device:
     iptables("-N syco_forward")
-    iptables("-A FORWARD {0} -p ALL -j syco_forward".format(forward_device))
+    iptables("-A FORWARD -p ALL -j syco_forward")
+    iptables("-A FORWARD -p ALL -j syco_forward")
 
     iptables("-t nat -N syco_nat_postrouting")
     iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
@@ -293,9 +296,6 @@ def _setup_general_rules():
 
 def setup_bad_tcp_packets():
   app.print_verbose("Bad TCP packets we don't want.")
-  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
-  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
-  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
 
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
@@ -313,6 +313,12 @@ def setup_bad_tcp_packets():
 
   # Drop NULL packets
   iptables("-A bad_tcp_packets -p tcp --tcp-flags ALL NONE -j LOGDROP")
+
+  # Join _after_ creating the new chain
+  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
+  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
+  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
+
 
 
 def setup_ssh_rules():
@@ -697,7 +703,7 @@ def add_icinga_chain():
   snmp_port = "161"
   switch_hostname_list = config.get_switches()
 
-  #For every switch 
+  #For every switch
 
   for host in config.get_servers():
     if config.host(host).is_switch():
@@ -720,7 +726,7 @@ def add_monitor_chain():
 
   iptables("-N monitor_input")
   iptables("-A syco_input  -p ALL -j monitor_input")
- 
+
   monitor_listen_port = "5666"
   monitor_server_hostname = config.general.get_monitor_server_hostname()
   monitor_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
@@ -798,7 +804,7 @@ def add_mail_relay_chain():
   iptables("-A syco_input -p tcp -j incoming_mail")
   iptables("-A syco_output -p tcp -j outgoing_mail")
 
-  # Allow mailrelay to receive email 
+  # Allow mailrelay to receive email
   if config.general.get_mail_relay_server() == get_hostname():
     iptables("-A incoming_mail -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
 
@@ -1001,6 +1007,8 @@ def add_ossec_chain():
       "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
       config.general.get_ossec_server_ip()
     )
+
+
 
 
 def _execute_private_repo_rules():
