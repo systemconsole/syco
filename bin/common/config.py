@@ -55,7 +55,8 @@ class Config(object):
 
     hosts = []
     for hostname in servers:
-      hosts.append(hostname)
+      if self.host(hostname).is_server():
+        hosts.append(hostname)
 
     return sorted(hosts)
 
@@ -328,6 +329,7 @@ class Config(object):
       '''The ip of the ossec server.'''
       return self.host(self.get_ossec_server()).get_front_ip()
 
+
   class HostConfig(SycoConfig):
     '''
     Access functions for the hosts in the install.cfg.
@@ -346,7 +348,7 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest', 'switch', 'firewall']:
+      if hosttype in ['host', 'guest', 'switch', 'firewall', 'template']:
         return hosttype
       else:
         raise Exception("Unknown type {0}".format(hosttype))
@@ -466,6 +468,32 @@ class Config(object):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
+    def _get_template(self):
+      '''
+      Get the template name that is used
+
+      Default name is host.
+
+      '''
+      return self.get_option("use", 'host')
+
+    def _get_template_commands(self, verbose):
+      '''
+      Get all commands from the template that this profile is associated with.
+
+      '''
+      return self._get_commands_from_host(self._get_template(), verbose)
+
+    def is_server(self):
+      '''
+      Return true if HostConfig is a valid physical device/server.
+
+      Ie. not a template and not General.
+
+      '''
+      return (self.is_host() or self.is_guest() or
+             self.is_firewall())
+
     def is_host(self):
       return self.get_type() == "host"
 
@@ -478,6 +506,9 @@ class Config(object):
     def is_firewall(self):
       return self.get_type() == "firewall"
 
+    def is_template(self):
+      return self.get_type() == "template"
+
     def has_guests(self):
       if (self.has_section(self.hostname)):
         for option, value in self.items(self.hostname):
@@ -487,21 +518,25 @@ class Config(object):
 
     def get_commands(self, verbose = False):
       '''Get all commands that should be executed on a host'''
-      commands = []
-
-      if (self.has_section(self.hostname)):
-        for option, value in self.items(self.hostname):
-          option = option.lower()
-          if "command" in option:
-            if (verbose):
-              value += " -v"
-            commands.append([option, value])
+      commands = self._get_template_commands(verbose)
+      commands += self._get_commands_from_host(self.hostname, verbose)
 
       ret_commands = []
       for option, value in sorted(commands):
         ret_commands.append(value)
 
       return ret_commands
+
+    def _get_commands_from_host(self, hostname, verbose):
+      commands = []
+      if (self.has_section(hostname)):
+        for option, value in self.items(hostname):
+          option = option.lower()
+          if "command" in option:
+            if (verbose):
+              value += " -v"
+            commands.append([option, value])
+      return commands
 
     def get_guests(self):
       '''Get the hostname of all guests that should be installed on the kvm host name.'''
