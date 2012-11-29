@@ -44,14 +44,22 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-
-from config import get_servers
-from general import x
-import app
+import shutil
+import stat
+import sys
+import time
+import traceback
 import config
-import install
 import iptables
+from config import get_servers, host
+import app
+from general import x, download_file, md5checksum, get_install_dir
 import version
+
+
+# OSSEC DOWNLOAD URL
+OSSEC_DOWNLOAD = "http://www.ossec.net/files/ossec-hids-2.7.tar.gz"
+OSSEC_MD5 = '71cd21a20f22b8eafffa3b57250f0a70'
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -79,19 +87,20 @@ def install_ossec_server(args):
     version_obj = version.Version("InstallOssecd", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    _install_packages()
+    build_ossec("preloaded-vars-server.conf")
     _generate_client_keys()
 
-    # Setup server config
-    x('rm -f /var/ossec/etc/ossec.conf')
-    x('cp -f /opt/syco/var/ossec/ossec_server.conf /var/ossec/etc/ossec.conf')
+    # Setup server config and local rules from syco
+    x('\cp -f /opt/syco/var/ossec/ossec_server.conf /var/ossec/etc/ossec.conf')
     x('chown root:ossec /var/ossec/etc/ossec.conf')
     x('chmod 640 /var/ossec/etc/ossec.conf')
 
     # Configure rules
     x('cp -f /opt/syco/var/ossec/local_rules.xml /var/ossec/rules/local_rules.xml')
-    x("find /var/ossec/rules -type d -print0 | xargs -0 chmod 750")
-    x("find /var/ossec/rules -type f -print0 | xargs -0 chmod 640")
+    #x("find /var/ossec/rules -type d -print0 | xargs -0 chmod 750")
+    #x("find /var/ossec/rules -type f -print0 | xargs -0 chmod 640")
+    x('chown root:ossec /var/ossec/rules/local_rules.xml')
+    x('chmod 640  /var/ossec/rules/local_rules.xml')
 
     # Enabling syslog logging
     x('/var/ossec/bin/ossec-control enable client-syslog')
@@ -100,21 +109,31 @@ def install_ossec_server(args):
     iptables.add_ossec_chain()
     iptables.save()
 
-    # Restaring OSSEC server
-    x("service ossec-hids restart")
-    x("chkconfig ossec-hids on")
-
-    version_obj.mark_executed()
+    x("service ossec restart")
 
 
-def _install_packages():
-    '''
-    Install atomic repo and all required ossec packages.
+def build_ossec(preloaded_conf):
+    x('yum install gcc make perl-Time-HiRes -y')
 
-    '''
-    if (not os.path.exists('/etc/init.d/ossec-hids')):
-        install.atomic_repo()
-        x("yum -y install ossec-hids ossec-hids-server")
+    # Downloading and md5 checking
+    download_file(OSSEC_DOWNLOAD, "ossec-hids.tar.gz",md5=OSSEC_MD5)
+
+    # Preparing OSSEC for building
+    install_dir = get_install_dir()
+    x("tar -C {0} -zxf {0}ossec-hids.tar.gz".format(install_dir))
+    x("mv {0}ossec-hids-* {0}ossecbuild".format(install_dir))
+
+    # Coping in ossec settings before build
+    x('\cp -f /opt/syco/var/ossec/osseconf/{0} {1}ossecbuild/etc/preloaded-vars.conf'.format(preloaded_conf, install_dir))
+
+    # Building OSSEC
+    x('{0}ossecbuild/install.sh'.format(install_dir))
+
+    # Autostart ossec.
+    x("chkconfig ossec on")
+
+    # Clean up install
+    x('yum remove gcc make perl-Time-HiRes -y')
 
 
 def _generate_client_keys():
@@ -126,11 +145,8 @@ def _generate_client_keys():
     '''
     for server in get_servers():
         fqdn = '{0}.{1}'.format(server, config.general.get_resolv_domain())
-        x(
-            "/usr/share/ossec/contrib/ossec-batch-manager.pl -a " +
-            "-n {0} -p {1}".format(
-                fqdn, config.host(server).get_back_ip()
-            )
+        x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a -n {1} -p {2}".format(
+            install_dir, fqdn, config.host(server).get_front_ip())
         )
 
         # Prepare separate key files that can be downloaded by each client.
@@ -138,8 +154,8 @@ def _generate_client_keys():
             "grep {0} /var/ossec/etc/client.keys > ".format(fqdn) +
             "/var/ossec/etc/{0}_client.keys".format(fqdn)
         )
-    x('chown root:ossec /var/ossec/etc/*.keys')
     x('chmod 640 /var/ossec/etc/*.keys')
+    x('chown ossec:ossec  /var/ossec/etc/*.keys')
 
 
 def uninstall_ossec_server(args):
@@ -152,4 +168,4 @@ def uninstall_ossec_server(args):
     x('/var/ossec/bin/ossec-remoted stop')
 
     # Removning folders
-    x('rm -rf /var/log/ossec')
+    x('rm -rf /var/ossec')
