@@ -777,9 +777,15 @@ def add_openvpn_chain():
 
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")
-  iptables("-D syco_input -p tcp -j mail_relay", general.X_OUTPUT_CMD)
-  iptables("-F mail_relay", general.X_OUTPUT_CMD)
-  iptables("-X mail_relay", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_input -p tcp -j incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p tcp -j outgoing_mail", general.X_OUTPUT_CMD)
+
+  iptables("-F incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-F outgoing_mail", general.X_OUTPUT_CMD)
+
+  iptables("-X incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-X outgoing_mail", general.X_OUTPUT_CMD)
 
 
 def add_mail_relay_chain():
@@ -787,19 +793,17 @@ def add_mail_relay_chain():
 
   app.print_verbose("Add iptables chain for mail relay")
 
-  iptables("-N mail_relay")
-  iptables("-A syco_input -p tcp -j mail_relay")
+  iptables("-N incoming_mail")
+  iptables("-N outgoing_mail")
+  iptables("-A syco_input -p tcp -j incoming_mail")
+  iptables("-A syco_output -p tcp -j outgoing_mail")
 
-  if (os.path.exists('/etc/mail/syco_mail_relay_server')):
-    # mail_relay with none TLS and with TLS
-    # Let mailrelay-server access smtp servers on internet.
-    iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
-  else:
-    # mailrelay clients should access mailrelay server
-    iptables(
-      "-A mail_relay -m state --state NEW -p tcp --dport 25 -d {0} -j allowed_tcp".format(
-        config.general.get_mail_relay_server_ip)
-    )
+  # Allow mailrelay to receive email 
+  if config.general.get_mail_relay_server() == get_hostname():
+    iptables("-A incoming_mail -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
+
+  # Allow all hosts to send mail on DMZ
+  iptables("-A outgoing_mail -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
 
 
 def del_bind_chain():
