@@ -311,7 +311,7 @@ def install_bind_client(args):
 
     # Iptables is already configured with iptables._setup_dns_resolver_rules
 
-    general.wait_for_server_to_start(ip, "53")
+    general.wait_for_server_to_start(config.general.get_resolv_nameserver_server_ip(), "53")
 
     # Set what resolver to user.
     resolv = scOpen("/etc/resolv.conf")

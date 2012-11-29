@@ -35,6 +35,9 @@ use Date::Calc qw(Delta_Days);
 use Date::Calc qw(Delta_DHMS);
 use Date::Calc qw(Localtime);
 
+$ENV{"PATH"} = "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin";
+
+
 our $CLAMSCAN;#path to clamscan binary
 #warning and critical threshold levels
 our %PERF_THRESHOLDS = (

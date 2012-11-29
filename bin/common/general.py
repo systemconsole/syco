@@ -13,23 +13,24 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+from random import choice
+from socket import *
 import glob
+import hashlib
+import inspect
 import os
 import re
 import shutil
-import urllib
 import string
-import inspect
 import subprocess
 import time
-import hashlib
-from random import choice
-from socket import *
+import urllib
 
 from constant import *
 import app
 import expect
 import pexpect
+
 
 def remove_file(path):
   '''
@@ -489,16 +490,3 @@ def use_original_file(filename):
         bak_folder = bak_file.rsplit('/', 1)[0]
         x("mkdir -p {0}".format(bak_folder))
         x("cp -f {0} {1}".format(filename, bak_file))
-
-
-if __name__ == "__main__":
-  command = 'echo "moo"'
-  command = command.replace('\\', '\\\\')
-  command = command.replace('"', r'\"')
-  command = 'su -c"' + command + '"'
-  print command
-  print shell_exec(command)
-
-  download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
-  os.chdir("/tmp/install")
-  print shell_exec("ls -alvh")
