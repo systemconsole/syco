@@ -27,12 +27,13 @@ __status__ = "Production"
 
 import os
 import sys
+from net import get_hostname
 
 from config import get_servers
 from general import x
 from scopen import scOpen
 import app
-import config
+from config import *
 import general
 import installGlassfish31
 import version
@@ -193,9 +194,11 @@ def setup_syco_chains(device=False):
   iptables("-A OUTPUT {0} -p ALL -j syco_output".format(output_device))
 
   # Forward chain should not be installed on main firewall.
+  # Cant use a single device for forward
   if not device:
     iptables("-N syco_forward")
-    iptables("-A FORWARD {0} -p ALL -j syco_forward".format(forward_device))
+    iptables("-A FORWARD -p ALL -j syco_forward")
+    iptables("-A FORWARD -p ALL -j syco_forward")
 
     iptables("-t nat -N syco_nat_postrouting")
     iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
@@ -293,9 +296,6 @@ def _setup_general_rules():
 
 def setup_bad_tcp_packets():
   app.print_verbose("Bad TCP packets we don't want.")
-  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
-  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
-  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
 
   app.print_verbose("Create bad_tcp_packets chain.")
   iptables("-N bad_tcp_packets")
@@ -313,6 +313,12 @@ def setup_bad_tcp_packets():
 
   # Drop NULL packets
   iptables("-A bad_tcp_packets -p tcp --tcp-flags ALL NONE -j LOGDROP")
+
+  # Join _after_ creating the new chain
+  iptables("-A INPUT   -p tcp -j bad_tcp_packets")
+  iptables("-A OUTPUT  -p tcp -j bad_tcp_packets")
+  iptables("-A FORWARD -p tcp -j bad_tcp_packets")
+
 
 
 def setup_ssh_rules():
@@ -665,14 +671,51 @@ def add_glassfish_chain():
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 
+def del_icinga_chain():
+  app.print_verbose("Delete iptables chain for Icinga poller")
+  iptables("-D syco_output -p ALL -j icinga_output", general.X_OUTPUT_CMD)
+  iptables("-F icinga_output", general.X_OUTPUT_CMD)
+  iptables("-X icinga_output", general.X_OUTPUT_CMD)
+
+
+def add_icinga_chain():
+  del_icinga_chain()
+
+  if (not os.path.exists("/etc/icinga/icinga.cfg")):
+    return
+
+  app.print_verbose("Add iptables chain for Icinga")
+
+  iptables("-N icinga_output")
+  iptables("-A syco_output -p ALL -j icinga_output")
+
+  # Output rule for NRPE-queries
+
+  icinga_ports = "5666"
+  icinga_server_hostname = config.general.get_monitor_server_hostname()
+  icinga_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
+
+  app.print_verbose("Chain for NRPE output".format(icinga_server_hostname))
+  iptables("-A icinga_output -p TCP -m multiport -s " + icinga_server_ip + " --dports " + icinga_ports + " -m state --state NEW -j allowed_tcp")
+
+  # Output rule for SNMP-queries
+
+  snmp_port = "161"
+  switch_hostname_list = config.get_switches()
+
+  #For every switch
+
+  for host in config.get_servers():
+    if config.host(host).is_switch():
+      host_ip = config.host(host).get_back_ip()
+      iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
+
+
 def del_monitor_chain():
   app.print_verbose("Delete iptables chain for Monitor")
   iptables("-D syco_input  -p ALL -j monitor_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j monitor_output", general.X_OUTPUT_CMD)
   iptables("-F monitor_input", general.X_OUTPUT_CMD)
   iptables("-X monitor_input", general.X_OUTPUT_CMD)
-  iptables("-F monitor_output", general.X_OUTPUT_CMD)
-  iptables("-X monitor_output", general.X_OUTPUT_CMD)
 
 
 def add_monitor_chain():
@@ -681,20 +724,15 @@ def add_monitor_chain():
   if (not os.path.exists("/etc/nagios/nrpe.cfg")):
     return
 
-  app.print_verbose("Add iptables chain for Monitor")
-
   iptables("-N monitor_input")
-  iptables("-N monitor_output")
   iptables("-A syco_input  -p ALL -j monitor_input")
-  iptables("-A syco_output -p ALL -j monitor_output")
 
-  # TODO only on dev servers??
-  app.print_verbose("Monitor input rule.")
-  monitor_ports = "5666,4949"
-  print config.general.get_monitor_server_hostname()
-  iptables("-A monitor_input -p TCP -m multiport -s " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
+  monitor_listen_port = "5666"
+  monitor_server_hostname = config.general.get_monitor_server_hostname()
+  monitor_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
 
-  iptables("-A monitor_output -p TCP -m multiport -d " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
+  app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_hostname))
+  iptables("-A monitor_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
 
 
 def del_openvpn_chain():
@@ -745,9 +783,15 @@ def add_openvpn_chain():
 
 def del_mail_relay_chain():
   app.print_verbose("Delete iptables chain for mail_relay")
-  iptables("-D syco_input -p tcp -j mail_relay", general.X_OUTPUT_CMD)
-  iptables("-F mail_relay", general.X_OUTPUT_CMD)
-  iptables("-X mail_relay", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_input -p tcp -j incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p tcp -j outgoing_mail", general.X_OUTPUT_CMD)
+
+  iptables("-F incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-F outgoing_mail", general.X_OUTPUT_CMD)
+
+  iptables("-X incoming_mail", general.X_OUTPUT_CMD)
+  iptables("-X outgoing_mail", general.X_OUTPUT_CMD)
 
 
 def add_mail_relay_chain():
@@ -755,19 +799,17 @@ def add_mail_relay_chain():
 
   app.print_verbose("Add iptables chain for mail relay")
 
-  iptables("-N mail_relay")
-  iptables("-A syco_input -p tcp -j mail_relay")
+  iptables("-N incoming_mail")
+  iptables("-N outgoing_mail")
+  iptables("-A syco_input -p tcp -j incoming_mail")
+  iptables("-A syco_output -p tcp -j outgoing_mail")
 
-  if (os.path.exists('/etc/mail/syco_mail_relay_server')):
-    # mail_relay with none TLS and with TLS
-    # Let mailrelay-server access smtp servers on internet.
-    iptables("-A mail_relay -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
-  else:
-    # mailrelay clients should access mailrelay server
-    iptables(
-      "-A mail_relay -m state --state NEW -p tcp --dport 25 -d {0} -j allowed_tcp".format(
-        config.general.get_mail_relay_server_ip)
-    )
+  # Allow mailrelay to receive email
+  if config.general.get_mail_relay_server() == get_hostname():
+    iptables("-A incoming_mail -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
+
+  # Allow all hosts to send mail on DMZ
+  iptables("-A outgoing_mail -m state --state NEW -p tcp --dport 25 -j allowed_tcp")
 
 
 def del_bind_chain():
@@ -965,6 +1007,8 @@ def add_ossec_chain():
       "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
       config.general.get_ossec_server_ip()
     )
+
+
 
 
 def _execute_private_repo_rules():

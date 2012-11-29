@@ -39,7 +39,7 @@ if [[ $PACKAGES =~ .*httpd.* ]]; then SERVICES="$SERVICES http-server"; fi
 
 # Is syslog server installed? Seems standard that we do not blank out comments from CFGs.
 (cat /etc/rsyslog.conf | grep -q ommysql) > /dev/null
-if [ $? -eq 1 ] ; then SERVICES="$SERVICES log-server"; fi
+if [ $? -eq 0 ] ; then SERVICES="$SERVICES log-server"; fi
 
 # Is glassfish installed? If so the service needs a user!
 id glassfish 2> /dev/null

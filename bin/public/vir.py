@@ -14,6 +14,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import app
+import config
 import general
 import ssh
 from exception import SettingsError

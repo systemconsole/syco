@@ -2,6 +2,8 @@
 '''
 Install mail relay Client/Server
 
+NOTE: Should only be used on Centos 5.
+
 
 READ
 http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch21_:_Configuring_Linux_Mail_Servers
