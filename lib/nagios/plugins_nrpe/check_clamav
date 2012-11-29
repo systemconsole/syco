@@ -35,6 +35,10 @@ use Net::DNS;
 
 use strict;
 
+$ENV{"PATH"} = "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin";
+
+
+
 # Path to installed clamd binary.
 my $clamd_cmd  = "/usr/local/sbin/clamd";
 

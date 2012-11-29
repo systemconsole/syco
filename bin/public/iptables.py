@@ -665,14 +665,51 @@ def add_glassfish_chain():
   iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 
+def del_icinga_chain():
+  app.print_verbose("Delete iptables chain for Icinga poller")
+  iptables("-D syco_output -p ALL -j icinga_output", general.X_OUTPUT_CMD)
+  iptables("-F icinga_output", general.X_OUTPUT_CMD)
+  iptables("-X icinga_output", general.X_OUTPUT_CMD)
+
+
+def add_icinga_chain():
+  del_icinga_chain()
+
+  if (not os.path.exists("/etc/icinga/icinga.cfg")):
+    return
+
+  app.print_verbose("Add iptables chain for Icinga")
+
+  iptables("-N icinga_output")
+  iptables("-A syco_output -p ALL -j icinga_output")
+
+  # Output rule for NRPE-queries
+
+  icinga_ports = "5666"
+  icinga_server_hostname = config.general.get_monitor_server_hostname()
+  icinga_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
+
+  app.print_verbose("Chain for NRPE output".format(icinga_server_hostname))
+  iptables("-A icinga_output -p TCP -m multiport -s " + icinga_server_ip + " --dports " + icinga_ports + " -m state --state NEW -j allowed_tcp")
+
+  # Output rule for SNMP-queries
+
+  snmp_port = "161"
+  switch_hostname_list = config.get_switches()
+
+  #For every switch 
+
+  for host in config.get_servers():
+    if config.host(host).is_switch():
+      host_ip = config.host(host).get_back_ip()
+      iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
+
+
 def del_monitor_chain():
   app.print_verbose("Delete iptables chain for Monitor")
   iptables("-D syco_input  -p ALL -j monitor_input", general.X_OUTPUT_CMD)
-  iptables("-D syco_output -p ALL -j monitor_output", general.X_OUTPUT_CMD)
   iptables("-F monitor_input", general.X_OUTPUT_CMD)
   iptables("-X monitor_input", general.X_OUTPUT_CMD)
-  iptables("-F monitor_output", general.X_OUTPUT_CMD)
-  iptables("-X monitor_output", general.X_OUTPUT_CMD)
 
 
 def add_monitor_chain():
@@ -681,20 +718,15 @@ def add_monitor_chain():
   if (not os.path.exists("/etc/nagios/nrpe.cfg")):
     return
 
-  app.print_verbose("Add iptables chain for Monitor")
-
   iptables("-N monitor_input")
-  iptables("-N monitor_output")
   iptables("-A syco_input  -p ALL -j monitor_input")
-  iptables("-A syco_output -p ALL -j monitor_output")
+ 
+  monitor_listen_port = "5666"
+  monitor_server_hostname = config.general.get_monitor_server_hostname()
+  monitor_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
 
-  # TODO only on dev servers??
-  app.print_verbose("Monitor input rule.")
-  monitor_ports = "5666,4949"
-  print config.general.get_monitor_server_hostname()
-  iptables("-A monitor_input -p TCP -m multiport -s " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
-
-  iptables("-A monitor_output -p TCP -m multiport -d " + config.general.get_monitor_server() + " --dports " + monitor_ports + " -j allowed_tcp")
+  app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_hostname))
+  iptables("-A monitor_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
 
 
 def del_openvpn_chain():

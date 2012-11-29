@@ -45,7 +45,7 @@ class Config(object):
       )
     return self.hosts[hostname]
 
-  def get_servers(self):
+  def get_devices(self):
     '''
     A list of all servers that are defined in install.cfg.
 
@@ -55,28 +55,28 @@ class Config(object):
 
     hosts = []
     for hostname in servers:
-      if self.host(hostname).is_server():
+      if self.host(hostname).is_server() or self.host(hostname).is_switch():
         hosts.append(hostname)
 
+    return sorted(hosts)
+
+  def get_servers(self):
+    '''
+    A list of all servers that are defined in install.cfg.
+
+    '''
+    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_server()]
     return sorted(hosts)
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
-    hosts = []
-
-    for hostname in self.get_servers():
-      if self.host(hostname).is_host():
-        hosts.append(hostname)
+    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_host()]
     return sorted(hosts)
 
   def get_switches(self):
     '''Get the hostname of all switches.'''
-    switch = []
-
-    for hostname in self.get_servers():
-      if self.host(hostname).is_switch():
-        switch.append(hostname)
-    return sorted(switch)
+    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_switch()]
+    return sorted(hosts)
 
 
   class SycoConfig(ConfigParser.RawConfigParser):
