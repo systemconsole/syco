@@ -490,3 +490,28 @@ def use_original_file(filename):
         bak_folder = bak_file.rsplit('/', 1)[0]
         x("mkdir -p {0}".format(bak_folder))
         x("cp -f {0} {1}".format(filename, bak_file))
+
+
+def deploy_folder(sourcefolder,destinationfolder):
+  '''
+  function to copy folder 
+  '''
+  x("/usr/bin/rsync -avr --delete {0} {1}".format(sourcefolder,destinationfolder))
+
+def deploy_web(webapp,sourcefolder,apacheconfig):
+  '''
+  Deploy and webb app
+  '''
+  deploy_folder(sourcefolder,config.general.get_apache_document_root()+'/'+webapp)
+  x('/bin/chown apache:apache '+config.general.get_apache_document_root()+webapp)
+  x('/bin/chmod -R 774 '+config.general.get_apache_document_root()+webapp)
+  x('\cp -f '+apacheconfig+' /etc/httpd/conf.d/'+webapp+'.conf')
+  x('/bin/chown root:root /etc/httpd/conf.d/'+webapp+'.conf')
+  x('/bin/chmod 770 /etc/httpd/conf.d/'+webapp+'.conf')
+  x('/etc/init.d/httpd restart')
+
+
+def remove_web(webapp):
+  x('rm -rf '+config.general.get_apache_document_root()+'/'+webapp)
+  x('rm -rf /etc/httpd/conf.d/'+webapp+'.conf')
+  x('/etc/init.d/httpd restart')
