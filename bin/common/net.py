@@ -238,3 +238,25 @@ BROADCAST=%s""" % (ip, netmask, network, broadcast)
         content += "\nDNS=" + resolver
 
     general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, content)
+
+def enable_ip_forward(enable=1):
+    '''
+    Controls IP packet forwarding
+
+    '''
+    scOpen("/etc/sysctl.conf").replace_add(
+        "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = {0}".format(enable)
+    )
+    x("/sbin/sysctl -w net.ipv4.ip_forward={0}".format(enable))
+
+    # Flush settings.
+    x("/sbin/sysctl -w net.ipv4.route.flush=1")
+    x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
+
+def disable_ip_forward():
+    '''
+    Controls IP packet forwarding
+
+    '''
+    enable_ip_forward(0)

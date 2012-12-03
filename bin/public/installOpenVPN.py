@@ -26,15 +26,15 @@ __status__ = "Production"
 import os
 import stat
 
+from general import x
+from scopen import scOpen
 import app
 import config
 import general
-from general import x
-import version
 import install
 import iptables
 import net
-from scopen import scOpen
+import version
 
 
 # The version of this module, used to prevent
@@ -91,8 +91,7 @@ def install_openvpn_server(args):
     scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
 
   # To be able to route trafic to internal network
-  general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
-  x("echo 1 > /proc/sys/net/ipv4/ip_forward")
+  net.enable_ip_forward()
 
   _setup_ldap()
 

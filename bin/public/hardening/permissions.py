@@ -163,7 +163,7 @@ def disable_virtual_terminals():
 
 def disable_singel_user_mode():
 	'''
-	Disable singel user mode.
+	Disable single user mode.
 
 	Which let a user start the server in "recoverymode" and change password.
 

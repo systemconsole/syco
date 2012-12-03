@@ -16,8 +16,25 @@ __status__ = "Production"
 
 import ConfigParser
 
+from general import x
 import app
 import install
+
+
+def install_packages():
+    '''
+    Should also match all kickstarts.
+
+    This function needs to be here because we sometimes (virtual hosts) install
+    syco without kickstart files.
+
+    '''
+    # The same packages that are defined in our kickstarts.
+    x(
+        "yum install -y acpid cronie-anacron coreutils e2fsprogs git grub lvm2 man " +
+        "mlocate nspr nss nss-util openssh openssh-clients openssh-server " +
+        "policycoreutils-python rpm wget yum yum-presto"
+    )
 
 
 def remove_packages():
