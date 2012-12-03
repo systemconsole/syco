@@ -1,4 +1,4 @@
-sdfasdfkkSystem Console
+System Console
 ==============
 
 System Console (syco) is a collection of installation and management
