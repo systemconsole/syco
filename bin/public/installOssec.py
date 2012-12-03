@@ -73,7 +73,9 @@ def install_ossec_client(args):
 
     # Restaring OSSEC server
     x("service ossec restart")
-
+    
+    # Clean up install
+    x('yum remove gcc make perl-Time-HiRes -y')
     version_obj.mark_executed()
 
 
