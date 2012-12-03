@@ -705,10 +705,9 @@ def add_icinga_chain():
 
   #For every switch
 
-  for host in config.get_servers():
-    if config.host(host).is_switch():
-      host_ip = config.host(host).get_back_ip()
-      iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
+  for host in config.get_switches():
+    host_ip = config.host(host).get_back_ip()
+    iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
 
 
 def del_monitor_chain():

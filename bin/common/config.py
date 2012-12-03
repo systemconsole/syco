@@ -65,17 +65,17 @@ class Config(object):
     A list of all servers that are defined in install.cfg.
 
     '''
-    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_server()]
+    hosts = [name for name in self.get_devices() if self.host(name).is_server()]
     return sorted(hosts)
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
-    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_host()]
+    hosts = [name for name in self.get_devices() if self.host(name).is_host()]
     return sorted(hosts)
 
   def get_switches(self):
     '''Get the hostname of all switches.'''
-    hosts = [self.host(name) for name in self.get_devices() if self.host(name).is_switch()]
+    hosts = [name for name in self.get_devices() if self.host(name).is_switch()]
     return sorted(hosts)
 
 
@@ -586,3 +586,6 @@ def get_hosts():
 
 def get_switches():
   return config.get_switches()
+
+def get_devices():
+  return config.get_devices()

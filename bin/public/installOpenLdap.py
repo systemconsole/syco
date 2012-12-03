@@ -499,7 +499,6 @@ olcTLSVerifyClient: allow""")
     # Enable LDAPS and dispable LDAP
     scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAPS=.*', 'SLAPD_LDAPS=yes')
     scOpen('/etc/sysconfig/ldap').replace('[#]*SLAPD_LDAP=.*', 'SLAPD_LDAP=no')
-    x("service slapd restart")
 
     configure_client_cert_for_ldaptools()
 
