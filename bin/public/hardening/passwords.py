@@ -29,19 +29,19 @@ from scopen import scOpen
 
 
 def harden_password():
-	app.print_verbose("Harden password")
+    app.print_verbose("Harden password")
 
-	#
-	# Set login shell to /dev/null
-	#
-	app.print_verbose("CIS 7.1 Disable System Accounts")
-	app.print_verbose("  Set login shell to '/dev/null' for system accounts")
-	for line in open("/etc/passwd"):
-		userid = int(line.split(':')[2]);
-		username = line.split(':')[0];
+    #
+    # Set login shell to /dev/null
+    #
+    app.print_verbose("CIS 7.2 Disable System Accounts (Scored)")
+    app.print_verbose("  Set login shell to '/sbin/nologin' for system accounts")
+    for line in open("/etc/passwd"):
+        userid = int(line.split(':')[2]);
+        username = line.split(':')[0];
 
-		if userid > 0 and userid <= 499:
-			x("/usr/sbin/usermod -L -s /sbin/nologin %s" % username)
+        if userid > 0 and userid <= 499:
+            x("/usr/sbin/usermod -L -s /sbin/nologin %s" % username)
 
 	#
 	# Disable users with empty passwords in the shadow file.

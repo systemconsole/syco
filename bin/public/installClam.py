@@ -66,7 +66,7 @@ def prepare_installation():
   #
   app.print_verbose("  Create user")
   if not is_user_installed("clamav"):
-    x("/usr/sbin/adduser clamav --shell=/dev/null")
+    x("/usr/sbin/adduser clamav --shell=/sbin/nologin")
 
   #
   app.print_verbose("Make the Pid and Socket directory")
