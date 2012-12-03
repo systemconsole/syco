@@ -79,27 +79,32 @@ logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fs
 services --disabled=smartd --enabled=acpid
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
+# Also have a look in hardening/package.py
 %packages --nobase
-# @core
 @server-policy
-policycoreutils-python
 
 # Enables shutdown etc. from virsh
 acpid
 
-git
 coreutils
-yum
-rpm
+cronie-anacron
 e2fsprogs
-lvm2
+git
 grub
-openssh-server
-openssh-clients
-yum-presto
+lvm2
 man
 mlocate
+nspr
+nss
+nss-util
+openssh
+openssh-clients
+openssh-server
+policycoreutils-python
+rpm
 wget
+yum
+yum-presto
 -atmel-firmware
 -b43-openfwwf
 -ipw2100-firmware
@@ -113,6 +118,7 @@ wget
 -iwl6000-firmware
 -iwl6050-firmware
 -libertas-usb8388-firmware
--zd1211-firmware
+-rt61pci-firmware
+-rt73usb-firmware
 -xorg-x11-drv-ati-firmware
-%end
+-zd1211-firmware%end

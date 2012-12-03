@@ -75,44 +75,46 @@ clearpart --all --drives=$boot_device --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=$boot_device
 part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
-logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
-logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
-logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
-logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=$disk_log_mb --fsoptions=noexec, nosuid, nodev
-logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
+logvol swap           --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
+logvol /              --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
+logvol /var           --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
+logvol /home          --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /var/tmp       --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /var/log       --fstype ext4 --name=varlog --vgname=VolGroup00 --size=$disk_log_mb --fsoptions=noexec,nodev,nosuid
+logvol /var/log/audit --fstype ext4 --name=varlog --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /tmp           --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
 
 services --disabled=smartd --enabled=acpid
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
+# Also have a look in hardening/package.py
 %packages --nobase
-# @core
 @server-policy
-policycoreutils-python
 
 # Enables shutdown etc. from virsh
 acpid
 
-git
 coreutils
-yum
-rpm
+cronie-anacron
 e2fsprogs
-lvm2
+git
 grub
-openssh-server
-openssh-clients
-yum-presto
+lvm2
 man
 mlocate
-wget
-nss
 nspr
+nss
 nss-util
+openssh
+openssh-clients
+openssh-server
+policycoreutils-python
+rpm
+wget
+yum
+yum-presto
 -atmel-firmware
 -b43-openfwwf
--xorg-x11-drv-ati-firmware
 -ipw2100-firmware
 -ipw2200-firmware
 -ivtv-firmware
@@ -126,6 +128,7 @@ nss-util
 -libertas-usb8388-firmware
 -rt61pci-firmware
 -rt73usb-firmware
+-xorg-x11-drv-ati-firmware
 -zd1211-firmware
 %end
 

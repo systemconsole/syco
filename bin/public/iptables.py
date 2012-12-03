@@ -198,7 +198,6 @@ def setup_syco_chains(device=False):
   if not device:
     iptables("-N syco_forward")
     iptables("-A FORWARD -p ALL -j syco_forward")
-    iptables("-A FORWARD -p ALL -j syco_forward")
 
     iptables("-t nat -N syco_nat_postrouting")
     iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
@@ -409,14 +408,7 @@ def del_kvm_chain():
   iptables("-F kvm", general.X_OUTPUT_CMD)
   iptables("-X kvm", general.X_OUTPUT_CMD)
 
-  # Controls IP packet forwarding
-  scOpen("/etc/sysctl.conf").replace_add(
-    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 0"
-  )
-
-  # Flush settings.
-  x("/sbin/sysctl -w net.ipv4.route.flush=1")
-  x("/sbin/sysctl -w net.ipv6.route.flush=1")
+  net.disable_ip_forward()
 
 
 def add_kvm_chain():
@@ -436,14 +428,7 @@ def add_kvm_chain():
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
-  # Controls IP packet forwarding
-  scOpen("/etc/sysctl.conf").replace_add(
-    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 1"
-  )
-
-  # Flush settings.
-  x("/sbin/sysctl -w net.ipv4.route.flush=1")
-  x("/sbin/sysctl -w net.ipv6.route.flush=1")
+  net.enable_ip_forward()
 
   # Reload all settings.
   x("service libvirtd reload")

@@ -455,9 +455,15 @@ class Config(object):
     def get_total_disk_gb(self):
       '''Total size of all partions, the size of the lvm volume on the host.'''
       return str(
+        int(self.get_disk_swap_gb()) +
         int(self.get_disk_var_gb()) +
         int(self.get_disk_log_gb()) +
-        int(self.get_disk_extra_lvm_gb()) + 12
+        int(self.get_disk_extra_lvm_gb()) +
+        4 + # /
+        1 + # /home
+        1 + # /var/tmp
+        1 + # /var/log/audit
+        1   # /tmp
       )
 
     def get_total_disk_mb(self):
@@ -586,3 +592,4 @@ def get_hosts():
 
 def get_switches():
   return config.get_switches()
+

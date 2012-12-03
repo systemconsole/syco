@@ -14,10 +14,10 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 
+from general import x
+from scopen import scOpen
 import app
 import config
-from scopen import scOpen
-from general import x
 
 
 def setup_common():
@@ -86,15 +86,20 @@ def general_cis():
     app.print_verbose("CIS 1.1.3 Set nosuid option for /tmp Partition")
     app.print_verbose("CIS 1.1.4 Set noexec option for /tmp Partition")
     scOpen("/etc/fstab").replace_ex(
-        "/tmp", "noexec[^0-9]*", "noexec,nodev,nosuid "
+        "/tmp ", "noexec[^0-9]*", "noexec,nodev,nosuid "
     )
     x("mount -o remount,noexec,nodev,nosuid /tmp")
+
+    app.print_verbose("1.1.6 Bind Mount the /var/tmp directory to /tmp")
+    scOpen("/etc/fstab").replace_ex(
+        "/var/tmp ", "noexec[^0-9]*", "noexec,nodev,nosuid "
+    )
     x("mount -o remount,noexec,nodev,nosuid /var/tmp")
 
     #
     app.print_verbose("CIS 1.1.10 Add nodev Option to /home")
     scOpen("/etc/fstab").replace_ex(
-        "/home", "noexec[^0-9]*", "noexec,nodev "
+        "/home", "noexec[^0-9]*", "noexec,nodev,nosuid "
     )
     x("mount -o remount,noexec,nodev /home")
 
@@ -157,21 +162,20 @@ def general_cis():
     )
 
     #
-    app.print_verbose("CIS 1.6.1 SetUser/GroupOwneron/etc/grub.conf")
+    app.print_verbose("CIS 1.5.1 Set User/Group Owner on /etc/grub.conf (Scored)")
     x("chown root:root /etc/grub.conf")
 
     #
-    app.print_verbose("CIS 1.6.2 Set Permissions on /etc/grub.conf")
+    app.print_verbose("CIS 1.5.2 Set Permissions on /etc/grub.conf (Scored)")
     x("chmod og-rwx /etc/grub.conf")
 
     #
-    app.print_verbose("CIS 1.6.5 Disable Interactive Boot")
-    scOpen("/etc/sysconfig/init").replace_add(
-        "^PROMPT=.*", "PROMPT=no"
-    )
+    app.print_verbose("CIS 1.5.4 Require Authentication for Single-User Mode (Scored)")
+    x('sed -i "/SINGLE/s/sushell/sulogin/" /etc/sysconfig/init')
+    x('sed -i "/PROMPT/s/yes/no/" /etc/sysconfig/init')
 
     #
-    app.print_verbose("CIS 1.7.1 Restrict Core Dumps")
+    app.print_verbose("CIS 1.6.1 Restrict Core Dumps")
     scOpen("/etc/security/limits.conf").replace_add(
         "^\* hard core 0", "* hard core 0"
     )
@@ -238,25 +242,23 @@ def general_cis():
 
     #
     app.print_verbose("CIS 6.1.9 Set User/Group Owner and Permission on /etc/cron.d")
-    x("chown root:root /etc/cron.d")
-    x("chmod og-rwx /etc/cron.d")
+    x("chown -R root:root /etc/cron.d")
+    x("chmod 700 /etc/cron.d")
+    x("chmod 600 /etc/cron.d/*")
 
     #
-    app.print_verbose("CIS 6.1.10 Restrict at Daemon")
+    app.print_verbose("CIS 6.1.10 Restrict at Daemon (Scored)")
     x("rm -f /etc/at.deny")
     x("touch /etc/at.allow")
     x("chown root:root /etc/at.allow")
-    x("chmod og-rwx /etc/at.allow")
+    x("chmod 600 /etc/at.allow")
 
     #
-    app.print_verbose("CIS 6.1.11 Restrict at/cron to Authorized Users")
+    app.print_verbose("CIS 6.1.11 Restrict at/cron to Authorized Users (Scored)")
     x("/bin/rm -f /etc/cron.deny")
-
-    x("[ -f '/etc/cron.allow' ] && chmod og-rwx /etc/cron.allow")
-    x("[ -f '/etc/cron.allow' ] && chown root:root /etc/cron.allow")
-
-    x("[ -f '/etc/at.allow' ] && chmod og-rwx /etc/at.allow")
-    x("[ -f '/etc/at.allow' ] && chown root:root /etc/at.allow")
+    x("touch /etc/cron.allow")
+    x("chmod 600 /etc/cron.allow")
+    x("chown root:root /etc/cron.allow")
 
     #
     app.print_verbose("CIS 9.2.13 Check That Defined Home Directories Exist")
