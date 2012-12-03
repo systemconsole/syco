@@ -1,5 +1,7 @@
 #!/usr/bin/php -q
+
 <?php
+// Source: https://www.monitoringexchange.org/inventory/Check-Plugins/Software/LDAP/check_ldap_bind
 // Checks if a user can bind with ldap (only tested on Active Directory 2003)
 // Exit Errorlevels: 0=OK, 1=Warning, 2=Critical, 3=Unknown
 error_reporting(E_ERROR | E_PARSE);

@@ -38,6 +38,7 @@ from scopen import scOpen
 from ssh import scp_from
 import app
 import config
+import general
 import installLogrotate
 import installRsyslogd
 import iptables
@@ -76,8 +77,12 @@ def install_rsyslogd_client(args):
     # Initialize all passwords used by the script
     app.init_mysql_passwords()
 
+    #Enabling iptables before server has start
+    iptables.add_rsyslog_chain()
+    iptables.save()
+
     # Wating for rsyslog Server to start
-    general.wait_for_server_to_start(config.general.get_log_server_hostname1(), "636")
+    general.wait_for_server_to_start(config.general.get_log_server_hostname1(), "514")
 
     app.print_verbose("CIS 5.2 Configure rsyslog")
 
@@ -92,8 +97,7 @@ def install_rsyslogd_client(args):
     _configure_rsyslog_conf()
     _copy_cert()
 
-    iptables.add_rsyslog_chain()
-    iptables.save()
+   
 
     # Restaring rsyslog
     x("/etc/init.d/rsyslog restart")

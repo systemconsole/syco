@@ -51,6 +51,10 @@ def passwords(args):
   print "mysql_stable: ", app.get_mysql_stable_password()
   print "mysql_uat: ", app.get_mysql_uat_password()
   print "mysql_prod: ", app.get_mysql_production_password()
+  print "mysql_backup: ",app.get_mysql_backup_password()
+  print "mysql_monitor: ",app.get_mysql_monitor_password()
+  print "switch_icmp: ",app.get_switch_icmp_password()
+
 
 
 def change_env(args):
