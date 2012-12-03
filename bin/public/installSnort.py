@@ -41,8 +41,8 @@ DAQ_URL="http://www.snort.org/downloads/1850"
 DAQ_MD5="bc204ea09165b4ecbb1bb49c7c1a2ad4"
 
 RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
-RULE_URL="http://www.snort.org/sub-rules/snortrules-snapshot-2931.tar.gz/6f1a1622979dec80485a8d8a2acc7b0c8149ddc2"
-RULE_MD5="1254317ba5c51a6b8f2b5ba711eecfeb"
+RULE_URL="http://10.101.2.2/files/snortrules-snapshot-2931.tar.gz"
+RULE_MD5="0355031181ea6cdac3205e6d54a324fe"
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
