@@ -38,7 +38,7 @@ SCRIPT_VERSION = 1
 
 
 def build_commands(commands):
-    commands.add("install-nrpe", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
+    commands.add("install-nrpe-client", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
 
 
 def install_nrpe(args):
@@ -103,6 +103,7 @@ def _install_nrpe_plugins():
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
+    nrpe_config.replace("($LDAPURL)", config.general.get_ldap_hostname())
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
     x("chmod -R 750 /usr/lib64/nagios/plugins/")
@@ -127,7 +128,7 @@ def _install_nrpe_plugins():
     try:
         x("/usr/lib64/nagios/plugins/check_nrpe -H {0} -c get_services".format("127.0.0.1")).find("mysql")
         nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
-        nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password())
+        nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password().replace("&","\&").replace("/","\/"))
     except ValueError:
         pass
 

@@ -67,5 +67,5 @@ elif digest == olddigest and olddigest != "":
 # Something has changed since last check.
 else:
     w("{0}-fail".format(filename), returnString)
-    print "CRITICAL: {0} needs to be removed.".format(filename)
+    print "CRITICAL {0} needs to be removed.".format(filename)
     sys.exit(2)

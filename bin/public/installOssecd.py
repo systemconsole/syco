@@ -65,8 +65,6 @@ OSSEC_MD5 = '71cd21a20f22b8eafffa3b57250f0a70'
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
 
-# OSSEC DOWNLOAD URL
-OSSEC_DOWNLOAD = "http://www.ossec.net/files/ossec-hids-2.6.tar.gz"
 
 
 def build_commands(commands):
@@ -86,7 +84,7 @@ def install_ossec_server(args):
     app.print_verbose("Install ossecd.")
     version_obj = version.Version("InstallOssecd", SCRIPT_VERSION)
     version_obj.check_executed()
-
+    install_dir = get_install_dir()
     build_ossec("preloaded-vars-server.conf")
     _generate_client_keys()
 
@@ -110,6 +108,8 @@ def install_ossec_server(args):
     iptables.save()
 
     x("service ossec restart")
+
+    version_obj.mark_executed()
 
 
 def build_ossec(preloaded_conf):
@@ -143,6 +143,7 @@ def _generate_client_keys():
     And prepare separate key files that can be downloaded by each client.
 
     '''
+    install_dir = get_install_dir()
     for server in get_servers():
         fqdn = '{0}.{1}'.format(server, config.general.get_resolv_domain())
         x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a -n {1} -p {2}".format(
