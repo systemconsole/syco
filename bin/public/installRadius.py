@@ -166,11 +166,11 @@ def _setup_radius_clients():
     x("rm /etc/raddb/clients.conf")
 
     # Adding localhost
-    setup_radius_client("localhost", "127.0.0.1")
+    _setup_radius_client("localhost", "127.0.0.1")
 
     # Adding switches
     for switch_name in get_switches():
-        _setup_radius_client(switch, config.host(switch_name).get_back_ip())
+        _setup_radius_client(switch_name, config.host(switch_name).get_back_ip())
 
 
 def _setup_radius_client(name, ip):

@@ -75,7 +75,7 @@ def install_ossec_client(args):
     x("service ossec restart")
 
     version_obj.mark_executed()
-
+    
 
 def _setup_conf():
     '''

@@ -1,4 +1,4 @@
-System Console
+sdfasdfkkSystem Console
 ==============
 
 System Console (syco) is a collection of installation and management
@@ -42,7 +42,6 @@ Contributing to syco
 
         # Prepare repos
         https://github.com/<username>/syco.git
-        git remote add devloper https://github.com/developer/syco.git
         git remote add upstream https://github.com/systemconsole/syco.git
         git fetch
         git branch -r
@@ -56,22 +55,28 @@ Contributing to syco
         git commit -am"Commit 2"
         git commit -am"Commit 3"
         git commit -am"Commit 4"
-        git push developer -- instalRsyslog
 
         # Get all the latest branches and their code.
         git fetch upstream
 
+        # Delete existing local version-0.2.7, if exists.
+        git branch -d version-0.2.7
+
+        # Create a local copy of git checkout -b version-0.2.7
+        git checkout upstream/version-0.2.7
+        git checkout -b version-0.2.7
+
         # Merge your feature
-        git merge upstream/version-0.2.7
+        git merge installRsyslog
 
         # Squash all your commits into one commit.
-        git reset upstream/version-0.2.7
+        git reset origin/version-0.2.7
         git add .
         git add -u .
         git commit
 
         # Push back to your own github repo.
-        git push developer
+        git push origin
 
         # Login to github and create a pull request.
 

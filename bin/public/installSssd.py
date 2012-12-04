@@ -37,8 +37,8 @@ import installOpenLdap
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
-    commands.add("install-sssd", install_sssd, help="Install sssd (ldap client).")
-    commands.add("uninstall-sssd", uninstall_sssd, help="Uninstall sssd.")
+    commands.add("install-sssd-client", install_sssd, help="Install sssd (ldap client).")
+    commands.add("uninstall-sssd-client", uninstall_sssd, help="Uninstall sssd.")
 
 def install_sssd(args):
     '''

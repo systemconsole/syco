@@ -49,11 +49,21 @@ SCRIPT_VERSION = 1
 
 MODSEC_INSTALL_FILE = "modsecurity-apache_2.6.7"
 MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE + ".tar.gz"
+MODSEC_MD5 = "b3ffc5886f7126d012b60e1d5c6b0a1f"
 
 MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
 MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
+MODSEC_ASC_MD5 = "df7bc78d81f567353e6d6eb8c4404fd9"
 
 MODSEC_RULES_FILE = "modsecurity-crs_2.2.5"
+MODSEC_BASE_URL = "http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/{0}.tar.gz{1}/download"
+
+MODSEC_RULES_URL = MODSEC_BASE_URL.format(MODSEC_RULES_FILE, "")
+MODSEC_RULES_MD5 = "aaeaa1124e8efc39eeb064fb47cfc0aa"
+
+MODSEC_ASC_RULES_URL = MODSEC_BASE_URL.format(MODSEC_RULES_FILE, ".asc")
+MODSEC_ASC_RULES_MD5 = "15b57184bc48f84defa76ad1280cd85d"
+
 
 def build_commands(commands):
   '''
@@ -157,8 +167,8 @@ def _install_mod_security():
     x("yum -y install httpd-devel apr apr-util pcre make gcc pcre-devel curl-devel lua-devel")
 
     # Downloading and verify the pgp key for modsec.
-    general.download_file(MODSEC_REPO_URL)
-    general.download_file(MODSEC_ASC_REPO_URL)
+    general.download_file(MODSEC_REPO_URL,md5=MODSEC_MD5)
+    general.download_file(MODSEC_ASC_REPO_URL, md5=MODSEC_ASC_MD5)
 
     os.chdir(app.INSTALL_DIR)
     x("gpg --keyserver keyserver.ubuntu.com --recv-keys 6980F8B0")
@@ -189,8 +199,8 @@ def _install_mod_security():
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz/download", MODSEC_RULES_FILE + ".tar.gz")
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz.asc/download", MODSEC_RULES_FILE + ".tar.gz.asc")
+  general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz",md5=MODSEC_RULES_MD5)
+  general.download_file(MODSEC_ASC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz.asc",md5=MODSEC_ASC_RULES_MD5)
 
   os.chdir(app.INSTALL_DIR)
   x("gpg --keyserver keyserver.ubuntu.com --recv-keys 9624FCD2")
