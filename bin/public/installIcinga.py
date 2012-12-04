@@ -118,9 +118,6 @@ def _install_icinga_core(args):
     # Add icinga-server iptables chain
     iptables.add_icinga_chain()
 
-    # Install NRPE monitoring capabilities (icinga needs to be able to check itself)
-    install_nrpe(args)
-
     # Reload the icinga object structure
     _reload_icinga(args)
 
@@ -338,8 +335,13 @@ def _install_server_plugins():
 
     '''
     _install_server_plugins_dependencies()
-    # These are plugins for the Icinga-server, no need for install on hosts.
-    x("cp {0}lib/nagios/plugins_snmp/* /usr/lib64/nagios/plugins/".format(constant.SYCO_PATH))
+
+    # These install snmp plugins
+    snmp_plugin_path = "{0}lib/nagios/plugins_snmp/".format(app.SYCO_PATH)
+    nagios_plugin_path = "/usr/lib64/nagios/plugins/"
+    for plugin in os.listdir(snmp_plugin_path):
+        x("cp {0}{2} {1}{2}".format(snmp_plugin_path,nagios_plugin_path,plugin))
+        x("chown icinga:nrpe {0}{1}".format(nagios_plugin_path,plugin))
 
     # Set switch password for SNMP switch plugins
     switch_check_file = scopen.scOpen("/etc/icinga/objects/commands/specific_checks.cfg")

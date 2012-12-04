@@ -198,6 +198,7 @@ def setup_syco_chains(device=False):
   if not device:
     iptables("-N syco_forward")
     iptables("-A FORWARD -p ALL -j syco_forward")
+    iptables("-A FORWARD -p ALL -j syco_forward")
 
     iptables("-t nat -N syco_nat_postrouting")
     iptables("-t nat -A POSTROUTING -p ALL -j syco_nat_postrouting")
@@ -408,7 +409,14 @@ def del_kvm_chain():
   iptables("-F kvm", general.X_OUTPUT_CMD)
   iptables("-X kvm", general.X_OUTPUT_CMD)
 
-  net.disable_ip_forward()
+  # Controls IP packet forwarding
+  scOpen("/etc/sysctl.conf").replace_add(
+    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 0"
+  )
+
+  # Flush settings.
+  x("/sbin/sysctl -w net.ipv4.route.flush=1")
+  x("/sbin/sysctl -w net.ipv6.route.flush=1")
 
 
 def add_kvm_chain():
@@ -428,7 +436,14 @@ def add_kvm_chain():
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
 
-  net.enable_ip_forward()
+  # Controls IP packet forwarding
+  scOpen("/etc/sysctl.conf").replace_add(
+    "^net.ipv4.ip_forward.*$", "net.ipv4.ip_forward = 1"
+  )
+
+  # Flush settings.
+  x("/sbin/sysctl -w net.ipv4.route.flush=1")
+  x("/sbin/sysctl -w net.ipv6.route.flush=1")
 
   # Reload all settings.
   x("service libvirtd reload")
@@ -690,10 +705,9 @@ def add_icinga_chain():
 
   #For every switch
 
-  for host in config.get_servers():
-    if config.host(host).is_switch():
-      host_ip = config.host(host).get_back_ip()
-      iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
+  for host in config.get_switches():
+    host_ip = config.host(host).get_back_ip()
+    iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
 
 
 def del_monitor_chain():
@@ -958,7 +972,8 @@ def add_ossec_chain():
   del_ossec_chain()
   app.print_verbose("Add iptables chain for OSSEC")
 
-  if not os.path.exists('/etc/init.d/ossec-hids'):
+  if not os.path.exists('/var/ossec'):
+    app.print_error("Not adding rules since /var/ossec was not found")
     return
 
   # Create chains.
