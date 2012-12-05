@@ -13,12 +13,15 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os
-import fcntl
 import array
-import struct
-import socket
+import fcntl
+import os
 import platform
+import socket
+import struct
+
+from general import x
+from scopen import scOpen
 
 def get_interface_ip(ifn):
     '''
