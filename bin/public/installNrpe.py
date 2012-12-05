@@ -59,6 +59,10 @@ def _install_nrpe(args):
     Server only listens to this IP. Not super safe but better than nothing. Also, argument parsing is _disabled_.
 
     '''
+    # Initialize all passwords at the beginning of the script.
+    app.get_ldap_sssd_password()
+    app.get_mysql_monitor_password()
+
     install.epel_repo()
 
     # Confusing that nagios-plugins-all does not really include all plugins
@@ -118,7 +122,7 @@ def _install_nrpe_plugins():
 
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl/iptables
     # Corresponding .te-files summarize rule content
-    x("mkdir /var/lib/syco_selinux_modules")
+    x("mkdir -p /var/lib/syco_selinux_modules")
     rule_path_list = list_plugin_files("/var/nagios/selinux_rules")
     for path in rule_path_list:
         x("cp {0}/*.pp /var/lib/syco_selinux_modules/".format(path))

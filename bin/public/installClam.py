@@ -34,7 +34,7 @@ SCRIPT_VERSION = 1
 
 
 def build_commands(commands):
-  commands.add("install-clam", install_clam, help="Install clam antivirus.")
+  commands.add("install-clam-client", install_clam, help="Install clam antivirus.")
 
 
 def install_clam(args):
@@ -96,7 +96,7 @@ def download_and_install():
   #
   app.print_verbose("Download and extract clamav")
   dst_path = urlretrive(CLAM_AV_URL, "clamav_latest.tar.gz")
-  x("tar -C %s -zxvf %s" % (app.INSTALL_DIR, dst_path))
+  x("tar -C %s -zxf %s" % (app.INSTALL_DIR, dst_path))
   compile_dir = "%scompile-clamav" % app.INSTALL_DIR
   x("mkdir -p %s" % compile_dir)
   x("mv %s/clamav-*/* %s" % (app.INSTALL_DIR, compile_dir))
