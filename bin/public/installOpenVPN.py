@@ -55,6 +55,9 @@ def install_openvpn_server(args):
   version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
+  # Initialize all passwords
+  app.get_ldap_sssd_password()
+
   x("yum -y install openvpn openvpn-auth-ldap")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
@@ -113,8 +116,8 @@ def _setup_ldap():
   '''
   ldapconf = scOpen("/etc/openvpn/auth/ldap.conf")
   ldapconf.replace("^\\s*URL\s*.*","\\tURL\\tldaps://%s" % config.general.get_ldap_hostname())
-  ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_admin_password())
-  ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=Manager,%s" % config.general.get_ldap_dn())
+  ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_sssd_password())
+  ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=sssd,%s" % config.general.get_ldap_dn())
   ldapconf.replace("^\s*TLSEnable\s*.*","\\t# TLSEnable\\t YES")
 
   # Deal with certs
@@ -161,10 +164,6 @@ def build_client_certs(args):
       # Config client.crt
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
-      general.set_config_property(
-        "/etc/openvpn/easy-rsa/keys/client.conf", "${OPENVPN.HOSTNAME}",
-        config.general.get_openvpn_hostname()
-      )
 
       os.chdir("/etc/openvpn/easy-rsa/keys")
       x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")
