@@ -263,3 +263,72 @@ def disable_ip_forward():
 
     '''
     enable_ip_forward(0)
+
+def get_network_cidr(dd_ipv4,dd_netmask):
+    '''
+    Returns proper CIDR (i.e "network-addr"/"24") network address, for arguments 
+    consisting of any ip within the subnet, and the dot-separated netmask. 
+
+    '''
+    # Generate network address and CIDR-style netmask
+    network_ip = get_network_address(dd_ipv4,dd_netmask)
+    netmask_cidr = dd_subnet_to_cidr_subnet(dd_netmask)
+
+    # Return them in a single string
+    return "{0}/{1}".format(network_ip,netmask_cidr)
+
+
+def dd_subnet_to_cidr_subnet(subnet):
+    '''
+    Converts a dot-decimal separated subnet to a cidr-style subnet
+    Definition of cidr: http://en.wikipedia.org/wiki/CIDR_notation
+
+    Ex 255.255.255.0 to 24
+
+    '''
+    # Convert octet format from integer to a binary-string (i.e 4 becomes "100")
+    subnet_binary_list = ["{0:b}".format(int(s)) for s in subnet.split(".")]
+    # For all 4 octets, count the number of ones, and return the count 
+    one_count = 0
+    for octet in subnet_binary_list:
+        one_count += octet.count("1")
+
+    return one_count
+
+def get_network_address(dd_ipv4, dd_netmask):
+    '''
+    Return the network address for any subnet and ip within it. 
+
+    Ex 192.168.5.7,255.255.250 to 192.168.5.0 
+
+    '''
+    # Split both arguments on "." into a int-list
+    dd_ipv4_int_list = [int(s) for s in dd_ipv4.split(".")]
+    dd_netmask_int_list = [int(s) for s in dd_netmask.split(".")]
+
+    # for every octet in outdata, AND together corresponding octets in dd-indata
+    # see http://docs.python.org/2/library/functions.html#zip
+    network_address_integers = [x & y for x,y in zip(dd_ipv4_int_list, dd_netmask_int_list)]
+
+    # Return the list as a dot-separated list
+    network_address_string = ".".join([str(octet) for octet in network_address_integers])
+    
+    return network_address_string
+
+
+def get_broadcast_address(dd_ipv4, dd_netmask):
+    '''
+    Return the broadcast address 
+
+
+    '''
+    # Make an int-list of both addresses (and invert netmask)
+    dd_ipv4_int_list = [int(s) for s in dd_ipv4.split(".")] 
+    dd_netmask_int_list_inv = [255 - int(s) for s in dd_netmask.split(".")]
+
+    # OR the lists together, and concatenate to a string
+    broadcast_address_integers = [x | y for x,y in zip(dd_ipv4_int_list, dd_netmask_int_list_inv)]
+    broadcast_address_string = ".".join([str(octet) for octet in broadcast_address_integers])
+    
+    # Return the result
+    return broadcast_address_string

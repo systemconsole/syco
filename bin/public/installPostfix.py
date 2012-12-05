@@ -34,6 +34,7 @@ import general
 import hardening
 import install
 import iptables
+import net
 import scopen
 import version
 
@@ -43,10 +44,14 @@ SCRIPT_VERSION = 1
 
 # Get network settings from install.cfg
 mail_server_hostname = config.general.get_mail_relay_server()
+
 server_front_ip = config.host(mail_server_hostname).get_front_ip()
 server_back_ip = config.host(mail_server_hostname).get_back_ip()
-server_front_network = config.general.get_front_network() + "/18"
-server_back_network = config.general.get_back_network() + "/18"
+
+server_front_network = net.get_network_cidr(server_front_ip, 
+  config.general.get_front_netmask())
+server_back_network = net.get_network_cidr(server_back_ip , 
+  config.general.get_back_netmask())
 
 
 def build_commands(commands):
