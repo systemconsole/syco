@@ -95,7 +95,7 @@ def download_cert(filename):
 
     '''
     #Creating certs folder
-    x("mkdir /etc/openldap/cacerts")
+    x("mkdir -p /etc/openldap/cacerts")
 
     ip = config.general.get_ldap_server_ip()
     fullpath = '/etc/openldap/cacerts/' + filename
