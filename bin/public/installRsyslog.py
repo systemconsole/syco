@@ -97,8 +97,6 @@ def install_rsyslogd_client(args):
     _configure_rsyslog_conf()
     _copy_cert()
 
-   
-
     # Restaring rsyslog
     x("/etc/init.d/rsyslog restart")
 
