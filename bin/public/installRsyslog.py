@@ -78,7 +78,7 @@ def install_rsyslogd_client(args):
     app.init_mysql_passwords()
 
     #Enabling iptables before server has start
-    iptables.add_rsyslog_chain()
+    iptables.add_rsyslog_chain("client")
     iptables.save()
 
     # Wating for rsyslog Server to start

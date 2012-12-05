@@ -109,6 +109,10 @@ def install_ossec_server(args):
 
     x("service ossec restart")
 
+    # Clean up install
+    x('yum remove gcc make perl-Time-HiRes -y')
+
+
     version_obj.mark_executed()
 
 
@@ -131,9 +135,6 @@ def build_ossec(preloaded_conf):
 
     # Autostart ossec.
     x("chkconfig ossec on")
-
-    # Clean up install
-    x('yum remove gcc make perl-Time-HiRes -y')
 
 
 def _generate_client_keys():

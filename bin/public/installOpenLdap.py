@@ -184,16 +184,12 @@ def store_logs_on_file():
     x("service rsyslog restart")
 
 def configure_ldap_client():
-    scOpen("/etc/ldap.conf").add(
-        "uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
-        "base " + config.general.get_ldap_dn() + "\n" +
-        "ssl on\n" +
+    scOpen("/etc/openldap/ldap.conf").add(
+	"uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
+	"base " + config.general.get_ldap_dn() + "\n" +
         "tls_cacertdir /etc/openldap/cacerts\n" +
         "tls_cert /etc/openldap/cacerts/client.pem\n" +
-        "tls_key /etc/openldap/cacerts/client.pem\n" +
-        "sudoers_base ou=SUDOers," + config.general.get_ldap_dn() + "\n" +
-        "binddn cn=sssd," + config.general.get_ldap_dn() + "\n" +
-        "bindpw " + app.get_ldap_sssd_password()
+	"tls_key /etc/openldap/cacerts/client.pem\n" 
     )
 
 

@@ -112,7 +112,8 @@ def install_rsyslogd(args):
     _setup_database(sql_password)
     _setup_rsyslogd(sql_password)
 
-    iptables.add_rsyslog_chain()
+    # Add iptables chains
+    iptables.add_rsyslog_chain("server")
     iptables.save()
 
     # Restarting service

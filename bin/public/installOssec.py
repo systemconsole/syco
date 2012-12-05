@@ -53,6 +53,11 @@ def install_ossec_client(args):
     Install OSSEC Client on the server
 
     '''
+
+    if os.path.exists('/var/ossec/bin/manage-agents'):
+        app.print_error("Not insalling OSSEC client since OSSEC server detected")
+        return
+
     app.print_verbose("Install ossec client.")
     version_obj = version.Version("InstallOssec", SCRIPT_VERSION)
     version_obj.check_executed()
@@ -74,8 +79,10 @@ def install_ossec_client(args):
     # Restaring OSSEC server
     x("service ossec restart")
 
+    x('yum remove gcc make perl-Time-HiRes -y')
+
     version_obj.mark_executed()
-    
+
 
 def _setup_conf():
     '''
@@ -129,8 +136,13 @@ def _setup_keys():
 def uninstall_ossec_client(args):
   '''
   Remove OSSECD Client from the server
+  @todo: Will uninstall the server aswell.
 
   '''
+  if os.path.exists('/var/ossec/bin/manage-agents'):
+    app.print_error("Not uninsalling OSSEC client since OSSEC server detected")
+    return
+
   # Stoping OSSEC client
   x('/var/ossec/bin/ossec-control stop')
 
