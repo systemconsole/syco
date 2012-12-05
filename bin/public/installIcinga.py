@@ -78,6 +78,10 @@ def _install_icinga(args):
     and more functionality.
 
     '''
+    # Initialize all used passwords.
+    app.init_mysql_passwords()
+    app.get_ldap_sssd_password()
+
     # Install icinga poller, web-interface and graping.
     icinga_db_password = _install_icinga_core(args)
     _install_icinga_web(icinga_db_password)
@@ -366,7 +370,6 @@ def _setup_icinga_mysql():
 
     '''
     # Create and configure. Install hardened MySQL if needed.
-    app.init_mysql_passwords()
     if not os.path.exists('/etc/init.d/mysqld'):
         install_mysql(["","1","1G"])
     sqlpassword = generate_password(40,chars=string.letters+string.digits)

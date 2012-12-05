@@ -899,16 +899,10 @@ def add_freeradius_chain():
   iptables("-N freeradius_input")
   iptables("-A syco_input  -p ALL -j freeradius_input")
 
-  # Localhost are allowed to talk to radius
-  iptables("-A freeradius_input -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
-  iptables("-A freeradius_output -p TCP -m multiport -d 127.0.0.1 --dports 1812,1813 -j allowed_tcp")
-
   # Switches are allowed to talk to radius
   for switch_name in get_switches():
     ip = config.host(switch_name).get_back_ip()
-    iptables("-A freeradius_input -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
-    iptables("-A freeradius_output -p TCP -m multiport -d {0} --dports 1812,1813 -j allowed_tcp".format(ip))
-
+    iptables("-A freeradius_input -p TCP -m multiport -s {0} --dports 1812,1813 -j allowed_tcp".format(ip))
 
 
 def del_openvas_chain():

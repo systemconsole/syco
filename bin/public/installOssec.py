@@ -54,7 +54,7 @@ def install_ossec_client(args):
 
     '''
 
-    if os.path.exists('/var/ossec/bin/manage-agents'):
+    if os.path.exists('/var/ossec/bin/manage_agents'):
         app.print_error("Not insalling OSSEC client since OSSEC server detected")
         return
 
@@ -139,7 +139,7 @@ def uninstall_ossec_client(args):
   @todo: Will uninstall the server aswell.
 
   '''
-  if os.path.exists('/var/ossec/bin/manage-agents'):
+  if os.path.exists('/var/ossec/bin/manage_agents'):
     app.print_error("Not uninsalling OSSEC client since OSSEC server detected")
     return
 
