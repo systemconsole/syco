@@ -48,9 +48,9 @@ mail_server_hostname = config.general.get_mail_relay_server()
 server_front_ip = config.host(mail_server_hostname).get_front_ip()
 server_back_ip = config.host(mail_server_hostname).get_back_ip()
 
-server_front_network = net.get_network_cidr(server_front_ip, 
+server_front_network = net.get_network_cidr(server_front_ip,
   config.general.get_front_netmask())
-server_back_network = net.get_network_cidr(server_back_ip , 
+server_back_network = net.get_network_cidr(server_back_ip ,
   config.general.get_back_netmask())
 
 
@@ -112,6 +112,12 @@ def install_mail_client(args):
   See line comments in install_mail_server
 
   '''
+  if config.host(net.get_hostname()).has_command_re("install-postfix-server"):
+    app.print_verbose(
+      "This server will later install the postfix server, abort client installation."
+    )
+    return
+
   version_obj = version.Version("Install-postfix-client", SCRIPT_VERSION)
   version_obj.check_executed()
 
