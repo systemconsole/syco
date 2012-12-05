@@ -29,8 +29,11 @@ import os
 from general import x
 from scopen import scOpen
 import app
+import config
 import general
 import version
+
+INSTALLATION_SERVER = config.general.get_installation_server()
 
 SNORT_FILENAME="snort-2.9.3.1.tar.gz"
 SNORT_URL="http://www.snort.org/downloads/1862"
@@ -41,7 +44,8 @@ DAQ_URL="http://www.snort.org/downloads/1850"
 DAQ_MD5="bc204ea09165b4ecbb1bb49c7c1a2ad4"
 
 RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
-RULE_URL="http://www.snort.org/sub-rules/snortrules-snapshot-2931.tar.gz/6f1a1622979dec80485a8d8a2acc7b0c8149ddc2"
+RULE_URL="http://{0}/files/{1}".format(
+    INSTALLATION_SERVER, RULE_FILENAME)
 RULE_MD5="1254317ba5c51a6b8f2b5ba711eecfeb"
 
 # The version of this module, used to prevent the same script version to be

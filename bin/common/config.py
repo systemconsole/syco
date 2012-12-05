@@ -15,6 +15,8 @@ __status__ = "Production"
 
 import ConfigParser
 import os
+import re
+
 
 class ConfigException(Exception):
   '''
@@ -532,6 +534,17 @@ class Config(object):
         ret_commands.append(value)
 
       return ret_commands
+
+    def has_command_re(self, cmd_pattern):
+      '''
+      Check if cmd will or has been executed on the host.
+
+      '''
+      prog = re.compile(cmd_pattern)
+      for command in self.get_commands():
+        if prog.search(command) != None:
+          return True
+      return False
 
     def _get_commands_from_host(self, hostname, verbose):
       commands = []

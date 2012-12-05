@@ -837,7 +837,7 @@ def del_rsyslog_chain():
   iptables("-X rsyslog_out", general.X_OUTPUT_CMD)
 
 
-def add_rsyslog_chain():
+def add_rsyslog_chain(context=None):
   '''
   Rsyslog IPtables rules
 
@@ -856,7 +856,7 @@ def add_rsyslog_chain():
   server_version_obj = version.Version("InstallRsyslogd", installRsyslogd.SCRIPT_VERSION)
   client_version_obj = version.Version("InstallRsyslogdClient", installRsyslog.SCRIPT_VERSION)
 
-  if server_version_obj.is_executed() or client_version_obj.is_executed():
+  if server_version_obj.is_executed() or client_version_obj.is_executed() or context in ["server","client"]:
     app.print_verbose("Add iptables chain for rsyslog")
     iptables("-N rsyslog_in")
     iptables("-N rsyslog_out")
@@ -864,14 +864,14 @@ def add_rsyslog_chain():
     iptables("-A syco_output -p tcp -j rsyslog_out")
 
     # On rsyslog server
-    if server_version_obj.is_executed():
+    if server_version_obj.is_executed() or context is "server":
       for server in get_servers():
         iptables(
           " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
           config.host(server).get_front_ip()
         )
     # On rsyslog client
-    elif client_version_obj.is_executed():
+    elif client_version_obj.is_executed() or context is "client" :
       iptables(
         "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
         config.general.get_log_server_hostname1()

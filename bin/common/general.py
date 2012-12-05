@@ -131,7 +131,7 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
 
-  if md5checksum(app.INSTALL_DIR + dst) != md5:
+  if md5 != None and md5checksum(app.INSTALL_DIR + dst) != md5:
     raise Exception("MD5 Checksum dont match for " + dst)
 
 
