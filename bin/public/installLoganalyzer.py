@@ -163,6 +163,7 @@ def _set_permissions():
     '''
     x("chown -R apache:apache /var/www/html/loganalyzer")
     x("restorecon -R /var/www/html/loganalyzer")
+    x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
 
 
 def uninstall_loganalyzer(args):
