@@ -18,18 +18,19 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+import mysqlUtils
 import os
 import string
-import mysqlUtils
 
 from general import x
 from scopen import scOpen
-import general
 import app
 import config
+import general
+import install
+import installHttpd
 import iptables
 import version
-import installHttpd
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -83,9 +84,8 @@ def _install_packages(args):
     if not os.path.exists('/etc/init.d/httpd'):
         installHttpd.install_httpd(args)
 
-    if not os.path.exists('/etc/php.ini'):
+    if not install.is_rpm_installed('php'):
         x("yum -y install php php-mysql php-gd")
-
 
 
 def _download_loganalyzer():
