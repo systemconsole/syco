@@ -401,7 +401,7 @@ def add_ntp_chain():
   iptables("-A syco_input  -p UDP -j ntp")
   iptables("-A syco_output -p UDP -j ntp")
 
-  iptables("-A ntp -p UDP --dport 123 -d {0} -j allowed_udp".format(config.general.get_ntp_server_ip()))
+  iptables("-A ntp -p UDP --dport 123 -j allowed_udp")
 
 
 def del_kvm_chain():
