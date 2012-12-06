@@ -133,7 +133,7 @@ def install_mysql(args):
 
   # Used by backup scripts to flush master and check slave status etc. when
   # doing an lvm backup.
-  mysql_exec("GRANT RELOAD,SUPER,REPLICATION CLIENT  *.* " +
+  mysql_exec("GRANT RELOAD,SUPER,REPLICATION CLIENT ON *.* " +
     "TO 'backup'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_backup_password() + "'"
   )
 
