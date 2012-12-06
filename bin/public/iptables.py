@@ -410,8 +410,6 @@ def del_kvm_chain():
   iptables("-F kvm", general.X_OUTPUT_CMD)
   iptables("-X kvm", general.X_OUTPUT_CMD)
 
-  net.disable_ip_forward()
-
 
 def add_kvm_chain():
   del_kvm_chain()
@@ -429,8 +427,6 @@ def add_kvm_chain():
   # DHCP / TODO: Needed??
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
-
-  net.enable_ip_forward()
 
   # Reload all settings.
   x("service libvirtd reload")
