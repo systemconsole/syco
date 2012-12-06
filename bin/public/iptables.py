@@ -239,6 +239,7 @@ def add_service_chains():
   add_rsyslog_chain()
   add_freeradius_chain()
   add_openvas_chain()
+  add_ossec_chain()
 
 
 def create_chains():
@@ -861,11 +862,16 @@ def add_rsyslog_chain(context=None):
 
     # On rsyslog server
     if server_version_obj.is_executed() or context is "server":
-      for server in get_servers():
-        iptables(
-          " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
-          config.host(server).get_front_ip()
-        )
+      back_subnet = config.general.get_back_subnet()
+      front_subnet = config.general.get_front_subnet()
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        back_subnet
+      )
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        front_subnet
+      )
     # On rsyslog client
     elif client_version_obj.is_executed() or context is "client" :
       iptables(
