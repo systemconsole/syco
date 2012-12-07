@@ -113,13 +113,6 @@ def _install_nrpe_plugins():
     x("chmod -R 750 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
-    # Set special permissions for Clam plugins
-    # Note the suid setting.
-    x("chown root:root /usr/lib64/nagios/plugins/check_clamscan")
-    x("chown root:root /usr/lib64/nagios/plugins/check_clamav")
-    x("chmod 4755 /usr/lib64/nagios/plugins/check_clamscan")
-    x("chmod 4755 /usr/lib64/nagios/plugins/check_clamav")
-
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl/iptables
     # Corresponding .te-files summarize rule content
     x("mkdir -p /var/lib/syco_selinux_modules")
@@ -144,6 +137,11 @@ def _install_nrpe_plugins_dependencies():
     # Dependency for check_clamav
     x("yum install -y nagios-plugins-perl perl-Net-DNS-Resolver-Programmable sudo yum install perl-suidperl")
 
+    nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
+    nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamav")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamscan")
+
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
 
@@ -163,15 +161,18 @@ def _install_nrpe_plugins_dependencies():
         )
         x("yum install {0} -y".format(HP_HEALTH_FILENAME))
 
-	# Remove their evil crontab
-	x("rm -f /etc/cron.d/hp-health")
+        # Remove their evil crontab
+        x("rm -f /etc/cron.d/hp-health")
 
         # Let nrpe run hpasmcli
-        nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
-        nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
-        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli,/usr/lib64/nagios/plugins/check_hpasm")
+        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli")
+        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_hpasm")  
 
         x("service hp-health start")
+
+
+    # Kernel wont parse anything but read-only in sudoers. So chmod it. 
+    x("chmod 0440 /etc/sudoers.d/nrpe")
 
 
 def list_plugin_files(path):
