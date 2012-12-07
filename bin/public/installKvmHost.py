@@ -275,7 +275,9 @@ BOOTPROTO=none
         content = content + """IPADDR=%s
 NETMASK=%s
 NETWORK=%s
-BROADCAST=%s""" % (ip, netmask, network, broadcast)
+BROADCAST=%s
+BRIDGING_OPTS="setmcsnoop=0"
+""" % (ip, netmask, network, broadcast)
 
     if gateway:
         content += "\nGATEWAY=" + gateway
