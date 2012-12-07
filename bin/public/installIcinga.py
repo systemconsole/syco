@@ -90,6 +90,9 @@ def _install_icinga(args):
     # Install a http index
     _install_http_index()
 
+    # Enable SELinux
+    _install_SELinux()
+
     # Restart all services
     x("service ido2db restart")
     x("service nrpe restart")
@@ -145,7 +148,6 @@ def _install_icinga_web(icinga_db_pass):
     x("useradd -G icingacmd apache")
 
     # Make everything startup on reboot
-    general.set_config_property("/etc/sysconfig/selinux", "SELINUX=enforcing", "SELINUX=permissive")
     x("/sbin/chkconfig --level 3 httpd on")
     x("/sbin/chkconfig --level 3 mysqld on")
     x("/sbin/chkconfig --level 3 ido2db on")
@@ -404,12 +406,27 @@ def _setup_icinga_web_mysql():
     return web_sqlpassword
 
 
+def _install_SELinux():
+    '''
+    Install SELinux policies for Icinga, icinga-web and pnp4nagios. 
+    See .te files for policy details. 
+
+    '''
+    # Create a local dir for SELinux modules
+    x("mkdir -p /var/lib/syco_selinux_modules/server")
+    module_path = "{0}var/icinga/SELinux_modules".format(app.SYCO_PATH)
+    x("cp {0}/*.pp /var/lib/syco_selinux_modules/server".format(module_path))
+    x("semodule -i /var/lib/syco_selinux_modules/server/*.pp")
+
+    # Enable SELinux after successfil installation
+    x("setenforce 1")
+
+
 class host():
     '''
     Objcect which wrapps all host-data needed by icinga.
 
     '''
-
     def __init__(self,configname,configip,hosttype):
         self.name = configname
         self.ip = configip
