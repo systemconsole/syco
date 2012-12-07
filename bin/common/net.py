@@ -213,6 +213,8 @@ BOOTPROTO=none
 def setup_bridge(bridge, ip, netmask, gateway, resolver):
     '''
     Bridge the bond network with the KVM guests.
+    For info on mcsnoop see:
+        http://thread.gmane.org/gmane.linux.network/153338
 
     Can work both with and without IP.
 
@@ -232,7 +234,9 @@ BOOTPROTO=none
         content = content + """IPADDR=%s
 NETMASK=%s
 NETWORK=%s
-BROADCAST=%s""" % (ip, netmask, network, broadcast)
+BROADCAST=%s
+BRIDGING_OPTS="setmcsnoop=0"
+""" % (ip, netmask, network, broadcast)
 
     if gateway:
         content += "\nGATEWAY=" + gateway
