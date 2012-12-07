@@ -126,7 +126,7 @@ def _install_icinga_core(args):
     iptables.add_icinga_chain()
 
     # Reload the icinga object structure
-    _reload_icinga(args)
+    _reload_icinga(args,reload=False)
 
     return icinga_sql_password
 
@@ -196,7 +196,7 @@ def _configure_icinga_web(icinga_db_pass, web_sqlpassword):
     general.set_config_property("/usr/share/icinga-web/app/config/translation.xml", "default_locale=\"en\"","default_locale=\"en\" default_timezone=\"CET\"",False)
 
 
-def _reload_icinga(args):
+def _reload_icinga(args, reload=True):
     '''
     Re-probes the network for running services and updates the icinga object structure.
 
@@ -205,6 +205,9 @@ def _reload_icinga(args):
     _append_services_to_hostlist(hostList)
     _build_icinga_config(hostList)
     _install_server_plugins()
+
+    if reload: 
+        x("service icinga reload")
 
 
 def _install_pnp4nagios():
@@ -348,10 +351,12 @@ def _install_server_plugins():
     for plugin in os.listdir(snmp_plugin_path):
         x("cp {0}{2} {1}{2}".format(snmp_plugin_path,nagios_plugin_path,plugin))
         x("chown icinga:nrpe {0}{1}".format(nagios_plugin_path,plugin))
+        x("chmod ug+x {0}{1}")
 
     # Set switch password for SNMP switch plugins
     switch_check_file = scopen.scOpen("/etc/icinga/objects/commands/specific_checks.cfg")
-    switch_check_file.replace("$(SWITCHPASS)", app.get_switch_icmp_password())
+    switchpass = app.get_switch_icmp_password().replace("&","\&").replace("/","\/")
+    switch_check_file.replace("$(SWITCHPASS)", switchpass)
 
     #x("chown -R icinga:icingacmd /usr/lib64/nagios/plugins")
     x("usermod -a -G nrpe icinga")
