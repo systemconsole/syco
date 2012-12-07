@@ -313,10 +313,19 @@ def install_bind_client(args):
 
     general.wait_for_server_to_start(config.general.get_resolv_nameserver_server_ip(), "53")
 
-    # Set what resolver to user.
+    # Set what resolver to use (this will be rewritten by networkmanager at
+    # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
     resolv.add("nameserver {0} ".format(config.general.get_resolv_nameserver_server_ip()))
+
+    # Change config files for networkmanager.
+    x("""
+        grep -irl dns ifcfg*|xargs \
+        sed -i 's/.*\(dns.*\)[=].*/\\1={0}/ig'""".format(
+            config.general.get_resolv_nameserver_server_ip()
+        ), cwd = "/etc/sysconfig/network-scripts"
+    )
 
     version_obj.mark_executed()
 

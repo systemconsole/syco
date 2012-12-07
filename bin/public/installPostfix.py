@@ -104,6 +104,9 @@ def install_mail_server(args):
 
   x("service postfix restart")
 
+  # Send test mail to the syco admin
+  send_test_mail((None, config.general.get_admin_email()))
+
 
 def install_mail_client(args):
   '''
@@ -152,6 +155,9 @@ def install_mail_client(args):
   # Restart postfix
   x("service postfix restart")
 
+  # Send test mail to the syco admin
+  send_test_mail((None, config.general.get_admin_email()))
+
 
 def install_mailx():
   '''
@@ -189,4 +195,3 @@ def send_test_mail(args):
     email = config.general.get_admin_email()
 
   x('echo "" | mail -s "Test email from {0}" {1}'.format(get_hostname(), email))
-

@@ -10,19 +10,16 @@
 # __status__ = "Production"
 
 CMD="DELETE FROM Syslog.SystemEvents WHERE ReceivedAt < DATE_SUB(NOW(), INTERVAL 100 DAY);"
-echo ""
-echo $CMD
 /usr/bin/env mysql -u"purgelogdb" -p"${MYSQL_PASSWORD}" Syslog -e"$CMD"
 OUT=$?
 if [ $OUT -ne 0 ]; then
     txt="[ERROR] purge rsyslgd mysql database failed."
+    echo $CMD
 	echo $txt
 	echo
     logger -t syco -p user.crit $txt
 else
-    $txt="[NOTICE] purged 100 days old rows from rsyslogd mysql database."
-	echo $txt
-    echo
+    txt="[NOTICE] purged 100 days old rows from rsyslogd mysql database."
     logger -t syco $txt
 fi
 exit $OUT

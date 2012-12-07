@@ -17,6 +17,8 @@ import ConfigParser
 import os
 import re
 
+import net
+
 
 class ConfigException(Exception):
   '''
@@ -167,6 +169,13 @@ class Config(object):
       '''The back network (ie. 10.100.10.0).'''
       return self.get_option("back.network")
 
+    def get_back_subnet(self):
+      '''The back subnet (ie. 10.100.10.0/24)'''
+      return net.get_network_cidr(
+        self.get_back_network(),
+        self.get_back_netmask()
+      )
+
     def get_front_netmask(self):
       '''The netmask of the front network.'''
       return self.get_option("front.netmask")
@@ -174,6 +183,13 @@ class Config(object):
     def get_back_netmask(self):
       '''The netmask of the back network.'''
       return self.get_option("back.netmask")
+
+    def get_front_subnet(self):
+      '''The back subnet (ie. 10.100.10.0/24)'''
+      return net.get_network_cidr(
+        self.get_front_network(),
+        self.get_front_netmask()
+      )
 
     def get_front_resolver_ip(self):
       '''ip of external dns resolver that are configured on all servers.'''
