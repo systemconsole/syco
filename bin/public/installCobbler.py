@@ -103,7 +103,7 @@ def _install_cobbler():
   x(
     "yum -y install cobbler koan httpd dhcp createrepo mkisofs mod_wsgi " +
     "python-cheetah python-netaddr python-simplejson python-urlgrabber " +
-    "PyYAML rsync tftp-server yum-utils"
+    "PyYAML rsync tftp-server yum-utils pykickstart"
   )
 
   # Cobbler web only has one other requirement besides cobbler itself
