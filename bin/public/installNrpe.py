@@ -163,6 +163,9 @@ def _install_nrpe_plugins_dependencies():
         )
         x("yum install {0} -y".format(HP_HEALTH_FILENAME))
 
+	# Remove their evil crontab
+	x("rm -f /etc/cron.d/hp-health")
+
         # Let nrpe run hpasmcli
         nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
         nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
