@@ -43,25 +43,27 @@ def install_nmap(args):
     version_obj = version.Version("InstallNMAP", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    subnet = config.general.get_subnet()
-    if not subnet:
-        raise('Need to put network.subnet in install.cfg')
-
     # Install the nmap packages.
-    if os.path.exists('/usr/bin/nmap'):
+    if not os.path.exists('/usr/bin/nmap'):
         x("yum -y install nmap")
 
     # Setup needed folders
     x("mkdir -p /var/lib/nmap/scans")
 
+    add_cron(config.general.get_front_subnet(), "front")
+    add_cron(config.general.get_back_subnet(), "back")
+
+    version_obj.mark_executed()
+
+
+def add_cron(targets, name):
     # Script should be executed once every hour.
-    fn = "/etc/cron.daily/nmap-scan.sh"
+    fn = "/etc/cron.daily/nmap-scan-{0}.sh".format(name)
     x("cp -f {0}var/nmap/nmap-scan.sh {1}".format(app.SYCO_PATH, fn))
     x("chmod +x {0}".format(fn))
     nmapScan = scOpen(fn)
-    nmapScan.replace("${NMAP_TARGETS}", subnet)
-
-    version_obj.mark_executed()
+    nmapScan.replace("${NMAP_TARGETS}", targets)
+    nmapScan.replace("${NMAP_NAME}", name)
 
 
 def uninstall_nmap(args):

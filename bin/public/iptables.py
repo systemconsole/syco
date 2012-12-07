@@ -239,6 +239,7 @@ def add_service_chains():
   add_rsyslog_chain()
   add_freeradius_chain()
   add_openvas_chain()
+  add_ossec_chain()
 
 
 def create_chains():
@@ -401,7 +402,7 @@ def add_ntp_chain():
   iptables("-A syco_input  -p UDP -j ntp")
   iptables("-A syco_output -p UDP -j ntp")
 
-  iptables("-A ntp -p UDP --dport 123 -d {0} -j allowed_udp".format(config.general.get_ntp_server_ip()))
+  iptables("-A ntp -p UDP --dport 123 -j allowed_udp")
 
 
 def del_kvm_chain():
@@ -409,8 +410,6 @@ def del_kvm_chain():
   iptables("-D syco_forward  -p ALL -j kvm", general.X_OUTPUT_CMD)
   iptables("-F kvm", general.X_OUTPUT_CMD)
   iptables("-X kvm", general.X_OUTPUT_CMD)
-
-  net.disable_ip_forward()
 
 
 def add_kvm_chain():
@@ -429,8 +428,6 @@ def add_kvm_chain():
   # DHCP / TODO: Needed??
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 67 -j allowed_udp")
   # iptables("-A kvm -m state --state NEW -m udp -p udp --dport 68 -j allowed_udp")
-
-  net.enable_ip_forward()
 
   # Reload all settings.
   x("service libvirtd reload")
@@ -865,11 +862,16 @@ def add_rsyslog_chain(context=None):
 
     # On rsyslog server
     if server_version_obj.is_executed() or context is "server":
-      for server in get_servers():
-        iptables(
-          " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
-          config.host(server).get_front_ip()
-        )
+      back_subnet = config.general.get_back_subnet()
+      front_subnet = config.general.get_front_subnet()
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        back_subnet
+      )
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        front_subnet
+      )
     # On rsyslog client
     elif client_version_obj.is_executed() or context is "client" :
       iptables(

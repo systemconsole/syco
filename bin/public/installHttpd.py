@@ -203,4 +203,4 @@ def _update_modsec_rules():
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
 
 def _enable_se_linux():
-  x("/usr/sbin/setsebool httpd_can_network_connect 1")
+  x("/usr/sbin/setsebool -P httpd_can_network_connect=1")

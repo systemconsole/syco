@@ -136,7 +136,7 @@ def _setup_database(sql_password):
     mysqlUtils.drop_user('rsyslogd')
     mysqlUtils.create_user('rsyslogd', sql_password, 'Syslog', 'INSERT')
 
-    mysql_exec("\. {0}".format(get_create_db_path()), True)
+    mysql_exec("\. {0}".format(get_create_db_path()), True, escape=False)
 
 
 def get_create_db_path():

@@ -387,4 +387,4 @@ def _install_custom_selinux_policy():
   x("semodule_package -o %s -m %s" % (pp, mod))
   x("semodule -i %s" % pp)
 
-  x("setsebool -P httpd_can_network_connect true")
+  x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
