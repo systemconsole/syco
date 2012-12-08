@@ -448,10 +448,7 @@ def store_file(file_name, value):
     Store a text in a file.
 
     '''
-    app.print_verbose("storing file " + file_name)
-    FILE = open(file_name, "w")
-    FILE.writelines(value)
-    FILE.close()
+    x("echo '%s' > %s" % (value, file_name))
 
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):

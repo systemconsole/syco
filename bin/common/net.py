@@ -13,6 +13,7 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+
 import array
 import fcntl
 import os
@@ -22,6 +23,7 @@ import struct
 
 from general import x
 from scopen import scOpen
+
 
 def get_interface_ip(ifn):
     '''
@@ -38,6 +40,7 @@ def get_interface_ip(ifn):
     except:
         ip = None
     return ip
+
 
 all_interfaces = None
 def get_all_interfaces():
@@ -72,6 +75,7 @@ def get_all_interfaces():
 
     return all_interfaces
 
+
 # Cache variable for lan_ip
 lan_ip = ""
 
@@ -102,8 +106,10 @@ def get_lan_ip():
 
     return lan_ip
 
+
 # Cache variable for public_ip
 public_ip = ""
+
 
 def get_public_ip():
     '''
@@ -125,6 +131,8 @@ def get_public_ip():
                    break
 
     return public_ip
+
+
 def reverse_ip(str):
     '''Reverse an ip from 1.2.3.4 to 4.3.2.1'''
     reverse_str=""
@@ -133,6 +141,7 @@ def reverse_ip(str):
             reverse_str = "." + reverse_str
         reverse_str = num + reverse_str
     return reverse_str
+
 
 def get_ip_class_c(ip):
     '''Get a class c net from an ip. 1.2.3.4 will return 1.2.3'''
@@ -145,6 +154,7 @@ def get_ip_class_c(ip):
 
     return new_ip
 
+
 def num_of_eth_interfaces():
     counter = 0
     interface_list = get_all_interfaces()
@@ -153,98 +163,10 @@ def num_of_eth_interfaces():
             counter += 1
     return counter
 
+
 def get_hostname():
     return os.uname()[1]
 
-if (__name__ == "__main__"):
-    print "get_all_interfaces " + str(get_all_interfaces())
-    print "get_interface_ip eth0 " + str(get_interface_ip("eth0"))
-    print "get_interface_ip br0 " + str(get_interface_ip("br0"))
-    print "get_interface_ip none " + str(get_interface_ip("none"))
-    print "get_lan_ip " + get_lan_ip()
-    print "reverse_ip " + reverse_ip("1.2.3.4")
-    print "get_ip_class_c " + get_ip_class_c("1.2.3.4")
-    print "num_of_eth_interfaces " + str(num_of_eth_interfaces())
-    print "get_hostname " + get_hostname()
-
-def setup_bond(bond, bridge):
-    """
-    Setup a bondX device.
-
-    Will use mode: active-backup or 1
-    - Sets an   policy for fault tolerance. Transmissions are
-    received and sent out via the first available bonded slave interface.
-    Another bonded slave interface is only used if the active bonded slave
-    interface fails.
-
-    READ MORE
-    http://www.kernel.org/doc/Documentation/networking/bonding.txt
-
-    """
-    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond,
-"""DEVICE=%s
-BRIDGE=%s
-BONDING_OPTS="miimon=100 mode=active-backup"
-ONBOOT=yes
-USERCTL=no
-ONPARENT=yes
-BOOTPROTO=none
-""" % (bond, bridge))
-
-def setup_eth(eth, bond):
-    '''
-    Setup the eth interface to be included in a bond.
-
-    '''
-    filename = "/etc/sysconfig/network-scripts/ifcfg-" + eth
-    mac = general.get_config_value(filename, "HWADDR")
-    general.store_file(filename,
-"""DEVICE="%s"
-HWADDR=%s
-MASTER=%s
-SLAVE=yes
-NM_CONTROLLED="no"
-ONBOOT=yes
-USERCTL=no
-HOTPLUG=no
-BOOTPROTO=none
-""" % (eth, mac, bond))
-
-def setup_bridge(bridge, ip, netmask, gateway, resolver):
-    '''
-    Bridge the bond network with the KVM guests.
-    For info on mcsnoop see:
-        http://thread.gmane.org/gmane.linux.network/153338
-
-    Can work both with and without IP.
-
-    '''
-    content = """DEVICE=%s
-TYPE=Bridge
-ONBOOT=yes
-USERCTL=no
-DELAY=0
-BOOTPROTO=none
-""" % (bridge)
-
-    if ip:
-        broadcast = net.get_ip_class_c(ip) + ".255"
-        network = net.get_ip_class_c(ip) + ".0"
-
-        content = content + """IPADDR=%s
-NETMASK=%s
-NETWORK=%s
-BROADCAST=%s
-BRIDGING_OPTS="setmcsnoop=0"
-""" % (ip, netmask, network, broadcast)
-
-    if gateway:
-        content += "\nGATEWAY=" + gateway
-
-    if resolver:
-        content += "\nDNS=" + resolver
-
-    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, content)
 
 def enable_ip_forward(enable=1):
     '''
@@ -267,6 +189,7 @@ def disable_ip_forward():
 
     '''
     enable_ip_forward(0)
+
 
 def get_network_cidr(dd_ipv4, dd_netmask):
     '''
@@ -299,6 +222,7 @@ def dd_subnet_to_cidr_subnet(subnet):
 
     return one_count
 
+
 def get_network_address(dd_ipv4, dd_netmask):
     '''
     Return the network address for any subnet and ip within it.
@@ -324,7 +248,6 @@ def get_broadcast_address(dd_ipv4, dd_netmask):
     '''
     Return the broadcast address
 
-
     '''
     # Make an int-list of both addresses (and invert netmask)
     dd_ipv4_int_list = [int(s) for s in dd_ipv4.split(".")]
@@ -336,3 +259,15 @@ def get_broadcast_address(dd_ipv4, dd_netmask):
 
     # Return the result
     return broadcast_address_string
+
+
+if (__name__ == "__main__"):
+    print "get_all_interfaces " + str(get_all_interfaces())
+    print "get_interface_ip eth0 " + str(get_interface_ip("eth0"))
+    print "get_interface_ip br0 " + str(get_interface_ip("br0"))
+    print "get_interface_ip none " + str(get_interface_ip("none"))
+    print "get_lan_ip " + get_lan_ip()
+    print "reverse_ip " + reverse_ip("1.2.3.4")
+    print "get_ip_class_c " + get_ip_class_c("1.2.3.4")
+    print "num_of_eth_interfaces " + str(num_of_eth_interfaces())
+    print "get_hostname " + get_hostname()
