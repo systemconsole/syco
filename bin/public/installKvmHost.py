@@ -37,15 +37,16 @@ import os
 import re
 import time
 
+from general import x, x_communicate
 import app
 import config
-import general
-from general import x, x_communicate
-import version
-import install
-import net
-import iptables
 import disk
+import general
+import install
+import iptables
+import net
+import netUtils
+import version
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -112,7 +113,7 @@ def install_kvmhost(args):
         app.print_error("virsh not installed.")
         _abort_kvm_host_installation()
 
-    _setup_network_interfaces()
+    _remove_kvm_virt_networking()
 
     iptables.add_kvm_chain()
     iptables.save()
@@ -149,19 +150,10 @@ def _create_kvm_snapshot_partition():
         value = devicename + "        /var/lib/libvirt/qemu     ext4        defaults                1 2"
         general.set_config_property("/etc/fstab", value, value)
 
-def _setup_network_interfaces():
+
+def _remove_kvm_virt_networking():
     """
     Setup bonded network interfaces and bridges.
-
-    Read more.
-    http://serverfault.com/questions/316623/what-is-the-correct-way-to-setup-a-bonded-bridge-on-centos-6-for-kvm-guests
-    http://www.linuxfoundation.org/collaborate/workgroups/networking/bridge
-    http://www.cyberciti.biz/faq/rhel-linux-kvm-virtualization-bridged-networking-with-libvirt/
-    http://www.linux-kvm.org/page/HOWTO_BONDING
-    https://fedorahosted.org/cobbler/wiki/VirtNetworkingSetupForUseWithKoan
-    http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization/sect-Virtualization-Network_Configuration-Bridged_networking_with_libvirt.html
-    http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s1-networkscripts-interfaces.html
-    http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/sec-Using_Channel_Bonding.html
 
     """
     # Remove the virbr0, "NAT-interface".
@@ -170,122 +162,6 @@ def _setup_network_interfaces():
     x("virsh net-undefine default")
     x("service libvirtd restart")
 
-    # Install network bridge
-    install.package("bridge-utils")
-
-    general.set_config_property2("/etc/modprobe.d/syco.conf",
-                                 "alias bond0 bonding")
-
-    num_of_if = net.num_of_eth_interfaces()
-
-    front_gw = config.general.get_front_gateway_ip()
-    front_resolver = config.general.get_front_resolver_ip()
-    front_netmask = config.general.get_front_netmask()
-    front_ip = config.host(net.get_hostname()).get_front_ip()
-
-    back_gw = config.general.get_back_gateway_ip()
-    back_resolver = config.general.get_back_resolver_ip()
-    back_netmask = config.general.get_back_netmask()
-    back_ip = config.host(net.get_hostname()).get_back_ip()
-    if (num_of_if >= 4):
-        # Setup back-net
-        _setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
-        _setup_bond("bond0", "br0")
-        _setup_eth("eth0", "bond0")
-        _setup_eth("eth1", "bond0")
-
-        # _setup front-net
-        _setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
-        _setup_bond("bond1", "br1")
-        _setup_eth("eth2", "bond1")
-        _setup_eth("eth3", "bond1")
-    elif (num_of_if == 2):
-        # Setup back-net
-        _setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
-        _setup_bond("bond0", "br0")
-        _setup_eth("eth0", "bond0")
-
-        # _setup front-net
-        _setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
-        _setup_bond("bond1", "br1")
-        _setup_eth("eth1", "bond1")
-    else:
-        app.print_error("To few network interfaces: " + str(num_of_if))
-        _abort_kvm_host_installation()
-
-def _setup_bond(bond, bridge):
-    """
-    Setup a bondX device.
-
-    Will use mode: active-backup or 1
-    - Sets an active-backup policy for fault tolerance. Transmissions are
-    received and sent out via the first available bonded slave interface.
-    Another bonded slave interface is only used if the active bonded slave
-    interface fails.
-
-    """
-    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bond,
-"""DEVICE=%s
-BRIDGE=%s
-BONDING_OPTS="miimon=100 mode=1"
-ONBOOT=yes
-USERCTL=no
-ONPARENT=yes
-BOOTPROTO=none
-""" % (bond, bridge))
-
-def _setup_eth(eth, bond):
-    '''
-    Setup the eth interface to be included in a bond.
-
-    '''
-    filename = "/etc/sysconfig/network-scripts/ifcfg-" + eth
-    mac = general.get_config_value(filename, "HWADDR")
-    general.store_file(filename,
-"""DEVICE="%s"
-HWADDR=%s
-MASTER=%s
-SLAVE=yes
-NM_CONTROLLED="no"
-ONBOOT=yes
-USERCTL=no
-HOTPLUG=no
-BOOTPROTO=none
-""" % (eth, mac, bond))
-
-def _setup_bridge(bridge, ip, netmask, gateway, resolver):
-    '''
-    Bridge the bond network with the KVM guests.
-
-    Can work both with and without IP.
-
-    '''
-    content = """DEVICE=%s
-TYPE=Bridge
-ONBOOT=yes
-USERCTL=no
-DELAY=0
-BOOTPROTO=none
-""" % (bridge)
-
-    if ip:
-        broadcast = net.get_ip_class_c(ip) + ".255"
-        network = net.get_ip_class_c(ip) + ".0"
-
-        content = content + """IPADDR=%s
-NETMASK=%s
-NETWORK=%s
-BROADCAST=%s
-BRIDGING_OPTS="setmcsnoop=0"
-""" % (ip, netmask, network, broadcast)
-
-    if gateway:
-        content += "\nGATEWAY=" + gateway
-
-    if resolver:
-        content += "\nDNS=" + resolver
-
-    general.store_file("/etc/sysconfig/network-scripts/ifcfg-" + bridge, content)
 
 def _enable_ksm():
     '''

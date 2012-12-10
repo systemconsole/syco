@@ -82,7 +82,7 @@ def create_install_dir():
     atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    x("chmod o+rwx " + app.INSTALL_DIR)
+    x("chmod 777 " + app.INSTALL_DIR)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
@@ -448,10 +448,7 @@ def store_file(file_name, value):
     Store a text in a file.
 
     '''
-    app.print_verbose("storing file " + file_name)
-    FILE = open(file_name, "w")
-    FILE.writelines(value)
-    FILE.close()
+    x("echo '%s' > %s" % (value, file_name))
 
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):

@@ -88,7 +88,8 @@ def _install_nrpe(args):
     nrpe_config.replace("$(MONITORIP)" ,monitor_server_front_ip)
 
     # Allow nrpe to listen on UDP port 5666
-    iptables.add_monitor_chain()
+    iptables.add_nrpe_chain()
+    iptables.save()
 
     # Make nrpe-server startup stateful and restart
     x("/sbin/chkconfig --level 3 nrpe on")
