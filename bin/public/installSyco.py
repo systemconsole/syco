@@ -32,6 +32,7 @@ def install_syco(args):
   if (os.access('/sbin/syco', os.F_OK) == False):
     app.print_verbose("Create symlink /sbin/syco")
     os.symlink(sys.path[0] + '/syco.py', '/sbin/syco')
+    x("chmod o+x {0}".format(sys.path[0]))
   else:
     app.print_verbose("   Already installed")
 
