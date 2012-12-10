@@ -231,7 +231,7 @@ def add_service_chains():
   add_kvm_chain()
   add_ldap_chain()
   add_ntp_chain()
-  add_monitor_chain()
+  add_nrpe_chain()
   add_openvpn_chain()
   add_mysql_chain()
   add_mail_relay_chain()
@@ -694,28 +694,28 @@ def add_icinga_chain():
     iptables("-A icinga_output -p udp --dport " + snmp_port + " -d " + host_ip + " -m state --state NEW -j allowed_udp")
 
 
-def del_monitor_chain():
+def del_nrpe_chain():
   app.print_verbose("Delete iptables chain for Monitor")
-  iptables("-D syco_input  -p ALL -j monitor_input", general.X_OUTPUT_CMD)
-  iptables("-F monitor_input", general.X_OUTPUT_CMD)
-  iptables("-X monitor_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_input  -p ALL -j nrpe_input", general.X_OUTPUT_CMD)
+  iptables("-F nrpe_input", general.X_OUTPUT_CMD)
+  iptables("-X nrpe_input", general.X_OUTPUT_CMD)
 
 
-def add_monitor_chain():
-  del_monitor_chain()
+def add_nrpe_chain():
+  del_nrpe_chain()
 
   if (not os.path.exists("/etc/nagios/nrpe.cfg")):
     return
 
-  iptables("-N monitor_input")
-  iptables("-A syco_input  -p ALL -j monitor_input")
+  iptables("-N nrpe_input")
+  iptables("-A syco_input  -p ALL -j nrpe_input")
 
   monitor_listen_port = "5666"
   monitor_server_hostname = config.general.get_monitor_server_hostname()
   monitor_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
 
   app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_hostname))
-  iptables("-A monitor_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
+  iptables("-A nrpe_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
 
 
 def del_openvpn_chain():

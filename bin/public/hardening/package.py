@@ -47,3 +47,7 @@ def remove_packages():
     for package in config.options('package'):
         app.print_verbose("  Remove %s." % package)
         install.rpm_remove(package)
+
+def packages():
+    remove_packages()
+    install_packages()

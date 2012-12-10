@@ -481,12 +481,13 @@ class Config(object):
         1 + # /home
         1 + # /var/tmp
         1 + # /var/log/audit
-        1   # /tmp
+        1 + # /tmp
+        1   # some extra free space if any LVM partion needs to be resized.
       )
 
     def get_total_disk_mb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_total_disk_gb()) * 1000)
+      return str(int(self.get_total_disk_gb()) * 1024)
 
     def get_boot_device(self, default_device = None):
       '''Get the device name on which the installation will be performed.'''

@@ -192,7 +192,8 @@ def configured_sssd():
     # the config file.
     x("touch /etc/sssd/sssd.conf")
 
-    # Restart sssd
+    # Restart sssd and read in all new configs.
+    x("rm /var/lib/sss/db/config.ldb")
     x("service sssd restart")
 
     # Start sssd after reboot.

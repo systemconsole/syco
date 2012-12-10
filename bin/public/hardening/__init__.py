@@ -35,7 +35,7 @@ import version
 from hardening.common import setup_common
 from hardening.auditd import install_auditd
 from hardening.network import setup_network
-from hardening.package import remove_packages
+from hardening.package import packages
 from hardening.passwords import harden_password
 from hardening.permissions import setup_permissions
 from hardening.service import disable_services
@@ -67,7 +67,7 @@ def harden(args):
     setup_common()
     install_auditd()
     setup_network()
-    remove_packages()
+    packages()
     harden_password()
     setup_permissions()
     disable_services()

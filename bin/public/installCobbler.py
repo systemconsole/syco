@@ -103,7 +103,7 @@ def _install_cobbler():
   x(
     "yum -y install cobbler koan httpd dhcp createrepo mkisofs mod_wsgi " +
     "python-cheetah python-netaddr python-simplejson python-urlgrabber " +
-    "PyYAML rsync tftp-server yum-utils"
+    "PyYAML rsync tftp-server yum-utils pykickstart"
   )
 
   # Cobbler web only has one other requirement besides cobbler itself
@@ -376,15 +376,17 @@ def _cobbler_sync():
 def _install_custom_selinux_policy():
   '''
   Install customized SELinux policy for cobbler.
+
   '''
-  install.package("policycoreutils")
+  pass
+  # install.package("policycoreutils")
 
-  te = app.SYCO_PATH + "/var/selinux/cobbler.te"
-  mod = "/tmp/cobbler.te"
-  pp = "/tmp/cobbler.te"
+  # te = app.SYCO_PATH + "/var/selinux/cobbler.te"
+  # mod = "/tmp/cobbler.te"
+  # pp = "/tmp/cobbler.te"
 
-  x("checkmodule -M -m -o %s %s" % (mod, te))
-  x("semodule_package -o %s -m %s" % (pp, mod))
-  x("semodule -i %s" % pp)
+  # x("checkmodule -M -m -o %s %s" % (mod, te))
+  # x("semodule_package -o %s -m %s" % (pp, mod))
+  # x("semodule -i %s" % pp)
 
   x("/usr/sbin/setsebool -P httpd_can_network_connect=1")

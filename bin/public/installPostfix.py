@@ -101,6 +101,7 @@ def install_mail_server(args):
 
   # Tell iptables and nrpe that this server is configured as a mail-relay server.
   iptables.add_mail_relay_chain()
+  iptables.save()
 
   x("service postfix restart")
 
@@ -151,6 +152,7 @@ def install_mail_client(args):
 
   # Tell iptables and nrpe that this server is configured as a mail-relay server.
   iptables.add_mail_relay_chain()
+  iptables.save()
 
   # Restart postfix
   x("service postfix restart")
@@ -180,6 +182,7 @@ def uninstall_mail_relay():
 
   # Remote iptables chains
   iptables.del_mail_relay_chain()
+  iptables.save()
 
 
 def send_test_mail(args):
