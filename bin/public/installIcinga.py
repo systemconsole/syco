@@ -124,6 +124,7 @@ def _install_icinga_core(args):
 
     # Add icinga-server iptables chain
     iptables.add_icinga_chain()
+    iptables.save()
 
     # Reload the icinga object structure
     _reload_icinga(args)
@@ -139,7 +140,7 @@ def _install_icinga_web(icinga_db_pass):
     x("yum install -y icinga-web php php-cli php-pear php-xmlrpc php-xsl php-pdo php-soap php-gd php-ldap php-mysql")
 
     # Setup icinga-web mysql
-    icinga_web_db_bass =  _setup_icinga_web_mysql()
+    icinga_web_db_bass = _setup_icinga_web_mysql()
 
     # Configure icinga web client config files
     _configure_icinga_web(icinga_db_pass, icinga_web_db_bass)
@@ -154,6 +155,7 @@ def _install_icinga_web(icinga_db_pass):
 
     # Harden with iptables-chain
     iptables.add_httpd_chain()
+    iptables.save()
 
 
 def _configure_icinga_web(icinga_db_pass, web_sqlpassword):
@@ -408,8 +410,8 @@ def _setup_icinga_web_mysql():
 
 def _install_SELinux():
     '''
-    Install SELinux policies for Icinga, icinga-web and pnp4nagios. 
-    See .te files for policy details. 
+    Install SELinux policies for Icinga, icinga-web and pnp4nagios.
+    See .te files for policy details.
 
     '''
     # Create a local dir for SELinux modules
