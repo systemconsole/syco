@@ -82,7 +82,7 @@ def create_install_dir():
     atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    x("chmod o+rwx " + app.INSTALL_DIR)
+    x("chmod 777 " + app.INSTALL_DIR)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
