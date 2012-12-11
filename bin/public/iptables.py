@@ -959,11 +959,11 @@ def add_ossec_chain():
 
   '''
   del_ossec_chain()
-  app.print_verbose("Add iptables chain for OSSEC")
 
   if not os.path.exists('/var/ossec'):
-    app.print_error("Not adding rules since /var/ossec was not found")
     return
+
+  app.print_verbose("Add iptables chain for OSSEC")
 
   # Create chains.
   iptables("-N ossec_in")
