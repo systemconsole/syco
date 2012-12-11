@@ -161,8 +161,7 @@ print_header("4.4.2 Disable IPv6 (Not Scored)")
 check_equals(
     'grep ipv6 /etc/modprobe.d/*',
     (
-        'options ipv6 "disable=1 off"',
-        'options ipv6 off'
+        'options ipv6 disable=1'
     )
 )
 check_equal('grep net-pf-10 /etc/modprobe.d/*', 'alias net-pf-10 off')
