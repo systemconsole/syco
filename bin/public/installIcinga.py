@@ -203,12 +203,16 @@ def _reload_icinga(args, reload=True):
     Re-probes the network for running services and updates the icinga object structure.
 
     '''
+    # Initialize all used passwords.
+    app.init_mysql_passwords()
+    app.get_ldap_sssd_password()
+
     hostList = _get_host_list()
     _append_services_to_hostlist(hostList)
     _build_icinga_config(hostList)
     _install_server_plugins()
 
-    if reload: 
+    if reload:
         x("service icinga reload")
 
 
@@ -353,7 +357,7 @@ def _install_server_plugins():
     for plugin in os.listdir(snmp_plugin_path):
         x("cp {0}{2} {1}{2}".format(snmp_plugin_path,nagios_plugin_path,plugin))
         x("chown icinga:nrpe {0}{1}".format(nagios_plugin_path,plugin))
-        x("chmod ug+x {0}{1}")
+        x("chmod ug+x {0}{1}".format(nagios_plugin_path,plugin))
 
     # Set switch password for SNMP switch plugins
     switch_check_file = scopen.scOpen("/etc/icinga/objects/commands/specific_checks.cfg")
