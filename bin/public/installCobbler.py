@@ -206,7 +206,7 @@ def _import_repos():
     app.print_verbose("Centos-updates-x86_64 repo already imported")
   else:
     x("cobbler repo add --arch=x86_64 --name=centos-updates-x86_64 --mirror=rsync://ftp.sunet.se/pub/Linux/distributions/centos/6/updates/x86_64/")
-    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://ftp.df.lth.se/pub/fedora-epel/6/x86_64")
+    x("cobbler repo add --arch=x86_64 --name=epel-x86_64 --mirror=rsync://mirrors.se.eu.kernel.org/fedora-epel/6/x86_64")
 
 def _refresh_all_profiles():
   # Removed unused distros/profiles
