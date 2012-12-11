@@ -16,7 +16,7 @@ __status__ = "Production"
 import os
 import sys
 
-# The version of the syco script
+# The version of the syco script.
 version = "0.2.7"
 parser = ''
 
