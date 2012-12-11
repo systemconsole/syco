@@ -37,6 +37,45 @@ If you are member of the syco team, use this to push things back to github.
         # Insert the output into www.github.com.
         git clone git@github.com:arlukin/syco.git
 
+Contributing to syco
+--------------------
+
+        # Prepare repos
+        https://github.com/<username>/syco.git
+        git remote add devloper https://github.com/developer/syco.git
+        git remote add upstream https://github.com/systemconsole/syco.git
+        git fetch
+        git branch -r
+
+        # Create local copy of upstream/version-0.2.6
+        git checkout upstream/version-0.2.6
+        git checkout -b installRsyslog
+
+        # Working on my feature
+        git commit -am"Commit 1"
+        git commit -am"Commit 2"
+        git commit -am"Commit 3"
+        git commit -am"Commit 4"
+        git push developer -- instalRsyslog
+
+        # Get all the latest branches and their code.
+        git fetch upstream
+
+        # Merge your feature
+        git merge upstream/version-0.2.7
+
+        # Squash all your commits into one commit.
+        git reset upstream/version-0.2.7
+        git add .
+        git add -u .
+        git commit
+
+        # Push back to your own github repo.
+        git push developer
+
+        # Login to github and create a pull request.
+
+
 The flow of the "syco remote-install"
 ------------------------------------
 

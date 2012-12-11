@@ -14,6 +14,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import app
+import config
 import general
 import ssh
 from exception import SettingsError
@@ -44,7 +45,7 @@ def vir_list(args):
   app.options.verbose = 2
   try:
     for hostname in config.get_hosts():
-      server = config.host(hostname).get_back_ip()
+      server = config.host(hostname).get_front_ip()
 
       obj = ssh.Ssh(server, app.get_root_password())
 

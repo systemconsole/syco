@@ -1,0 +1,46 @@
+# X.509 Certificate options
+
+#
+# DN options
+
+# The organization of the subject.
+organization = "${ORGANIZATION}"
+
+# The organizational unit of the subject.
+unit = "${UNIT}"
+
+# The locality of the subject.
+locality = "${LOCALITY}"
+
+# The state of the certificate owner.
+state = "${STATE}"
+
+# The country of the subject. Two letter code.
+country = "${COUNTRY}"
+
+# The common name of the certificate owner.
+cn = "${CN}"
+
+# The serial number of the certificate
+serial = "${SERIAL}"
+
+# In how many days, counting from today, this certificate will expire.
+expiration_days = 3650
+
+# X.509 v3 extensions
+
+# A dnsname in case of a WWW server.
+dns_name = "${DNS_NAME}"
+
+# An email in case of a person
+email = "${EMAIL}"
+
+# Whether this certificate will be used for a TLS client
+tls_www_client
+
+# Whether this certificate will be used for a TLS server
+tls_www_server
+
+# Whether this certificate will be used to sign data (needed
+# in TLS DHE ciphersuites).
+signing_key

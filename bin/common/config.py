@@ -15,6 +15,10 @@ __status__ = "Production"
 
 import ConfigParser
 import os
+import re
+
+import net
+
 
 class ConfigException(Exception):
   '''
@@ -22,6 +26,7 @@ class ConfigException(Exception):
 
   '''
   pass
+
 
 class Config(object):
   etc_path = None
@@ -34,16 +39,19 @@ class Config(object):
     self.general = self.GeneralConfig(etc_path, usr_path)
 
   def host(self, hostname):
+    '''
+    Return HostConfig object for hostname.
+
+    '''
     if hostname not in self.hosts:
-      self.hosts[hostname] = self.HostConfig(hostname,
-                                             self.etc_path, self.usr_path)
+      self.hosts[hostname] = self.HostConfig(
+        hostname, self.etc_path, self.usr_path
+      )
     return self.hosts[hostname]
 
-  def get_servers(self, backup = False):
+  def get_devices(self):
     '''
     A list of all servers that are defined in install.cfg.
-
-    backup - Also retrive servers of type backup
 
     '''
     servers = self.general.sections()
@@ -51,20 +59,29 @@ class Config(object):
 
     hosts = []
     for hostname in servers:
-      if not self.host(hostname).is_backup() or backup:
+      if self.host(hostname).is_server() or self.host(hostname).is_switch():
         hosts.append(hostname)
 
     return sorted(hosts)
 
+  def get_servers(self):
+    '''
+    A list of all servers that are defined in install.cfg.
+
+    '''
+    hosts = [name for name in self.get_devices() if self.host(name).is_server()]
+    return sorted(hosts)
 
   def get_hosts(self):
     '''Get the hostname of all kvm hosts.'''
-    hosts = []
-
-    for hostname in self.get_servers():
-      if self.host(hostname).is_host():
-        hosts.append(hostname)
+    hosts = [name for name in self.get_devices() if self.host(name).is_host()]
     return sorted(hosts)
+
+  def get_switches(self):
+    '''Get the hostname of all switches.'''
+    hosts = [name for name in self.get_devices() if self.host(name).is_switch()]
+    return sorted(hosts)
+
 
   class SycoConfig(ConfigParser.RawConfigParser):
 
@@ -106,7 +123,8 @@ class Config(object):
         return default_value
       else:
         raise ConfigException(
-          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg")
+          "Can't find value for option '" + option + "' in section '" + section + "' in install.cfg"
+        )
 
   class GeneralConfig(SycoConfig):
     '''
@@ -133,7 +151,7 @@ class Config(object):
 
     def get_installation_server_ip(self):
       '''The ip of the installation server.'''
-      return self.host(self.get_installation_server()).get_back_ip()
+      return self.host(self.get_installation_server()).get_front_ip()
 
     def get_front_gateway_ip(self):
       '''The ip of the network gateway.'''
@@ -151,6 +169,13 @@ class Config(object):
       '''The back network (ie. 10.100.10.0).'''
       return self.get_option("back.network")
 
+    def get_back_subnet(self):
+      '''The back subnet (ie. 10.100.10.0/24)'''
+      return net.get_network_cidr(
+        self.get_back_network(),
+        self.get_back_netmask()
+      )
+
     def get_front_netmask(self):
       '''The netmask of the front network.'''
       return self.get_option("front.netmask")
@@ -158,6 +183,13 @@ class Config(object):
     def get_back_netmask(self):
       '''The netmask of the back network.'''
       return self.get_option("back.netmask")
+
+    def get_front_subnet(self):
+      '''The back subnet (ie. 10.100.10.0/24)'''
+      return net.get_network_cidr(
+        self.get_front_network(),
+        self.get_front_netmask()
+      )
 
     def get_front_resolver_ip(self):
       '''ip of external dns resolver that are configured on all servers.'''
@@ -180,7 +212,10 @@ class Config(object):
       Ip list of all dns resolvers that are configured on all servers.
 
       '''
-      resolvers = str(self.get_front_resolver_ip() + " " + self.get_back_resolver_ip())
+      resolvers = "{0} {1} {2}".format(
+        self.get_front_resolver_ip(), self.get_back_resolver_ip(),
+        self.get_resolv_nameserver_server_ip()
+      )
 
       if (limiter != " "):
         resolvers = resolvers.replace(' ', limiter)
@@ -196,12 +231,18 @@ class Config(object):
     def get_resolv_search(self):
       return self.get_option("resolv.search")
 
+    def get_resolv_nameserver_server(self):
+      return self.get_option("resolv.nameserver.server")
+
+    def get_resolv_nameserver_server_ip(self):
+      return self.host(self.get_resolv_nameserver_server()).get_front_ip()
+
     def get_ldap_server(self):
       '''The hostname of the ldap server.'''
       return self.get_option("ldap.server")
 
     def get_ldap_server_ip(self):
-      return self.host(self.get_ldap_server()).get_back_ip()
+      return self.host(self.get_ldap_server()).get_front_ip()
 
     def get_ldap_hostname(self):
       return self.get_option("ldap.hostname")
@@ -221,10 +262,18 @@ class Config(object):
       return self.get_option("ntp.server")
 
     def get_ntp_server_ip(self):
-      return self.host(self.get_ntp_server()).get_back_ip()
+      return self.host(self.get_ntp_server()).get_front_ip()
 
     def get_mail_relay_domain_name(self):
       return self.get_option("mail_relay.domain_name")
+
+    def get_mail_relay_server(self):
+      '''The hostname of the mail_relay server.'''
+      return self.get_option("mail_relay.server")
+
+    def get_mail_relay_server_ip(self):
+      '''The ip of the cert server.'''
+      return self.host(self.get_mail_relay_server()).get_back_ip()
 
     def get_cert_server(self):
       '''The hostname of the cert server.'''
@@ -246,19 +295,13 @@ class Config(object):
       '''The hostname of the cert server.'''
       return self.get_option("cert.wild.key")
 
-    def get_mysql_primary_master(self):
-      return self.get_option("mysql.primary_master")
-
     def get_mysql_primary_master_ip(self):
       '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_primary_master()).get_back_ip()
-
-    def get_mysql_secondary_master(self):
-      return self.get_option("mysql.secondary_master")
+      return self.get_option("mysql.primary_master_ip")
 
     def get_mysql_secondary_master_ip(self):
-      '''IP or hostname for primary mysql server.'''
-      return self.host(self.get_mysql_secondary_master()).get_back_ip()
+      '''IP or hostname for secondary mysql server.'''
+      return self.get_option("mysql.secondary_master_ip")
 
     def get_country_name(self):
       return self.get_option("country_name")
@@ -278,8 +321,15 @@ class Config(object):
     def get_admin_email(self):
       return self.get_option("admin_email")
 
-    def get_log_server_hostname(self):
-      return self.get_option("log.hostname")
+    def get_log_server_hostname1(self):
+      return self.get_option("log.hostname1")
+
+    def get_log_server_hostname2(self):
+       return self.get_option("log.hostname2")
+
+    def get_subnet(self):
+      '''The subnet of the data center'''
+      return self.get_option("network.subnet")
 
     def get_openvpn_network(self):
       '''The network range of the ips givven to openvpn clients.'''
@@ -288,15 +338,14 @@ class Config(object):
     def get_openvpn_hostname(self):
       '''The domain name used to access the vpn from internet.'''
       return str(self.get_option("openvpn.hostname"))
-    
-    def get_logg_server(self):
-      return self.get_option("logg.server")
+
+    def get_ossec_server(self):
+      '''The hostname of the ossec server.'''
+      return self.get_option("ossec.server")
 
     def get_ossec_server_ip(self):
-      return self.get_option("ossec.server_ip")
-
-    def get_logg_server2(self):
-      return self.get_option("logg.server2")
+      '''The ip of the ossec server.'''
+      return self.host(self.get_ossec_server()).get_front_ip()
 
 
   class HostConfig(SycoConfig):
@@ -317,8 +366,10 @@ class Config(object):
     def get_type(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
       hosttype = self.get_option("type").lower()
-      if hosttype in ['host', 'guest']:
+      if hosttype in ['host', 'guest', 'switch', 'firewall', 'template']:
         return hosttype
+      else:
+        raise Exception("Unknown type {0}".format(hosttype))
 
     def get_front_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
@@ -336,6 +387,15 @@ class Config(object):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
       return self.get_option("back.mac")
 
+    def get_any_ip(self):
+      ''' Get any ip (front preferred, back second hand, otherwise error'''
+      if self.has_option(self.hostname, "front.ip"):
+        return(self.get_front_ip())
+      elif self.has_option(self.hostname, "back.ip"):
+        return(self.get_back_ip())
+      else:
+        raise Exception("No IP defined for host {0}".format(self.hostname))
+
     def get_ram(self):
       '''Get the amount of ram in MB that are used for a specific kvm host, as it is defined in install.cfg.'''
       return self.get_option("ram")
@@ -345,11 +405,21 @@ class Config(object):
       return self.get_option("cpu")
 
     def get_disk_swap_gb(self):
-      '''Get the size of the swap partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+
+      '''
       return self.get_option("disk_swap", "4")
 
     def get_disk_swap_mb(self):
-      '''Get the size of the swap partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the swap partion in GB, as it is defined in install.cfg
+
+      Defaut: 4096 GB
+
+      '''
       return str(int(self.get_disk_swap_gb()) * 1024)
 
     def get_disk_var(self):
@@ -357,12 +427,38 @@ class Config(object):
       return self.get_option("disk_var")
 
     def get_disk_var_gb(self):
-      '''Get the size of the var partion in GB that are used for a specific kvm host, as it is defined in install.cfg'''
-      return self.get_option("disk_var")
+      '''
+      Size of the /var partion in GB, as it is defined in install.cfg
+
+      Defaut: 10 GB
+
+      '''
+      return self.get_option("disk_var", "10")
 
     def get_disk_var_mb(self):
-      '''Get the size of the var partion in MB that are used for a specific kvm host, as it is defined in install.cfg'''
+      '''
+      Size of the /var partion in MB, as it is defined in install.cfg
+
+      Defaut: 10240 MB
+
+      '''
       return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_disk_log_gb(self):
+      '''
+      Size of the /var/log partion in GB, as it is defined in install.cfg
+
+      Defaut: 4 GB
+      '''
+      return self.get_option("disk_log", "4")
+
+    def get_disk_log_mb(self):
+      '''
+      Size of the /var/log partion in MB, as it is defined in install.cfg
+
+      Defaut: 4096 MB
+      '''
+      return str(int(self.get_disk_log_gb()) * 1024)
 
     def get_disk_extra_lvm_gb(self):
       '''
@@ -375,29 +471,68 @@ class Config(object):
       return self.get_option("disk_extra_lvm", 0)
 
     def get_total_disk_gb(self):
-      '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_disk_var_gb()) + int(self.get_disk_extra_lvm_gb()) + 16)
+      '''Total size of all partions, the size of the lvm volume on the host.'''
+      return str(
+        int(self.get_disk_swap_gb()) +
+        int(self.get_disk_var_gb()) +
+        int(self.get_disk_log_gb()) +
+        int(self.get_disk_extra_lvm_gb()) +
+        4 + # /
+        1 + # /home
+        1 + # /var/tmp
+        1 + # /var/log/audit
+        1 + # /tmp
+        1   # some extra free space if any LVM partion needs to be resized.
+      )
 
     def get_total_disk_mb(self):
       '''Total size of all volumes/partions, the size of the lvm volume on the host.'''
-      return str(int(self.get_total_disk_gb()) * 1000)
+      return str(int(self.get_total_disk_gb()) * 1024)
 
     def get_boot_device(self, default_device = None):
       '''Get the device name on which the installation will be performed.'''
       return self.get_option("boot_device", default_device)
 
+    def _get_template(self):
+      '''
+      Get the template name that is used
+
+      Default name is host.
+
+      '''
+      return self.get_option("use", 'host')
+
+    def _get_template_commands(self, verbose):
+      '''
+      Get all commands from the template that this profile is associated with.
+
+      '''
+      return self._get_commands_from_host(self._get_template(), verbose)
+
+    def is_server(self):
+      '''
+      Return true if HostConfig is a valid physical device/server.
+
+      Ie. not a template and not General.
+
+      '''
+      return (self.is_host() or self.is_guest() or
+             self.is_firewall())
 
     def is_host(self):
       return self.get_type() == "host"
 
-
     def is_guest(self):
       return self.get_type() == "guest"
 
+    def is_switch(self):
+      return self.get_type() == "switch"
 
-    def is_backup(self):
-      return self.get_type() == "backup"
+    def is_firewall(self):
+      return self.get_type() == "firewall"
 
+    def is_template(self):
+      return self.get_type() == "template"
 
     def has_guests(self):
       if (self.has_section(self.hostname)):
@@ -408,21 +543,36 @@ class Config(object):
 
     def get_commands(self, verbose = False):
       '''Get all commands that should be executed on a host'''
-      commands = []
-
-      if (self.has_section(self.hostname)):
-        for option, value in self.items(self.hostname):
-          option = option.lower()
-          if "command" in option:
-            if (verbose):
-              value += " -v"
-            commands.append([option, value])
+      commands = self._get_template_commands(verbose)
+      commands += self._get_commands_from_host(self.hostname, verbose)
 
       ret_commands = []
       for option, value in sorted(commands):
         ret_commands.append(value)
 
       return ret_commands
+
+    def has_command_re(self, cmd_pattern):
+      '''
+      Check if cmd will or has been executed on the host.
+
+      '''
+      prog = re.compile(cmd_pattern)
+      for command in self.get_commands():
+        if prog.search(command) != None:
+          return True
+      return False
+
+    def _get_commands_from_host(self, hostname, verbose):
+      commands = []
+      if (self.has_section(hostname)):
+        for option, value in self.items(hostname):
+          option = option.lower()
+          if "command" in option:
+            if (verbose):
+              value += " -v"
+            commands.append([option, value])
+      return commands
 
     def get_guests(self):
       '''Get the hostname of all guests that should be installed on the kvm host name.'''
@@ -469,3 +619,10 @@ def get_servers():
 
 def get_hosts():
   return config.get_hosts()
+
+def get_switches():
+  return config.get_switches()
+
+def get_devices():
+  return config.get_devices()
+

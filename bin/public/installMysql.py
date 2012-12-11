@@ -19,24 +19,30 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import fileinput, shutil, os
-import app
-import general
-from general import x
-import version
-import iptables
-import config
+import fileinput
+import os
+import re
+import shutil
 
-# The version of this module, used to prevent
-# the same script version to be executed more then
-# once on the same host.
+from general import x
+import app
+import config
+import general
+import iptables
+import version
+
+
+# The version of this module, used to prevent the same script version to be
+# executed more then once on the same host.
 SCRIPT_VERSION = 1
+
 
 def build_commands(commands):
   commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]", help="Install mysql server on the current server.")
   commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")
   commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master.")
   commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
+
 
 def install_mysql(args):
   '''
@@ -120,6 +126,17 @@ def install_mysql(args):
     "WITH GRANT OPTION "
   )
 
+  # Used by monitor services (icingas nrpe plugin etc.)
+  mysql_exec("GRANT REPLICATION CLIENT ON *.* " +
+    "TO 'monitor'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_monitor_password() + "'"
+  )
+
+  # Used by backup scripts to flush master and check slave status etc. when
+  # doing an lvm backup.
+  mysql_exec("GRANT RELOAD,SUPER,REPLICATION CLIENT ON *.* " +
+    "TO 'backup'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_backup_password() + "'"
+  )
+
   mysql_exec("DROP DATABASE test;")
   mysql_exec("SELECT host,user FROM mysql.db;")
   mysql_exec("SELECT host,user FROM mysql.user;")
@@ -179,6 +196,7 @@ def install_mysql_replication(args):
 
   version_obj.mark_executed()
 
+
 def test_mysql(args):
   '''
   Run all mysql unittests, to test the MySQL daemon on the current hardware.
@@ -188,15 +206,18 @@ def test_mysql(args):
   x("perl /usr/share/mysql-test/mysql-test-run.pl")
   x("yum -y remove mysql-test")
 
-def mysql_exec(command, with_user=False, host="127.0.0.1"):
+
+def mysql_exec(command, with_user=False, host="127.0.0.1", escape=True):
   '''
   Execute a MySQL query, through the command line mysql console.
 
   todo: Don't send password on command line.
 
   '''
-  command = command.replace('\\', '\\\\')
-  command = command.replace('"', r'\"')
+
+  if escape:
+    command = command.replace('\\', '\\\\')
+    command = command.replace('"', r'\"')
 
   cmd="mysql "
 
@@ -204,9 +225,10 @@ def mysql_exec(command, with_user=False, host="127.0.0.1"):
     cmd+= "-h" + host + " "
 
   if (with_user):
-    cmd+='-uroot -p"' + app.get_mysql_root_password() + '" '
+    cmd+='-uroot -p"{0}" '.format(app.get_mysql_root_password())
 
-  return x(cmd + '-e "' + command + '"')
+  return x(cmd + '-e "{0}"'.format(command))
+
 
 def install_mysql_client():
   '''

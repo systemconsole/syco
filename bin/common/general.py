@@ -13,22 +13,24 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+from random import choice
+from socket import *
 import glob
+import hashlib
+import inspect
 import os
 import re
 import shutil
-import urllib
 import string
-import inspect
 import subprocess
 import time
-from random import choice
-from socket import *
+import urllib
 
 from constant import *
 import app
 import expect
 import pexpect
+
 
 def remove_file(path):
   '''
@@ -80,12 +82,24 @@ def create_install_dir():
     atexit.register(delete_install_dir)
 
   if (os.access(app.INSTALL_DIR, os.W_OK | os.X_OK)):
-    x("chmod o+rwx " + app.INSTALL_DIR)
+    x("chmod 777 " + app.INSTALL_DIR)
     os.chdir(app.INSTALL_DIR)
   else:
     raise Exception("Can't create install dir.")
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None):
+
+def get_install_dir():
+  '''
+  Create and return the installtion tmp dir.
+
+  This dir will automatically be deleted when the script ends.
+
+  '''
+  create_install_dir()
+  return app.INSTALL_DIR
+
+
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -105,6 +119,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
     if (remote_password):
       cmd += " --password=\"" + remote_password + "\""
 
+    if (cookie):
+      cmd += ' --no-cookies --header "Cookie: %s"' % cookie
+
     shell_exec("wget " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
     # making the script not able to read the file immediatley after it's
@@ -113,6 +130,9 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
     raise Exception("Couldn't download: " + dst)
+
+  if md5 != None and md5checksum(app.INSTALL_DIR + dst) != md5:
+    raise Exception("MD5 Checksum dont match for " + dst)
 
 
 def urlretrive(src_url, dst_filename):
@@ -134,17 +154,25 @@ def urlretrive(src_url, dst_filename):
 
   return dst_path
 
-
-def generate_password(length=8, chars=string.letters + string.digits):
+# Restricted version of string.punctuation, has removed some "dangerous" chars,
+# that might crash some scripts if not properly escaped.
+punctuation = '!#$%()*+,-./:;<=>?@[\]^_{|}~'
+def generate_password(length=8, chars=string.letters + string.digits + punctuation):
   '''Generate a random password'''
   return ''.join([choice(chars) for i in range(length)])
 
-def is_server_alive(server, port):
+def is_server_alive(server, port, proto='tcp'):
   '''
   Check if port on a server is responding, this assumes the server is alive.
 
   '''
   try:
+    if proto=='udp':
+      s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    elif proto=='tcp':
+      s = socket(AF_INET, SOCK_STREAM)
+    else:
+      raise Exception("Invalid proto")
     s = socket(AF_INET, SOCK_STREAM)
     s.settimeout(5)
     result = s.connect_ex((server, int(port)))
@@ -396,9 +424,11 @@ def set_config_property(file_name, search_exp, replace_exp, add_if_not_exist=Tru
     w.write(replace_exp + "\n")
     w.close()
 
+
 def set_config_property_batch(file_name, key_value_dict, add_if_not_exist=True):
   for key, value in key_value_dict.iteritems():
     set_config_property(file_name, key, value, add_if_not_exist)
+
 
 def get_config_value(file_name, config_name):
     '''
@@ -412,15 +442,13 @@ def get_config_value(file_name, config_name):
             return m.group(1)
     return False
 
+
 def store_file(file_name, value):
     '''
     Store a text in a file.
 
     '''
-    app.print_verbose("storing file " + file_name)
-    FILE = open(file_name, "w")
-    FILE.writelines(value)
-    FILE.close()
+    x("echo '%s' > %s" % (value, file_name))
 
 # TODO: Set a good name.
 def set_config_property2(file_name, replace_exp):
@@ -428,14 +456,34 @@ def set_config_property2(file_name, replace_exp):
   set_config_property(file_name, search_exp, replace_exp)
 
 
-if __name__ == "__main__":
-  command = 'echo "moo"'
-  command = command.replace('\\', '\\\\')
-  command = command.replace('"', r'\"')
-  command = 'su -c"' + command + '"'
-  print command
-  print shell_exec(command)
+def md5checksum(filePath):
+    fh = open(filePath, 'rb')
+    m = hashlib.md5()
+    while True:
+        data = fh.read(8192)
+        if not data:
+            break
+        m.update(data)
+    return m.hexdigest()
 
-  download_file("http://airadvice.com/buildingblog/wp-content/uploads/2010/05/hal-9000.jpg")
-  os.chdir("/tmp/install")
-  print shell_exec("ls -alvh")
+
+def use_original_file(filename):
+    '''
+    Backup original file, and restore if backup exist.
+
+    With this procedure it's possible to have script makeing changes to a file
+    with sed/awk, and then run the script again to to make the same changes
+    to the original data.
+
+    '''
+    if not filename.startswith('/'):
+        raise Exeption("Filename {0} must start with /.".format(filename))
+    syco_bak_folder = '/tmp/syco_bak'
+    bak_file = '{0}{1}'.format(syco_bak_folder, filename)
+
+    if os.path.exists(bak_file):
+        x("cp -f {0} {1}".format(bak_file, filename))
+    else:
+        bak_folder = bak_file.rsplit('/', 1)[0]
+        x("mkdir -p {0}".format(bak_folder))
+        x("cp -f {0} {1}".format(filename, bak_file))

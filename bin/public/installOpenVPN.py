@@ -26,15 +26,15 @@ __status__ = "Production"
 import os
 import stat
 
+from general import x
+from scopen import scOpen
 import app
 import config
 import general
-from general import x
-import version
 import install
 import iptables
 import net
-from scopen import scOpen
+import version
 
 
 # The version of this module, used to prevent
@@ -55,7 +55,10 @@ def install_openvpn_server(args):
   version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
   version_obj.check_executed()
 
-  x("yum -y install openvpn")
+  # Initialize all passwords
+  app.get_ldap_sssd_password()
+
+  x("yum -y install openvpn openvpn-auth-ldap")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
     x("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
@@ -91,8 +94,9 @@ def install_openvpn_server(args):
     scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
 
   # To be able to route trafic to internal network
-  general.set_config_property("/etc/sysctl.conf", '[\s]*net.ipv4.ip_forward[\s]*[=].*', "net.ipv4.ip_forward = 1")
-  x("echo 1 > /proc/sys/net/ipv4/ip_forward")
+  net.enable_ip_forward()
+
+  _setup_ldap()
 
   iptables.add_openvpn_chain()
   iptables.save()
@@ -104,11 +108,41 @@ def install_openvpn_server(args):
 
   version_obj.mark_executed()
 
+
+def _setup_ldap():
+  '''
+  Configure openvpn to authenticate through LDAP.
+
+  '''
+  ldapconf = scOpen("/etc/openvpn/auth/ldap.conf")
+  ldapconf.replace("^\\s*URL\s*.*","\\tURL\\tldaps://%s" % config.general.get_ldap_hostname())
+  ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_sssd_password())
+  ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=sssd,%s" % config.general.get_ldap_dn())
+  ldapconf.replace("^\s*TLSEnable\s*.*","\\t# TLSEnable\\t YES")
+
+  # Deal with certs
+  ldapconf.replace("^\s*TLSCACertFile\s*.*","\\tTLSCACertFile\\t /etc/openldap/cacerts/ca.crt")
+  ldapconf.replace("^\s*TLSCACertDir\s*.*","\\tTLSCACertDir\\t /etc/openldap/cacerts/")
+  ldapconf.replace("^\s*TLSCertFile\s*.*","\\tTLSCertFile\\t /etc/openldap/cacerts/client.crt")
+  ldapconf.replace("^\s*TLSKeyFile\s*.*","\\tTLSKeyFile\\t /etc/openldap/cacerts/client.key")
+
+  # Auth
+  ldapconf.replace("^\s*BaseDN\s*.*","\\BaseDN\\t \"%s\"" % config.general.get_ldap_dn() )
+  ldapconf.replace("^\s*SearchFilter\s*.*","\\tSearchFilter\\t \"(\\&(uid=%u)(employeeType=Sysop))\"")
+
+  x('echo "plugin /usr/lib64/openvpn/plugin/lib/openvpn-auth-ldap.so /etc/openvpn/auth/ldap.conf" >> /etc/openvpn/server.conf ')
+
+
 def build_client_certs(args):
   install.package("zip")
   os.chdir("/etc/openvpn/easy-rsa/keys")
   general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
-  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf ./client.conf")
+
+  # Create client.conf
+  clientConf = "/etc/openvpn/easy-rsa/keys/client.conf"
+  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf %s" % clientConf)
+  scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
+
   x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
 
   for user in os.listdir("/home"):
@@ -130,10 +164,6 @@ def build_client_certs(args):
       # Config client.crt
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
-      general.set_config_property(
-        "/etc/openvpn/easy-rsa/keys/client.conf", "${OPENVPN.HOSTNAME}",
-        config.general.get_openvpn_hostname()
-      )
 
       os.chdir("/etc/openvpn/easy-rsa/keys")
       x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")
