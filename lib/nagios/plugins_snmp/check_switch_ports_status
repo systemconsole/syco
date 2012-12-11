@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+'''
+NRPE check if any physical network port on the switch has been deactivated.
+
+SCENARIOS
+* Rebooting a physical server.
+* Plugin a laptop.
+* Network card or switch port is about to crash.
+* Uplink on the fiber.
+* If anybody moves a cable between two ports.
+
+'''
+
+__author__ = "Elis Kullberg <elis.kullberg@netlight.se>"
+__copyright__ = "Copyright 2012, The System Console project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["???"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
+
+
+import commands
+import sys
+import hashlib
+import os
+import sys
+
+def w(filename, string):
+    f = open(filename, "w")
+    f.write(string)
+    f.close()
+
+
+filename = "/tmp/syco-switch-port-status"
+
+
+[status,returnString] = commands.getstatusoutput(
+    "snmpwalk -v3 -u nagios -n '' -l AuthPriv -a SHA -x AES -c public " +
+    "-A {0} -X {0} -m all {1} ifOperStatus".format(
+        sys.argv[1], sys.argv[2]
+    )
+)
+
+digest = hashlib.md5(returnString).hexdigest()
+[catstatus, olddigest] = commands.getstatusoutput("cat {0}".format(filename))
+
+# Probably the first time the script is executed.
+if catstatus != 0:
+    w(filename, digest)
+    print "I/O Issue"
+    sys.exit(3)
+
+# snmpwalk issue.
+elif status != 0:
+    print "SNMP problem"
+    sys.exit(3)
+
+# No changes since last check.
+elif digest == olddigest and olddigest != "":
+    w("{0}-ok".format(filename), returnString)
+    w(filename, digest)
+    print "OK"
+    sys.exit(0)
+
+# Something has changed since last check.
+else:
+    w("{0}-fail".format(filename), returnString)
+    print "CRITICAL {0} needs to be removed.".format(filename)
+    sys.exit(2)

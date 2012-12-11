@@ -58,6 +58,7 @@ def install_openldap(args):
     enable_selinux()
     install_packages()
     store_logs_on_file()
+    configure_ldap_client()
     configure_openldap()
     configure_sudo_in_ldap()
     create_modules()
@@ -66,7 +67,7 @@ def install_openldap(args):
     add_user_domain()
     create_certs()
     enable_ssl()
-    #require_highest_security_from_clients()
+    require_highest_security_from_clients()
 
     # Let clients connect to the server through the firewall. This is done after
     # everything else is done, so we are sure that the server is secure before
@@ -143,7 +144,7 @@ def install_packages():
     setup_hosts()
 
     # Install all required packages.
-    x("yum -y install openldap-servers openldap-clients")
+    x("yum -y install openldap-servers openldap-clients mlocate")
 
     # Create backend database.
     scOpen("/var/lib/ldap/DB_CONFIG").add(
@@ -181,6 +182,16 @@ def store_logs_on_file():
         'local4.*                                                /var/log/slapd/slapd.log'
     )
     x("service rsyslog restart")
+
+def configure_ldap_client():
+    scOpen("/etc/openldap/ldap.conf").add(
+	"uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
+	"base " + config.general.get_ldap_dn() + "\n" +
+        "tls_cacertdir /etc/openldap/cacerts\n" +
+        "tls_cert /etc/openldap/cacerts/client.pem\n" +
+	"tls_key /etc/openldap/cacerts/client.pem\n" 
+    )
+
 
 def configure_openldap():
     '''
@@ -350,7 +361,10 @@ def add_user_domain():
 
     # Add private domains.
     for dir in os.listdir(app.SYCO_USR_PATH):
-        filenames.append(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/domain.ldif")
+        if dir =="mod-template":
+            pass
+        else:
+            filenames.append(app.SYCO_USR_PATH + dir + "/var/ldap/ldif/domain.ldif")
 
     # Import the files
     for filename in filenames:
@@ -374,6 +388,9 @@ def create_certs():
     openssl req -noout -text -in /etc/openldap/cacerts/client.csr
 
     '''
+    # Creating certs folder
+    x("mkdir /etc/openldap/cacerts")
+
     create_ca_cert()
     create_server_cert()
     create_client_cert()

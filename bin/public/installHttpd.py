@@ -47,13 +47,15 @@ import iptables
 # once on the same host.
 SCRIPT_VERSION = 1
 
-MODSEC_INSTALL_FILE = "modsecurity-apache_2.6.7"
-MODSEC_REPO_URL = "http://www.modsecurity.org/download/" + MODSEC_INSTALL_FILE + ".tar.gz"
+MODSEC_INSTALL_FILE = "modsecurity-apache_2.7.1"
+MODSEC_REPO_URL = "https://github.com/downloads/SpiderLabs/ModSecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
-MODSEC_ASC_FILE = MODSEC_INSTALL_FILE + ".tar.gz.asc"
-MODSEC_ASC_REPO_URL = MODSEC_REPO_URL + ".asc"
+MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.md5"
+MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".md5"
 
-MODSEC_RULES_FILE = "modsecurity-crs_2.2.5"
+MODSEC_RULES_FILE = "v2.2.6"
+MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/{0}.tar.gz".format(MODSEC_RULES_FILE)
+
 
 def build_commands(commands):
   '''
@@ -158,12 +160,11 @@ def _install_mod_security():
 
     # Downloading and verify the pgp key for modsec.
     general.download_file(MODSEC_REPO_URL)
-    general.download_file(MODSEC_ASC_REPO_URL)
+    general.download_file(MODSEC_MD5_REPO_URL)
 
     os.chdir(app.INSTALL_DIR)
-    x("gpg --keyserver keyserver.ubuntu.com --recv-keys 6980F8B0")
-    signature = x("gpg --verify " + MODSEC_ASC_FILE)
-    if (r'Good signature from "Breno Silva Pinto <bpinto@trustwave.com>"' not in signature):
+    signature = x("md5sum -c " + MODSEC_MD5_FILE)
+    if (MODSEC_INSTALL_FILE + '.tar.gz: OK' not in signature):
       raise Exception("Invalid signature.")
 
     # Compile and install modsec
@@ -189,21 +190,17 @@ def _install_mod_security():
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz/download", MODSEC_RULES_FILE + ".tar.gz")
-  general.download_file("http://sourceforge.net/projects/mod-security/files/modsecurity-crs/0-CURRENT/" + MODSEC_RULES_FILE + ".tar.gz.asc/download", MODSEC_RULES_FILE + ".tar.gz.asc")
-
+  general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz")
   os.chdir(app.INSTALL_DIR)
-  x("gpg --keyserver keyserver.ubuntu.com --recv-keys 9624FCD2")
-  signature = x("gpg " + MODSEC_RULES_FILE + ".tar.gz.asc")
-  if (r'Good signature from "Ryan Barnett (OWASP Core Rule Set Project Leader) <rbarnett@trustwave.com>"' not in signature):
-    raise Exception("Invalid signature.")
 
   x("rm -fR /etc/httpd/modsecurity.d")
-  x("tar zxvf " + MODSEC_RULES_FILE + ".tar.gz -C /etc/httpd")
-  x("mv /etc/httpd/" + MODSEC_RULES_FILE + " /etc/httpd/modsecurity.d")
+  x("mkdir -p /etc/httpd/rules_tmp")
+  x("tar zxvf " + MODSEC_RULES_FILE + ".tar.gz -C /etc/httpd/rules_tmp")
+  x("mv /etc/httpd/rules_tmp/*/ /etc/httpd/modsecurity.d")
+  x("rm -rf /etc/httpd/rules_tmp")
 
   # Install customized rules.
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
 
 def _enable_se_linux():
-  x("/usr/sbin/setsebool httpd_can_network_connect 1")
+  x("/usr/sbin/setsebool -P httpd_can_network_connect=1")

@@ -54,8 +54,8 @@ class Version:
     '''
     Check if the command has been executed, raise Exception otherwise.
 
-    '''    
-    if (self.is_executed()):
+    '''
+    if (app.options.force == 0 and self.is_executed()):
       raise VersionException("Command " + str(self.command) + " version " + str(self.version) + " is already executed")
 
   def mark_executed(self):
@@ -79,10 +79,7 @@ class Version:
     Check if a specific command/routine/script with a specific
     version has been executed on the current server.
 
-    '''    
-    if (app.options.force != 0):
-      return False
-
+    '''
     config = ConfigParser.RawConfigParser()
     config.read(self.config_file_name)
 

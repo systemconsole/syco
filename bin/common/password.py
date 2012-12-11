@@ -42,7 +42,7 @@ _get_password_store.password_store = None
 
 def _get_password(service, user_name):
   '''
-  Get a password from the password store.
+  Get a password from the password store.g
 
   '''
   password = _get_password_store().get_password(service, user_name)
@@ -100,9 +100,31 @@ def get_glassfish_admin_password():
   '''Login to asadmin or web admin console'''
   return _get_password("glassfish", "admin")
 
+def get_switch_icmp_password():
+  '''The password for read-only SNMP switch access.'''
+  return _get_password("switch", "snmp")
+
 def get_mysql_root_password():
   '''The root password for the mysql service.'''
   return _get_password("mysql", "root")
+
+def get_mysql_monitor_password():
+  '''
+  The monitor password for the mysql service.
+
+  Used by icinga nrpe plugins.
+
+  '''
+  return _get_password("mysql", "monitor")
+
+def get_mysql_backup_password():
+  '''
+  The backup password for the mysql service.
+
+  Used by backup scripts.
+
+  '''
+  return _get_password("mysql", "backup")
 
 def get_mysql_password(env):
   '''A user password for the mysql service.'''
@@ -124,8 +146,11 @@ def get_mysql_production_password():
   '''A user password for the mysql service.'''
   return _get_password("mysql", "production")
 
+
 def init_mysql_passwords():
   get_mysql_root_password()
+  get_mysql_monitor_password()
+  get_mysql_backup_password()
   get_mysql_integration_password()
   get_mysql_stable_password()
   get_mysql_uat_password()
@@ -143,5 +168,6 @@ def init_all_passwords():
   get_glassfish_master_password()
   get_glassfish_admin_password()
   get_user_password("glassfish")
+  get_switch_icmp_password()
 
   init_mysql_passwords()

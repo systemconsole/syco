@@ -1,0 +1,50 @@
+
+module monitorserver 1.0;
+
+require {
+	type unconfined_t;
+	type kernel_t;
+	type ping_t;
+	type var_spool_t;
+	type fonts_cache_t;
+	type initrc_tmp_t;
+	type httpd_log_t;
+	type nagios_services_plugin_t;
+	type nrpe_t;
+	type httpd_t;
+	class file { write read append };
+	class unix_stream_socket connectto;
+	class system module_request;
+	class capability sys_ptrace;
+	class fifo_file { write getattr open };
+	class dir setattr;
+}
+
+#============= httpd_t ==============
+#!!!! This avc is allowed in the current policy
+
+allow httpd_t fonts_cache_t:dir setattr;
+#!!!! This avc is allowed in the current policy
+
+allow httpd_t httpd_log_t:file write;
+#!!!! This avc is allowed in the current policy
+
+allow httpd_t unconfined_t:unix_stream_socket connectto;
+#!!!! This avc is allowed in the current policy
+
+allow httpd_t var_spool_t:fifo_file { write getattr open };
+
+#============= nagios_services_plugin_t ==============
+#!!!! This avc is allowed in the current policy
+
+allow nagios_services_plugin_t kernel_t:system module_request;
+
+#============= nrpe_t ==============
+#!!!! This avc is allowed in the current policy
+
+allow nrpe_t self:capability sys_ptrace;
+
+#============= ping_t ==============
+#!!!! This avc is allowed in the current policy
+
+allow ping_t initrc_tmp_t:file { read write append };

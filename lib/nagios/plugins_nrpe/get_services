@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# NRPE check what services that are installed.
+#
+
+# __author__ = "Elis Kullberg <elis.kullberg@netlight.se>"
+# __copyright__ = "Copyright 2012, The System Console project"
+# __maintainer__ = "Daniel Lindh"
+# __email__ = "syco@cybercow.se"
+# __credits__ = ["???"]
+# __license__ = "???"
+# __version__ = "1.0.0"
+# __status__ = "Production"
+
+
+PACKAGES=$(rpm -qa)
+SERVICES="OK "
+
+
+###################################################################
+# Services that are installed via rpm/yum (easy peasy to find)
+###################################################################
+
+# Is mysql-server installed?
+if [[ $PACKAGES =~ .*mysql-server.* ]]; then SERVICES="$SERVICES mysql-server"; fi
+
+# Is openldap installed?
+if [[ $PACKAGES =~ .*openldap-servers.* ]]; then SERVICES="$SERVICES ldap-server"; fi
+
+# Is a backup server installed?
+if [[ $PACKAGES =~ .*rsnapshot.* ]]; then SERVICES="$SERVICES backup-server"; fi
+
+# Is httpd instllaed
+if [[ $PACKAGES =~ .*httpd.* ]]; then SERVICES="$SERVICES http-server"; fi
+
+###################################################################
+# Services without rpm-treatment (not as straightforward)
+###################################################################
+
+# Is syslog server installed? Seems standard that we do not blank out comments from CFGs.
+(cat /etc/rsyslog.conf | grep -q ommysql) > /dev/null
+if [ $? -eq 0 ] ; then SERVICES="$SERVICES log-server"; fi
+
+# Is glassfish installed? If so the service needs a user!
+id glassfish 2> /dev/null
+if [ $? -eq 0 ]; then SERVICES="$SERVICES glassfish-server"; fi
+
+# Is mailrelay installed
+if [ -e '/etc/mail/syco_mail_relay_server' ]; then SERVICES="$SERVICES mail-server"; fi
+
+
+###################################################################
+# Return exit codes and information.
+###################################################################
+echo "$SERVICES"
+exit 0

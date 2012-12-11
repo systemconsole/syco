@@ -13,6 +13,7 @@ __license__ = "???"
 __version__ = "1.0.2"
 __status__ = "Production"
 
+import os
 import subprocess
 
 import version
@@ -33,7 +34,7 @@ def epel_repo():
 
   '''
   package = "epel-release-6-7.noarch"
-  fn = "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm"
+  fn = "http://mirrors.se.eu.kernel.org/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm"
   rpm(package, fn)
 
 
@@ -63,6 +64,28 @@ def rforge_repo():
 
     # Download rpmforge packages.
     rpm(package, fn)
+
+
+def atomic_repo():
+    '''
+    Setup ATOMIC repository.
+
+    Used for openvas, ossec etc.
+
+    '''
+    # Must be imported in the function, because install.py should be possible
+    # to import before app and general.
+    import app
+    import general
+
+    app.print_verbose("Adding atomic repo for yum.")
+    general.shell_exec(
+        "wget -q -O - http://www.atomicorp.com/installers/atomic | sh",
+        events={'(?i)\[Default: yes\]':'\n'}
+    )
+
+    if (not os.access("/etc/yum.repos.d/atomic.repo", os.F_OK)):
+        raise Exception("You need to install the atomic repo first.")
 
 
 def _yum_protect_base():

@@ -13,12 +13,11 @@
 #logging --host=10.100.100.200 --port=XX --level=debug
 
 # System authorization information
-auth  --useshadow  --enablemd5
+authconfig --enableshadow  --enablemd5
 
 # Bootloader
 # Put a password on the boot loader to keep the riff raff out,
-# disable usb as per NSA 2.2.2.2.3:
-bootloader --location=mbr --append="rhgb quiet nousb" --driveorder=$boot_device --md5pass="$default_password_crypted"
+bootloader --location=mbr --append="rhgb quiet" --driveorder=$boot_device --md5pass="$default_password_crypted"
 
 # Clear the Master Boot Record
 zerombr
@@ -68,38 +67,44 @@ clearpart --all --drives=$boot_device --initlabel
 part /boot --fstype ext4 --size=100 --ondisk=$boot_device
 part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup VolGroup00 pv.2
-logvol swap     --fstype swap --name=swap   --vgname=VolGroup00 --size=$disk_swap_mb
-logvol /        --fstype ext4 --name=root   --vgname=VolGroup00 --size=4096
-logvol /var     --fstype ext4 --name=var    --vgname=VolGroup00 --size=$disk_var_mb
-logvol /home    --fstype ext4 --name=home   --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /var/tmp --fstype ext4 --name=vartmp --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
-logvol /var/log --fstype ext4 --name=varlog --vgname=VolGroup00 --size=4096 --fsoptions=noexec, nosuid, nodev
-logvol /tmp     --fstype ext4 --name=tmp    --vgname=VolGroup00 --size=1024 --fsoptions=noexec, nosuid, nodev
+logvol swap           --fstype swap --name=lv_swap        --vgname=VolGroup00 --size=$disk_swap_mb
+logvol /              --fstype ext4 --name=lv_root        --vgname=VolGroup00 --size=4096
+logvol /var           --fstype ext4 --name=lv_var         --vgname=VolGroup00 --size=$disk_var_mb
+logvol /home          --fstype ext4 --name=lv_home        --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /var/tmp       --fstype ext4 --name=lv_vartmp      --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /var/log       --fstype ext4 --name=lv_varlog      --vgname=VolGroup00 --size=$disk_log_mb --fsoptions=noexec,nodev,nosuid
+logvol /var/log/audit --fstype ext4 --name=lv_varlogaudit --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
+logvol /tmp           --fstype ext4 --name=lv_tmp         --vgname=VolGroup00 --size=1024 --fsoptions=noexec,nodev,nosuid
 
 services --disabled=smartd --enabled=acpid
 
 # Followig is MINIMAL https://partner-bugzilla.redhat.com/show_bug.cgi?id=593309
+# Also have a look in hardening/package.py
 %packages --nobase
-# @core
 @server-policy
-policycoreutils-python
 
 # Enables shutdown etc. from virsh
 acpid
 
-git
 coreutils
-yum
-rpm
+cronie-anacron
 e2fsprogs
-lvm2
+git
 grub
-openssh-server
-openssh-clients
-yum-presto
+lvm2
 man
 mlocate
+nspr
+nss
+nss-util
+openssh
+openssh-clients
+openssh-server
+policycoreutils-python
+rpm
 wget
+yum
+yum-presto
 -atmel-firmware
 -b43-openfwwf
 -ipw2100-firmware
@@ -113,6 +118,8 @@ wget
 -iwl6000-firmware
 -iwl6050-firmware
 -libertas-usb8388-firmware
--zd1211-firmware
+-rt61pci-firmware
+-rt73usb-firmware
 -xorg-x11-drv-ati-firmware
+-zd1211-firmware
 %end

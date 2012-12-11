@@ -28,11 +28,13 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
+
 import app
 import config
 import general
-import version
 import iptables
+import net
+import version
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -48,6 +50,11 @@ def install_ntp_server(args):
   install_ntp()
 
 def install_ntp_client(args):
+  if config.host(net.get_hostname()).has_command_re("install-ntp-server"):
+    app.print_verbose(
+      "This server will later install the ntp server, abort client installation."
+    )
+    return
   ip = config.general.get_ntp_server_ip()
   install_ntp(ip)
 

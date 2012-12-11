@@ -1,0 +1,38 @@
+<!-- @(#) $Id$
+
+Modified to work in PCI-DSS systemes.
+
+__author__ = "matte@elino.se"
+__copyright__ = "Copyright 2011, The System Console project"
+__maintainer__ = "Daniel Lindh"
+__email__ = "syco@cybercow.se"
+__credits__ = ["Daniel LIndh"]
+__license__ = "???"
+__version__ = "1.0.0"
+__status__ = "Production"
+
+-->
+<group name="forcefield">
+
+  <!-- ALERT ON NEW FILES" -->
+  <rule id="554" level="7" overwrite="yes">
+    <category>ossec</category>
+    <decoded_as>syscheck_new_entry</decoded_as>
+    <description>File added to the system.</description>
+    <group>syscheck,</group>
+  </rule>
+
+  <!-- ALERT ON WORLD WIDE FILES -->
+  <rule id="100018" level="7">
+    <if_group>syscheck,</if_group>
+    <regex>Permissions changed from ‘\D+’ to ‘\D\D\D\D\D\D\Dw\D’</regex>
+    <description>World-writable File</description>
+  </rule>
+
+  <rule id="100019" level="0">
+    <if_sid>100018</if_sid>
+    <regex>Permissions changed from ‘\D\D\D\D\D\D\Dw\D’ to ‘\D+’</regex>
+    <description>World-writable File</description>
+  </rule>
+</group>
+<!-- EOF -->

@@ -61,7 +61,7 @@ def setup_kernel():
 def disable_ip6_support():
   app.print_verbose("Disable IP6 support")
   modprobe = scOpen("/etc/modprobe.d/syco.conf")
-  modprobe.replace_add("^alias ipv6 off$",      "alias ipv6 off")
+  modprobe.replace_add("^options ipv6.*",    "options ipv6 disable=1")
   modprobe.replace_add("^alias net-pf-10 off$", "alias net-pf-10 off")
 
   network = scOpen("/etc/sysconfig/network")
