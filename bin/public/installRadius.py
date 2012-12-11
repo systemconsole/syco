@@ -67,6 +67,7 @@ def install_freeradius(args):
 
     _configure_ldap()
     _enable_ldap()
+    _configure_radius()
     _setup_radius_clients()
 
     x("/etc/init.d/radiusd restart")
@@ -155,6 +156,12 @@ def _enable_ldap():
     x("rm -f /etc/raddb/sites-enabled/default.tmp")
 
 
+def _configure_radius():
+    o = scOpen("/etc/raddb/users")
+    o.add('DEFAULT GROUP == "SYSOP"')
+    o.add('\t\tService-Thype = Administrative-User')
+
+
 def _setup_radius_clients():
     '''
     Create client config/certs for all radius clients.
@@ -181,7 +188,7 @@ def _setup_radius_client(name, ip):
   '''
 
   o = open("/etc/raddb/clients.conf","a")
-  o.write (name +" {" "\n")
+  o.write ("client " + name +" {" "\n")
   o.write ("\tipaddr = {0}\n".format(ip))
   o.write ("\tsecret = {0}\n".format(generate_password(20, string.letters + string.digits)))
   o.write ("\tnastype = other\n")

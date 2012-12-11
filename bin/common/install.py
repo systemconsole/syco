@@ -34,7 +34,7 @@ def epel_repo():
 
   '''
   package = "epel-release-6-7.noarch"
-  fn = "http://ftp.df.lth.se/pub/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm"
+  fn = "http://mirrors.se.eu.kernel.org/fedora-epel/6/x86_64/epel-release-6-7.noarch.rpm"
   rpm(package, fn)
 
 
