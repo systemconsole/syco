@@ -42,7 +42,7 @@ if [[ $PACKAGES =~ .*httpd.* ]]; then SERVICES="$SERVICES http-server"; fi
 if [ $? -eq 0 ] ; then SERVICES="$SERVICES log-server"; fi
 
 # Is glassfish installed? If so the service needs a user!
-id glassfish 2> /dev/null
+id glassfish &> /dev/null
 if [ $? -eq 0 ]; then SERVICES="$SERVICES glassfish-server"; fi
 
 # Is mailrelay installed
