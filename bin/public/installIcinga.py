@@ -318,7 +318,7 @@ def _get_host_list():
         elif config.host(server).is_host():
             serverList.append(host(server, config.host(server).get_any_ip(), "host"))
         elif config.host(server).is_firewall():
-            serverList.append(host(server, config.host(server).get_any_ip(), "firewall"))
+            serverList.append(host(server, config.host(server).get_back_ip(), "firewall"))
         elif config.host(server).is_switch():
             serverList.append(host(server, config.host(server).get_any_ip(), "switch"))
     return serverList
