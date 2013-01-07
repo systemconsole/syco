@@ -143,6 +143,7 @@ def _install_nrpe_plugins_dependencies():
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamav")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamscan")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_disk")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/get_services")
 
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
