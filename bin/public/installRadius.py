@@ -158,8 +158,8 @@ def _enable_ldap():
 
 def _configure_radius():
     o = scOpen("/etc/raddb/users")
-    o.add('DEFAULT GROUP == "SYSOP"')
-    o.add('\t\tService-Thype = Administrative-User')
+    o.add('DEFAULT GROUP == "sysop"')
+    o.add('\tService-Type = Administrative-User')
 
 
 def _setup_radius_clients():

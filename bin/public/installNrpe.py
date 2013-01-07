@@ -142,6 +142,8 @@ def _install_nrpe_plugins_dependencies():
     nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamav")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamscan")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_disk")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/get_services")
 
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
@@ -167,12 +169,12 @@ def _install_nrpe_plugins_dependencies():
 
         # Let nrpe run hpasmcli
         nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli")
-        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_hpasm")  
+        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_hpasm")
 
         x("service hp-health start")
 
 
-    # Kernel wont parse anything but read-only in sudoers. So chmod it. 
+    # Kernel wont parse anything but read-only in sudoers. So chmod it.
     x("chmod 0440 /etc/sudoers.d/nrpe")
 
 
