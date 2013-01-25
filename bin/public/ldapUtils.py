@@ -99,7 +99,7 @@ def dump_database():
     ldapsearch -D "cn=Manager,dc=syco,dc=net" -Y /root/.ldap.password -b dc=syco,dc=net -LLL > ~/dump.ldif
 
     '''
-    x("ldapsearch -D '%s' -y %s -b %s > %s" % (
+    x("ldapsearch -D '%s' -y %s -b %s '*' pwdPolicySubentry > %s" % (
         'cn=Manager,' + config.general.get_ldap_dn(),
         password_filename(),
         config.general.get_ldap_dn(),
