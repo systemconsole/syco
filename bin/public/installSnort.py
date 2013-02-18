@@ -76,7 +76,7 @@ def download():
     general.download_file(SNORT_URL, SNORT_FILENAME, md5=SNORT_MD5)
     general.download_file(DAQ_URL, DAQ_FILENAME, md5=DAQ_MD5)
     general.download_file(LIBNET_URL, LIBNET_FILENAME, md5=LIBNET_MD5)
-    #general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
+    general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
 
 
 def install_snort(args):
@@ -89,7 +89,7 @@ def install_snort(args):
     _install_dependencies()
     _compile_snort()
     _create_user()
-    #_setup_config_and_rules()
+    _setup_config_and_rules()
     _setup_sysconfig()
     _setup_start_scripts()
     _setup_snort_bin()
