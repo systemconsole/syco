@@ -35,13 +35,18 @@ import version
 
 INSTALLATION_SERVER = config.general.get_installation_server()
 
-SNORT_FILENAME="snort-2.9.3.1.tar.gz"
-SNORT_URL="http://www.snort.org/downloads/1862"
-SNORT_MD5="b2102605a7ca023ad6a2429821061c29"
 
-DAQ_FILENAME="daq-1.1.1.tar.gz"
-DAQ_URL="http://www.snort.org/downloads/1850"
-DAQ_MD5="bc204ea09165b4ecbb1bb49c7c1a2ad4"
+SNORT_FILENAME="snort-2.9.4.tar.gz"
+SNORT_URL="http://www.snort.org/downloads/2112"
+SNORT_MD5="e79ee6b4fbb32edc5dfed2d7dfcc6813"
+
+DAQ_FILENAME="daq-2.0.0.tar.gz"
+DAQ_URL="http://www.snort.org/downloads/2103"
+DAQ_MD5="a00855a153647df76d47f1ea454f74ae"
+
+LIBNET_FILENAME="libnet-1.12.tgz"
+LIBNET_URL="https://libdnet.googlecode.com/files/libdnet-1.12.tgz"
+LIBNET_MD5="9253ef6de1b5e28e9c9a62b882e44cc9"
 
 RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
 RULE_URL="http://{0}/files/{1}".format(
@@ -70,7 +75,8 @@ def download():
     '''
     general.download_file(SNORT_URL, SNORT_FILENAME, md5=SNORT_MD5)
     general.download_file(DAQ_URL, DAQ_FILENAME, md5=DAQ_MD5)
-    general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
+    general.download_file(LIBNET_URL, LIBNET_FILENAME, md5=LIBNET_MD5)
+    #general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
 
 
 def install_snort(args):
@@ -83,7 +89,7 @@ def install_snort(args):
     _install_dependencies()
     _compile_snort()
     _create_user()
-    _setup_config_and_rules()
+    #_setup_config_and_rules()
     _setup_sysconfig()
     _setup_start_scripts()
     _setup_snort_bin()
@@ -98,15 +104,16 @@ def install_snort(args):
 
 
 def _install_dependencies():
-    x('yum install -y gcc flex bison zlib zlib-devel libpcap libpcap-devel ' +
+    x('yum install -y gcc gcc-c++ flex bison zlib zlib-devel libpcap libpcap-devel ' +
       'pcre pcre-devel libdnet libdnet-devel tcpdump libtool'
     )
 
 
 def _compile_snort():
     _make('daq/', DAQ_FILENAME)
+    _make('libnet/', LIBNET_FILENAME)
     _make('snort/', SNORT_FILENAME, '--enable-sourcefire')
-    x("libtool --finish /usr/local/lib/snort_dynamicpreprocessor")
+    #x("libtool --finish /usr/local/lib/snort_dynamicpreprocessor")
 
 
 def _make(build_dir, filename, compile_flags=""):
