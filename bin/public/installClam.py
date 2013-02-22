@@ -169,6 +169,10 @@ def setup_crontab():
     "${ADMIN_EMAIL}", config.general.get_admin_email()
   )
 
+  # https://redmine.fareoffice.com/issues/61041
+  x("/bin/chmod 0755 /etc/cron.daily/viruscan.sh")
+
+
 
 def setup_autostart_and_start():
   x("cp %sclam/clamd /etc/init.d/" % app.SYCO_VAR_PATH)
