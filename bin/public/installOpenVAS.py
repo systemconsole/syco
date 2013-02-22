@@ -27,6 +27,7 @@ import config
 import general
 import iptables
 import version
+import subprocess
 
 
 # The version of this module, used to prevent the same script version to be
@@ -77,6 +78,7 @@ def _install_packages():
     Install all required packages and repositories.
 
     '''
+    install.package("wget")
     install.atomic_repo()
     install.package("sqlite")
     install.package("openvas")
@@ -131,16 +133,17 @@ def _start_all_services():
     Start all deamons and set for autostart at boot time.
 
     '''
-    x("/etc/init.d/openvas-manager restart")
-    x("/etc/init.d/openvas-administrator restart")
-    x("/etc/init.d/openvas-scanner restart")
-    x("/etc/init.d/gsad restart")
-
-    x("chkconfig openvas-manager on")
-    x("chkconfig openvas-administrator on")
-    x("chkconfig openvas-scanner on")
-    x("chkconfig gsad on")
-
+    commands = [ "/etc/init.d/openvas-manager restart",
+    "/etc/init.d/openvas-administrator restart",
+    "/etc/init.d/openvas-scanner restart",
+    "/etc/init.d/gsad restart",
+    "chkconfig openvas-manager on",
+    "chkconfig openvas-administrator on",
+    "chkconfig openvas-scanner on",
+    "chkconfig gsad on"
+		]
+    for p in commands:
+    	subprocess.call(p, shell=True)
 
 def uninstall_openvas(args):
     '''
