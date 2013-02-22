@@ -220,6 +220,16 @@ def setup_icmp_chains():
   iptables("-A OUTPUT -p ICMP -j icmp_packets")
 
 
+def setup_multicast_chains():
+  app.print_verbose("Create Multicast chain.")
+  iptables("-N multicast_packets")
+  iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+  iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
+  iptables("-A multicast_packets -s 0.0.0.0/8 -j DROP")
+  iptables("-A multicast_packets -d 0.0.0.0/8 -j DROP")
+  iptables("-A OUTPUT -p ALL -j multicast_packets")
+
+
 def add_service_chains():
   '''
   Rules that will only be added on servers that has a specific service installed.
@@ -285,6 +295,7 @@ def _setup_general_rules():
 
   setup_syco_chains()
   setup_icmp_chains()
+  setup_multicast_chains()
 
   app.print_verbose("Log weird packets that don't match the above.")
   iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: INPUT packet died: '")
