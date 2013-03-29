@@ -100,6 +100,8 @@ def install_mysql(args):
 
   app.print_verbose("Install /etc/my.cnf")
   shutil.copy(app.SYCO_PATH + "var/mysql/my.cnf",  "/etc/my.cnf")
+  x("chown mysql:mysql /etc/my.cnf")
+  x("chmod 600 /etc/my.cnf")
   for line in fileinput.FileInput("/etc/my.cnf", inplace=1):
     line=line.replace("${server-id}", server_id)
     line=line.replace("${innodb_buffer_pool_size}", innodb_buffer_pool_size)
