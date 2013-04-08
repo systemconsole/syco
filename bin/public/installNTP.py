@@ -108,7 +108,8 @@ def install_ntp(ntp_server_ip = False):
     app.print_verbose("Configure /etc/ntp.conf as a server")
     general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server 0.se.pool.ntp.org")
     general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server 1.se.pool.ntp.org")
-    general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server 2.se.pool.ntp.org")
+    general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server " + config.general.get_slave_ntp_server())
+
 
   general.shell_exec("service ntpd start")
 
