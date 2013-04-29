@@ -157,6 +157,9 @@ def setup_clam_and_freshclam():
   freshclam.replace("^[#]\?PidFile.*",        "PidFile /var/run/clamav/freshclam.pid")
   freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror database.clamav.net")
   freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
+  freshclam.replace("^[#]\?DatabaseMirror*",  "DatabaseMirror db.se.clamav.net")
+  freshclam.replace("^[#]\?DatabaseMirror*",  "DatabaseMirror db.se.clamav.net")
+
 
 
 def setup_crontab():
