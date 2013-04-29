@@ -836,11 +836,11 @@ def add_bind_chain():
 
 def del_rsyslog_chain():
   app.print_verbose("Delete iptables chain for rsyslog")
-  iptables("-D syco_input -p tcp -j rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-D syco_input -p all -j rsyslog_in", general.X_OUTPUT_CMD)
   iptables("-F rsyslog_in", general.X_OUTPUT_CMD)
   iptables("-X rsyslog_in", general.X_OUTPUT_CMD)
 
-  iptables("-D syco_output -p tcp -j rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p all -j rsyslog_out", general.X_OUTPUT_CMD)
   iptables("-F rsyslog_out", general.X_OUTPUT_CMD)
   iptables("-X rsyslog_out", general.X_OUTPUT_CMD)
 
@@ -891,6 +891,8 @@ def add_rsyslog_chain(context=None):
         " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
         front_subnet
       )
+
+
 
     # On rsyslog client
     elif client_version_obj.is_executed() or context is "client" :
