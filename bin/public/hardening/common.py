@@ -24,6 +24,7 @@ def setup_common():
     yum_update()
     customize_shell()
     create_syco_modprobe()
+    time_out()
     disable_usb()
     forward_root_mail()
     general_cis()
@@ -62,8 +63,15 @@ def create_syco_modprobe():
     x("chmod 644 /etc/modprobe.d/syco.conf")
     x("chcon system_u:object_r:modules_conf_t:s0 /etc/modprobe.d/syco.conf")
 
+
+def time_out():
+    #Timing out users from there shell after 15 min
+    profile = scOpen("/etc/profile")
+    profile.replace_add("^export TMOUT=.*$",   "export TMOUT=900")
+
+
 def disable_usb():
-    # TODO Currently need usb dvd reader for installation.
+    # TODO Currently need usb dvd reader for installation and keyboard.
     return
     app.print_verbose("Disable usb")
     scOpen("/etc/modprobe.d/syco.conf").replace_add(
