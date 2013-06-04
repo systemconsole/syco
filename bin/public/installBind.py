@@ -3,7 +3,7 @@
 Install DNS server.
 
 This server will be installed with a chrooted bind dns server. The script will
-copy named.conf and zone files from syco/usr/*/var/dns to proper named/bind
+copy named.conf and zone files from syco/usr/*/var/dns/* to proper named/bind
 folder and replace syco defined tags (See below).
 
 The installed bind server will be a master Authoritative to internet users
@@ -105,7 +105,7 @@ from scopen import scOpen
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 1.1
 
 
 def build_commands(commands):
@@ -234,9 +234,13 @@ def _copy_all_configs(active_dc):
     Copy all configuration and zone files into proper named folder.
 
     '''
-    _copy_conf(".conf", "/var/named/chroot/etc/", active_dc)
-    _copy_conf(".zones", "/var/named/chroot/etc/", active_dc)
-    _copy_conf(".zone", "/var/named/chroot/var/named/", active_dc)
+    bind_config_subdir = config.general.get_bind_conf_subdir()
+    if (len(bind_config_subdir) > 0 and !bind_config_subdir.endswith('/'))
+        bind_config_subdir = bind_config_subdir + "/"
+
+    _copy_conf(".conf", "/var/named/chroot/etc/" + bind_config_subdir, active_dc)
+    _copy_conf(".zones", "/var/named/chroot/etc/" + bind_config_subdir, active_dc)
+    _copy_conf(".zone", "/var/named/chroot/var/named/" + bind_config_subdir, active_dc)
     _set_permissions()
 
 
