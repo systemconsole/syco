@@ -191,10 +191,6 @@ class Config(object):
         self.get_front_netmask()
       )
 
-    def get_bind_conf_subdir(self):
-      '''Gets the relative path to the bind config if any'''
-      return str(self.get_option("bind_conf_subdir"))
-
     def get_front_resolver_ip(self):
       '''ip of external dns resolver that are configured on all servers.'''
       return str(self.get_option("front.resolver"))
@@ -447,6 +443,13 @@ class Config(object):
 
       '''
       return str(int(self.get_disk_var_gb()) * 1024)
+
+    def get_bind_conf_subdir(self):
+      '''
+      Gets the relative path to the bind config if any
+      The empty default value is required to allow this property to not be defined
+      '''
+      return str(self.get_option("bind_conf_subdir", ""))
 
     def get_disk_log_gb(self):
       '''

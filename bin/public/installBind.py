@@ -87,7 +87,7 @@ __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __status__ = "Production"
 
 
@@ -105,7 +105,7 @@ from scopen import scOpen
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1.1
+SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
@@ -234,13 +234,10 @@ def _copy_all_configs(active_dc):
     Copy all configuration and zone files into proper named folder.
 
     '''
-    bind_config_subdir = config.general.get_bind_conf_subdir()
-    if (len(bind_config_subdir) > 0 and !bind_config_subdir.endswith('/'))
-        bind_config_subdir = bind_config_subdir + "/"
 
-    _copy_conf(".conf", "/var/named/chroot/etc/" + bind_config_subdir, active_dc)
-    _copy_conf(".zones", "/var/named/chroot/etc/" + bind_config_subdir, active_dc)
-    _copy_conf(".zone", "/var/named/chroot/var/named/" + bind_config_subdir, active_dc)
+    _copy_conf(".conf", "/var/named/chroot/etc/", active_dc)
+    _copy_conf(".zones", "/var/named/chroot/etc/", active_dc)
+    _copy_conf(".zone", "/var/named/chroot/var/named/", active_dc)
     _set_permissions()
 
 
@@ -252,12 +249,16 @@ def _copy_conf(file_ext, to_folder, active_dc):
             zone files. That might fuck up the installation.
 
     '''
+    bind_config_subdir = config.host(config.general.get_dns_server()).get_bind_conf_subdir()
+    if len(bind_config_subdir) > 0 and not bind_config_subdir.startswith('/'):
+        bind_config_subdir = "/" + bind_config_subdir
+
     app.print_verbose("\nCopy config/zone files from all syco plugin modules into a named folder.")
     for plugin_path in get_syco_plugin_paths():
-        for zone_fn in os.listdir(plugin_path):
+        for zone_fn in os.listdir(plugin_path + bind_config_subdir):
             if zone_fn.endswith(file_ext):
                 app.print_verbose("\nConfigure file {0}".format(zone_fn))
-                x("cp {0}/{1} {2}".format(plugin_path, zone_fn, to_folder))
+                x("cp {0}/{1} {2}".format(plugin_path + bind_config_subdir, zone_fn, to_folder))
                 _replace_tags("{0}{1}".format(to_folder, zone_fn), active_dc)
 
 
