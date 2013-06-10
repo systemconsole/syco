@@ -65,7 +65,19 @@ def install_auditd():
 	auditd = scOpen("/etc/grub.conf")
 	auditd.add_to_end_of_line("^[^#]*kernel", "audit=1")
 
+	# Addin audit to pam
+	app.print_verbose("Logging all admin Actions")
+	pam = scOpen("/etc/pam.d/systemauth")
+	pam.replace_add("^session[\s]required[\s]pam_tty_audit.so[\s]enable=","session\trequired\tpam_tty_audit.so enable=*")
+
+	# Making audit to log to syslog
+	app.print_verbose("Sending all admin actions to Syslog")
+	syslog = scOpen("/etc/audisp/plugins.d/syslog.conf")
+	syslog.replace_add("^active[\s]=.*","active = yes")
+
+
 	#
 	# Restarting service
 	#
+
 	x("service auditd restart")

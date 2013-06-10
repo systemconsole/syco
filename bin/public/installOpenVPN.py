@@ -90,6 +90,10 @@ def install_openvpn_server(args):
     x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
     x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
+    #Generation TLS key
+    os.chdir("/etc/openvpn/")
+    x("openvpn --genkey --secret ta.key")
+
     # To prevent error "TXT_DB error number 2" when running ./build-key-pkcs12 --batch xxx"
     scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
 
@@ -166,7 +170,7 @@ def build_client_certs(args):
       general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
 
       os.chdir("/etc/openvpn/easy-rsa/keys")
-      x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt")
+      x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt /etc/openvpn/ta.key")
       # Set permission for the user who now owns the file.
       os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
       general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")

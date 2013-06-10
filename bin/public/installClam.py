@@ -157,6 +157,9 @@ def setup_clam_and_freshclam():
   freshclam.replace("^[#]\?PidFile.*",        "PidFile /var/run/clamav/freshclam.pid")
   freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror database.clamav.net")
   freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
+  freshclam.replace("^[#]\?DatabaseMirror*",  "DatabaseMirror db.se.clamav.net")
+  freshclam.replace("^[#]\?DatabaseMirror*",  "DatabaseMirror db.se.clamav.net")
+
 
 
 def setup_crontab():
@@ -168,6 +171,10 @@ def setup_crontab():
   scOpen("/etc/cron.daily/viruscan.sh").replace(
     "${ADMIN_EMAIL}", config.general.get_admin_email()
   )
+
+  # https://redmine.fareoffice.com/issues/61041
+  x("/bin/chmod 0755 /etc/cron.daily/viruscan.sh")
+
 
 
 def setup_autostart_and_start():
