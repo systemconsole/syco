@@ -220,6 +220,16 @@ def setup_icmp_chains():
   iptables("-A OUTPUT -p ICMP -j icmp_packets")
 
 
+def setup_multicast_chains():
+  app.print_verbose("Create Multicast chain.")
+  iptables("-N multicast_packets")
+  iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+  iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
+  iptables("-A multicast_packets -s 0.0.0.0/8 -j DROP")
+  iptables("-A multicast_packets -d 0.0.0.0/8 -j DROP")
+  iptables("-A OUTPUT -p ALL -j multicast_packets")
+
+
 def add_service_chains():
   '''
   Rules that will only be added on servers that has a specific service installed.
@@ -285,6 +295,7 @@ def _setup_general_rules():
 
   setup_syco_chains()
   setup_icmp_chains()
+  setup_multicast_chains()
 
   app.print_verbose("Log weird packets that don't match the above.")
   iptables("-A INPUT -m limit --limit 3/minute --limit-burst 3 -j LOG --log-level DEBUG --log-prefix 'IPT: INPUT packet died: '")
@@ -825,11 +836,11 @@ def add_bind_chain():
 
 def del_rsyslog_chain():
   app.print_verbose("Delete iptables chain for rsyslog")
-  iptables("-D syco_input -p tcp -j rsyslog_in", general.X_OUTPUT_CMD)
+  iptables("-D syco_input -p all -j rsyslog_in", general.X_OUTPUT_CMD)
   iptables("-F rsyslog_in", general.X_OUTPUT_CMD)
   iptables("-X rsyslog_in", general.X_OUTPUT_CMD)
 
-  iptables("-D syco_output -p tcp -j rsyslog_out", general.X_OUTPUT_CMD)
+  iptables("-D syco_output -p all -j rsyslog_out", general.X_OUTPUT_CMD)
   iptables("-F rsyslog_out", general.X_OUTPUT_CMD)
   iptables("-X rsyslog_out", general.X_OUTPUT_CMD)
 
@@ -857,8 +868,8 @@ def add_rsyslog_chain(context=None):
     app.print_verbose("Add iptables chain for rsyslog")
     iptables("-N rsyslog_in")
     iptables("-N rsyslog_out")
-    iptables("-A syco_input  -p tcp -j rsyslog_in")
-    iptables("-A syco_output -p tcp -j rsyslog_out")
+    iptables("-A syco_input  -p all -j rsyslog_in")
+    iptables("-A syco_output -p all -j rsyslog_out")
 
     # On rsyslog server
     if server_version_obj.is_executed() or context is "server":
@@ -872,6 +883,17 @@ def add_rsyslog_chain(context=None):
         " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
         front_subnet
       )
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+        back_subnet
+      )
+      iptables(
+        " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+        front_subnet
+      )
+
+
+
     # On rsyslog client
     elif client_version_obj.is_executed() or context is "client" :
       iptables(
@@ -886,9 +908,10 @@ def add_rsyslog_chain(context=None):
 
 def del_freeradius_chain():
   app.print_verbose("Delete iptables chain for FreeRadius")
-  iptables("-D syco_input  -p ALL -j freeradius_input", general.X_OUTPUT_CMD)
-  iptables("-F freeradius_input", general.X_OUTPUT_CMD)
-  iptables("-X freeradius_input", general.X_OUTPUT_CMD)
+  iptables("-D syco_input  -p ALL -j freeradius", general.X_OUTPUT_CMD)
+  iptables("-D syco_output  -p ALL -j freeradius", general.X_OUTPUT_CMD)
+  iptables("-F freeradius", general.X_OUTPUT_CMD)
+  iptables("-X freeradius", general.X_OUTPUT_CMD)
 
 
 def add_freeradius_chain():
@@ -898,13 +921,14 @@ def add_freeradius_chain():
     return
 
   app.print_verbose("Add iptables chain for FreeRadius")
-  iptables("-N freeradius_input")
-  iptables("-A syco_input  -p ALL -j freeradius_input")
+  iptables("-N freeradius")
+  iptables("-A syco_input  -p ALL -j freeradius")
+  iptables("-A syco_output  -p ALL -j freeradius")
 
   # Switches are allowed to talk to radius
   for switch_name in get_switches():
     ip = config.host(switch_name).get_back_ip()
-    iptables("-A freeradius_input -p TCP -m multiport -s {0} --dports 1812,1813 -j allowed_tcp".format(ip))
+    iptables("-A freeradius -p UDP -m multiport -s {0} --dports 1812,1813 -j allowed_udp".format(ip))
 
 
 def del_openvas_chain():

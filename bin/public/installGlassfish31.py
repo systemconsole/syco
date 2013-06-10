@@ -380,6 +380,9 @@ def _set_domain_passwords(domain_name, admin_port):
   )
 
 def _set_domain_configs(admin_port):
+  #log to syslog
+  asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true", admin_port)
+
   # Disable sending x-powered-by in http header (Glassfish obfuscation)
   asadmin_exec("set server.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false", admin_port)
   asadmin_exec("set server.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false", admin_port)

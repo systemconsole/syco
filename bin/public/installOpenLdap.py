@@ -207,7 +207,7 @@ def configure_openldap():
 dn: cn=config
 changetype:modify
 replace: olcLogLevel
-olcLogLevel: config stats shell
+olcLogLevel: 0
 -
 replace: olcIdleTimeout
 olcIdleTimeout: 30
@@ -666,6 +666,15 @@ def configure_client_cert_for_ldaptools():
 
 # Test config files
 # slaptest -u
+
+# Enable Debug logging
+# ldapadd -x -D 'cn=config' -w '<password>' << EOF
+# dn: cn=config
+# changetype:modify
+# replace: olcLogLevel
+# olcLogLevel: config stats shell
+# EOF
+
 
 # Verify the client-cert auth
 # openssl s_client -connect localhost:636 -state \
