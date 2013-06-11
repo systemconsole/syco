@@ -448,6 +448,13 @@ class Config(object):
       '''
       return str(int(self.get_disk_var_gb()) * 1024)
 
+    def get_bind_conf_subdir(self):
+      '''
+      Gets the relative path to the bind config if any
+      The empty default value is required to allow this property to not be defined
+      '''
+      return str(self.get_option("bind_conf_subdir", ""))
+
     def get_disk_log_gb(self):
       '''
       Size of the /var/log partion in GB, as it is defined in install.cfg
