@@ -61,8 +61,14 @@ def install_openvpn_server(args):
   x("yum -y install openvpn openvpn-auth-ldap")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
-    x("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
-
+    
+    #Downloading and preparing easy-rsa, because its no longer included in the openvpn package. 	
+    x("wget https://github.com/OpenVPN/easy-rsa/archive/master.zip -P /tmp")
+    x("unzip /tmp/master* -d /tmp")
+    x("cp -R /tmp/easy-rsa-master/easy-rsa/2.0 /etc/openvpn/easy-rsa") 
+    x("rm -rf /tmp/master*")
+    x("rm -rf /tmp/easy-rsa-master/")
+	
     # Install server.conf
     serverConf = "/etc/openvpn/server.conf"
     x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
@@ -88,7 +94,7 @@ def install_openvpn_server(args):
     # Generate CA cert
     os.chdir("/etc/openvpn/easy-rsa/")
     x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
+    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh2048.pem} /etc/openvpn/")
 
     #Generation TLS key
     os.chdir("/etc/openvpn/")
