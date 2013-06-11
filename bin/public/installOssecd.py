@@ -146,15 +146,16 @@ def _generate_client_keys():
     '''
     install_dir = get_install_dir()
     for server in get_servers():
-        fqdn = '{0}.{1}'.format(server, config.general.get_resolv_domain())
-        x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a -n {1} -p {2}".format(
+        fqdn = '{0}'.format(server)
+        fqdn2 = '{0}.{1}'.format(server, config.general.get_resolv_domain())
+	x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a --name {1} --ip {2}".format(
             install_dir, fqdn, config.host(server).get_front_ip())
         )
 
         # Prepare separate key files that can be downloaded by each client.
         x(
             "grep {0} /var/ossec/etc/client.keys > ".format(fqdn) +
-            "/var/ossec/etc/{0}_client.keys".format(fqdn)
+            "/var/ossec/etc/{0}_client.keys".format(fqdn2)
         )
     x('chmod 640 /var/ossec/etc/*.keys')
     x('chown ossec:ossec  /var/ossec/etc/*.keys')
