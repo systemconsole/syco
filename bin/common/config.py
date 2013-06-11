@@ -261,6 +261,10 @@ class Config(object):
       '''The hostname of the ntp server.'''
       return self.get_option("ntp.server")
 
+    def get_slave_ntp_server(self):
+      '''The hostname of the ntp server.'''
+      return self.get_option("ntp.slave.server")
+
     def get_ntp_server_ip(self):
       return self.host(self.get_ntp_server()).get_front_ip()
 
