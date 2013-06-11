@@ -330,7 +330,7 @@ def _get_icinga_version():
 
     '''
     # Since repoforge may be updated, check insalled version of icinga.
-    icingaversion = x("yum list installed | grep icinga.x").split()[1].split("-")[0]
+    icingaversion = x("yum list installed | grep icinga-web.noarch").split()[1].split("-")[0]
     app.print_verbose(icingaversion)
     return icingaversion
 
