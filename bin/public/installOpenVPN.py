@@ -26,7 +26,7 @@ __status__ = "Production"
 import os
 import stat
 
-from general import x
+from general import x, download_file, md5checksum, get_install_dir
 from scopen import scOpen
 import app
 import config
@@ -36,16 +36,31 @@ import iptables
 import net
 import version
 
-
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
+
+# EASY RSA DOWNLOAD URL
+EASY_RSA_DOWNLOAD = "https://github.com/OpenVPN/easy-rsa/archive/v2.2.0.zip"
+EASY_RSA_MD5 = 'd2e760402541e4b534b4bab5f92455aa'
+
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
   commands.add("install-openvpn-client-certs", build_client_certs, help="Build client certs on the openvpn server.")
 
+def copy_easy_rsa():
+    
+    # Downloading and md5 checking
+    download_file(EASY_RSA_DOWNLOAD, "v2.2.0.zip",md5=EASY_RSA_MD5)
+
+    # Unzipping and moving easy-rsa files
+    install_dir = get_install_dir()
+    x("unzip {0}{1} -d {0}".format(install_dir,"v2.2.0.zip"))
+    x("mv {0}easy-rsa-2.2.0/easy-rsa/2.0 /etc/openvpn/easy-rsa".format(install_dir))
+
+    
 def install_openvpn_server(args):
   '''
   The actual installation of openvpn server.
@@ -62,12 +77,13 @@ def install_openvpn_server(args):
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
     
+    copy_easy_rsa()
     #Downloading and preparing easy-rsa, because its no longer included in the openvpn package. 	
-    x("wget https://github.com/OpenVPN/easy-rsa/archive/master.zip -P /tmp")
-    x("unzip /tmp/master* -d /tmp")
-    x("cp -R /tmp/easy-rsa-master/easy-rsa/2.0 /etc/openvpn/easy-rsa") 
-    x("rm -rf /tmp/master*")
-    x("rm -rf /tmp/easy-rsa-master/")
+    #x("wget https://github.com/OpenVPN/easy-rsa/archive/master.zip -P /tmp")
+    #x("unzip /tmp/master* -d /tmp")
+    #x("cp -R /tmp/easy-rsa-master/easy-rsa/2.0 /etc/openvpn/easy-rsa") 
+    #x("rm -rf /tmp/master*")
+    #x("rm -rf /tmp/easy-rsa-master/")
 	
     # Install server.conf
     serverConf = "/etc/openvpn/server.conf"
@@ -94,7 +110,7 @@ def install_openvpn_server(args):
     # Generate CA cert
     os.chdir("/etc/openvpn/easy-rsa/")
     x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh2048.pem} /etc/openvpn/")
+    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
     #Generation TLS key
     os.chdir("/etc/openvpn/")
