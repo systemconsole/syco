@@ -78,13 +78,7 @@ def install_openvpn_server(args):
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
     
     copy_easy_rsa()
-    #Downloading and preparing easy-rsa, because its no longer included in the openvpn package. 	
-    #x("wget https://github.com/OpenVPN/easy-rsa/archive/master.zip -P /tmp")
-    #x("unzip /tmp/master* -d /tmp")
-    #x("cp -R /tmp/easy-rsa-master/easy-rsa/2.0 /etc/openvpn/easy-rsa") 
-    #x("rm -rf /tmp/master*")
-    #x("rm -rf /tmp/easy-rsa-master/")
-	
+   
     # Install server.conf
     serverConf = "/etc/openvpn/server.conf"
     x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
