@@ -148,8 +148,8 @@ def _generate_client_keys():
     for server in get_servers():
         fqdn = '{0}'.format(server)
         fqdn2 = '{0}.{1}'.format(server, config.general.get_resolv_domain())
-	x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a --name {1} --ip {2}".format(
-            install_dir, fqdn, config.host(server).get_front_ip())
+        x("{0}ossecbuild/contrib/ossec-batch-manager.pl -a --name {1} --ip {2}".format(
+        install_dir, fqdn, config.host(server).get_front_ip())
         )
 
         # Prepare separate key files that can be downloaded by each client.
