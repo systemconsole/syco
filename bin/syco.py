@@ -147,22 +147,27 @@ class Commands:
     Read command directories (public and private) and add commands.
 
     '''
-    try:
-      self.current_type = "public"
-      for obj in self._get_modules(app.SYCO_PUBLIC_PATH):
+
+    self.current_type = "public"
+    for obj in self._get_modules(app.SYCO_PUBLIC_PATH):
+      try:
         obj.build_commands(self)
+      except AttributeError, e:
+        app.print_error("   Problem with obj, error:: " + repr(e.args))
+      except NameError, e:
+        app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
 
-      self.current_type = "private"
-      if (os.access(app.SYCO_USR_PATH, os.F_OK)):
-        for plugin in os.listdir(app.SYCO_USR_PATH):
-          plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
-          for obj in self._get_modules(plugin_path):
-           obj.build_commands(self)
-
-    except AttributeError, e:
-      app.print_error("   Problem with obj, error:: " + repr(e.args))
-    except NameError, e:
-      app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
+    self.current_type = "private"
+    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+      for plugin in os.listdir(app.SYCO_USR_PATH):
+        plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
+        for obj in self._get_modules(plugin_path):
+          try:
+            obj.build_commands(self)
+          except AttributeError, e:
+            app.print_error("   Problem with obj, error:: " + repr(e.args))
+          except NameError, e:
+            app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
 
   def _get_modules(self, commands_path):
     '''
