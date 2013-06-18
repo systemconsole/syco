@@ -249,7 +249,7 @@ def _copy_conf(file_ext, to_folder, active_dc):
             zone files. That might fuck up the installation.
 
     '''
-    bind_config_subdir = config.host(config.general.get_dns_server()).get_bind_conf_subdir()
+    bind_config_subdir = config.host(config.general.get_resolv_nameserver_server()).get_bind_conf_subdir()
     if len(bind_config_subdir) > 0 and not bind_config_subdir.startswith('/'):
         bind_config_subdir = "/" + bind_config_subdir
 
