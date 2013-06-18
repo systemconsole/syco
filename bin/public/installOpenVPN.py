@@ -57,9 +57,10 @@ def copy_easy_rsa():
 
     # Unzipping and moving easy-rsa files
     install_dir = get_install_dir()
+    x("yum -y install unzip")
     x("unzip {0}{1} -d {0}".format(install_dir,"v2.2.0.zip"))
     x("mv {0}easy-rsa-2.2.0/easy-rsa/2.0 /etc/openvpn/easy-rsa".format(install_dir))
-
+    x("yum -y remove unzip")
     
 def install_openvpn_server(args):
   '''
