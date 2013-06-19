@@ -45,7 +45,7 @@ from hardening.ssh import setup_ssh
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 3
+SCRIPT_VERSION = 4
 
 
 def build_commands(commands):

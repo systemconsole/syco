@@ -3,6 +3,7 @@
 Remove packages listed in hardening/config.cfg - part of the hardening.
 
 '''
+from general import get_install_dir
 
 __author__ = "daniel@fareoffice.com"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -56,6 +57,18 @@ def customize_shell():
     skel = scOpen("/etc/skel/.bash_profile")
     skel.replace_add("^export GREP_COLOR=.*$",   "export GREP_COLOR='1;32'")
     skel.replace_add("^export GREP_OPTIONS=.*$", "export GREP_OPTIONS=--color=auto")
+
+    app.print_verbose("  Enable SSH key forwarding to work with sudo su")
+    tmp_sudo_file = get_install_dir() + "sudoers"
+    x("cp /etc/sudoers " + tmp_sudo_file)
+    sudoers = scOpen(tmp_sudo_file)
+    sudoers.remove("Defaults    env_keep += \"SSH_AUTH_SOCK\"")
+    sudoers.add("Defaults    env_keep += \"SSH_AUTH_SOCK\"")
+    xRes = x("visudo -c -f " + tmp_sudo_file)
+    if tmp_sudo_file + ": parsed OK" in xRes:
+        x("mv " + tmp_sudo_file + " /etc/sudoers")
+    else:
+        app.print_error("Temporary sudoers file corrupt, not updating")
 
 def create_syco_modprobe():
     x("touch /etc/modprobe.d/syco.conf")
