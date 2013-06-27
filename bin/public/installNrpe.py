@@ -25,7 +25,7 @@ __maintainer__ = "Elis Kullberg"
 __email__ = "above"
 __credits__ = ["Daniel & Mattias"]
 __license__ = "???"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __status__ = "Development"
 
 
@@ -34,7 +34,7 @@ HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/psp/RedHatEnterpriseES/6.0/pack
 HP_HEALTH_MD5="0bc2a9932c3080829a96ab7bb4727089"
 
 
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
