@@ -330,6 +330,16 @@ def _get_icinga_version():
 
     '''
     # Since repoforge may be updated, check insalled version of icinga.
+    icingaversion = x("yum list installed | grep icinga.x86_64").split()[1].split("-")[0]
+    app.print_verbose(icingaversion)
+    return icingaversion
+
+def _get_icinga_web_version():
+    '''
+    Checks what package version of icinga is installed (package version comes after "-" i)
+
+    '''
+    # Since repoforge may be updated, check insalled version of icinga.
     icingaversion = x("yum list installed | grep icinga-web.noarch").split()[1].split("-")[0]
     app.print_verbose(icingaversion)
     return icingaversion
@@ -409,7 +419,7 @@ def _setup_icinga_web_mysql():
 
     # Build database tables from supplied schema
     x("mysql --user='{0}' --password='{1}' -e 'CREATE DATABASE icinga_web'".format("icinga-web",re.escape(web_sqlpassword)))
-    x("mysql icinga_web  --user='{0}' --password='{1}' < /usr/share/doc/icinga-web-{2}/schema/mysql.sql".format("icinga-web",re.escape(web_sqlpassword),_get_icinga_version()))
+    x("mysql icinga_web  --user='{0}' --password='{1}' < /usr/share/doc/icinga-web-{2}/schema/mysql.sql".format("icinga-web",re.escape(web_sqlpassword),_get_icinga_web_version()))
 
     # Append a login password for "icingaadmin".
     x("mysql --user='{0}' --password='{1}' < {2}syco-private/var/nagios/{3}".format("icinga-web",re.escape(web_sqlpassword), constant.SYCO_USR_PATH,"icinga_password.sql"))
