@@ -17,6 +17,7 @@ import iptables
 import net
 import scopen
 import version
+import ConfigParser
 
 
 __author__ = "elis.kullberg@netlight.com"
@@ -39,6 +40,7 @@ SCRIPT_VERSION = 2
 
 def build_commands(commands):
     commands.add("install-nrpe-client", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
+    commands.add("update-nrpe-config", update_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
 
 
 def install_nrpe(args):
@@ -51,6 +53,31 @@ def install_nrpe(args):
     version_obj.check_executed()
     _install_nrpe(args)
     version_obj.mark_executed()
+
+
+def update_nrpe(args):
+    '''
+    Update the nrpe config with new settings for nrpe deamon.
+    '''
+    #Reading config file
+    config = ConfigParser.ConfigParser()
+    config.read('/opt/syco/usr/syco-private/var/nagios/hosts_nrpe_config.cfg')
+    nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
+
+    #Getting setting for host and modyfying command.cfg
+    try:        
+        for name, value in config.items(net.get_hostname()):
+            nrpe_config.replace("^command\[" + name + "\].*", value)
+            print '  %s = %s' % (name, value)
+        #Setting correct SQL password to config
+        nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password().replace("&","\&").replace("/","\/"))
+    
+    #No custom enteries for host passing
+    except Exception: 
+        pass
+
+    #Restart nrpe so changes take effect    
+    x("/etc/init.d/nrpe restart")
 
 
 def _install_nrpe(args):
@@ -105,12 +132,16 @@ def _install_nrpe_plugins():
     _install_nrpe_plugins_dependencies()
     x("cp -p {0}lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/".format(constant.SYCO_PATH))
 
+    #copy in extra plugins.
+    x("cp -r /opt/syco/var/nrpe/* /usr/lib64/nagios/plugins")
+
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
     nrpe_config.replace("($LDAPURL)", config.general.get_ldap_hostname())
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
+    x("adduser nrpe")
     x("chmod -R 750 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
@@ -144,6 +175,8 @@ def _install_nrpe_plugins_dependencies():
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamscan")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_disk")
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/get_services")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/mysql/pmp-check-mysql-deleted-files")
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/mysql/pmp-check-mysql-file-privs")
 
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
