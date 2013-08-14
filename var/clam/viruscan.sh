@@ -43,3 +43,5 @@ check_scan () {
 
 check_scan
 cat ${LOG} | logger
+rm -f /var/log/clamav/scan-latest.log
+ln -s /var/log/clamav/scan-$DATE.log /var/log/clamav/scan-latest.log

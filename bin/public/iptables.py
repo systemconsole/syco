@@ -876,19 +876,19 @@ def add_rsyslog_chain(context=None):
       back_subnet = config.general.get_back_subnet()
       front_subnet = config.general.get_front_subnet()
       iptables(
-        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        " -A rsyslog_in -p tcp -s %s --dport 514 -j allowed_tcp" %
         back_subnet
       )
       iptables(
-        " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+        " -A rsyslog_in -p tcp -s %s --dport 514 -j allowed_tcp" %
         front_subnet
       )
       iptables(
-        " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+        " -A rsyslog_in -p udp -s %s --dport 514 -j allowed_udp" %
         back_subnet
       )
       iptables(
-        " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+        " -A rsyslog_in -p udp -s %s --dport 514 -j allowed_udp" %
         front_subnet
       )
 
@@ -897,11 +897,11 @@ def add_rsyslog_chain(context=None):
     # On rsyslog client
     elif client_version_obj.is_executed() or context is "client" :
       iptables(
-        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        "-A rsyslog_out -p tcp -d %s --dport 514 -j allowed_tcp" %
         config.general.get_log_server_hostname1()
       )
       iptables(
-        "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+        "-A rsyslog_out -p tcp -d %s --dport 514 -j allowed_tcp" %
         config.general.get_log_server_hostname2()
       )
 
