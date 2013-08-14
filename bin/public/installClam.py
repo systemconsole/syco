@@ -18,7 +18,6 @@ __status__ = "Production"
 
 
 # Path to clam installation.
-#CLAM_AV_URL="http://downloads.sourceforge.net/project/clamav/clamav/0.97.6/clamav-0.97.6.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fclamav%2Ffiles%2F&ts=1348174189&use_mirror=netcologne"
 CLAM_AV_URL="http://downloads.sourceforge.net/project/clamav/clamav/0.97.8/clamav-0.97.8.tar.gz?r=http%3A%2F%2Fwww.clamav.net%2Flang%2Fen%2Fdownload%2Fsources%2F&ts=1375861434&use_mirror=kent"
 
 import app

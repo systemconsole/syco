@@ -73,9 +73,10 @@ def send_oncall():
     Subject = f.readline().replace("\n","")
     #Gets the rest of file for messages
     file_text = f.read()
-    message = file_text.replace("$(ONCALL)",oncall)
+    file_in = file_text.replace("$(ONCALL)",oncall)
+    message = file_in.replace('$(DATE)',str(date.today().year)+"-"+str(datetime.today().isocalendar()[1]))
     #Send email
-    #send_email(emails,message)
+    send_email(emails,message)
 
 
 def schedule(when):
@@ -86,11 +87,12 @@ def schedule(when):
   f = open(template_dir+when+".txt")
   #Takes firt line in file to subje  Subject = f.readline().replace("\n","")
   #Gets the rest of file for messages
-  message = f.read()
+  file_in = f.read()
+  message = file_in.replace('$(DATE)',str(date.today().year)+"-"+str(datetime.today().isocalendar()[1]))
   emails = emailto
   
   #Send email
-  #send_email(emails,message)
+  send_email(emails,message)
 
 
 #Sending the email
@@ -100,13 +102,11 @@ def send_email(emails,message):
       '''
       try:
          smtpObj = smtplib.SMTP('localhost')
-         #smtpObj.sendmail(sender, emails, message)         
+         smtpObj.sendmail(sender, emails, message)         
          print "Successfully sent email"
-      except SMTPException:
+      except:
          print "Error: unable to send email"
-      
-      print emails
-      print sender + message + Subject  
+ 
 
 if str(sys.argv[1])=="oncall":
   '''
