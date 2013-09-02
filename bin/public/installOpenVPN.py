@@ -26,7 +26,7 @@ __status__ = "Production"
 import os
 import stat
 
-from general import x
+from general import x, download_file, md5checksum, get_install_dir
 from scopen import scOpen
 import app
 import config
@@ -36,16 +36,32 @@ import iptables
 import net
 import version
 
-
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
+
+# EASY RSA DOWNLOAD URL
+EASY_RSA_DOWNLOAD = "https://github.com/OpenVPN/easy-rsa/archive/v2.2.0.zip"
+EASY_RSA_MD5 = 'd2e760402541e4b534b4bab5f92455aa'
+
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
   commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
   commands.add("install-openvpn-client-certs", build_client_certs, help="Build client certs on the openvpn server.")
 
+def copy_easy_rsa():
+    
+    # Downloading and md5 checking
+    download_file(EASY_RSA_DOWNLOAD, "v2.2.0.zip",md5=EASY_RSA_MD5)
+
+    # Unzipping and moving easy-rsa files
+    install_dir = get_install_dir()
+    x("yum -y install unzip")
+    x("unzip {0}{1} -d {0}".format(install_dir,"v2.2.0.zip"))
+    x("mv {0}easy-rsa-2.2.0/easy-rsa/2.0 /etc/openvpn/easy-rsa".format(install_dir))
+    x("yum -y remove unzip")
+    
 def install_openvpn_server(args):
   '''
   The actual installation of openvpn server.
@@ -61,8 +77,9 @@ def install_openvpn_server(args):
   x("yum -y install openvpn openvpn-auth-ldap")
 
   if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
-    x("cp -R /usr/share/openvpn/easy-rsa/2.0 /etc/openvpn/easy-rsa")
-
+    
+    copy_easy_rsa()
+   
     # Install server.conf
     serverConf = "/etc/openvpn/server.conf"
     x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
