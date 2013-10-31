@@ -18,7 +18,7 @@ __status__ = "Production"
 
 
 # Path to clam installation.
-CLAM_AV_URL="http://sourceforge.net/projects/clamav/files/clamav/0.97.8/clamav-0.97.8.tar.gz/download?use_mirror=heanet"
+CLAM_AV_URL="http://sourceforge.net/projects/clamav/files/clamav/0.98/clamav-0.98.tar.gz/download?use_mirror=heanet"
 
 import app
 from general import x, urlretrive
@@ -30,7 +30,7 @@ import version
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
