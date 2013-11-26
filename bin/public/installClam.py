@@ -134,6 +134,7 @@ def setup_clam_and_freshclam():
   app.print_verbose("Setup clamav and freshclam")
 
   app.print_verbose("  Setup config files.")
+  x("cp /usr/local/etc/clamd.conf.sample /usr/local/etc/clamd.conf")
   clamd = scOpen("/usr/local/etc/clamd.conf")
   clamd.replace("^[#]\?Example.*",            "#Example")
   clamd.replace("^[#]\?LogFileMaxSize.*",     "LogFileMaxSize 100M")
@@ -148,6 +149,7 @@ def setup_clam_and_freshclam():
   clamd.replace("^[#]\?LocalSocket.*",        "LocalSocket /var/run/clamav/clamd.socket")
   clamd.replace("^[#]\?PidFile.*",            "PidFile /var/run/clamav/clamd.pid")
 
+  x("cp /usr/local/etc/freshclam.conf.sample /usr/local/etc/freshclam.conf")
   freshclam = scOpen("/usr/local/etc/freshclam.conf")
   freshclam.replace("^[#]\?Example.*",        "#Example")
   freshclam.replace("^[#]\?LogFileMaxSize.*", "LogFileMaxSize 100M")
