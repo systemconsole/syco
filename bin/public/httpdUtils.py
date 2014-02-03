@@ -45,3 +45,16 @@ def toggle_mod_sec(args):
         x("sed -i '/SecRequestBodyAccess On/ s/^/#/' " + CONF_FILE)
 
     x("service httpd graceful")
+
+def toggle_apache_mod(apache_mod, turn_on):
+
+    CONF_FILE = "/etc/httpd/conf/httpd.conf"
+
+    ##Check args
+    if (not isinstance(turn_on, bool)):
+        raise Exception("Invalid argument, expected a boolean value")
+
+    if turn_on:
+        x("sed -i '/" + apache_mod + "/ s/^#//' " + CONF_FILE)
+    else:
+        x("sed -i '/" + apache_mod + "/ s/^/#/' " + CONF_FILE)
