@@ -159,7 +159,7 @@ class Config(object):
 
     def get_back_gateway_ip(self):
       '''The ip of the network gateway.'''
-      return self.get_option("back.gateway")
+      return self.get_option("back.gateway", "")
 
     def get_front_network(self):
       '''The front network (ie. 10.100.10.0).'''
@@ -167,7 +167,7 @@ class Config(object):
 
     def get_back_network(self):
       '''The back network (ie. 10.100.10.0).'''
-      return self.get_option("back.network")
+      return self.get_option("back.network", "")
 
     def get_back_subnet(self):
       '''The back subnet (ie. 10.100.10.0/24)'''
@@ -182,7 +182,7 @@ class Config(object):
 
     def get_back_netmask(self):
       '''The netmask of the back network.'''
-      return self.get_option("back.netmask")
+      return self.get_option("back.netmask", "")
 
     def get_front_subnet(self):
       '''The back subnet (ie. 10.100.10.0/24)'''
