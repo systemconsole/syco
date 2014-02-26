@@ -75,8 +75,8 @@ def net_setup_bond_br(args):
 
     # Get all parameters from syco config.
     # Check if interfaces are defined, otherwise fall back to autodetecting
-    front_interfaces = config.host(net.get_hostname()).get_front_interfaces().split(",")
-    back_interfaces = config.host(net.get_hostname()).get_back_interfaces().split(",")
+    front_interfaces = config.general.get_front_interfaces().split(",")
+    back_interfaces = config.general.get_back_interfaces().split(",")
 
     num_of_if = len(front_interfaces) + len(back_interfaces)
     if (num_of_if == 0):
