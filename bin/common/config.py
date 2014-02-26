@@ -184,6 +184,14 @@ class Config(object):
       '''The netmask of the back network.'''
       return self.get_option("back.netmask", "")
 
+    def get_front_interfaces(self):
+      '''The interfaces of the front network or an empty string if not configured.'''
+      return self.get_option("front.interfaces")
+
+    def get_back_interfaces(self):
+      '''The interfaces of the back network or an empty string if not configured.'''
+      return self.get_option("back.interfaces", "")
+
     def get_front_subnet(self):
       '''The back subnet (ie. 10.100.10.0/24)'''
       return net.get_network_cidr(
