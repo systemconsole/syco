@@ -385,11 +385,11 @@ class Config(object):
 
     def get_back_ip(self):
       '''Get ip for a specific host, as it is defined in install.cfg'''
-      return self.get_option("back.ip")
+      return self.get_option("back.ip", "")
 
     def get_back_mac(self):
       '''Get network mac address for a specific host, as it is defined in install.cfg'''
-      return self.get_option("back.mac")
+      return self.get_option("back.mac", "")
 
     def get_any_ip(self):
       ''' Get any ip (front preferred, back second hand, otherwise error'''
