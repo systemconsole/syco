@@ -201,7 +201,7 @@ class Config(object):
 
     def get_back_resolver_ip(self):
       '''ip of internal dns resolver that are configured on all servers.'''
-      return str(self.get_option("back.resolver"))
+      return str(self.get_option("back.resolver", ""))
 
     def get_internal_dns_resolvers(self):
       '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
