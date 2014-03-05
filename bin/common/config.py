@@ -90,6 +90,23 @@ class Config(object):
 
             self.load_config_file(etc_path, usr_path)
 
+        '''
+        Load general.cfg if it exists.
+        '''
+
+        def load_general_config_file(self, etc_path):
+            file_name = etc_path + "general.cfg"
+
+            config_dir = []
+            if os.access(file_name, os.F_OK):
+                config_dir.append(file_name)
+
+            if len(config_dir) == 1:
+                self.read(config_dir[0])
+            elif len(config_dir) > 1:
+                raise ConfigException(str(len(config_dir)) + " general.cfg found, only one or zero is allowed.",
+                                      config_dir)
+
         def load_config_file(self, etc_path, usr_path):
             file_name = etc_path + "install.cfg"
 
