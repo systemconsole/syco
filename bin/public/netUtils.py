@@ -23,11 +23,12 @@ import general
 import install
 import net
 import version
+import math
 
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
@@ -73,7 +74,14 @@ def net_setup_bond_br(args):
     sycoConf.add("alias bond0 bonding")
 
     # Get all parameters from syco config.
-    num_of_if = net.num_of_eth_interfaces()
+    # Check if interfaces are defined, otherwise fall back to autodetecting
+    front_interfaces = config.general.get_front_interfaces().split(",")
+    back_interfaces = config.general.get_back_interfaces().split(",")
+
+    num_of_if = len(front_interfaces) + len(back_interfaces)
+    if (num_of_if == 0):
+        # Autodetect
+        num_of_if = net.num_of_eth_interfaces()
 
     front_ip = config.host(net.get_hostname()).get_front_ip()
     front_netmask = config.general.get_front_netmask()
@@ -84,41 +92,38 @@ def net_setup_bond_br(args):
     back_netmask = config.general.get_back_netmask()
     back_gw = config.general.get_back_gateway_ip()
     back_resolver = config.general.get_back_resolver_ip()
-    if (num_of_if >= 4):
-        app.print_verbose(
-            "{0} network interfaces was found, and 2 eth interfaces per bond " +
-            "will be configured."
-        )
-        # Setup back-net
+
+    net_count = (2 if (back_ip is not None and len(back_ip)) > 0 else 1)
+
+    eth_count = 0;
+    if front_interfaces is None or len(front_interfaces) < 1:
+        # Use default eth interfaces
+        # Also, if you don't specify front net interfaces, you may not specify backnet interfaces.
+        if_per_net_count = math.floor(num_of_if / net_count)
+
+        if net_count > 1:
+            back_interfaces = []
+            for i in range(if_per_net_count):
+                back_interfaces.append("eth" + eth_count)
+                eth_count += 1
+
+        front_interfaces = []
+        for i in range(if_per_net_count):
+            front_interfaces.append("eth" + eth_count)
+            eth_count += 1
+
+    app.print_verbose("Configuring front net bond bond1 with interfaces: {0}".format(front_interfaces))
+    setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
+    setup_bond("bond1", "br1")
+    for front_interface in front_interfaces:
+        setup_eth(front_interface, "bond1")
+
+    if net_count == 2:
+        app.print_verbose("Found back-net configuration, configuring second bond bond0 with interfaces: {0}".format(back_interfaces))
         setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
         setup_bond("bond0", "br0")
-        setup_eth("eth0", "bond0")
-        setup_eth("eth1", "bond0")
-
-        # _setup front-net
-        setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
-        setup_bond("bond1", "br1")
-        setup_eth("eth2", "bond1")
-        setup_eth("eth3", "bond1")
-    elif (num_of_if == 2):
-        app.print_verbose(
-            "2 network interfaces was found, and 1 eth interfaces per bond " +
-            "will be configured. There is no point in bonding in this case, " +
-            "except that we have the same kind of configuration on all hosts. "
-        )
-
-        # Setup back-net
-        setup_bridge("br0", back_ip, back_netmask, back_gw, back_resolver)
-        setup_bond("bond0", "br0")
-        setup_eth("eth0", "bond0")
-
-        # _setup front-net
-        setup_bridge("br1", front_ip, front_netmask, front_gw, front_resolver)
-        setup_bond("bond1", "br1")
-        setup_eth("eth1", "bond1")
-    else:
-        app.print_error("To few network interfaces: " + str(num_of_if))
-        raise Exception("To few network interfaces: " + str(num_of_if))
+        for back_interface in back_interfaces:
+            setup_eth(back_interface, "bond0")
 
     #
     app.print_verbose(
