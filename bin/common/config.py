@@ -88,7 +88,8 @@ class Config(object):
         def __init__(self, etc_path, usr_path = None):
             ConfigParser.RawConfigParser.__init__(self)
 
-            self.load_config_file(etc_path, usr_path)
+            self.load_general_config_file(etc_path)
+            self.load_config_file(etc_path)
 
         '''
         Load general.cfg if it exists.
@@ -107,7 +108,7 @@ class Config(object):
                 raise ConfigException(str(len(config_dir)) + " general.cfg found, only one or zero is allowed.",
                                       config_dir)
 
-        def load_config_file(self, etc_path, usr_path):
+        def load_config_file(self, etc_path):
             file_name = etc_path + "install.cfg"
 
             config_dir = []
@@ -437,6 +438,10 @@ class Config(object):
         def get_cpu(self):
             '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
             return self.get_option("cpu")
+
+        def get_cpu_max(self):
+            '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
+            return self.get_option("cpu_max", "")
 
         def get_disk_swap_gb(self):
             '''

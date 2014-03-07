@@ -79,6 +79,7 @@ class install_guest:
 
     self.ram = str(config.host(self.hostname).get_ram())
     self.cpu = str(config.host(self.hostname).get_cpu())
+    self.cpu_max = str(config.host(self.hostname).get_cpu_max())
 
     self.set_kickstart_options()
 
@@ -161,6 +162,7 @@ class install_guest:
       cmd += " --name " + self.hostname
       cmd += " --ram " + self.ram
       cmd += " --vcpus=" + self.cpu
+      if self.cpu_max is not None and self.cpu_max != "": cmd += ",maxvcpus=" + self.cpu_max
       cmd += " --vnc --noautoconsole"
       cmd += " --hvm"
       cmd += " --virt-type=kvm"
