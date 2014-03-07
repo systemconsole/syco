@@ -87,18 +87,19 @@ def net_setup_bond_br(args):
     front_netmask = config.general.get_front_netmask()
     front_gw = config.general.get_front_gateway_ip()
     front_resolver = config.general.get_front_resolver_ip()
+    net_count = 1
 
-    back_ip = config.host(net.get_hostname()).get_back_ip()
-    back_netmask = config.general.get_back_netmask()
-    back_gw = config.general.get_back_gateway_ip()
-    back_resolver = config.general.get_back_resolver_ip()
-
-    net_count = (2 if (back_ip is not None and len(back_ip)) > 0 else 1)
+    if config.general.is_back_enabled():
+        back_ip = config.host(net.get_hostname()).get_back_ip()
+        back_netmask = config.general.get_back_netmask()
+        back_gw = config.general.get_back_gateway_ip()
+        back_resolver = config.general.get_back_resolver_ip()
+        net_count += 1
 
     eth_count = 0;
     if front_interfaces is None or len(front_interfaces) < 1:
         # Use default eth interfaces
-        # Also, if you don't specify front net interfaces, you may not specify backnet interfaces.
+        # Also, if you don't specify front net interfaces, you may not specify back net interfaces.
         if_per_net_count = math.floor(num_of_if / net_count)
 
         if net_count > 1:
