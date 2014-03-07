@@ -88,7 +88,8 @@ class Config(object):
         def __init__(self, etc_path, usr_path = None):
             ConfigParser.RawConfigParser.__init__(self)
 
-            self.load_config_file(etc_path, usr_path)
+            self.load_general_config_file(etc_path)
+            self.load_config_file(etc_path)
 
         '''
         Load general.cfg if it exists.
@@ -107,7 +108,7 @@ class Config(object):
                 raise ConfigException(str(len(config_dir)) + " general.cfg found, only one or zero is allowed.",
                                       config_dir)
 
-        def load_config_file(self, etc_path, usr_path):
+        def load_config_file(self, etc_path):
             file_name = etc_path + "install.cfg"
 
             config_dir = []
