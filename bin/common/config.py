@@ -174,6 +174,11 @@ class Config(object):
             '''The ip of the network gateway.'''
             return self.get_option("front.gateway")
 
+        def is_back_enabled(self):
+            if self.get_option("back.disable", "false") == "true":
+                return False
+            return True
+
         def get_back_gateway_ip(self):
             '''The ip of the network gateway.'''
             return self.get_option("back.gateway", "")
