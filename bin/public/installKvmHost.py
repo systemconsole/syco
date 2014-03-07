@@ -66,11 +66,11 @@ def install_kvmhost(args):
     version_obj.check_executed()
 
     if (not general.grep("/proc/cpuinfo", "vmx|svm")):
-        app.print_error("CPU don't support virtualization.")
+        app.print_error("CPU doesn't support virtualization.")
         _abort_kvm_host_installation()
 
     if (not general.grep("/proc/cpuinfo", "constant_tsc")):
-        app.print_error("CPU don't have a constant Time Stamp Counter.")
+        app.print_error("CPU doesn't have a constant Time Stamp Counter.")
         _abort_kvm_host_installation()
 
     # Install the kvm packages

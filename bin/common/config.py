@@ -439,6 +439,10 @@ class Config(object):
             '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
             return self.get_option("cpu")
 
+        def get_cpu_max(self):
+            '''Get the number of cores that are used for a specific kvm host, as it is defined in install.cfg'''
+            return self.get_option("cpu_max", "")
+
         def get_disk_swap_gb(self):
             '''
             Size of the swap partion in GB, as it is defined in install.cfg
