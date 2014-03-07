@@ -258,12 +258,12 @@ class Config(object):
             return self.get_option("resolv.nameserver.server")
 
         def get_resolv_nameserver_server_ip(self):
-            '''Attempt to auto-detect ip from a dns server config in install.cfg '''
-            nameserver_ip = self.host(self.get_resolv_nameserver_server()).get_front_ip()
+            '''Use property if it exists'''
+            nameserver_ip = self.get_option("resolv.nameserver.ip", "")
 
             if nameserver_ip is None or nameserver_ip == "":
-                ''' Read from property '''
-                nameserver_ip = self.get_option("resolv.nameserver.ip")
+                '''Attempt to auto-detect ip from a dns server config in install.cfg '''
+                nameserver_ip = self.host(self.get_resolv_nameserver_server()).get_front_ip()
 
             return nameserver_ip
 
@@ -415,7 +415,7 @@ class Config(object):
 
         def get_front_ip(self):
             '''Get ip for a specific host, as it is defined in install.cfg'''
-            return self.get_option("front.ip", "")
+            return self.get_option("front.ip")
 
         def get_front_mac(self):
             '''Get network mac address for a specific host, as it is defined in install.cfg'''
