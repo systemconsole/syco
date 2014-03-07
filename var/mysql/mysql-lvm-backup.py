@@ -124,7 +124,7 @@ UNLOCK TABLES;
 EOF""" % (snapshotSize, lvName, vgName, lvName))
 	x("mkdir -p %s" % backupMountPath)
 	x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
-	x("chmod 777 -R " + backupMountPath)inst
+	x("chmod 777 -R " + backupMountPath)
 
 def clean():
 	'''
