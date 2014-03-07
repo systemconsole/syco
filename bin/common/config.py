@@ -397,6 +397,14 @@ class Config(object):
             else:
                 raise Exception("Unknown type {0}".format(hosttype))
 
+        def get_front_interfaces(self):
+            '''Get front interfaces for a specific host, as it is defined in install.cfg'''
+            return self.get_option("front.interfaces")
+
+        def get_back_interfaces(self):
+            '''Get back interfaces for a specific host, as it is defined in install.cfg'''
+            return self.get_option("back.interfaces")
+
         def get_front_ip(self):
             '''Get ip for a specific host, as it is defined in install.cfg'''
             return self.get_option("front.ip")

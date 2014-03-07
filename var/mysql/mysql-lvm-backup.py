@@ -10,7 +10,7 @@ REQUIREMENTS
 ============
 
 This file needs to be created, to do it possible for the mysql client to
-login to the mysql database without exposeing the mysql password on command
+login to the mysql database without exposing the mysql password on command
 line (ps aux) or in this script.
 
 #/root/.my.cnf
@@ -124,7 +124,7 @@ UNLOCK TABLES;
 EOF""" % (snapshotSize, lvName, vgName, lvName))
 	x("mkdir -p %s" % backupMountPath)
 	x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
-	x("chmod 777 -R " + backupMountPath)
+	x("chmod 777 -R " + backupMountPath)inst
 
 def clean():
 	'''
