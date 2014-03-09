@@ -135,11 +135,13 @@ def _create_kvm_snapshot_partition():
 
     TODO: Size should be equal to RAM.
     '''
-    volgroup = disk.active_volgroup_name()
-    devicename = "/dev/" + volgroup + "/qemu"
+
+    vol_group = "VolGroup00"
+    disk.verify_volgroup(vol_group)
+    devicename = "/dev/" + vol_group + "/qemu"
     result = x("lvdisplay -v " + devicename, output = False)
     if (devicename not in result):
-        x("lvcreate -n qemu -L 100G " + volgroup)
+        x("lvcreate -n qemu -L 100G " + vol_group)
         x("mkfs.ext4 -j " + devicename)
         x("mkdir -p /var/lib/libvirt/qemu")
         x("mount " + devicename + " /var/lib/libvirt/qemu")
