@@ -546,6 +546,10 @@ class Config(object):
             '''Get the device name on which the installation will be performed.'''
             return self.get_option("boot_device", default_device)
 
+        def get_vol_group(self, default_vol_group = "VolGroup00"):
+            '''Get the volume group name on which the installation will be performed.'''
+            return self.get_option("vol_group", default_vol_group)
+
         def _get_template(self):
             '''
             Get the template name that is used

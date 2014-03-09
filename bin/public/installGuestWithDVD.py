@@ -109,6 +109,7 @@ class install_guest:
     prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
     prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
     prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
+    prop['\$vol_group'] = config.host(self.hostname).get_vol_group()
 
     self.property_list = prop
 
