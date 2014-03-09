@@ -84,7 +84,7 @@ def get_lan_ip():
     Get one of the external ips on the computer.
 
     Prioritize ips from interface in the following orders
-    "br0", "bond0", "eth0", "eth1", "br1", "bond1", "eth2", "eth3"
+    "br0", "bond0", "br1", "bond1", "eth0", "eth1",  "eth2", "eth3"
 
     '''
     global lan_ip
