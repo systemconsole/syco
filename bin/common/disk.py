@@ -28,7 +28,7 @@ def verify_volgroup(vol_group_name):
         if vol_group_name in volgroup:
             return
 
-    raise Exception("Can't find VolGroup named: %s" % (vol_group_name)
+    raise Exception("Can't find VolGroup named: %s" % (vol_group_name))
 
 
 def create_lvm_volumegroup(name, size, vol_group = "VolGroup00"):
