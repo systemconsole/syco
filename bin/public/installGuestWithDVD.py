@@ -179,9 +179,9 @@ class install_guest:
       cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
       cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
       cmd += ' ksdevice=eth0'
-      cmd += ' ip=' + self.property_list['\$back_ip']
-      cmd += ' netmask=' + self.property_list['\$back_netmask']
-      cmd += ' dns=' + config.general.get_back_resolver_ip()
+      cmd += ' ip=' + self.property_list['\$front_ip']
+      cmd += ' netmask=' + self.property_list['\$front_netmask']
+      cmd += ' dns=' + config.general.get_front_resolver_ip()
       cmd += ' gateway=' + self.kvm_host_ip
       cmd += ' "'
 
