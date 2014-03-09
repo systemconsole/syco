@@ -156,7 +156,10 @@ class install_guest:
       nfs.remove_export('dvd')
 
   def create_kvm_host(self):
-      devicename = disk.create_lvm_volumegroup(self.hostname, int(self.property_list['\$total_disk_gb']) + 1)
+      devicename = disk.create_lvm_volumegroup(
+          self.hostname,
+          int(self.property_list['\$total_disk_gb']) + 1,
+          config.host(self.hostname).get_vol_group())
 
       cmd =  " virt-install"
       cmd += " -d --connect qemu:///system"
