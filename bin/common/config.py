@@ -310,7 +310,14 @@ class Config(object):
             return self.get_option("ntp.slave.server")
 
         def get_ntp_server_ip(self):
-            return self.host(self.get_ntp_server()).get_front_ip()
+
+            server_ip = self.get_option("ntp.server.ip", "")
+
+            '''IP not configured, try to get IP from guest configuration for this host'''
+            if server_ip == "":
+                server_ip = self.host(self.get_ntp_server()).get_front_ip()
+
+            return server_ip
 
         def get_mail_relay_domain_name(self):
             return self.get_option("mail_relay.domain_name")
