@@ -723,7 +723,7 @@ def add_nrpe_chain():
 
   monitor_listen_port = "5666"
   monitor_server_hostname = config.general.get_monitor_server_hostname()
-  monitor_server_ip = config.host(config.general.get_monitor_server()).get_front_ip()
+  monitor_server_ip = config.general.get_monitor_server_ip()
 
   app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_hostname))
   iptables("-A nrpe_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
