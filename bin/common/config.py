@@ -400,11 +400,19 @@ class Config(object):
 
         def get_front_interfaces(self):
             '''Get front interfaces for a specific host, as it is defined in install.cfg'''
-            return self.get_option("front.interfaces", "")
+            return self._get_interfaces("front.interfaces")
 
         def get_back_interfaces(self):
             '''Get back interfaces for a specific host, as it is defined in install.cfg'''
-            return self.get_option("back.interfaces", "")
+            return self._get_interfaces("back.interfaces")
+
+        def _get_interfaces(self, interface_name):
+            interfaces = self.get_option(interface_name, "").split(",")
+            ret = []
+            for interface in interfaces:
+                if interface.strip() != '':
+                    ret.append(interface.strip())
+            return ret 
 
         def get_front_ip(self):
             '''Get ip for a specific host, as it is defined in install.cfg'''

@@ -75,14 +75,14 @@ def net_setup_bond_br(args):
 
     # Get all parameters from syco config.
     # Check if interfaces are defined, otherwise fall back to autodetecting
-    front_interfaces = config.host(net.get_hostname()).get_front_interfaces().split(",")
-    back_interfaces = config.host(net.get_hostname()).get_back_interfaces().split(",")
+    front_interfaces = config.host(net.get_hostname()).get_front_interfaces()
+    back_interfaces = config.host(net.get_hostname()).get_back_interfaces()
 
     num_of_if = len(front_interfaces) + len(back_interfaces)
-    if (num_of_if == 0):
+    if num_of_if == 0:
         # Autodetect
         num_of_if = net.num_of_eth_interfaces()
-
+        
     front_ip = config.host(net.get_hostname()).get_front_ip()
     front_netmask = config.general.get_front_netmask()
     front_gw = config.general.get_front_gateway_ip()
@@ -97,7 +97,7 @@ def net_setup_bond_br(args):
         net_count += 1
 
     eth_count = 0;
-    if front_interfaces is None or len(front_interfaces) < 1:
+    if len(front_interfaces) < 1:
         # Use default eth interfaces
         # Also, if you don't specify front net interfaces, you may not specify back net interfaces.
         if_per_net_count = math.floor(num_of_if / net_count)
@@ -105,12 +105,12 @@ def net_setup_bond_br(args):
         if net_count > 1:
             back_interfaces = []
             for i in range(if_per_net_count):
-                back_interfaces.append("eth" + eth_count)
+                back_interfaces.append("eth" + str(eth_count))
                 eth_count += 1
 
         front_interfaces = []
         for i in range(if_per_net_count):
-            front_interfaces.append("eth" + eth_count)
+            front_interfaces.append("eth" + str(eth_count))
             eth_count += 1
 
     app.print_verbose("Configuring front net bond bond1 with interfaces: {0}".format(front_interfaces))
