@@ -281,8 +281,22 @@ class Config(object):
             return self.get_option("ldap.dn")
 
         def get_monitor_server(self):
-            '''The ip of the monitor server.'''
+            '''The host name of the monitor server.'''
             return self.get_option("monitor.server")
+
+        ''' The IP of the monitor server if specified in the general section OR
+            The front.ip of the monitor.server host if the general config does not exist.
+        '''
+
+        def get_monitor_server_ip(self):
+
+            server_ip = self.get_option("monitor.server.ip", "")
+
+            '''IP not configured, try to get IP from guest configuration for this host'''
+            if server_ip == "":
+                server_ip = self.host(self.get_monitor_server()).get_front_ip()
+
+            return server_ip
 
         def get_monitor_server_hostname(self):
             return self.get_option("monitor.hostname")
