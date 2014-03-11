@@ -43,13 +43,11 @@ import version
 SCRIPT_VERSION = 1
 
 def init_properties():
-  # Get network settings from install.cfg
-  mail_server_hostname = config.general.get_mail_relay_server()
+    # Get network settings from install.cfg
+    server_ip = config.general.get_mailrelay_server_ip()
 
-  server_ip = config.general.get_mailrelay_ip()
-
-  server_network = net.get_network_cidr(server_ip,
-    config.general.get_netmask(server_ip))
+    server_network = net.get_network_cidr(server_ip,
+        config.general.get_front_netmask(server_ip))
 
 
 def build_commands(commands):
@@ -86,8 +84,8 @@ def install_mail_server(args):
   postfix_main_cf.replace("#myorigin = $mydomain", "myorigin = $myhostname")
 
   # Accept email from frontnet and backnet
-  postfix_main_cf.replace("inet_interfaces = localhost", "inet_interfaces = 127.0.0.1,{0},{1}".format(server_front_ip, server_back_ip))
-  postfix_main_cf.replace("#mynetworks = 168.100.189.0/28, 127.0.0.0/8", "mynetworks = {0}, {1}, 127.0.0.0/8".format(server_front_network, server_back_network))
+  postfix_main_cf.replace("inet_interfaces = localhost", "inet_interfaces = 127.0.0.1,{0}".format(self.server_ip))
+  postfix_main_cf.replace("#mynetworks = 168.100.189.0/28, 127.0.0.0/8", "mynetworks = {0}, 127.0.0.0/8".format(server_network))
 
   # Do not relay anywhere special, i.e straight to internet.
   postfix_main_cf.replace("#relay_domains = $mydestination", "relay_domains =")
