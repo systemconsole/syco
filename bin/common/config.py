@@ -237,7 +237,7 @@ class Config(object):
             '''
             resolvers = "{0} {1} {2}".format(
                 self.get_front_resolver_ip(), self.get_back_resolver_ip(),
-                self.get_resolv_nameserver_server_ip()
+                self.get_nameserver_server_ip()
             )
 
             if (limiter != " "):
@@ -254,18 +254,12 @@ class Config(object):
         def get_resolv_search(self):
             return self.get_option("resolv.search")
 
-        def get_resolv_nameserver_server(self):
+        def get_nameserver_server(self):
             return self.get_option("resolv.nameserver.server")
 
-        def get_resolv_nameserver_server_ip(self):
-            '''Use property if it exists'''
-            nameserver_ip = self.get_option("resolv.nameserver.ip", "")
+        def get_nameserver_server_ip(self):
 
-            if nameserver_ip is None or nameserver_ip == "":
-                '''Attempt to auto-detect ip from a dns server config in install.cfg '''
-                nameserver_ip = self.host(self.get_resolv_nameserver_server()).get_front_ip()
-
-            return nameserver_ip
+            return self._get_service_ip("nameserver")
 
         def get_ldap_server(self):
             '''The hostname of the ldap server.'''
@@ -290,13 +284,7 @@ class Config(object):
 
         def get_monitor_server_ip(self):
 
-            server_ip = self.get_option("monitor.server.ip", "")
-
-            '''IP not configured, try to get IP from guest configuration for this host'''
-            if server_ip == "":
-                server_ip = self.host(self.get_monitor_server()).get_front_ip()
-
-            return server_ip
+            return self._get_service_ip("monitor")
 
         def get_monitor_server_hostname(self):
             return self.get_option("monitor.hostname")
@@ -311,20 +299,18 @@ class Config(object):
 
         def get_ntp_server_ip(self):
 
-            server_ip = self.get_option("ntp.server.ip", "")
+            return self._get_service_ip("ntp")
 
-            '''IP not configured, try to get IP from guest configuration for this host'''
-            if server_ip == "":
-                server_ip = self.host(self.get_ntp_server()).get_front_ip()
+        def get_mailrelay_server_ip(self):
 
-            return server_ip
+            return self._get_service_ip("mailrelay")
 
         def get_mail_relay_domain_name(self):
-            return self.get_option("mail_relay.domain_name")
+            return self.get_option("mailrelay.domain_name")
 
         def get_mail_relay_server(self):
             '''The hostname of the mail_relay server.'''
-            return self.get_option("mail_relay.server")
+            return self.get_option("mailrelay.server")
 
         def get_mail_relay_server_ip(self):
             '''The ip of the cert server.'''
@@ -401,6 +387,21 @@ class Config(object):
         def get_ossec_server_ip(self):
             '''The ip of the ossec server.'''
             return self.host(self.get_ossec_server()).get_front_ip()
+
+        '''
+        Get the IP of a service by:
+        A) Looking for a general section property called <service-name>.server.ip
+        B) Finding front-net IP by host name which is retrieved through a function in this class called: get_<service>_server()
+        '''
+        def _get_service_ip(self, service_name):
+
+            service_ip = self.get_option(service_name + ".server.ip", "")
+
+            if service_ip == "":
+                '''If IP is not configured, try to get IP from guest configuration for this host'''
+                hostname_method = getattr(self, "get_" + service_name + "_server")
+                service_host_name = hostname_method()
+                service_ip = self.host(service_host_name).get_front_ip()
 
 
     class HostConfig(SycoConfig):
