@@ -47,7 +47,7 @@ def init_properties():
     server_ip = config.general.get_mailrelay_server_ip()
 
     server_network = net.get_network_cidr(server_ip,
-        config.general.get_front_netmask(server_ip))
+        config.general.get_front_netmask())
 
 
 def build_commands(commands):
