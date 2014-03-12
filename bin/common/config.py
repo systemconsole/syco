@@ -386,7 +386,7 @@ class Config(object):
 
         def get_ossec_server_ip(self):
             '''The ip of the ossec server.'''
-            return self.host(self.get_ossec_server()).get_front_ip()
+            return self._get_service_ip("ossec")
 
         '''
         Get the IP of a service by:
