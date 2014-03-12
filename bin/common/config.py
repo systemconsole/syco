@@ -266,7 +266,7 @@ class Config(object):
             return self.get_option("ldap.server")
 
         def get_ldap_server_ip(self):
-            return self.host(self.get_ldap_server()).get_front_ip()
+            return self._get_service_ip("ldap")
 
         def get_ldap_hostname(self):
             return self.get_option("ldap.hostname")
