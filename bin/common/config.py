@@ -403,6 +403,7 @@ class Config(object):
                 service_host_name = hostname_method()
                 service_ip = self.host(service_host_name).get_front_ip()
 
+            return service_ip
 
     class HostConfig(SycoConfig):
         '''
