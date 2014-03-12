@@ -17,25 +17,25 @@ __status__ = "Production"
 from general import x
 
 
-def active_volgroup_name():
-	"""
-	Return the name of the first LVM volumegroup.
+def verify_volgroup(vol_group_name):
+    """
+    Return the name of the first LVM volumegroup.
 
-	"""
-	result = x("vgdisplay --activevolumegroups -c")
-	for row in result.split("\n"):
-		volgroup = row.split(":", 1)[0].strip()
-		if "VolGroup00" in volgroup:
-			return "VolGroup00"
+    """
+    result = x("vgdisplay --activevolumegroups -c")
+    for row in result.split("\n"):
+        volgroup = row.split(":", 1)[0].strip()
+        if vol_group_name in volgroup:
+            return
 
-	raise Exception("Can't find any volgroup name.")
+    raise Exception("Can't find VolGroup named: %s" % (vol_group_name))
 
 
-def create_lvm_volumegroup(name, size):
-	volgroup = active_volgroup_name()
-	devicename = "/dev/%s/%s" % (volgroup, name)
-	result = x("lvdisplay -v " + devicename)
-	if (devicename not in result):
-		x("lvcreate -n %s -L %sG %s" % (name, size, volgroup))
+def create_lvm_volumegroup(name, size, vol_group = "VolGroup00"):
+    verify_volgroup(vol_group)
+    device_name = "/dev/%s/%s" % (vol_group, name)
+    result = x("lvdisplay -v " + device_name)
+    if device_name not in result:
+        x("lvcreate -n %s -L %sG %s" % (name, size, vol_group))
 
-	return devicename
+    return device_name

@@ -237,7 +237,7 @@ class Config(object):
             '''
             resolvers = "{0} {1} {2}".format(
                 self.get_front_resolver_ip(), self.get_back_resolver_ip(),
-                self.get_resolv_nameserver_server_ip()
+                self.get_nameserver_server_ip()
             )
 
             if (limiter != " "):
@@ -254,11 +254,12 @@ class Config(object):
         def get_resolv_search(self):
             return self.get_option("resolv.search")
 
-        def get_resolv_nameserver_server(self):
+        def get_nameserver_server(self):
             return self.get_option("resolv.nameserver.server")
 
-        def get_resolv_nameserver_server_ip(self):
-            return self.host(self.get_resolv_nameserver_server()).get_front_ip()
+        def get_nameserver_server_ip(self):
+
+            return self._get_service_ip("nameserver")
 
         def get_ldap_server(self):
             '''The hostname of the ldap server.'''
@@ -274,8 +275,16 @@ class Config(object):
             return self.get_option("ldap.dn")
 
         def get_monitor_server(self):
-            '''The ip of the monitor server.'''
+            '''The host name of the monitor server.'''
             return self.get_option("monitor.server")
+
+        ''' The IP of the monitor server if specified in the general section OR
+            The front.ip of the monitor.server host if the general config does not exist.
+        '''
+
+        def get_monitor_server_ip(self):
+
+            return self._get_service_ip("monitor")
 
         def get_monitor_server_hostname(self):
             return self.get_option("monitor.hostname")
@@ -289,14 +298,19 @@ class Config(object):
             return self.get_option("ntp.slave.server")
 
         def get_ntp_server_ip(self):
-            return self.host(self.get_ntp_server()).get_front_ip()
+
+            return self._get_service_ip("ntp")
+
+        def get_mailrelay_server_ip(self):
+
+            return self._get_service_ip("mailrelay")
 
         def get_mail_relay_domain_name(self):
-            return self.get_option("mail_relay.domain_name")
+            return self.get_option("mailrelay.domain_name")
 
         def get_mail_relay_server(self):
             '''The hostname of the mail_relay server.'''
-            return self.get_option("mail_relay.server")
+            return self.get_option("mailrelay.server")
 
         def get_mail_relay_server_ip(self):
             '''The ip of the cert server.'''
@@ -374,6 +388,22 @@ class Config(object):
             '''The ip of the ossec server.'''
             return self.host(self.get_ossec_server()).get_front_ip()
 
+        '''
+        Get the IP of a service by:
+        A) Looking for a general section property called <service-name>.server.ip
+        B) Finding front-net IP by host name which is retrieved through a function in this class called: get_<service>_server()
+        '''
+        def _get_service_ip(self, service_name):
+
+            service_ip = self.get_option(service_name + ".server.ip", "")
+
+            if service_ip == "":
+                '''If IP is not configured, try to get IP from guest configuration for this host'''
+                hostname_method = getattr(self, "get_" + service_name + "_server")
+                service_host_name = hostname_method()
+                service_ip = self.host(service_host_name).get_front_ip()
+
+            return service_ip
 
     class HostConfig(SycoConfig):
         '''
@@ -546,6 +576,10 @@ class Config(object):
         def get_boot_device(self, default_device = None):
             '''Get the device name on which the installation will be performed.'''
             return self.get_option("boot_device", default_device)
+
+        def get_vol_group(self, default_vol_group = "VolGroup00"):
+            '''Get the volume group name on which the installation will be performed.'''
+            return self.get_option("vol_group", default_vol_group)
 
         def _get_template(self):
             '''

@@ -75,7 +75,7 @@ class install_guest:
     '''
     # The ip connected to the admin net, from which the nfs
     # export is done.
-    self.kvm_host_back_ip = net.get_lan_ip()
+    self.kvm_host_ip = net.get_lan_ip()
 
     self.ram = str(config.host(self.hostname).get_ram())
     self.cpu = str(config.host(self.hostname).get_cpu())
@@ -109,6 +109,7 @@ class install_guest:
     prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
     prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
     prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
+    prop['\$vol_group'] = config.host(self.hostname).get_vol_group()
 
     self.property_list = prop
 
@@ -155,7 +156,10 @@ class install_guest:
       nfs.remove_export('dvd')
 
   def create_kvm_host(self):
-      devicename = disk.create_lvm_volumegroup(self.hostname, int(self.property_list['\$total_disk_gb']) + 1)
+      devicename = disk.create_lvm_volumegroup(
+          self.hostname,
+          int(self.property_list['\$total_disk_gb']) + 1,
+          config.host(self.hostname).get_vol_group())
 
       cmd =  " virt-install"
       cmd += " -d --connect qemu:///system"
@@ -170,15 +174,15 @@ class install_guest:
       cmd += " --disk path=" + devicename
       cmd += " --os-variant=rhel6"
       cmd += " --arch x86_64"
-      cmd += " --network bridge:br0"
+      if config.general.is_back_enabled(): cmd += " --network bridge:br0"
       cmd += " --network bridge:br1"
-      cmd += " --location nfs:" + self.kvm_host_back_ip + ":/dvd"
-      cmd += ' -x "ks=nfs:' + self.kvm_host_back_ip + ':/kickstart/' + self.hostname + '.ks'
+      cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
+      cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
       cmd += ' ksdevice=eth0'
-      cmd += ' ip=' + self.property_list['\$back_ip']
-      cmd += ' netmask=' + self.property_list['\$back_netmask']
-      cmd += ' dns=' + config.general.get_back_resolver_ip()
-      cmd += ' gateway=' + self.kvm_host_back_ip
+      cmd += ' ip=' + self.property_list['\$front_ip']
+      cmd += ' netmask=' + self.property_list['\$front_netmask']
+      cmd += ' dns=' + config.general.get_front_resolver_ip()
+      cmd += ' gateway=' + self.kvm_host_ip
       cmd += ' "'
 
       x(cmd)

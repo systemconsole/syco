@@ -82,10 +82,10 @@ def _install_nrpe(args):
     _install_nrpe_plugins()
 
     # Allow only monitor to query NRPE
-    monitor_server_front_ip = config.host(config.general.get_monitor_server()).get_front_ip()
+    monitor_server_front_ip = config.general.get_monitor_server_ip()
     app.print_verbose("Setting monitor server:" + monitor_server_front_ip)
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.cfg")
-    nrpe_config.replace("$(MONITORIP)" ,monitor_server_front_ip)
+    nrpe_config.replace("$(MONITORIP)", monitor_server_front_ip)
 
     # Allow nrpe to listen on UDP port 5666
     iptables.add_nrpe_chain()

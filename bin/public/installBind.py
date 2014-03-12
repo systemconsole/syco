@@ -249,7 +249,7 @@ def _copy_conf(file_ext, to_folder, active_dc):
             zone files. That might fuck up the installation.
 
     '''
-    bind_config_subdir = config.host(config.general.get_resolv_nameserver_server()).get_bind_conf_subdir()
+    bind_config_subdir = config.host(config.general.get_nameserver_server()).get_bind_conf_subdir()
     if len(bind_config_subdir) > 0 and not bind_config_subdir.startswith('/'):
         bind_config_subdir = "/" + bind_config_subdir
 
@@ -316,19 +316,19 @@ def install_bind_client(args):
 
     # Iptables is already configured with iptables._setup_dns_resolver_rules
 
-    general.wait_for_server_to_start(config.general.get_resolv_nameserver_server_ip(), "53")
+    general.wait_for_server_to_start(config.general.get_nameserver_server_ip(), "53")
 
     # Set what resolver to use (this will be rewritten by networkmanager at
     # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
-    resolv.add("nameserver {0} ".format(config.general.get_resolv_nameserver_server_ip()))
+    resolv.add("nameserver {0} ".format(config.general.get_nameserver_server_ip()))
 
     # Change config files for networkmanager.
     x("""
         grep -irl dns ifcfg*|xargs \
         sed -i 's/.*\(dns.*\)[=].*/\\1={0}/ig'""".format(
-            config.general.get_resolv_nameserver_server_ip()
+            config.general.get_nameserver_server_ip()
         ), cwd = "/etc/sysconfig/network-scripts"
     )
 
