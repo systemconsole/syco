@@ -131,6 +131,7 @@ def net_setup_bond_br(args):
         "Restart the network service so all changes will be applied."
     )
     x("service network restart")
+    x("echo \"nameserver 8.8.8.8\" > /etc/resolv.conf")
 
     #
     version_obj.mark_executed()
