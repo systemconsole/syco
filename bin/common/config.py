@@ -165,11 +165,11 @@ class Config(object):
 
         def get_installation_server(self):
             '''The hostname of the installation server.'''
-            return self.get_option("installation_server")
+            return self.get_option("installation.server")
 
         def get_installation_server_ip(self):
-            '''The ip of the installation server.'''
-            return self.host(self.get_installation_server()).get_front_ip()
+            """The ip of the installation server."""
+            return self._get_service_ip("installation")
 
         def get_front_gateway_ip(self):
             '''The ip of the network gateway.'''
