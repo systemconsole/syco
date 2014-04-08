@@ -322,7 +322,7 @@ class Config(object):
 
         def get_cert_server_ip(self):
             '''The ip of the cert server.'''
-            return self.host(self.get_cert_server()).get_back_ip()
+            return self._get_service_ip('cert')
 
         def get_cert_wild_ca(self):
             '''The hostname of the cert server.'''
