@@ -115,16 +115,16 @@ class install_guest:
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
-      x("mkdir /media/dvd1")
+      x("mkdir /media/dvd")
 
     if (not os.path.ismount("/media/dvd")):
-      x("mount -o ro -t iso9660 /dev/dvd1 /media/dvd")
+      x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
 
     if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
       raise Exception("Couldn't mount dvd")
 
   def unmount_dvd(self):
-    x("umount /media/dvd1")
+    x("umount /media/dvd")
 
   def create_kickstart(self):
       '''
