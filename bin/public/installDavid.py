@@ -5,8 +5,6 @@ is forbidden and will be prosecuted by law. All information and communications
 on this system are subject to review, monitoring and recording at any time,
 without notice or permission. Users should have no expectation of privacy.
 ******************************************************************************
-[root@vh01-tc ~]# cd /opt/syco/bin/public/
-[root@vh01-tc public]# cat installDavid.py
 #!/usr/bin/env python
 '''
 Installs clam antivirus
