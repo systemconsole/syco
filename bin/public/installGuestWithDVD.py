@@ -115,16 +115,16 @@ class install_guest:
 
   def mount_dvd(self):
     if (not os.access("/media/dvd", os.F_OK)):
-      x("mkdir /media/dvd")
+      x("mkdir /media/dvd1")
 
     if (not os.path.ismount("/media/dvd")):
-      x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
+      x("mount -o ro -t iso9660 /dev/dvd1 /media/dvd")
 
     if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
       raise Exception("Couldn't mount dvd")
 
   def unmount_dvd(self):
-    x("umount /media/dvd")
+    x("umount /media/dvd1")
 
   def create_kickstart(self):
       '''
@@ -178,7 +178,7 @@ class install_guest:
       cmd += " --network bridge:br1"
       cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
       cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
-      cmd += ' ksdevice=eth0'
+      cmd += ' ksdevice=eth1'
       cmd += ' ip=' + self.property_list['\$front_ip']
       cmd += ' netmask=' + self.property_list['\$front_netmask']
       cmd += ' dns=' + config.general.get_front_resolver_ip()
