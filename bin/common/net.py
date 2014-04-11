@@ -95,7 +95,7 @@ def get_lan_ip():
             pass
 
         if lan_ip == "" or (lan_ip.startswith("127.") and os.name != "nt"):
-            interfaces = ["br0", "br1", "bond0", "bond1",
+            interfaces = ["br1", "br0", "bond0", "bond1",
                           "eth0", "eth1", "eth2", "eth3"]
 
             interface_list = get_all_interfaces()
