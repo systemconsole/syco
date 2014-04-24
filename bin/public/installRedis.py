@@ -45,7 +45,7 @@ def install_redis(args):
   Redis Installation
 
   '''
-  return
+  #return
   app.print_verbose("Install Redis version: %d" % script_version)
   version_obj = version.Version("InstallRedis", script_version)
   version_obj.check_executed()
@@ -65,7 +65,7 @@ def uninstall_redis(args):
   Remove Redis from the server
 
   '''
-  return
+  #return
   app.print_verbose("Uninstall Redis")
 
   os.chdir("/")
