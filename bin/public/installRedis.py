@@ -21,6 +21,7 @@ import time
 import traceback
 import config
 import iptables
+import install
 from config import get_servers, host
 import app
 from general import x, download_file, md5checksum, get_install_dir
@@ -51,12 +52,13 @@ def install_redis(args):
   version_obj.check_executed()
 
   os.chdir("/")
-  x("yum -y install tcl redis")
-  x("/sbin/iptables -A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  x("/sbin/iptables -A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  x("service iptables save")
+  install.package("tcl redis")
+  iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.iptables("-A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.save()
   x("mv /etc/redis.conf /etc/org.redis.conf")
   x("cp /opt/syco/usr/syco-private/var/redis/redis.conf /etc/redis.conf")
+  x("/sbin/chkconfig --level 3 redis on")
   x("service redis restart")
 
   version_obj.mark_executed()
@@ -70,11 +72,11 @@ def uninstall_redis(args):
   app.print_verbose("Uninstall Redis")
 
   os.chdir("/")
-
+  x("/sbin/chkconfig --level 3 redis off")
   x("service redis stop")
   x("yum -y remove redis")
   x("rm -rf /etc/redis.conf")
   x("rm -rf /etc/redis.conf.rpmsave")
-  x("/sbin/iptables -D syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  x("/sbin/iptables -D syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  x("service iptables save")
+  iptables.iptables("-D syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.iptables("-D syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.save()
