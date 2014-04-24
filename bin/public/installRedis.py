@@ -38,7 +38,7 @@ def build_commands(commands):
 
   '''
   commands.add("install-redis", install_redis, help="Install Redis on the server.")
-  commands.add("uninstall-redis", uninstall_redis, help="uninstall Redis and all certs on the server.")
+  commands.add("uninstall-redis", uninstall_redis, help="Uninstall Redis from the server.")
 
 def install_redis(args):
   '''
@@ -73,4 +73,3 @@ def uninstall_redis(args):
   x("service redis stop")
   x("yum -y remove redis")
   x("rm -rf /etc/redis.conf")
-  
