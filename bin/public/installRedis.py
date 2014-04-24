@@ -73,3 +73,4 @@ def uninstall_redis(args):
   x("service redis stop")
   x("yum -y remove redis")
   x("rm -rf /etc/redis.conf")
+  x("rm -rf /etc/redis.conf.rpmsave")
