@@ -52,12 +52,28 @@ def install_redis(args):
   version_obj.check_executed()
 
   os.chdir("/")
-  install.package("tcl redis")
-  iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  iptables.iptables("-A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  install.package("tcl redis keepalived")
+  
+  # Add iptables rules.
+  iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp") # Redis listens to port 6379
+  iptables.iptables("-A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp") # Redis listens to port 6379
+  iptables.iptables("-A syco_input -i eth1 -d 224.0.0.0/8 -j ACCEPT") #M ulticast needed to be unblocked for VRRP protocol to work.
+  iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT") # Open up for VRRP Protocol (IP Protocol 112)
+  iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT") # Open up for VRRP Protocol (IP Protocol 112)
   iptables.save()
+  
+  #Configure Redis
   x("mv /etc/redis.conf /etc/org.redis.conf")
   x("cp /opt/syco/usr/syco-private/var/redis/redis.conf /etc/redis.conf")
+
+  # Configure Keepalived
+  x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
+  x("mv /etc/keepalived/keepalived.conf /etc/keepalived/org.keepalived.conf")
+  x("cp /opt/syco/usr/syco-private/var/redis/keepalived.conf /etc/keepalived/keepalived.conf")
+
+  # Start the services.
+  x("/sbin/chkconfig --level 3 keepalived on")
+  x("service keepalived restart")
   x("/sbin/chkconfig --level 3 redis on")
   x("service redis restart")
 
