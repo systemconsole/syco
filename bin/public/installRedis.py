@@ -19,10 +19,13 @@ import stat
 import sys
 import time
 import traceback
-
+import config
+import iptables
+from config import get_servers, host
 import app
-import general
+from general import x, download_file, md5checksum, get_install_dir
 import version
+
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -47,16 +50,13 @@ def install_redis(args):
   version_obj = version.Version("InstallRedis", script_version)
   version_obj.check_executed()
 
-  #if os.path.exists('/etc/ssl/ca/private/ca.key'):
-  #  app.print_verbose("CA is already installed")
-  #else:
-    #making folders
-    #creating certs
-    #os.chdir("/etc/ssl")
-    #general.shell_exec("openssl genrsa -out ca/private/ca.key 4096")
-    #general.shell_exec("openssl req -new -key ca/private/ca.key -out ca/ca.csr -subj '/O=syco/OU=System Console Project/CN=systemconsole.github.com'")
-    #general.shell_exec("openssl x509 -req -days 365 -in ca/ca.csr -signkey ca/private/ca.key -out ca/ca.crt ")
-
+  os.chdir("/")
+  x("yum -y install tcl redis")
+  x("/sbin/iptables -A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  x("/sbin/iptables -A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  x("mv /etc/redis.conf /etc/org.redis.conf")
+  x("cp /opt/syco/usr/syco-private/var/redis/redis.conf /etc/redis.conf")
+  x("service redis restart")
 
   version_obj.mark_executed()
 
@@ -68,9 +68,9 @@ def uninstall_redis(args):
   return
   app.print_verbose("Uninstall Redis")
 
-  #if (os.path.exists('/etc/ssl/ca/private/ca.key')):
-  #  general.shell_exec("rm -rf /etc/ssl/")
-  #version_obj = version.Version("InstallCa", script_version)
-  #version_obj.mark_uninstalled()
+  os.chdir("/")
 
-
+  x("service redis stop")
+  x("yum -y remove redis")
+  x("rm -rf /etc/redis.conf")
+  
