@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-TODO, THIS FILE IS NOT READY TO USE.
+This script will install Redis on the targeted server.
 
 '''
 
