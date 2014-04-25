@@ -21,6 +21,7 @@ import time
 import traceback
 import config
 import iptables
+import socket
 import install
 from config import get_servers, host
 import app
@@ -55,26 +56,36 @@ def install_redis(args):
   install.package("tcl redis keepalived")
   
   # Add iptables rules.
-  iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp") # Redis listens to port 6379
-  iptables.iptables("-A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp") # Redis listens to port 6379
-  iptables.iptables("-A syco_input -i eth1 -d 224.0.0.0/8 -j ACCEPT") #M ulticast needed to be unblocked for VRRP protocol to work.
-  iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT") # Open up for VRRP Protocol (IP Protocol 112)
-  iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT") # Open up for VRRP Protocol (IP Protocol 112)
+  iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.iptables("-A syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
+  iptables.iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP")
+  iptables.iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP")
+  iptables.iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
+  iptables.iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
+  iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT")
+  iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT")
   iptables.save()
   
   #Configure Redis
+  x("echo 'vm.overcommit_memory = 1' >> /etc/sysctl.conf")
   x("mv /etc/redis.conf /etc/org.redis.conf")
   x("cp /opt/syco/usr/syco-private/var/redis/redis.conf /etc/redis.conf")
+  x("cp /opt/syco/usr/syco-private/var/redis/redis-check /usr/bin/redis-check")
+  x("chmod 755 /usr/bin/redis-check")
 
   # Configure Keepalived
   x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
   x("mv /etc/keepalived/keepalived.conf /etc/keepalived/org.keepalived.conf")
   x("cp /opt/syco/usr/syco-private/var/redis/keepalived.conf /etc/keepalived/keepalived.conf")
 
+  x("sed -i s/REDIS%%IDDCB%%/{0}}/g /etc/keepalived/keepalived.conf".format(socket.gethostname().upper()))
+  x("sed -i s/REDIS%%IDDCS%%/{0}}/g /etc/keepalived/keepalived.conf".format(socket.gethostname().lower()))
+
   # Start the services.
-  x("/sbin/chkconfig --level 3 keepalived on")
+  x("sysctl -p")
+  x("/sbin/chkconfig keepalived on")
   x("service keepalived restart")
-  x("/sbin/chkconfig --level 3 redis on")
+  x("/sbin/chkconfig redis on")
   x("service redis restart")
 
   version_obj.mark_executed()
@@ -88,9 +99,9 @@ def uninstall_redis(args):
   app.print_verbose("Uninstall Redis")
 
   os.chdir("/")
-  x("/sbin/chkconfig --level 3 redis off")
+  x("/sbin/chkconfig redis off")
   x("service redis stop")
-  x("/sbin/chkconfig --level 3 keepalived off")
+  x("/sbin/chkconfig keepalived off")
   x("service keepalived stop")
   x("yum -y remove redis keepalived")
   x("rm -rf /etc/redis.conf")
@@ -98,7 +109,10 @@ def uninstall_redis(args):
   x("rm -rf /etc/keepalived/*")
   iptables.iptables("-D syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
   iptables.iptables("-D syco_output -p tcp -m multiport --dports 6379 -j allowed_tcp")
-  iptables.iptables("-D syco_input -i eth1 -d 224.0.0.0/8 -j ACCEPT")
+  iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
+  iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
   iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
   iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
+  iptables.iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+  iptables.iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
   iptables.save()
