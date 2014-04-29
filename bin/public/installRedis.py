@@ -25,6 +25,7 @@ import socket
 import install
 import app
 import version
+import scopen
 
 script_version = 1
 
@@ -72,8 +73,8 @@ def _configure_keepalived():
   x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
   x("mv {0}keepalived.conf {1}org.keepalived.conf".format(KEEPALIVED_CONF_DIR, KEEPALIVED_CONF_DIR))
   x("cp {0}var/redis/keepalived.conf {1}keepalived.conf".format(KEEPALIVED_CONF_DIR, KEEPALIVED_CONF_DIR))
-  x("sed -i s/${REDIS_SERVER_NAME_UP}/{0}/g {1}keepalived.conf".format(socket.gethostname().upper(), KEEPALIVED_CONF_DIR))
-  x("sed -i s/${REDIS_SERVER_NAME_DN}/{0}/g {1}keepalived.conf".format(socket.gethostname().lower(), KEEPALIVED_CONF_DIR))
+  scopen.replace("${REDIS_SERVER_NAME_UP}", socket.gethostname().upper(), KEEPALIVED_CONF_DIR + "keepalived.conf")
+  scopen.replace("${REDIS_SERVER_NAME_DN}", socket.gethostname().lower(), KEEPALIVED_CONF_DIR + "keepalived.conf")
   _chkconfig("keepalived","on")
   _service("keepalived","restart")
 
