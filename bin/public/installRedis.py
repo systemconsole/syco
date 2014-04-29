@@ -95,7 +95,7 @@ def _configure_redis():
 
 
 def _service(service,command):
-  x("service {0} {1}".format(service, command))
+  x("/sbin/service {0} {1}".format(service, command))
 
 
 def _chkconfig(service,command):
