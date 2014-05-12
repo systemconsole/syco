@@ -112,7 +112,7 @@ def _install_nrpe_plugins():
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
-    nrpe_config.replace("$(LDAPURL)", config.general.get_ldap_hostname())
+    nrpe_config.replace("($LDAPURL)", config.general.get_ldap_hostname())
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
     x("chmod -R 750 /usr/lib64/nagios/plugins/")
