@@ -154,13 +154,13 @@ def _install_nrpe_plugins_dependencies():
 
     nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
     nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamav".format(constant.SYCO_PATH, PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamscan".format(constant.SYCO_PATH, PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_disk".format(constant.SYCO_PATH, PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}get_services".format(constant.SYCO_PATH, PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files".format(constant.SYCO_PATH, PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs".format(constant.SYCO_PATH, PLG_PATH))
-
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamav".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamscan".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_disk".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}get_services".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs".format(PLG_PATH))
+    
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
 
