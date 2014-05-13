@@ -98,7 +98,7 @@ def _install_nrpe(args):
 
 def _fix_selinux(type, filename):
     x("chcon -t {0} {1}{2}".format(type, PLG_PATH, filename))
-    x("semanage fcontext -a -t {0} '{1}{2}".format(type, PLG_PATH, filename))
+    x("semanage fcontext -a -t {0} '{1}{2}'".format(type, PLG_PATH, filename))
 
 def _install_nrpe_plugins():
     '''
