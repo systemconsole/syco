@@ -85,7 +85,7 @@ class Version:
 
     if config.has_section(self.hostname):
       if config.has_option(self.hostname, self.command):
-        if config.getint(self.hostname, self.command) >= self.version:
+        if config.get(self.hostname, self.command) == self.version:
           return True
     return False
 
