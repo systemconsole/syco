@@ -40,11 +40,12 @@ def build_commands(commands):
 def install_clam(args):
 
     check_arguments(args)
-    clam_version = args[0]
+    clam_version = args[1]
 
     app.print_verbose("Install antivirus (clamav and freshclam).")
 
-    version_obj = version.Version("InstallClamAntiVirus", SCRIPT_VERSION + clam_version)
+    exec_version = `SCRIPT_VERSION` + "-" + clam_version
+    version_obj = version.Version("InstallClamAntiVirus", exec_version)
     version_obj.check_executed()
 
     prepare_installation()
@@ -55,7 +56,7 @@ def install_clam(args):
 
     version_obj.mark_executed()
 
-def check_arguments(self, args):
+def check_arguments(args):
 
     if (len(args) != 2):
         raise Exception("Invalid arguments. syco install-clam-client [version]")
@@ -115,7 +116,7 @@ def download_and_install(clam_version):
     #
     # Install packages required for compiling
     #
-    x("yum -y install gcc make gcc-c++ zlib-devel bzip2-devel ncurses-devel file")
+    x("yum -y install gcc make gcc-c++ zlib-devel bzip2-devel ncurses-devel file openssl-devel")
 
     #
     # Build and install clamav and freshclam
