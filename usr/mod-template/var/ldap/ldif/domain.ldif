@@ -1,0 +1,179 @@
+###########################################################
+# NEW DATABASE
+###########################################################
+dn: dc=systemconsole,dc=com
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: System Console Inc
+dc: System Operations
+description: Tree root
+
+# Used by sssd to ask general queries.
+#
+# The SSHA password is "password"
+#
+dn: cn=sssd,dc=systemconsole,dc=com
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: sssd
+description: Account for sssd.
+userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+
+###########################################################
+# Add pwdpolicy overlay
+# Need to be done before adding new users.
+###########################################################
+dn: ou=pwpolicies,dc=systemconsole,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
+
+dn: cn=default,ou=pwpolicies,dc=systemconsole,dc=com
+cn: default
+objectClass: pwdPolicy
+objectClass: person
+objectClass: top
+pwdAllowUserChange: TRUE
+pwdAttribute: 2.5.4.35
+pwdExpireWarning: 604800
+pwdFailureCountInterval: 30
+pwdGraceAuthNLimit: 0
+pwdInHistory: 10
+pwdLockout: TRUE
+pwdLockoutDuration: 3600
+pwdMaxAge: 7776000
+pwdMaxFailure: 5
+pwdMinAge: 3600
+pwdMinLength: 12
+pwdMustChange: FALSE
+pwdSafeModify: FALSE
+sn: dummy value
+
+###########################################################
+# GROUPS
+###########################################################
+dn: ou=group,dc=systemconsole,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: group
+
+dn: cn=fareoffice,ou=group,dc=systemconsole,dc=com
+cn: users
+objectClass: posixGroup
+gidNumber: 2100
+memberUid: patbat
+memberUid: norbat
+
+dn: cn=sysop,ou=group,dc=systemconsole,dc=com
+cn: sysop
+objectClass: posixGroup
+gidNumber: 2101
+memberUid: patbat
+
+dn: cn=management,ou=group,dc=systemconsole,dc=com
+cn: management
+objectClass: posixGroup
+gidNumber: 2102
+memberUid: norbat
+
+###########################################################
+# USERS
+###########################################################
+dn: ou=people,dc=systemconsole,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: people
+
+dn: uid=syscon,ou=people,dc=systemconsole,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+commonName: System Console
+displayName: System Console
+gecos: System Console
+givenName: System
+surname: Console
+uid: syscon
+userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+loginShell: /bin/bash
+uidNumber: 2099
+gidNumber: 100
+homeDirectory: /home/syscon
+mail: syscon@systemconsole.com
+
+dn: uid=patbat,ou=people,dc=systemconsole,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+commonName: Patrick Bateman
+displayName: Patrick Bateman
+gecos: Patrick Bateman
+givenName: Patrick
+surname: Bateman
+uid: patbat
+userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+loginShell: /bin/bash
+uidNumber: 2100
+gidNumber: 100
+homeDirectory: /home/batbat
+mail: patbat@systemconsole.com
+employeeType: Sysop
+
+dn: uid=norbat,ou=people,dc=systemconsole,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+commonName: Norman Bates
+displayName: Norman Bates
+gecos: Norman Bates
+givenName: Norman
+surname: Bates
+uid: norbat
+userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+loginShell: /bin/bash
+uidNumber: 2100
+gidNumber: 100
+homeDirectory: /home/batbat
+mail: norbat@systemconsole.com
+employeeType: Sysop
+
+
+###########################################################
+# SUDOERS
+###########################################################
+dn: ou=SUDOers,dc=systemconsole,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: SUDOers
+
+dn: cn=defaults,ou=SUDOers,dc=systemconsole,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: defaults
+description: Default sudoOptions go here
+sudoOption: requiretty
+sudoOption: always_set_home
+sudoOption: env_reset
+sudoOption: env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS"
+sudoOption: env_keep+="MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE"
+sudoOption: env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES"
+sudoOption: env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
+sudoOption: env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
+sudoOption: secure_path=/sbin:/bin:/usr/sbin:/usr/bin
+
+dn: cn=root,ou=SUDOers,dc=systemconsole,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: root
+sudoUser: root
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
+
+# Allow all sysops to execute anything
+dn: cn=%sysop,ou=SUDOers,dc=systemconsole,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: %sysop
+sudoUser: %sysop
+sudoHost: ALL
+sudoRunAsUser: ALL
+sudoCommand: ALL
