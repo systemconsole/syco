@@ -33,6 +33,7 @@ HP_HEALTH_FILENAME="hp-health-9.1.0.42-54.rhel6.x86_64.rpm"
 HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/psp/RedHatEnterpriseES/6.0/packages/x86_64/{0}".format(HP_HEALTH_FILENAME)
 HP_HEALTH_MD5="0bc2a9932c3080829a96ab7bb4727089"
 
+PLG_PATH="/usr/lib64/nagios/plugins/"
 
 SCRIPT_VERSION = 2
 
@@ -95,6 +96,9 @@ def _install_nrpe(args):
     x("/sbin/chkconfig --level 3 nrpe on")
     x("service nrpe restart")
 
+def _fix_selinux(type, filename):
+    x("chcon -t {0} {1}{2}".format(type, PLG_PATH, filename))
+    x("semanage fcontext -a -t {0} '{1}{2}'".format(type, PLG_PATH, filename))
 
 def _install_nrpe_plugins():
     '''
@@ -103,7 +107,7 @@ def _install_nrpe_plugins():
     '''
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
-    x("cp -p {0}lib/nagios/plugins_nrpe/* /usr/lib64/nagios/plugins/".format(constant.SYCO_PATH))
+    x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
 
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
@@ -121,6 +125,16 @@ def _install_nrpe_plugins():
     for path in rule_path_list:
         x("cp {0}/*.pp /var/lib/syco_selinux_modules/".format(path))
     x("semodule -i /var/lib/syco_selinux_modules/*.pp")
+
+    #Fix some SELinux rules on custom plugins.
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "check_disk")
+    _fix_selinux("nagios_services_plugin_exec_t",   "check_ldap.php")
+    _fix_selinux("nagios_services_plugin_exec_t",   "check_iptables.py")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "check_clam*")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
 
     # Set MySQL password, if running MySQL.
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
@@ -140,11 +154,13 @@ def _install_nrpe_plugins_dependencies():
 
     nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
     nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamav")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_clamscan")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_disk")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/get_services")
-
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamav".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamscan".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_disk".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}get_services".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files".format(PLG_PATH))
+    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs".format(PLG_PATH))
+    
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
 
@@ -169,7 +185,7 @@ def _install_nrpe_plugins_dependencies():
 
         # Let nrpe run hpasmcli
         nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli")
-        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/usr/lib64/nagios/plugins/check_hpasm")
+        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_hpasm".format(PLG_PATH))
 
         x("service hp-health start")
 
