@@ -1,3 +1,0 @@
-#!/bin/bash
-
-su play -c "/opt/ehi-pbk/target/start -server -Xms${JAVA_XMS}M -Xmx${JAVA_XMX}M -Dconfig.file=/opt/pbk-conf/installed_application.conf -Dlogger.file=/opt/pbk-conf/logger.xml" &

@@ -1,9 +1,0 @@
-;
-; This file contains zones that will be used when requesting DNS entries
-; from lan.
-;
-
-$INCLUDE farepayment.com.global.zone
-
-dns-tc               IN  A       10.101.1.6
-dns-av               IN  A       10.101.2.6

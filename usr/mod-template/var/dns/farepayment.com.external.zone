@@ -1,9 +1,0 @@
-;
-; This file contains zones that will be used when requesting DNS entries
-; from internet.
-;
-
-$INCLUDE farepayment.com.global.zone
-
-dns-av              IN  A       88.80.170.189
-dns-tc              IN  A       83.140.64.189
