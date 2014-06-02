@@ -30,7 +30,7 @@ import version
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
 
 
 def build_commands(commands):
@@ -39,19 +39,27 @@ def build_commands(commands):
 
 def install_clam(args):
 
+    check_arguments(args)
+    clam_version = args[1]
+
     app.print_verbose("Install antivirus (clamav and freshclam).")
 
-    version_obj = version.Version("InstallClamAntiVirus", SCRIPT_VERSION)
+    exec_version = `SCRIPT_VERSION` + "-" + clam_version
+    version_obj = version.Version("InstallClamAntiVirus", exec_version)
     version_obj.check_executed()
 
     prepare_installation()
-    download_and_install()
+    download_and_install(clam_version)
     setup_clam_and_freshclam()
     setup_crontab()
     setup_autostart_and_start()
 
     version_obj.mark_executed()
 
+def check_arguments(args):
+
+    if (len(args) != 2):
+        raise Exception("Invalid arguments. syco install-clam-client [version]")
 
 def is_user_installed(username):
     '''
@@ -92,12 +100,14 @@ def prepare_installation():
     x("chmod 700 /usr/local/share/clamav/")
 
 
-def download_and_install():
+def download_and_install(clam_version):
     #
     # Download and extract clamav
     #
     app.print_verbose("Download and extract clamav")
-    dst_path = urlretrive(CLAM_AV_URL, "clamav_latest.tar.gz")
+    dst_path = urlretrive(
+        CLAM_AV_URL.format(clam_version),
+        "clamav_latest.tar.gz")
     x("tar -C %s -zxf %s" % (app.INSTALL_DIR, dst_path))
     compile_dir = "%scompile-clamav" % app.INSTALL_DIR
     x("mkdir -p %s" % compile_dir)
@@ -106,7 +116,7 @@ def download_and_install():
     #
     # Install packages required for compiling
     #
-    x("yum -y install gcc make gcc-c++ zlib-devel bzip2-devel ncurses-devel file")
+    x("yum -y install gcc make gcc-c++ zlib-devel bzip2-devel ncurses-devel file openssl-devel")
 
     #
     # Build and install clamav and freshclam
