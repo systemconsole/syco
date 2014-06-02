@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /opt/ehi-pbk
+git pull origin master
+/opt/play/play-2.1.1/play clean compile stage
+chown -R play:play /opt/ehi-pbk

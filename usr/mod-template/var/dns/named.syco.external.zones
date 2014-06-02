@@ -1,0 +1,12 @@
+zone "farepayment.com" IN {
+    type master;
+    file "farepayment.com.external.zone";
+    allow-update { none; };
+};
+
+
+zone "fareoffice.com" IN {
+    type master;
+    file "fareoffice.com.external.zone";
+    allow-update { none; };
+};

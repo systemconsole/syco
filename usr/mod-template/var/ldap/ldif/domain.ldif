@@ -1,41 +1,43 @@
-###########################################################
-# NEW DATABASE
-###########################################################
-dn: dc=systemconsole,dc=com
+# extended LDIF
+#
+# LDAPv3
+# base <dc=fareoffice,dc=com> with scope subtree
+# filter: (objectclass=*)
+# requesting: *
+#
+
+# fareoffice.com
+dn: dc=fareoffice,dc=com
 objectClass: top
 objectClass: dcObject
 objectClass: organization
-o: System Console Inc
-dc: System Operations
+o: Fareoffice Car Rental Solutions AB
+dc: Fareoffice
 description: Tree root
 
-# Used by sssd to ask general queries.
-#
-# The SSHA password is "password"
-#
-dn: cn=sssd,dc=systemconsole,dc=com
+# sssd, fareoffice.com
+dn: cn=sssd,dc=fareoffice,dc=com
 objectClass: simpleSecurityObject
 objectClass: organizationalRole
 cn: sssd
 description: Account for sssd.
-userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+userPassword:: e1NTSEF9a29ZZkVsSFQ3OElzQi9IWGJmaG9seFdFVE9ZRzB4VzQ=
 
-###########################################################
-# Add pwdpolicy overlay
-# Need to be done before adding new users.
-###########################################################
-dn: ou=pwpolicies,dc=systemconsole,dc=com
+# pwpolicies, fareoffice.com
+dn: ou=pwpolicies,dc=fareoffice,dc=com
 objectClass: organizationalUnit
 objectClass: top
 ou: policies
+ou: pwpolicies
 
-dn: cn=default,ou=pwpolicies,dc=systemconsole,dc=com
+# default, pwpolicies, fareoffice.com
+dn: cn=default,ou=pwpolicies,dc=fareoffice,dc=com
 cn: default
 objectClass: pwdPolicy
 objectClass: person
 objectClass: top
 pwdAllowUserChange: TRUE
-pwdAttribute: 2.5.4.35
+pwdAttribute: userPassword
 pwdExpireWarning: 604800
 pwdFailureCountInterval: 30
 pwdGraceAuthNLimit: 0
@@ -50,101 +52,137 @@ pwdMustChange: FALSE
 pwdSafeModify: FALSE
 sn: dummy value
 
-###########################################################
-# GROUPS
-###########################################################
-dn: ou=group,dc=systemconsole,dc=com
+# group, fareoffice.com
+dn: ou=group,dc=fareoffice,dc=com
 objectClass: top
-objectClass: organizationalunit
+objectClass: organizationalUnit
 ou: group
 
-dn: cn=fareoffice,ou=group,dc=systemconsole,dc=com
+# fareoffice, group, fareoffice.com
+dn: cn=fareoffice,ou=group,dc=fareoffice,dc=com
 cn: users
+cn: fareoffice
 objectClass: posixGroup
 gidNumber: 2100
-memberUid: patbat
-memberUid: norbat
+memberUid: danlin
+memberUid: mathem
+memberUid: markem
+memberUid: kribor
 
-dn: cn=sysop,ou=group,dc=systemconsole,dc=com
+# sysop, group, fareoffice.com
+dn: cn=sysop,ou=group,dc=fareoffice,dc=com
 cn: sysop
 objectClass: posixGroup
 gidNumber: 2101
-memberUid: patbat
+memberUid: danlin
+memberUid: mathem
+memberUid: markem
+memberUid: kribor
 
-dn: cn=management,ou=group,dc=systemconsole,dc=com
+# management, group, fareoffice.com
+dn: cn=management,ou=group,dc=fareoffice,dc=com
 cn: management
 objectClass: posixGroup
 gidNumber: 2102
-memberUid: norbat
+memberUid: danlin
 
-###########################################################
-# USERS
-###########################################################
-dn: ou=people,dc=systemconsole,dc=com
+# people, fareoffice.com
+dn: ou=people,dc=fareoffice,dc=com
 objectClass: top
-objectClass: organizationalunit
+objectClass: organizationalUnit
 ou: people
 
-dn: uid=syscon,ou=people,dc=systemconsole,dc=com
+# syscon, people, fareoffice.com
+dn: uid=syscon,ou=people,dc=fareoffice,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
-commonName: System Console
+cn: System Console
 displayName: System Console
 gecos: System Console
 givenName: System
-surname: Console
+sn: Console
 uid: syscon
-userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
 loginShell: /bin/bash
 uidNumber: 2099
 gidNumber: 100
 homeDirectory: /home/syscon
-mail: syscon@systemconsole.com
+mail: syscon@fareoffice.com
+userPassword:: e1NTSEF9ODVoaDhkbEpyekZobjZUMkNITkowTStOc2VIbllDeEo=
 
-dn: uid=patbat,ou=people,dc=systemconsole,dc=com
+# danlin, people, fareoffice.com
+dn: uid=danlin,ou=people,dc=fareoffice,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
-commonName: Patrick Bateman
-displayName: Patrick Bateman
-gecos: Patrick Bateman
-givenName: Patrick
-surname: Bateman
-uid: patbat
-userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+cn: Daniel Lindh
+displayName: Daniel Lindh
+gecos: Daniel Lindh
+givenName: Daniel
+sn: Lindh
+uid: danlin
 loginShell: /bin/bash
 uidNumber: 2100
 gidNumber: 100
-homeDirectory: /home/batbat
-mail: patbat@systemconsole.com
+homeDirectory: /home/danlin
+mail: daniel@fareoffice.com
 employeeType: Sysop
+userPassword:: e1NTSEF9bUxsd01pcXpUNSs2Y1JENHVPWENLZWxyWnBla3B1YW0=
 
-dn: uid=norbat,ou=people,dc=systemconsole,dc=com
+# mathem, people, fareoffice.com
+dn: uid=mathem,ou=people,dc=fareoffice,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
-commonName: Norman Bates
-displayName: Norman Bates
-gecos: Norman Bates
-givenName: Norman
-surname: Bates
-uid: norbat
-userPassword: {SSHA}br/27Nw1orjogOpAPY1eidM6sZSqjGNa
+cn: Mattias Hemmingsson
+displayName: Mattias Hemmingsson
+gecos: Mattias Hemmingsson
+givenName: Mattias
+sn: Hemmingsson
+uid: mathem
 loginShell: /bin/bash
-uidNumber: 2100
+uidNumber: 2101
 gidNumber: 100
-homeDirectory: /home/batbat
-mail: norbat@systemconsole.com
+homeDirectory: /home/mathem
+mail: mattias@fareoffice.com
 employeeType: Sysop
+userPassword:: e1NTSEF9WGs1VGFuMXU2dmFIdE1tK2RwLy94RlZqVFNyeGdyTmg=
 
+# backupfo, people, fareoffice.com
+dn: uid=backupfo,ou=people,dc=fareoffice,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+cn: backupfo
+displayName: Backup User from fo
+gecos: backupfo
+givenName: Backupfo
+sn: User
+uid: backupfo
+loginShell: /bin/bash
+uidNumber: 2102
+gidNumber: 100
+homeDirectory: /home/backup
+mail: sysop@fareoffice.com
+employeeType: Sysop
+userPassword:: e1NTSEF9MER6b2NmVWRKQ3Z0SmE4OG1jbjFBa3p6V1A4ZkpEL2s=
 
-###########################################################
-# SUDOERS
-###########################################################
-dn: ou=SUDOers,dc=systemconsole,dc=com
+# user, pwpolicies, fareoffice.com
+dn: cn=user,ou=pwpolicies,dc=fareoffice,dc=com
+cn: user
+objectClass: pwdPolicy
+objectClass: person
+objectClass: top
+sn: Password Policy
+pwdAttribute: userPassword
+pwdMaxAge: 0
+pwdLockout: FALSE
+pwdMinLength: 10
+
+# SUDOers, fareoffice.com
+dn: ou=SUDOers,dc=fareoffice,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: SUDOers
 
-dn: cn=defaults,ou=SUDOers,dc=systemconsole,dc=com
+# defaults, SUDOers, fareoffice.com
+dn: cn=defaults,ou=SUDOers,dc=fareoffice,dc=com
 objectClass: top
 objectClass: sudoRole
 cn: defaults
@@ -152,14 +190,54 @@ description: Default sudoOptions go here
 sudoOption: requiretty
 sudoOption: always_set_home
 sudoOption: env_reset
-sudoOption: env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS"
-sudoOption: env_keep+="MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE"
-sudoOption: env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES"
-sudoOption: env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
-sudoOption: env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
+sudoOption: env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR "
+sudoOption: env_keep+="LS_COLORS "
+sudoOption: env_keep+="MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE "
+sudoOption: env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT "
+sudoOption: env_keep+="LC_MESSAGES "
+sudoOption: env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE "
+sudoOption: env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET "
+sudoOption: env_keep+="XAUTHORITY"
 sudoOption: secure_path=/sbin:/bin:/usr/sbin:/usr/bin
 
-dn: cn=root,ou=SUDOers,dc=systemconsole,dc=com
+# kribor, people, fareoffice.com
+dn: uid=kribor,ou=people,dc=fareoffice,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+cn: Kristofer Borgstrom
+displayName: Kristofer Borgstrom
+gecos: Kristofer Borgstrom
+givenName: Kristofer
+sn: Borgstrom
+uid: kribor
+loginShell: /bin/bash
+uidNumber: 2122
+gidNumber: 100
+homeDirectory: /home/kribor
+mail: kristofer@fareoffice.com
+employeeType: Sysop
+userPassword:: e1NTSEF9YmdTNitNbVk0YXVtbXV3bTVYcmtvbklKVUlkNzFYRlI=
+
+# markem, people, fareoffice.com
+dn: uid=markem,ou=people,dc=fareoffice,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+cn: Martin Kemani
+displayName: Martin Kemani
+gecos: Martin Kemani
+givenName: Martin
+sn: Kemani
+uid: markem
+loginShell: /bin/bash
+uidNumber: 2103
+gidNumber: 100
+homeDirectory: /home/markem
+mail: markem@fareoffice.com
+employeeType: Sysop
+userPassword:: e1NTSEF9QmdjWHBFZzcrLzUxbVBKaWwxY0UyZG5wQmtKM05IUUk=
+
+# root, SUDOers, fareoffice.com
+dn: cn=root,ou=SUDOers,dc=fareoffice,dc=com
 objectClass: top
 objectClass: sudoRole
 cn: root
@@ -168,8 +246,8 @@ sudoHost: ALL
 sudoRunAsUser: ALL
 sudoCommand: ALL
 
-# Allow all sysops to execute anything
-dn: cn=%sysop,ou=SUDOers,dc=systemconsole,dc=com
+# %sysop, SUDOers, fareoffice.com
+dn: cn=%sysop,ou=SUDOers,dc=fareoffice,dc=com
 objectClass: top
 objectClass: sudoRole
 cn: %sysop
@@ -177,3 +255,10 @@ sudoUser: %sysop
 sudoHost: ALL
 sudoRunAsUser: ALL
 sudoCommand: ALL
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 20
+# numEntries: 19

@@ -1,0 +1,21 @@
+;
+; This file contains zones that will be used when requesting DNS entries
+; from internet.
+;
+
+$INCLUDE fareoffice.com.global.zone
+
+dns-av          IN  A  88.80.170.189
+dns-tc          IN  A  83.140.64.189
+
+redmine-tp       IN  A  31.211.193.14
+redmine-tc       IN  A  88.80.170.188
+redmine-av       IN  A  83.140.64.188
+
+;bounce-tp       IN  A  x
+bounce-tc        IN  A  88.80.170.189
+bounce-av        IN  A  83.140.64.189
+
+;monitor-tp      IN  A  x
+monitor-tc       IN  A  88.80.170.189
+monitor-av       IN  A  83.140.64.189

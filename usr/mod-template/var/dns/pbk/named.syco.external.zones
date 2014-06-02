@@ -1,0 +1,5 @@
+zone "partnerbookingkit.com" IN {
+    type master;
+    file "partnerbookingkit.com.external.zone";
+    allow-update { none; };
+};

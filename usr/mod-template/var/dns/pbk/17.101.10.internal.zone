@@ -1,0 +1,23 @@
+$TTL 600
+@                      IN      SOA     ns1.partnerbookingkit.com. hostmaster.partnerbookingkit.com. (
+                       ${SERIAL}       ; Serial
+                       600             ; Refresh after 10 minutes
+                       600             ; Retry after 10 minutes
+                       604800          ; Expire after 1 week
+                       86400 )         ; Minimum TTL of 1 day
+17.101.10.in-addr.arpa. IN      NS      ns1.partnerbookingkit.com.
+17.101.10.in-addr.arpa. IN      NS      ns2.partnerbookingkit.com.
+
+1                      IN      PTR     fw-pbk-pbk-tc.partnerbookingkit.com.
+2                      IN      PTR     install-pbk-tc.partnerbookingkit.com.
+3                      IN      PTR     ntp-pbk-tc.partnerbookingkit.com.
+4                      IN      PTR     mailrelay-pbk-tc.partnerbookingkit.com.
+5                      IN      PTR     ldap-pbk-tc.partnerbookingkit.com.
+6                      IN      PTR     dns-pbk-tc.partnerbookingkit.com.
+7                      IN      PTR     log-pbk-tc.partnerbookingkit.com.
+10                     IN      PTR     bounce-pbk-tc.partnerbookingkit.com.
+12                     IN      PTR     monitor-pbk-tc.partnerbookingkit.com.
+13                     IN      PTR     scan-pbk-tc.partnerbookingkit.com.
+105                    IN      PTR     mysql1-pbk-tc.partnerbookingkit.com.
+165                    IN      PTR     pbk-pbk-tc.partnerbookingkit.com.
+201                    IN      PTR     vh01-pbk-tc.partnerbookingkit.com.

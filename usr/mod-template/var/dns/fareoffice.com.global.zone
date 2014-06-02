@@ -1,0 +1,319 @@
+$ORIGIN fareoffice.com.
+$TTL 600
+@                                   IN  SOA         dns-av.fareoffice.com. hostmaster.fareoffice.com. (
+                                        ${SERIAL}   ; Serial
+                                        600         ; Refresh after 10 minutes
+                                        600         ; Retry after 10 minutes
+                                        604800      ; Expire after 1 week
+                                        86400 )     ; Minimum TTL of 1 day
+@                                   IN  NS          dns-av.fareoffice.com.
+@                                   IN  NS          dns-tc.fareoffice.com.
+@                                   IN  MX       10 mail.fareoffice.com.
+
+;
+; NOTE: SWITCHING ACTIVE DC (NEED TO CHANGE THESE)
+;
+fareoffice.com.                     IN  A       81.201.214.10
+prod                                IN  CNAME   prod-${ACTIVE_DC}
+
+redmine                             IN  CNAME   redmine-tp
+
+; RentalFront
+backstage                           IN  CNAME   backstage-active-prod-tp
+ws                                  IN  CNAME   ws-active-prod-tp
+
+; Fareway Active
+fareway                             IN CNAME    ${ACTIVE_DC}-fareway-production
+
+; Static Active
+static                              IN CNAME    ${ACTIVE_DC}-static-production
+
+;
+; DOMAINS THAT SHOULD BE ACCESSED BY USERS/CUSTOMERS/ENDUSERS ETC.
+;
+
+; General Services.
+mail                                       IN A 178.78.197.211
+
+git                                        IN A 178.78.197.212
+vcs                                        IN A 178.78.197.212
+packages                                   IN A 31.211.193.12
+file-tp                                    IN A 178.78.197.210
+eff-int                                    IN A 31.211.193.12
+
+sitemap                                    IN A 31.211.193.11
+
+fw-av                                      IN A 83.140.64.190
+
+av-fareway-production                      IN A 83.140.64.171
+tc-fareway-production                      IN A 88.80.170.171
+
+av-static-production                      IN A 83.140.64.172
+tc-static-production                      IN A 88.80.170.172
+
+www                                        IN CNAME prod
+sycochuck                                  IN CNAME prod
+webadmin                                   IN CNAME prod
+
+; WebRes - General Services
+customers                                  IN CNAME prod
+customersrelease                           IN CNAME prod
+files                                      IN CNAME prod
+filesrelease                               IN CNAME prod
+webcustomer                                IN CNAME prod
+
+; WebRes - Diagnostics
+diagnostic-sysop-production                IN CNAME prod
+
+; WebRes - Hertz
+hertz                                      IN CNAME prod
+hertz-portal-fareoffice-release            IN CNAME prod
+hertz-portal-hertz-production              IN CNAME prod
+hertz-portal-hertz-release                 IN CNAME prod
+
+; WebRes - Alamo Portals
+alamo-portal-enterprise-production         IN CNAME prod
+alamo-portal-enterprise-release            IN CNAME prod
+alamo-portal-vanguard                      IN CNAME prod
+alamo-portaljp-enterprise-production       IN CNAME prod
+alamo-portaljp-enterprise-release          IN CNAME prod
+alamo-portaljp-vanguard                    IN CNAME prod
+alamo-resagent-enterprise-production       IN CNAME prod
+alamo-resagent-enterprise-release          IN CNAME prod
+enterprise-portal-enterprise-production    IN CNAME prod
+enterprise-portal-enterprise-release       IN CNAME prod
+portal-fareoffice-production               IN CNAME prod
+
+; WebRes - Alamo
+alamo-ch-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-ch-enterprise-production
+alamo-ch-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-ch-enterprise-release
+alamo-ch-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-ch-enterprise-production
+alamo-cn-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-cn-enterprise-production
+alamo-cn-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-cn-enterprise-release
+alamo-couk-enterprise-production           IN CNAME ${ACTIVE_DC}-alamo-couk-enterprise-production
+alamo-couk-enterprise-release              IN CNAME ${ACTIVE_DC}-alamo-couk-enterprise-release
+alamo-couk-vanguard                        IN CNAME ${ACTIVE_DC}-alamo-couk-enterprise-production
+alamo-de-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-de-enterprise-production
+alamo-de-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-de-enterprise-release
+alamo-de-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-de-enterprise-production
+alamo-dk-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-dk-enterprise-production
+alamo-dk-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-dk-enterprise-release
+alamo-dk-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-dk-enterprise-production
+alamo-fi-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-fi-enterprise-production
+alamo-fi-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-fi-enterprise-release
+alamo-fi-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-fi-enterprise-production
+alamo-fr-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-fr-enterprise-production
+alamo-fr-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-fr-enterprise-release
+alamo-fr-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-fr-enterprise-production
+alamo-it-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-it-enterprise-production
+alamo-it-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-it-enterprise-release
+alamo-it-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-it-enterprise-production
+alamo-jp-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-jp-enterprise-production
+alamo-jp-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-jp-enterprise-release
+alamo-jp-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-jp-enterprise-production
+alamo-no-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-no-enterprise-production
+alamo-no-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-no-enterprise-release
+alamo-no-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-no-enterprise-production
+alamo-se-enterprise-production             IN CNAME ${ACTIVE_DC}-alamo-se-enterprise-production
+alamo-se-enterprise-release                IN CNAME ${ACTIVE_DC}-alamo-se-enterprise-release
+alamo-se-vanguard                          IN CNAME ${ACTIVE_DC}-alamo-se-enterprise-production
+alamospecials-com-enterprise-production    IN CNAME ${ACTIVE_DC}-alamospecials-com-enterprise-production
+alamospecials-com-enterprise-release       IN CNAME ${ACTIVE_DC}-alamospecials-com-enterprise-release
+
+; WebRes - National Portals
+national-portal-enterprise-production      IN CNAME prod
+national-portal-enterprise-release         IN CNAME prod
+national-portal-vanguard                   IN CNAME prod
+national-portal-enterprise-production      IN CNAME prod
+
+; WebRes - National
+national-couk-enterprise-production        IN CNAME ${ACTIVE_DC}-national-couk-enterprise-production
+national-couk-enterprise-release           IN CNAME ${ACTIVE_DC}-national-couk-enterprise-release
+national-couk-vanguard                     IN CNAME ${ACTIVE_DC}-national-couk-enterprise-production
+national-de-enterprise-production          IN CNAME ${ACTIVE_DC}-national-de-enterprise-production
+national-de-enterprise-release             IN CNAME ${ACTIVE_DC}-national-de-enterprise-release
+national-de-vanguard                       IN CNAME ${ACTIVE_DC}-national-de-enterprise-production
+nationalvan-couk-enterprise-production     IN CNAME ${ACTIVE_DC}-nationalvan-couk-enterprise-production
+nationalvan-couk-enterprise-release        IN CNAME ${ACTIVE_DC}-nationalvan-couk-enterprise-release
+nationalvan-couk-vanguard                  IN CNAME ${ACTIVE_DC}-nationalvan-couk-enterprise-production
+
+;
+; DOMAINS FOR A SPECIFIC DC, SHOULD NOT BE ACCESSED BY CUSTOMERS.
+;
+
+; Main IP for each datacenter and environment.
+prod-av                                       IN A 83.140.64.135
+prod-tc                                       IN A 88.80.170.135
+;uat-tp                                       IN A 31.211.193.10
+;stable-tp                                    IN A 10.100.131.121
+;integration-tp                               IN A 10.100.131.120
+
+; RentalFront
+backstage-active-prod-av                       IN A 83.140.64.133
+backstage-active-prod-tc                       IN A 88.80.170.133
+backstage-uat                                  IN A 83.140.64.132
+backstage-active-uat-tp                        IN A 83.140.64.132
+backstage-int                                  IN A 192.168.0.7
+backstage-active-stable-tp                     IN A 10.100.131.111
+
+ws-active-prod-av                              IN A 83.140.64.133
+ws-active-prod-tc                              IN A 88.80.170.133
+ws-uat                                         IN A 83.140.64.132
+ws-active-uat                                  IN A 83.140.64.132
+ws-active-uat-tp                               IN A 83.140.64.132
+ws-int                                         IN A 192.168.0.7
+ws-t                                           IN A 31.211.193.12
+ws-active-stable-tp                            IN A 10.100.131.111
+
+; WebRes - Alamo
+av-alamo-ch-enterprise-production              IN A 83.140.64.137
+av-alamo-cn-enterprise-production              IN A 83.140.64.146
+av-alamo-couk-enterprise-production            IN A 83.140.64.136
+av-alamo-de-enterprise-production              IN A 83.140.64.138
+av-alamo-dk-enterprise-production              IN A 83.140.64.139
+av-alamo-fi-enterprise-production              IN A 83.140.64.140
+av-alamo-fr-enterprise-production              IN A 83.140.64.141
+av-alamo-it-enterprise-production              IN A 83.140.64.142
+av-alamo-jp-enterprise-production              IN A 83.140.64.143
+av-alamo-no-enterprise-production              IN A 83.140.64.144
+av-alamo-se-enterprise-production              IN A 83.140.64.145
+av-alamospecials-com-enterprise-production     IN A 83.140.64.147
+
+tc-alamo-ch-enterprise-production              IN A 88.80.170.137
+tc-alamo-cn-enterprise-production              IN A 88.80.170.146
+tc-alamo-couk-enterprise-production            IN A 88.80.170.136
+tc-alamo-de-enterprise-production              IN A 88.80.170.138
+tc-alamo-dk-enterprise-production              IN A 88.80.170.139
+tc-alamo-fi-enterprise-production              IN A 88.80.170.140
+tc-alamo-fr-enterprise-production              IN A 88.80.170.141
+tc-alamo-it-enterprise-production              IN A 88.80.170.142
+tc-alamo-jp-enterprise-production              IN A 88.80.170.143
+tc-alamo-no-enterprise-production              IN A 88.80.170.144
+tc-alamo-se-enterprise-production              IN A 88.80.170.145
+tc-alamospecials-com-enterprise-production     IN A 88.80.170.147
+
+; WebRes - National Prod
+av-national-couk-enterprise-production         IN A 83.140.64.148
+av-national-de-enterprise-production           IN A 83.140.64.149
+av-nationalvan-couk-enterprise-production      IN A 83.140.64.150
+tc-national-couk-enterprise-production         IN A 88.80.170.148
+tc-national-de-enterprise-production           IN A 88.80.170.149
+tc-nationalvan-couk-enterprise-production      IN A 88.80.170.150
+
+; WebRes - Alamo RC
+av-alamo-ch-enterprise-release                IN  CNAME prod-av
+av-alamo-cn-enterprise-release                IN  CNAME prod-av
+av-alamo-couk-enterprise-release              IN  CNAME prod-av
+av-alamo-de-enterprise-release                IN  CNAME prod-av
+av-alamo-dk-enterprise-release                IN  CNAME prod-av
+av-alamo-fi-enterprise-release                IN  CNAME prod-av
+av-alamo-fr-enterprise-release                IN  CNAME prod-av
+av-alamo-it-enterprise-release                IN  CNAME prod-av
+av-alamo-jp-enterprise-release                IN  CNAME prod-av
+av-alamo-no-enterprise-release                IN  CNAME prod-av
+av-alamo-se-enterprise-release                IN  CNAME prod-av
+av-alamospecials-com-enterprise-release       IN  CNAME prod-av
+
+tc-alamo-ch-enterprise-release                IN  CNAME prod-tc
+tc-alamo-cn-enterprise-release                IN  CNAME prod-tc
+tc-alamo-couk-enterprise-release              IN  CNAME prod-tc
+tc-alamo-de-enterprise-release                IN  CNAME prod-tc
+tc-alamo-dk-enterprise-release                IN  CNAME prod-tc
+tc-alamo-fi-enterprise-release                IN  CNAME prod-tc
+tc-alamo-fr-enterprise-release                IN  CNAME prod-tc
+tc-alamo-it-enterprise-release                IN  CNAME prod-tc
+tc-alamo-jp-enterprise-release                IN  CNAME prod-tc
+tc-alamo-no-enterprise-release                IN  CNAME prod-tc
+tc-alamo-se-enterprise-release                IN  CNAME prod-tc
+tc-alamospecials-com-enterprise-release       IN  CNAME prod-tc
+
+; WebRes - National RC
+av-national-couk-enterprise-release           IN  CNAME prod-av
+av-national-de-enterprise-release             IN  CNAME prod-av
+av-nationalvan-couk-enterprise-release        IN  CNAME prod-av
+
+tc-national-couk-enterprise-release           IN  CNAME prod-tc
+tc-national-de-enterprise-release             IN  CNAME prod-tc
+tc-nationalvan-couk-enterprise-release        IN  CNAME prod-tc
+
+;Resagent and portal TC
+tc-alamo-resagent-enterprise-production	      IN  CNAME prod-tc 
+tc-alamo-resagent-enterprise-production      IN CNAME prod-tc
+tc-alamo-resagent-enterprise-release         IN CNAME prod-tc
+tc-alamo-resagent-enterprise-release         IN CNAME prod-tc
+tc-alamo-portal-enterprise-production        IN CNAME prod-tc
+tc-alamo-portal-enterprise-production        IN CNAME prod-tc
+tc-alamo-portal-enterprise-release           IN CNAME prod-tc
+tc-alamo-portal-enterprise-release           IN CNAME prod-tc
+tc-alamo-portaljp-enterprise-production	     IN CNAME prod-tc
+tc-alamo-portaljp-enterprise-production	     IN CNAME prod-tc
+tc-alamo-portaljp-enterprise-release         IN CNAME prod-tc
+tc-alamo-portaljp-enterprise-release         IN CNAME prod-tc
+
+
+tc-diagnostic-sysop-production               IN CNAME prod-tc
+tc-enterprise-portal-enterprise-production   IN CNAME prod-tc
+
+tc-enterprise-portal-enterprise-production   IN CNAME prod-tc
+tc-enterprise-portal-enterprise-production   IN CNAME prod-tc
+tc-enterprise-portal-enterprise-release      IN CNAME prod-tc
+tc-enterprise-portal-enterprise-release      IN CNAME prod-tc
+tc-hertz-portal-fareoffice-release           IN CNAME prod-tc
+tc-hertz-portal-fareoffice-release           IN CNAME prod-tc
+tc-hertz-portal-hertz-production             IN CNAME prod-tc
+tc-hertz-portal-hertz-production             IN CNAME prod-tc
+tc-hertz-portal-hertz-release                IN CNAME prod-tc
+tc-hertz-portal-hertz-release                IN CNAME prod-tc
+
+;tc-national-de-enterprise-release           IN CNAME prod-tc
+tc-national-portal-enterprise-production     IN CNAME prod-tc
+tc-national-portal-enterprise-production     IN CNAME prod-tc
+tc-national-portal-enterprise-release        IN CNAME prod-tc
+
+;tc-nationalvan-couk-enterprise-release      IN CNAME prod-tc
+tc-portal-fareoffice-production              IN CNAME prod-tc
+tc-portal-fareoffice-production              IN CNAME prod-tc
+tc-sycochuck-production                      IN CNAME prod-tc
+
+
+;Reasgent and portal
+av-alamo-resagent-enterprise-production      IN  CNAME prod-av
+av-alamo-resagent-enterprise-production      IN CNAME prod-av
+av-alamo-resagent-enterprise-release         IN CNAME prod-av
+av-alamo-resagent-enterprise-release         IN CNAME prod-av
+av-alamo-portal-enterprise-production        IN CNAME prod-av
+av-alamo-portal-enterprise-production        IN CNAME prod-av
+av-alamo-portal-enterprise-release           IN CNAME prod-av
+av-alamo-portal-enterprise-release           IN CNAME prod-av
+av-alamo-portaljp-enterprise-production      IN CNAME prod-av
+av-alamo-portaljp-enterprise-production      IN CNAME prod-av
+av-alamo-portaljp-enterprise-release         IN CNAME prod-av
+av-alamo-portaljp-enterprise-release         IN CNAME prod-av
+
+
+av-diagnostic-sysop-production                  IN CNAME prod-av
+av-enterprise-portal-enterprise-production      IN CNAME prod-av
+
+av-enterprise-portal-enterprise-production      IN CNAME prod-av
+av-enterprise-portal-enterprise-production      IN CNAME prod-av
+av-enterprise-portal-enterprise-release         IN CNAME prod-av
+av-enterprise-portal-enterprise-release         IN CNAME prod-av
+av-hertz-portal-fareoffice-release              IN CNAME prod-av
+av-hertz-portal-fareoffice-release              IN CNAME prod-av
+av-hertz-portal-hertz-production                IN CNAME prod-av
+av-hertz-portal-hertz-production                IN CNAME prod-av
+av-hertz-portal-hertz-release                   IN CNAME prod-av
+av-hertz-portal-hertz-release                   IN CNAME prod-av
+
+;av-national-de-enterprise-release              IN CNAME prod-av
+av-national-portal-enterprise-production        IN CNAME prod-av
+av-national-portal-enterprise-production        IN CNAME prod-av
+av-national-portal-enterprise-release           IN CNAME prod-av
+
+;av-nationalvan-couk-enterprise-release         IN CNAME prod-av
+av-portal-fareoffice-production                 IN CNAME prod-av
+av-portal-fareoffice-production                 IN CNAME prod-av
+av-sycochuck-production                         IN CNAME prod-av
+
+; TP
+mail-tp                                         IN A 178.78.197.211

@@ -1,0 +1,29 @@
+$TTL 600
+@                      IN      SOA     ns1.fareoffice.com. hostmaster.fareoffice.com. (
+                       ${SERIAL}       ; Serial
+                       600             ; Refresh after 10 minutes
+                       600             ; Retry after 10 minutes
+                       604800          ; Expire after 1 week
+                       86400 )         ; Minimum TTL of 1 day
+2.101.10.in-addr.arpa. IN      NS      ns1.fareoffice.com.
+2.101.10.in-addr.arpa. IN      NS      ns2.fareoffice.com.
+
+1                      IN      PTR     fw-av.fareoffice.com.
+2                      IN      PTR     install-av.fareoffice.com.
+3                      IN      PTR     ntp-av.fareoffice.com.
+4                      IN      PTR     mailrelay-av.fareoffice.com.
+5                      IN      PTR     ldap-av.fareoffice.com.
+6                      IN      PTR     dns-av.fareoffice.com.
+7                      IN      PTR     log-av.fareoffice.com.
+10                     IN      PTR     bounce-av.fareoffice.com.
+12                     IN      PTR     monitor-av.fareoffice.com.
+13                     IN      PTR     scan-av.fareoffice.com.
+24                     IN      PTR     redmine-av.fareoffice.com.
+105                    IN      PTR     mysql1-av.fareoffice.com.
+107                    IN      PTR     fpmysql-av.fareoffice.com.
+108                    IN      PTR     webresmysql-av.fareoffice.com.
+115                    IN      PTR     rentalfront-av.fareoffice.com.
+125                    IN      PTR     farepayment-av.fareoffice.com.
+135                    IN      PTR     webres-av.fareoffice.com.
+201                    IN      PTR     vh01-av.fareoffice.com.
+202                    IN      PTR     vh02-av.fareoffice.com.

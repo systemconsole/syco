@@ -1,0 +1,3 @@
+#!/bin/bash
+
+kill `cat /opt/ehi-pbk/RUNNING_PID` && rm -f /opt/ehi-pbk/RUNNING_PID

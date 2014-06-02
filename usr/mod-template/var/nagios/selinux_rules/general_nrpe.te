@@ -1,0 +1,94 @@
+
+module nrpe 1.0;
+
+require {
+	type insmod_exec_t;
+	type xserver_misc_device_t;
+	type usr_t;
+	type modules_dep_t;
+	type crash_device_t;
+	type rpm_exec_t;
+	type printer_device_t;
+	type event_device_t;
+	type tmp_t;
+	type proc_kcore_t;
+	type memory_device_t;
+	type nvram_device_t;
+	type sysctl_modprobe_t;
+	type fuse_device_t;
+	type nrpe_exec_t;
+	type cpu_device_t;
+	type modules_conf_t;
+	type apm_bios_t;
+	type framebuf_device_t;
+	type tmpfs_t;
+	type usbmon_device_t;
+	type clock_device_t;
+	type mouse_device_t;
+	type iptables_exec_t;
+	type kmsg_device_t;
+	type ppp_device_t;
+	type fixed_disk_device_t;
+	type tun_tap_device_t;
+	type ptmx_t;
+	type lvm_control_t;
+	type nrpe_t;
+	type random_device_t;
+	type modules_object_t;
+	type netcontrol_device_t;
+	class chr_file getattr;
+	class capability { dac_read_search dac_override };
+	class file { execute read create ioctl execute_no_trans write getattr open };
+	class rawip_socket create;
+	class lnk_file read;
+	class blk_file getattr;
+	class dir { write search getattr read open add_name };
+}
+
+#============= nrpe_t ==============
+allow nrpe_t apm_bios_t:chr_file getattr;
+allow nrpe_t clock_device_t:chr_file getattr;
+allow nrpe_t cpu_device_t:chr_file getattr;
+allow nrpe_t crash_device_t:chr_file getattr;
+allow nrpe_t event_device_t:chr_file getattr;
+allow nrpe_t fixed_disk_device_t:blk_file getattr;
+allow nrpe_t fixed_disk_device_t:chr_file getattr;
+allow nrpe_t framebuf_device_t:chr_file getattr;
+allow nrpe_t fuse_device_t:chr_file getattr;
+allow nrpe_t insmod_exec_t:file { read execute open execute_no_trans };
+allow nrpe_t iptables_exec_t:file { read execute open getattr execute_no_trans };
+allow nrpe_t kmsg_device_t:chr_file getattr;
+allow nrpe_t lvm_control_t:chr_file getattr;
+allow nrpe_t memory_device_t:chr_file getattr;
+allow nrpe_t modules_conf_t:dir { read search open };
+allow nrpe_t modules_conf_t:file { read getattr open };
+allow nrpe_t modules_dep_t:file { read getattr open };
+allow nrpe_t modules_object_t:dir search;
+allow nrpe_t modules_object_t:file { read open };
+allow nrpe_t mouse_device_t:chr_file getattr;
+allow nrpe_t netcontrol_device_t:chr_file getattr;
+allow nrpe_t nrpe_exec_t:dir search;
+allow nrpe_t nvram_device_t:chr_file getattr;
+allow nrpe_t ppp_device_t:chr_file getattr;
+allow nrpe_t printer_device_t:chr_file getattr;
+allow nrpe_t proc_kcore_t:file getattr;
+allow nrpe_t ptmx_t:chr_file getattr;
+allow nrpe_t random_device_t:chr_file getattr;
+allow nrpe_t rpm_exec_t:file getattr;
+allow nrpe_t self:capability { dac_read_search dac_override };
+allow nrpe_t self:rawip_socket create;
+allow nrpe_t sysctl_modprobe_t:file read;
+#!!!! The source type 'nrpe_t' can write to a 'dir' of the following types:
+# nrpe_var_run_t, var_run_t, root_t
+
+allow nrpe_t tmp_t:dir { write read add_name };
+#!!!! The source type 'nrpe_t' can write to a 'file' of the following types:
+# nrpe_var_run_t, root_t
+
+allow nrpe_t tmp_t:file { write read create open getattr };
+allow nrpe_t tmpfs_t:dir { read getattr open };
+allow nrpe_t tun_tap_device_t:chr_file getattr;
+allow nrpe_t usbmon_device_t:chr_file getattr;
+allow nrpe_t usr_t:file { read getattr open ioctl };
+allow nrpe_t usr_t:lnk_file read;
+allow nrpe_t xserver_misc_device_t:chr_file getattr;

@@ -1,0 +1,46 @@
+$ORIGIN partnerbookingkit.com.
+$TTL 600
+@                                   IN  SOA         dns-av.partnerbookingkit.com. hostmaster.partnerbookingkit.com. (
+                                        ${SERIAL}   ; Serial
+                                        600         ; Refresh after 10 minutes
+                                        600         ; Retry after 10 minutes
+                                        604800      ; Expire after 1 week
+                                        86400 )     ; Minimum TTL of 1 day
+@                                   IN  NS          dns-pbk-av.partnerbookingkit.com.
+@                                   IN  NS          dns-pbk-tc.partnerbookingkit.com.
+@                                   IN  MX       10 mail.fareoffice.com.
+@                             600    IN TXT   "v=spf1 ip4:88.80.170.128/26 ip4:83.140.64.128/26 ip4:88.80.170.192/29 ~all"
+
+;
+; NOTE: SWITCHING ACTIVE DC (NEED TO CHANGE THESE)
+;
+;pbk.partnerbookingkit.com.          IN  A       88.80.170.196
+prod                                IN  CNAME   prod-${ACTIVE_DC}
+
+;PBK
+pbk                                 IN  CNAME   prod-${ACTIVE_DC}
+
+;UAT
+uat 				                IN	CNAME	uat-${ACTIVE_DC}
+
+;Integration
+int                                 IN	A	    31.211.193.12
+
+;
+; DOMAINS THAT SHOULD BE ACCESSED BY USERS/CUSTOMERS/ENDUSERS ETC.
+;
+
+; General Services.
+
+sycochuck                                  IN CNAME prod
+
+;
+; DOMAINS FOR A SPECIFIC DC, SHOULD NOT BE ACCESSED BY CUSTOMERS.
+;
+
+; Main IP for each datacenter and environment.
+prod-tc                                   IN A 88.80.170.196
+prod-av                                   IN A 83.140.64.163
+
+uat-tc                                    IN A 88.80.170.197
+uat-av                                    IN A 83.140.64.164

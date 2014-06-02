@@ -1,0 +1,107 @@
+$ORIGIN farepayment.com.
+$TTL 600
+@                                   IN  SOA         dns-av.farepayment.com. hostmaster.farepayment.com. (
+                                        ${SERIAL}   ; Serial
+                                        600         ; Refresh after 10 minutes
+                                        600         ; Retry after 10 minutes
+                                        604800      ; Expire after 1 week
+                                        86400 )     ; Minimum TTL of 1 day
+@                                   IN  NS          dns-av.farepayment.com.
+@                                   IN  NS          dns-tc.farepayment.com.
+@                                   IN  MX       10 mail.fareoffice.com.
+
+;
+; NOTE: Switching Active DC (Need to change these)
+;
+farepayment.com                     IN  A       83.140.64.134
+prod.farepayment.com.               IN  CNAME   prod-${ACTIVE_DC}.farepayment.com.
+
+;
+; ALL A records
+;
+
+; Main IP for each datacenter and environment.
+prod-tc.farepayment.com.            IN  A       88.80.165.134
+prod-av.farepayment.com.            IN  A       83.140.64.134
+uat-tp.farepayment.com.             IN  A       31.211.193.10
+stable-tp.farepayment.com.          IN  A       10.100.131.121
+integration-tp.farepayment.com.     IN  A       10.100.131.120
+
+;
+; ALL CNAMES
+;
+www.farepayment.com.                                     IN CNAME  prod.farepayment.com.
+
+backoffice.farepayment.com.                              IN CNAME  prod.farepayment.com.
+backoffice-active-prod-av.farepayment.com.               IN CNAME  prod-av.farepayment.com.
+backoffice-active-prod-tc.farepayment.com.               IN CNAME  prod-tc.farepayment.com.
+backoffice-active-uat-tp.farepayment.com.                IN CNAME  uat-tp.farepayment.com.
+backoffice-active-stable-tp.farepayment.com.             IN CNAME  stable-tp.farepayment.com.
+backoffice-active-integration-tp.farepayment.com.        IN CNAME  integration-tp.farepayment.com.
+
+paymentservice.farepayment.com.                          IN CNAME  prod.farepayment.com.
+paymentservice-active-prod-av.farepayment.com.           IN CNAME  prod-av.farepayment.com.
+paymentservice-active-prod-tc.farepayment.com.           IN CNAME  prod-tc.farepayment.com.
+paymentservice-active-uat-tp.farepayment.com.            IN CNAME  uat-tp.farepayment.com.
+paymentservice-active-stable-tp.farepayment.com.         IN CNAME  stable-tp.farepayment.com.
+paymentservice-active-integration-tp.farepayment.com.    IN CNAME  integration-tp.farepayment.com.
+
+spp.farepayment.com.                                     IN CNAME  prod.farepayment.com.
+spp-active-prod-av.farepayment.com.                      IN CNAME  prod-av.farepayment.com.
+spp-active-prod-tc.farepayment.com.                      IN CNAME  prod-tc.farepayment.com.
+spp-active-uat-tp.farepayment.com.                       IN CNAME  uat-tp.farepayment.com.
+spp-active-stable-tp.farepayment.com.                    IN CNAME  stable-tp.farepayment.com.
+spp-active-integration-tp.farepayment.com.               IN CNAME  integration-tp.farepayment.com.
+
+superadmin.farepayment.com.                              IN CNAME  prod.farepayment.com.
+superadmin-active-prod-av.farepayment.com.               IN CNAME  prod-av.farepayment.com.
+superadmin-active-prod-tc.farepayment.com.               IN CNAME  prod-tc.farepayment.com.
+superadmin-active-uat-tp.farepayment.com.                IN CNAME  uat-tp.farepayment.com.
+superadmin-active-stable-tp.farepayment.com.             IN CNAME  stable-tp.farepayment.com.
+superadmin-active-integration-tp.farepayment.com.        IN CNAME  integration-tp.farepayment.com.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

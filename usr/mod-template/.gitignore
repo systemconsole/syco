@@ -1,0 +1,10 @@
+etc/passwordstore*
+etc/version.cfg
+usr/
+*.pyc
+.DS_Store
+install.cfg
+tmp/
+/nbproject/private/
+._*
+

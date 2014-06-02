@@ -1,0 +1,48 @@
+Backup schedule
+	00:10 fo-dev-file
+		Script: /opt/fareoffice/ShScript/01-fo-dev-file-backup.php
+		Backup of Home and Documents
+
+	00:10 fo-dev-mail
+		Script: /opt/fareoffice/ShScript/01fo-dev-mail-backup.sh
+		Backup of all email. 
+
+	00:10 fo-dev-php
+		Script: /opt/fareoffice/ShScript/01-fo-dev-php-backup.php
+		Backup of Environment and Repository
+
+  00:10 fo-dev-svn
+    Script: /opt/fareoffice/ShScript/01fo-dev-svn-backup.sh	  	
+    Backup of subversion
+
+  00:10 fo-dev-sys
+    Script: /opt/fareoffice/ShScript/01fo-dev-sys-backup.sh	  	
+    Backup of all email.
+
+	00:10 01fo-dev-wiki-backup.sh
+		Script: /opt/fareoffice/shscript/01fo-dev-wiki-backup.sh
+		Backup of wiki
+
+	00:10 fo-dp-sql2 (dpsql2.fareoffice.com)
+		Script: /home/backup/NoBackup/Backup/05backupMysql.sh
+		Backup of mysql database.
+
+	00:10 fo-dp-www2 (dpwww2.fareoffice.com)
+		Script: /opt/fareoffice/ShScript/01fo-dp-www2-backup.sh
+		Backup of web files.
+
+	02:00 fo-dev-file
+		Script: /opt/data/ShScript/02syncSql2AndFilecow.sh
+		Copy backups from remoteserver and then to dpsql2.fareoffice.com		
+	
+	02:00 dpsql2.fareoffice.com
+		Script: /home/backup/NoBackup/Backup/07backupDownload.sh
+		Copy backups from www to sql2.			
+
+	12:00 fo-dev-file
+		Script: /opt/data/ShScript/03verify-fo-dev-file-backups.sh
+		Verify that all tar archives are ok (not corrupted).
+
+	12:00 dpsql2.fareoffice.com
+		Script: /home/backup/NoBackup/Backup/10verifySQL2Backups.sh
+		Verify that all tar archives are ok (not corrupted).

@@ -1,0 +1,105 @@
+;
+; This file contains zones that will be used when requesting DNS entries
+; from lan.
+;
+
+$INCLUDE fareoffice.com.global.zone
+
+
+mailrelay                                      IN A 10.100.121.4
+ldap-tp                                        IN A 10.100.131.5
+
+; RentalFront
+backstage-active-stable-tp                     IN A 10.100.131.111
+backstage-active-int-tp                        IN A 10.100.131.110
+ws-active-stable-tp                            IN A 10.100.131.111
+ws-active-int-tp                               IN A 10.100.131.110
+
+; Internal server names.
+fw-tp               IN A 10.101.0.1
+fw-tc               IN A 10.101.1.1
+fw-ac               IN A 10.101.2.1
+
+install-tp          IN A 10.101.0.2
+install-tc          IN A 10.101.1.2
+install-av          IN A 10.101.2.2
+
+ntp-tp              IN A 10.101.0.3
+ntp-tc              IN A 10.101.1.3
+ntp-av              IN A 10.101.2.3
+
+mailrelay-tp        IN A 10.101.0.4
+mailrelay-tc        IN A 10.101.1.4
+mailrelay-av        IN A 10.101.2.4
+
+ldap-tp             IN A 10.101.0.5
+ldap-tc             IN A 10.101.1.5
+ldap-av             IN A 10.101.2.5
+
+dns-tp              IN A 10.101.0.6
+dns-tc              IN A 10.101.1.6
+dns-av              IN A 10.101.2.6
+
+log-tp              IN A 10.101.0.7
+log-tc              IN A 10.101.1.7
+log-av              IN A 10.101.2.7
+
+bounce-tp           IN A 10.101.0.10
+bounce-tc           IN A 10.101.1.10
+bounce-av           IN A 10.101.2.10
+
+monitor-tp          IN A 10.101.0.12
+monitor-tc          IN A 10.101.1.12
+monitor-av          IN A 10.101.2.12
+
+scan-tp             IN A 10.101.0.13
+scan-tc             IN A 10.101.1.13
+scan-av             IN A 10.101.2.13
+
+redmine-tp          IN A 10.101.0.24
+redmine-tc          IN A 10.101.1.24
+redmine-av          IN A 10.101.2.24
+
+mysql1-tp           IN A 10.101.0.105
+mysql1-tc           IN A 10.101.1.105
+mysql1-av           IN A 10.101.2.105
+
+fpmysql-tp          IN A 10.101.0.107
+fpmysql-tc          IN A 10.101.1.107
+fpmysql-av          IN A 10.101.2.107
+
+webresmysql-tp      IN A 10.101.0.108
+webresmysql-tc      IN A 10.101.1.108
+webresmysql-av      IN A 10.101.2.108
+
+rentalfront-tp      IN A 10.101.0.115
+rentalfront-tc      IN A 10.101.1.115
+rentalfront-av      IN A 10.101.2.115
+
+farepayment-tp      IN A 10.101.0.125
+farepayment-tc      IN A 10.101.1.125
+farepayment-av      IN A 10.101.2.125
+
+webres-tp           IN A 10.101.0.135
+webres-tc           IN A 10.101.1.135
+webres-av           IN A 10.101.2.135
+
+vh01-tp             IN A 10.101.0.201
+vh01-tc             IN A 10.101.1.201
+vh01-av             IN A 10.101.2.201
+
+vh02-tp             IN A 10.101.0.202
+vh02-tc             IN A 10.101.1.202
+vh02-av             IN A 10.101.2.202
+
+ilo-fw-tp           IN A 10.100.0.210
+ilo-fw-tc           IN A 10.100.1.210
+ilo-fw-av           IN A 10.100.2.210
+
+ilo-vh01-tp         IN A 10.100.0.211
+ilo-vh01-tc         IN A 10.100.1.211
+ilo-vh02-av         IN A 10.100.2.211
+
+switch-tp           IN A 10.100.0.220
+switch-tc           IN A 10.100.1.220
+switch-av           IN A 10.100.2.220
