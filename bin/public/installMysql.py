@@ -122,13 +122,15 @@ def install_mysql(args):
     mysql_exec("truncate mysql.user")
 
     current_host_config = config.host(net.get_hostname())
+    repl_peer = current_host_config.get_option("repl_peer")
 
     mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
                "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-                                                                                              "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-                                                                                                                                                                          "'root'@'" + current_host_config.get_front_ip()          + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-                                                                                                                                                                                                                                                                                                "'root'@'" + current_host_config.get_option("repl_peer") + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
-                                                                                                                                                                                                                                                                                                                                                                                                                      "WITH GRANT OPTION "
+               "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+               "'root'@'" + current_host_config.get_front_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'"
+               ("" if repl_peer is None else ", 'root'@'" + repl_peer + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'") +
+               " WITH GRANT OPTION"
+
     )
 
     # Used by monitor services (icingas nrpe plugin etc.)
