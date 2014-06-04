@@ -506,8 +506,10 @@ def add_httpd_chain():
 
     # We assume this is an application server that requires connection to the
     # syco mysql server.
-    iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
-    iptables("-A httpd_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
+    mysql_servers = config.host(net.get_hostname()).get_option("mysql_servers").split(",")
+
+    for mysql_server in mysql_servers:
+        iptables("-A httpd_output -p TCP -m multiport -d " + mysql_server + " --dports 3306 -j allowed_tcp")
 
 
 def del_nfs_chain():
