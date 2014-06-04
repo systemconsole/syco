@@ -470,8 +470,10 @@ def add_mysql_chain():
   iptables("-A mysql_input -p TCP -m multiport --dports 3306 -j allowed_tcp")
 
   # Required for replication.
-  iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
-  iptables("-A mysql_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
+  current_host_config = config.host(net.get_hostname())
+
+  iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get_front_ip()   + " --dports 3306 -j allowed_tcp")
+  iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get("repl_peer") + " --dports 3306 -j allowed_tcp")
 
 
 def del_httpd_chain():
