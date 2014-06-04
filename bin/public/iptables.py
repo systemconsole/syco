@@ -473,7 +473,7 @@ def add_mysql_chain():
     current_host_config = config.host(net.get_hostname())
 
     iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get_front_ip()   + " --dports 3306 -j allowed_tcp")
-    iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get("repl_peer") + " --dports 3306 -j allowed_tcp")
+    iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get_option("repl_peer") + " --dports 3306 -j allowed_tcp")
 
 
 def del_httpd_chain():
