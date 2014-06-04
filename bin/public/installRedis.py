@@ -23,6 +23,7 @@ import os
 import iptables
 import socket
 import install
+import app
 import password
 import version
 import scopen
