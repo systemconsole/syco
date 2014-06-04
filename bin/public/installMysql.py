@@ -185,20 +185,23 @@ def install_mysql_replication(args):
     version_obj = version.Version("install-mysql-replication", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    general.wait_for_server_to_start(config.general.get_mysql_primary_master_ip(), "3306")
+    current_host_config = config.host(net.get_hostname())
+    repl_peer = current_host_config.get_option("repl_peer")
+
+    general.wait_for_server_to_start(repl_peer, "3306")
 
     repl_password=general.generate_password(20)
 
-    for ip in [config.general.get_mysql_primary_master_ip(), config.general.get_mysql_secondary_master_ip()]:
+    for ip in [current_host_config.get_front_ip(), repl_peer]:
         mysql_exec("stop slave;", True, ip)
         mysql_exec("delete from mysql.user where User = 'repl';", True, ip)
         mysql_exec("flush privileges;", True, ip)
         mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + config.general.get_mysql_primary_master_ip() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
         mysql_exec("GRANT REPLICATION SLAVE ON *.* TO 'repl'@'" + config.general.get_mysql_secondary_master_ip() + "' IDENTIFIED BY '" + repl_password + "';", True, ip)
-        if (ip==config.general.get_mysql_primary_master_ip()):
-            mysql_exec("CHANGE MASTER TO MASTER_HOST='" + config.general.get_mysql_secondary_master_ip() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+        if (ip==current_host_config.get_front_ip()):
+            mysql_exec("CHANGE MASTER TO MASTER_HOST='" + repl_peer + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
         else:
-            mysql_exec("CHANGE MASTER TO MASTER_HOST='" + config.general.get_mysql_primary_master_ip() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
+            mysql_exec("CHANGE MASTER TO MASTER_HOST='" + current_host_config.get_front_ip() + "', MASTER_USER='repl', MASTER_PASSWORD='" + repl_password + "'", True, ip)
         mysql_exec("start slave;", True, ip)
 
     version_obj.mark_executed()
