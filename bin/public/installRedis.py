@@ -23,7 +23,7 @@ import os
 import iptables
 import socket
 import install
-import app
+import password
 import version
 import scopen
 
@@ -34,6 +34,7 @@ SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
 REDIS_SCRIPT_DIR = "/usr/bin/"
 REDIS_CONF_DIR = "/etc/"
 KEEPALIVED_CONF_DIR = "/etc/keepalived/"
+REDIS_PASSWD_STORE = password.get_redis_production_password()
 
 def build_commands(commands):
   '''
@@ -91,6 +92,8 @@ def _configure_redis():
   x("cp {0}var/redis/redis.conf {1}redis.conf".format(SYCO_FO_PATH, REDIS_CONF_DIR))
   x("cp {0}var/redis/redis-check {1}redis-check".format(SYCO_FO_PATH, REDIS_SCRIPT_DIR))
   x("chmod 755 {0}redis-check".format(REDIS_SCRIPT_DIR))
+  scopen.replace("${REDIS_PASSWORD}", REDIS_PASSWD_STORE, REDIS_CONF_DIR + "redis.conf")
+  scopen.replace("${REDIS_PASSWORD}", REDIS_PASSWD_STORE, REDIS_SCRIPT_DIR + "redis-check")
   _chkconfig("redis","on")
   _service("redis","restart")
 
