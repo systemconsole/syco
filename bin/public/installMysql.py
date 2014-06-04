@@ -20,6 +20,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import fileinput
+import net
 import os
 import re
 import shutil
@@ -120,11 +121,13 @@ def install_mysql(args):
   mysql_exec("truncate mysql.db")
   mysql_exec("truncate mysql.user")
 
+  current_host_config = config.host(net.get_hostname())
+
   mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
     "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
     "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-    "'root'@'" + config.general.get_mysql_primary_master_ip()   + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-    "'root'@'" + config.general.get_mysql_secondary_master_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
+    "'root'@'" + current_host_config.get_front_ip()          + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+    "'root'@'" + current_host_config.get_option("repl_peer") + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "' "
     "WITH GRANT OPTION "
   )
 
