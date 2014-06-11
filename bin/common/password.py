@@ -49,6 +49,13 @@ def _get_password(service, user_name):
     _get_password_store().save_password_file()
     return password
 
+def get_custom_password(service, user_name):
+
+    if service is None or user_name is None:
+        raise Exception("None service and user name not allowed, please specify both")
+
+    return _get_password(service, user_name)
+
 def get_master_password():
     '''
     Get a password from the password store.
