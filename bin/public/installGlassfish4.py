@@ -248,10 +248,6 @@ def _setup_glassfish4():
   #Increase http acceptor threads, recomended is same as number of cpu cores.
   asadmin_exec("set server-config.network-config.transports.transport.tcp.acceptor-threads=4")
 
-  #JDBC increase max connections pool size
-  asadmin_exec("set resources.jdbc-connection-pool.mysql_rf_ecl.max-pool-size=64")
-
-
 
 def _install_mysql_connect():
   '''
