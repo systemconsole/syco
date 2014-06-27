@@ -255,7 +255,7 @@ class Config(object):
             return self.get_option("resolv.search")
 
         def get_nameserver_server(self):
-            return self.get_option("resolv.nameserver.server")
+            return self.get_option("nameserver.server")
 
         def get_nameserver_server_ip(self):
 
