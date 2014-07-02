@@ -310,11 +310,7 @@ class Config(object):
 
         def get_mail_relay_server(self):
             '''The hostname of the mail_relay server.'''
-            return self.get_option("mailrelay.server")
-
-        def get_mail_relay_server_ip(self):
-            '''The ip of the cert server.'''
-            return self.host(self.get_mail_relay_server()).get_back_ip()
+            return self.get_option("mailrelay.server", "")
 
         def get_cert_server(self):
             '''The hostname of the cert server.'''
