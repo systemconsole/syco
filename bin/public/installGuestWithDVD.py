@@ -127,6 +127,7 @@ class install_guest:
 
         prop['\$backnet_kickstart_line'] = back_line
         prop['\$frontnet_kickstart_line'] = front_line
+
         prop['\$default_password_crypted'] = app.get_root_password_hash()
 
         prop['\$disk_swap_mb'] = config.host(self.hostname).get_disk_swap_mb()
@@ -205,8 +206,8 @@ class install_guest:
         cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
         cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
         cmd += ' ksdevice=eth1'
-        cmd += ' ip=' + self.property_list['\$front_ip']
-        cmd += ' netmask=' + self.property_list['\$front_netmask']
+        cmd += ' ip=' + config.host(self.hostname).get_front_ip()
+        cmd += ' netmask=' + config.general.get_front_netmask()
         cmd += ' dns=' + config.general.get_front_resolver_ip()
         cmd += ' gateway=' + self.kvm_host_ip
         cmd += ' "'
