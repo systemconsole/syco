@@ -92,18 +92,24 @@ class install_guest:
         prop['\$hostname'] = self.hostname
 
         if config.general.is_back_enabled():
+
             back_line = \
                 "network --bootproto=static --ip=" + \
                 config.host(self.hostname).get_back_ip() + \
                 " --netmask=" + \
                 config.general.get_back_netmask() + \
-                " --gateway=" + \
-                config.general.get_back_gateway_ip() + \
                 " --hostname=" + \
                 self.hostname + \
-                " --device=eth0 --onboot=on --nameserver=" + \
-                config.general.get_back_resolver_ip() + \
-                " --noipv6"
+                " --device=eth0 --onboot=on --noipv6"
+
+            #Resolver and gateway optional on back net
+            if config.general.get_back_resolver_ip() is not None:
+                back_line += " --nameserver=" + \
+                    config.general.get_back_resolver_ip()
+
+            if config.general.get_back_gateway_ip() is not None:
+                back_line += " --gateway=" + \
+                    config.general.get_back_gateway_ip()
 
             front_if = "eth1"
         else:
