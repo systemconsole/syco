@@ -38,8 +38,8 @@ keyboard sv-latin1
 lang en_US.UTF-8
 
 # Network information
-network --bootproto=static --ip=$back_ip  --netmask=$back_netmask  --gateway=$back_gateway  --hostname=$hostname --device=eth0 --onboot=on --nameserver=$back_nameserver  --noipv6
-network --bootproto=static --ip=$front_ip --netmask=$front_netmask --gateway=$front_gateway --hostname=$hostname --device=eth1 --onboot=on --nameserver=$front_nameserver --noipv6
+$backnet_kickstart_line
+$frontnet_kickstart_line
 
 # Reboot after installation
 reboot
