@@ -139,99 +139,99 @@ class install_guest:
 
         self.property_list = prop
 
-def mount_dvd(self):
-    if (not os.access("/media/dvd", os.F_OK)):
-        x("mkdir /media/dvd")
+    def mount_dvd(self):
+        if (not os.access("/media/dvd", os.F_OK)):
+            x("mkdir /media/dvd")
 
-    if (not os.path.ismount("/media/dvd")):
-        x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
+        if (not os.path.ismount("/media/dvd")):
+            x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
 
-    if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
-        raise Exception("Couldn't mount dvd")
+        if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
+            raise Exception("Couldn't mount dvd")
 
-def unmount_dvd(self):
-    x("umount /media/dvd")
+    def unmount_dvd(self):
+        x("umount /media/dvd")
 
-def create_kickstart(self):
-    '''
-    Create the kickstart file that should be used during installation.
+    def create_kickstart(self):
+        '''
+        Create the kickstart file that should be used during installation.
 
-    '''
-    ks_folder = app.SYCO_PATH + "var/kickstart/generated/"
-    hostname_ks_file = ks_folder + self.hostname + ".ks"
-    dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
+        '''
+        ks_folder = app.SYCO_PATH + "var/kickstart/generated/"
+        hostname_ks_file = ks_folder + self.hostname + ".ks"
+        dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
 
-    x("mkdir -p " + ks_folder)
-    x("cp " + dvd_ks_file + " " + hostname_ks_file)
-    x("chmod 744 %s" % hostname_ks_file)
+        x("mkdir -p " + ks_folder)
+        x("cp " + dvd_ks_file + " " + hostname_ks_file)
+        x("chmod 744 %s" % hostname_ks_file)
 
-    set_config_property_batch(hostname_ks_file, self.property_list, False)
+        set_config_property_batch(hostname_ks_file, self.property_list, False)
 
-def start_nfs_export(self):
-    nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
-    nfs.add_export("dvd", "/media/dvd/")
-    nfs.configure_with_static_ip()
-    nfs.restart_services()
-    nfs.add_iptables_rules()
+    def start_nfs_export(self):
+        nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
+        nfs.add_export("dvd", "/media/dvd/")
+        nfs.configure_with_static_ip()
+        nfs.restart_services()
+        nfs.add_iptables_rules()
 
-def stop_nfs_export(self):
-    nfs.remove_iptables_rules()
-    nfs.stop_services()
-    time.sleep(1)
-    nfs.remove_export("kickstart")
-    nfs.remove_export('dvd')
+    def stop_nfs_export(self):
+        nfs.remove_iptables_rules()
+        nfs.stop_services()
+        time.sleep(1)
+        nfs.remove_export("kickstart")
+        nfs.remove_export('dvd')
 
-def create_kvm_host(self):
-    devicename = disk.create_lvm_volumegroup(
-        self.hostname,
-        int(self.property_list['\$total_disk_gb']) + 1,
-        config.host(self.hostname).get_vol_group())
+    def create_kvm_host(self):
+        devicename = disk.create_lvm_volumegroup(
+            self.hostname,
+            int(self.property_list['\$total_disk_gb']) + 1,
+            config.host(self.hostname).get_vol_group())
 
-    cmd =  " virt-install"
-    cmd += " -d --connect qemu:///system"
-    cmd += " --name " + self.hostname
-    cmd += " --ram " + self.ram
-    cmd += " --vcpus=" + self.cpu
-    if self.cpu_max is not None and self.cpu_max != "": cmd += ",maxvcpus=" + self.cpu_max
-    cmd += " --vnc --noautoconsole"
-    cmd += " --hvm"
-    cmd += " --virt-type=kvm"
-    cmd += " --autostart"
-    cmd += " --disk path=" + devicename
-    cmd += " --os-variant=rhel6"
-    cmd += " --arch x86_64"
-    if config.general.is_back_enabled(): cmd += " --network bridge:br0"
-    cmd += " --network bridge:br1"
-    cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
-    cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
-    cmd += ' ksdevice=eth1'
-    cmd += ' ip=' + self.property_list['\$front_ip']
-    cmd += ' netmask=' + self.property_list['\$front_netmask']
-    cmd += ' dns=' + config.general.get_front_resolver_ip()
-    cmd += ' gateway=' + self.kvm_host_ip
-    cmd += ' "'
+        cmd =  " virt-install"
+        cmd += " -d --connect qemu:///system"
+        cmd += " --name " + self.hostname
+        cmd += " --ram " + self.ram
+        cmd += " --vcpus=" + self.cpu
+        if self.cpu_max is not None and self.cpu_max != "": cmd += ",maxvcpus=" + self.cpu_max
+        cmd += " --vnc --noautoconsole"
+        cmd += " --hvm"
+        cmd += " --virt-type=kvm"
+        cmd += " --autostart"
+        cmd += " --disk path=" + devicename
+        cmd += " --os-variant=rhel6"
+        cmd += " --arch x86_64"
+        if config.general.is_back_enabled(): cmd += " --network bridge:br0"
+        cmd += " --network bridge:br1"
+        cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
+        cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
+        cmd += ' ksdevice=eth1'
+        cmd += ' ip=' + self.property_list['\$front_ip']
+        cmd += ' netmask=' + self.property_list['\$front_netmask']
+        cmd += ' dns=' + config.general.get_front_resolver_ip()
+        cmd += ' gateway=' + self.kvm_host_ip
+        cmd += ' "'
 
-    x(cmd)
-    self.wait_for_installation_to_complete()
-    self.autostart_guests()
+        x(cmd)
+        self.wait_for_installation_to_complete()
+        self.autostart_guests()
 
-def wait_for_installation_to_complete(self):
-    '''
-    Waiting for the installation process to complete, and halt the guest.
+    def wait_for_installation_to_complete(self):
+        '''
+        Waiting for the installation process to complete, and halt the guest.
 
-    '''
-    app.print_verbose("Wait for installation of " + self.hostname +
-                      " to complete", new_line=False)
-    while(True):
-        time.sleep(10)
-        print ".",
-        sys.stdout.flush()
-        result = x("virsh list", output=False)
-        if (self.hostname not in result):
-            print "Now installed"
-            break
+        '''
+        app.print_verbose("Wait for installation of " + self.hostname +
+                          " to complete", new_line=False)
+        while(True):
+            time.sleep(10)
+            print ".",
+            sys.stdout.flush()
+            result = x("virsh list", output=False)
+            if (self.hostname not in result):
+                print "Now installed"
+                break
 
-def autostart_guests(self):
-    # Autostart guests.
-    x("virsh autostart " + self.hostname)
-    x("virsh start " + self.hostname)
+    def autostart_guests(self):
+        # Autostart guests.
+        x("virsh autostart " + self.hostname)
+        x("virsh start " + self.hostname)
