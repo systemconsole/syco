@@ -47,11 +47,11 @@ EASY_RSA_MD5 = 'd2e760402541e4b534b4bab5f92455aa'
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
-  commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
-  commands.add("install-openvpn-client-certs", build_client_certs, help="Build client certs on the openvpn server.")
+    commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
+    commands.add("install-openvpn-client-certs", build_client_certs, help="Build client certs on the openvpn server.")
 
 def copy_easy_rsa():
-    
+
     # Downloading and md5 checking
     download_file(EASY_RSA_DOWNLOAD, "v2.2.0.zip",md5=EASY_RSA_MD5)
 
@@ -61,133 +61,133 @@ def copy_easy_rsa():
     x("unzip {0}{1} -d {0}".format(install_dir,"v2.2.0.zip"))
     x("mv {0}easy-rsa-2.2.0/easy-rsa/2.0 /etc/openvpn/easy-rsa".format(install_dir))
     x("yum -y remove unzip")
-    
+
 def install_openvpn_server(args):
-  '''
-  The actual installation of openvpn server.
+    '''
+    The actual installation of openvpn server.
 
-  '''
-  app.print_verbose("Install openvpn server version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
-  version_obj.check_executed()
+    '''
+    app.print_verbose("Install openvpn server version: %d" % SCRIPT_VERSION)
+    version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
+    version_obj.check_executed()
 
-  # Initialize all passwords
-  app.get_ldap_sssd_password()
+    # Initialize all passwords
+    app.get_ldap_sssd_password()
 
-  x("yum -y install openvpn openvpn-auth-ldap")
+    x("yum -y install openvpn openvpn-auth-ldap")
 
-  if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
-    
-    copy_easy_rsa()
-   
-    # Install server.conf
-    serverConf = "/etc/openvpn/server.conf"
-    x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
-    scOpen(serverConf).replace('${EXTERN_IP}',  net.get_public_ip())
-    scOpen(serverConf).replace('${OPENVPN.NETWORK}',  config.general.get_openvpn_network())
-    scOpen(serverConf).replace('${FRONT.NETWORK}',  config.general.get_front_network())
-    scOpen(serverConf).replace('${FRONT.NETMASK}',  config.general.get_front_netmask())
-    scOpen(serverConf).replace('${BACK.NETWORK}',  config.general.get_back_network())
-    scOpen(serverConf).replace('${BACK.NETMASK}',  config.general.get_back_netmask())
+    if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
 
-    # Prepare the ca cert generation.
-    fn = "/etc/openvpn/easy-rsa/vars"
-    scOpen(fn).replace('[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="' + config.general.get_country_name() + '"')
-    scOpen(fn).replace('[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="' + config.general.get_state() + '"')
-    scOpen(fn).replace('[\s]*export KEY_CITY.*',     'export KEY_CITY="' + config.general.get_locality() + '"')
-    scOpen(fn).replace('[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_organization_name() + '"')
-    scOpen(fn).replace('[\s]*export KEY_OU.*',       'export KEY_OU="' + config.general.get_organizational_unit_name() + '"')
-    scOpen(fn).replace('[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
+        copy_easy_rsa()
 
-    # Can't find the current version of openssl.cnf.
-    scOpen("/etc/openvpn/easy-rsa/whichopensslcnf").replace("\[\[\:alnum\:\]\]", "[[:alnum:]]*")
+        # Install server.conf
+        serverConf = "/etc/openvpn/server.conf"
+        x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
+        scOpen(serverConf).replace('${EXTERN_IP}',  net.get_public_ip())
+        scOpen(serverConf).replace('${OPENVPN.NETWORK}',  config.general.get_openvpn_network())
+        scOpen(serverConf).replace('${FRONT.NETWORK}',  config.general.get_front_network())
+        scOpen(serverConf).replace('${FRONT.NETMASK}',  config.general.get_front_netmask())
+        scOpen(serverConf).replace('${BACK.NETWORK}',  config.general.get_back_network())
+        scOpen(serverConf).replace('${BACK.NETMASK}',  config.general.get_back_netmask())
 
-    # Generate CA cert
-    os.chdir("/etc/openvpn/easy-rsa/")
-    x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-    x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
+        # Prepare the ca cert generation.
+        fn = "/etc/openvpn/easy-rsa/vars"
+        scOpen(fn).replace('[\s]*export KEY_COUNTRY.*',  'export KEY_COUNTRY="' + config.general.get_country_name() + '"')
+        scOpen(fn).replace('[\s]*export KEY_PROVINCE.*', 'export KEY_PROVINCE="' + config.general.get_state() + '"')
+        scOpen(fn).replace('[\s]*export KEY_CITY.*',     'export KEY_CITY="' + config.general.get_locality() + '"')
+        scOpen(fn).replace('[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_organization_name() + '"')
+        scOpen(fn).replace('[\s]*export KEY_OU.*',       'export KEY_OU="' + config.general.get_organizational_unit_name() + '"')
+        scOpen(fn).replace('[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
 
-    #Generation TLS key
-    os.chdir("/etc/openvpn/")
-    x("openvpn --genkey --secret ta.key")
+        # Can't find the current version of openssl.cnf.
+        scOpen("/etc/openvpn/easy-rsa/whichopensslcnf").replace("\[\[\:alnum\:\]\]", "[[:alnum:]]*")
 
-    # To prevent error "TXT_DB error number 2" when running ./build-key-pkcs12 --batch xxx"
-    scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
+        # Generate CA cert
+        os.chdir("/etc/openvpn/easy-rsa/")
+        x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
+        x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
 
-  # To be able to route trafic to internal network
-  net.enable_ip_forward()
+        #Generation TLS key
+        os.chdir("/etc/openvpn/")
+        x("openvpn --genkey --secret ta.key")
 
-  _setup_ldap()
+        # To prevent error "TXT_DB error number 2" when running ./build-key-pkcs12 --batch xxx"
+        scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
 
-  iptables.add_openvpn_chain()
-  iptables.save()
+    # To be able to route trafic to internal network
+    net.enable_ip_forward()
 
-  x("/etc/init.d/openvpn restart")
-  x("/sbin/chkconfig openvpn on")
+    _setup_ldap()
 
-  build_client_certs(args)
+    iptables.add_openvpn_chain()
+    iptables.save()
 
-  version_obj.mark_executed()
+    x("/etc/init.d/openvpn restart")
+    x("/sbin/chkconfig openvpn on")
+
+    build_client_certs(args)
+
+    version_obj.mark_executed()
 
 
 def _setup_ldap():
-  '''
-  Configure openvpn to authenticate through LDAP.
+    '''
+    Configure openvpn to authenticate through LDAP.
 
-  '''
-  ldapconf = scOpen("/etc/openvpn/auth/ldap.conf")
-  ldapconf.replace("^\\s*URL\s*.*","\\tURL\\tldaps://%s" % config.general.get_ldap_hostname())
-  ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_sssd_password())
-  ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=sssd,%s" % config.general.get_ldap_dn())
-  ldapconf.replace("^\s*TLSEnable\s*.*","\\t# TLSEnable\\t YES")
+    '''
+    ldapconf = scOpen("/etc/openvpn/auth/ldap.conf")
+    ldapconf.replace("^\\s*URL\s*.*","\\tURL\\tldaps://%s" % config.general.get_ldap_hostname())
+    ldapconf.replace("^\s*# Password\s*.*","\\tPassword\\t%s" % app.get_ldap_sssd_password())
+    ldapconf.replace("^\s*# BindDN\s*.*","\\tBindDN\\tcn=sssd,%s" % config.general.get_ldap_dn())
+    ldapconf.replace("^\s*TLSEnable\s*.*","\\t# TLSEnable\\t YES")
 
-  # Deal with certs
-  ldapconf.replace("^\s*TLSCACertFile\s*.*","\\tTLSCACertFile\\t /etc/openldap/cacerts/ca.crt")
-  ldapconf.replace("^\s*TLSCACertDir\s*.*","\\tTLSCACertDir\\t /etc/openldap/cacerts/")
-  ldapconf.replace("^\s*TLSCertFile\s*.*","\\tTLSCertFile\\t /etc/openldap/cacerts/client.crt")
-  ldapconf.replace("^\s*TLSKeyFile\s*.*","\\tTLSKeyFile\\t /etc/openldap/cacerts/client.key")
+    # Deal with certs
+    ldapconf.replace("^\s*TLSCACertFile\s*.*","\\tTLSCACertFile\\t /etc/openldap/cacerts/ca.crt")
+    ldapconf.replace("^\s*TLSCACertDir\s*.*","\\tTLSCACertDir\\t /etc/openldap/cacerts/")
+    ldapconf.replace("^\s*TLSCertFile\s*.*","\\tTLSCertFile\\t /etc/openldap/cacerts/client.crt")
+    ldapconf.replace("^\s*TLSKeyFile\s*.*","\\tTLSKeyFile\\t /etc/openldap/cacerts/client.key")
 
-  # Auth
-  ldapconf.replace("^\s*BaseDN\s*.*","\\BaseDN\\t \"%s\"" % config.general.get_ldap_dn() )
-  ldapconf.replace("^\s*SearchFilter\s*.*","\\tSearchFilter\\t \"(\\&(uid=%u)(employeeType=Sysop))\"")
+    # Auth
+    ldapconf.replace("^\s*BaseDN\s*.*","\\BaseDN\\t \"%s\"" % config.general.get_ldap_dn() )
+    ldapconf.replace("^\s*SearchFilter\s*.*","\\tSearchFilter\\t \"(\\&(uid=%u)(employeeType=Sysop))\"")
 
-  x('echo "plugin /usr/lib64/openvpn/plugin/lib/openvpn-auth-ldap.so /etc/openvpn/auth/ldap.conf" >> /etc/openvpn/server.conf ')
+    x('echo "plugin /usr/lib64/openvpn/plugin/lib/openvpn-auth-ldap.so /etc/openvpn/auth/ldap.conf" >> /etc/openvpn/server.conf ')
 
 
 def build_client_certs(args):
-  install.package("zip")
-  os.chdir("/etc/openvpn/easy-rsa/keys")
-  general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
+    install.package("zip")
+    os.chdir("/etc/openvpn/easy-rsa/keys")
+    general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
 
-  # Create client.conf
-  clientConf = "/etc/openvpn/easy-rsa/keys/client.conf"
-  x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf %s" % clientConf)
-  scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
+    # Create client.conf
+    clientConf = "/etc/openvpn/easy-rsa/keys/client.conf"
+    x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf %s" % clientConf)
+    scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
 
-  x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
+    x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
 
-  for user in os.listdir("/home"):
-    cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
-    valid_file="lost+found" not in user
-    if valid_file and not cert_already_installed:
-      os.chdir("/etc/openvpn/easy-rsa/")
-      general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CN.*',    'export KEY_CN="' + user + '"')
-      general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_NAME.*',  'export KEY_NAME="' + user + '"')
+    for user in os.listdir("/home"):
+        cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
+        valid_file="lost+found" not in user
+        if valid_file and not cert_already_installed:
+            os.chdir("/etc/openvpn/easy-rsa/")
+            general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_CN.*',    'export KEY_CN="' + user + '"')
+            general.set_config_property("/etc/openvpn/easy-rsa/vars", '[\s]*export KEY_NAME.*',  'export KEY_NAME="' + user + '"')
 
-      general.set_config_property("/etc/openvpn/easy-rsa/build-key-pkcs12", '.*export EASY_RSA.*', 'source ./vars;export EASY_RSA="${EASY_RSA:-.}"')
+            general.set_config_property("/etc/openvpn/easy-rsa/build-key-pkcs12", '.*export EASY_RSA.*', 'source ./vars;export EASY_RSA="${EASY_RSA:-.}"')
 
-      out = general.shell_exec("./build-key-pkcs12 --batch " + user,
-        cwd="/etc/openvpn/easy-rsa/",
-        events={'(?i)Enter Export Password:':'\n', '(?i)Verifying - Enter Export Password:':'\n'}
-      )
-      app.print_verbose(out)
+            out = general.shell_exec("./build-key-pkcs12 --batch " + user,
+                                     cwd="/etc/openvpn/easy-rsa/",
+                                     events={'(?i)Enter Export Password:':'\n', '(?i)Verifying - Enter Export Password:':'\n'}
+            )
+            app.print_verbose(out)
 
-      # Config client.crt
-      general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
-      general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
+            # Config client.crt
+            general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^cert.*crt", "cert " + user + ".crt")
+            general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
 
-      os.chdir("/etc/openvpn/easy-rsa/keys")
-      x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt /etc/openvpn/ta.key")
-      # Set permission for the user who now owns the file.
-      os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
-      general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")
+            os.chdir("/etc/openvpn/easy-rsa/keys")
+            x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt /etc/openvpn/ta.key")
+            # Set permission for the user who now owns the file.
+            os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
+            general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")
