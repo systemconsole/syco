@@ -10,7 +10,6 @@ This script should be executed directly on a kvm host.
 All configurations are retrived from the install.cfg.
 
 '''
-from miro.app import playback_manager
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
