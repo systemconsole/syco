@@ -89,6 +89,8 @@ def install_glassfish(arg):
   '''
   Install glassfish4
   '''
+  general.create_install_dir()
+
   if False ==_is_glassfish_user_installed():
     x('adduser glassfish')
 
@@ -194,9 +196,11 @@ def _setup_glassfish4():
   asadmin_exec("delete-jvm-options -Xmx512m")
   
   asadmin_exec("create-jvm-options -server")
-  asadmin_exec("create-jvm-options -Xmx2048m")
+  asadmin_exec("create-jvm-options -Xmx6144m")
   asadmin_exec("create-jvm-options -Xms1024m")
   asadmin_exec("create-jvm-options '-XX\:MaxPermSize=1024m'")
+  asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
+  asadmin_exec("create-jvm-options '-XX\:+UseParallelGC'")
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
@@ -226,8 +230,24 @@ def _setup_glassfish4():
   asadmin_exec("create-jvm-options -Dcom.sun.management.jmxremote.authenticate=false")
   asadmin_exec("create-jvm-options -Dcom.sun.management.jmxremote.ssl=false")
   asadmin_exec("create-jvm-options -Djava.rmi.server.hostname=192.168.0.8")
+  
+  # Allow glassfish to make more than 32 outgoing connections.
+  asadmin_exec("set server.ejb-container.property.thread-core-pool-size=64")
+  asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
+  asadmin_exec("set server.ejb-container.property.thread-keep-alive-seconds=60")
+  asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
 
+  #Increase thread pool sizes
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=200")
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.min-thread-pool-size=50")
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.max-queue-size=2048")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.max-thread-pool-size=200")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.min-thread-pool-size=50")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.max-queue-size=2048")
 
+  #Increase http acceptor threads, recomended is same as number of cpu cores.
+  #Needs to be tested more together with ulimit settings before implementation.
+  #asadmin_exec("set server-config.network-config.transports.transport.tcp.acceptor-threads=4")
 
 
 def _install_mysql_connect():
