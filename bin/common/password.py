@@ -155,6 +155,9 @@ def get_mysql_production_password():
     '''A user password for the mysql service.'''
     return _get_password("mysql", "production")
 
+def get_redis_production_password():
+  '''A user password for the redis service.'''
+  return _get_password("redis", "production")
 
 def init_mysql_passwords():
     get_mysql_root_password()
@@ -178,5 +181,6 @@ def init_all_passwords():
     get_glassfish_admin_password()
     get_user_password("glassfish")
     get_switch_icmp_password()
+    get_redis_production_password()
 
     init_mysql_passwords()
