@@ -72,23 +72,38 @@ def install_openvpn_server(args):
     version_obj.check_executed()
 
     # Initialize all passwords
-    app.get_ldap_sssd_password()
+    enable_ldap = config.general.get_option("openvpn.ldap.enable", "false")
+    x("yum -y install openvpn")
 
-    x("yum -y install openvpn openvpn-auth-ldap")
+    if enable_ldap:
+        app.get_ldap_sssd_password()
+        x("yum -y install openvpn-auth-ldap")
 
-    if (not os.access("/etc/openvpn/easy-rsa", os.F_OK)):
+    if not os.access("/etc/openvpn/easy-rsa", os.F_OK):
 
         copy_easy_rsa()
 
         # Install server.conf
-        serverConf = "/etc/openvpn/server.conf"
-        x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % serverConf)
-        scOpen(serverConf).replace('${EXTERN_IP}',  net.get_public_ip())
-        scOpen(serverConf).replace('${OPENVPN.NETWORK}',  config.general.get_openvpn_network())
-        scOpen(serverConf).replace('${FRONT.NETWORK}',  config.general.get_front_network())
-        scOpen(serverConf).replace('${FRONT.NETMASK}',  config.general.get_front_netmask())
-        scOpen(serverConf).replace('${BACK.NETWORK}',  config.general.get_back_network())
-        scOpen(serverConf).replace('${BACK.NETMASK}',  config.general.get_back_netmask())
+        server_conf = "/etc/openvpn/server.conf"
+        x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % server_conf)
+        scOpen(server_conf).replace('${EXTERN_IP}',  net.get_public_ip())
+        scOpen(server_conf).replace('${OPENVPN_NETWORK}',  config.general.get_openvpn_network())
+        scOpen(server_conf).replace('${PUSH_ROUTES}',  _get_push_routes())
+
+        ccd_enabled = config.general.get_option("openvpn.ccd.enable", "false").lower()
+        ccd_dir = ""
+        client_routes = ""
+        c2c = ""
+
+        if ccd_enabled:
+            ccd_dir = "client-config-dir ccd"
+            client_routes = _get_client_routes()
+            c2c = "client-to-client"
+
+        scOpen(server_conf).replace('${CCD_DIR}', ccd_dir)
+        scOpen(server_conf).replace('${CLIENT_ROUTES}', client_routes)
+        scOpen(server_conf).replace('${CLIENT_TO_CLIENT}', c2c)
+        scOpen(server_conf).replace('${DHCP_DNS_SERVERS}', _get_dhcp_dns_servers())
 
         # Prepare the ca cert generation.
         fn = "/etc/openvpn/easy-rsa/vars"
@@ -117,7 +132,8 @@ def install_openvpn_server(args):
     # To be able to route trafic to internal network
     net.enable_ip_forward()
 
-    _setup_ldap()
+    if enable_ldap:
+        _setup_ldap()
 
     iptables.add_openvpn_chain()
     iptables.save()
@@ -128,6 +144,77 @@ def install_openvpn_server(args):
     build_client_certs(args)
 
     version_obj.mark_executed()
+
+
+def _get_client_routes():
+    '''
+    Determine client routes from config
+    '''
+
+    client_routes = config.general.get_option("openvpn.ccd.routes", "")
+    client_routes_res = ""
+    if client_routes is not None and client_routes != "":
+        routes = _parse_routes(client_routes)
+
+        for route_network in routes.keys():
+            client_routes_res += "route " + route_network + " " + routes[route_network] + "\n"
+
+    return client_routes_res
+
+
+def _get_dhcp_dns_servers():
+    dns_servers = config.general.get_option("openvpn.dhcp.dns", "")
+    dns_servers_res =""
+    if dns_servers is not None and dns_servers != "":
+
+        for dns_server in dns_servers.split():
+            dns_servers_res += "push \"dhcp-option DNS " + dns_server + "\"\n"
+
+    return dns_servers_res
+
+
+def _get_push_routes():
+    '''
+    Determine push routes from config or default to frontnet and backnet.
+    '''
+
+    push_routes = config.general.get_option("openvpn.push_routes", "")
+
+    if push_routes is None or push_routes == "":
+        #Fall Back to front-net and back net if enabled
+        push_routes = "push \"route " + config.general.get_front_network() + " " + config.general.get_front_netmask()\
+            + "\"\n"
+
+        if config.general.is_back_enabled():
+            push_routes += "push \"route " + config.general.get_back_network() + " " + config.general.get_back_netmask()\
+                + "\n"
+
+    else:
+        routes = _parse_routes(push_routes)
+
+        for route_network in routes.keys():
+            push_routes += "push \"route " + route_network + " " + routes[route_network] + "\"\n"
+
+    return push_routes
+
+
+def _parse_routes(route_str)
+    '''
+    Parse a route string to a dict of routes
+    Different routes are separated by comma and network/mask are seperated by colon
+    e.g. 10.10.10.0:255.255.255.0,10.10.11.0:255.255.255.248
+    '''
+    routes_dict = {}
+    route_list = route_str.split(",")
+
+    for route in route_list:
+        route_pair = route.split(":")
+        if len(route_pair) != 2:
+            raise Exception("Expected push routes of format: <network>:<netmask> and several "
+                            "routes separated by comma")
+        routes_dict[route_pair[0]] = route_pair[1]
+
+    return routes_dict
 
 
 def _setup_ldap():
