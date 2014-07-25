@@ -135,6 +135,7 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "check_connections.pl")
 
     # Set MySQL password, if running MySQL.
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")

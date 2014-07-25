@@ -97,8 +97,8 @@ def _configure_redis():
   x("cp {0}var/redis/redis-check {1}redis-check".format(SYCO_FO_PATH, REDIS_SCRIPT_DIR))
   x("chmod 755 {0}redis-check".format(REDIS_SCRIPT_DIR))
   scopen.scOpen(REDIS_CONF_DIR + "redis.conf").replace("${REDIS_PASSWORD}", REDIS_PASSWD_STORE)
-  scopen.scOpen(REDIS_SCRIPT_DIR + "redis-check").replace("${REDIS_PASSWORD}", REDIS_PASSWD_STORE)
-  _chkconfig("redis","on")
+  scopen.scOpen(REDIS_SCRIPT_DIR + "redis-check").replace("${REDIS_PASSWORD}", REDIS_PASSWD_STORE) 
+ _chkconfig("redis","on")
   _service("redis","restart")
 
 
