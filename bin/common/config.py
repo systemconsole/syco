@@ -165,11 +165,11 @@ class Config(object):
 
         def get_installation_server(self):
             '''The hostname of the installation server.'''
-            return self.get_option("installation_server")
+            return self.get_option("installation.server")
 
         def get_installation_server_ip(self):
-            '''The ip of the installation server.'''
-            return self.host(self.get_installation_server()).get_front_ip()
+            """The ip of the installation server."""
+            return self._get_service_ip("installation")
 
         def get_front_gateway_ip(self):
             '''The ip of the network gateway.'''
@@ -255,7 +255,7 @@ class Config(object):
             return self.get_option("resolv.search")
 
         def get_nameserver_server(self):
-            return self.get_option("resolv.nameserver.server")
+            return self.get_option("nameserver.server")
 
         def get_nameserver_server_ip(self):
 
@@ -310,11 +310,7 @@ class Config(object):
 
         def get_mail_relay_server(self):
             '''The hostname of the mail_relay server.'''
-            return self.get_option("mailrelay.server")
-
-        def get_mail_relay_server_ip(self):
-            '''The ip of the cert server.'''
-            return self.host(self.get_mail_relay_server()).get_back_ip()
+            return self.get_option("mailrelay.server", "")
 
         def get_cert_server(self):
             '''The hostname of the cert server.'''
@@ -322,7 +318,7 @@ class Config(object):
 
         def get_cert_server_ip(self):
             '''The ip of the cert server.'''
-            return self.host(self.get_cert_server()).get_back_ip()
+            return self._get_service_ip('cert')
 
         def get_cert_wild_ca(self):
             '''The hostname of the cert server.'''

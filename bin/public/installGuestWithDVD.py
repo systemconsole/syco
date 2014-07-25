@@ -32,180 +32,213 @@ import sys
 import disk
 
 def build_commands(commands):
-  commands.add(
-    "install-guest", install_guest, "hostname",
-    help="Install KVM guest from dvd.")
+    commands.add(
+        "install-guest", install_guest, "hostname",
+        help="Install KVM guest from dvd.")
 
 class install_guest:
-  hostname = None
+    hostname = None
 
-  def __init__(self, args):
-    self.check_commandline_args(args)
-    app.print_verbose("Install kvm guest " + self.hostname + ".")
-    self.check_if_host_is_installed()
-    self.init_host_options_from_config()
+    def __init__(self, args):
+        self.check_commandline_args(args)
+        app.print_verbose("Install kvm guest " + self.hostname + ".")
+        self.check_if_host_is_installed()
+        self.init_host_options_from_config()
 
-    self.mount_dvd()
-    self.create_kickstart()
-    self.start_nfs_export()
+        self.mount_dvd()
+        self.create_kickstart()
+        self.start_nfs_export()
 
-    self.create_kvm_host()
+        self.create_kvm_host()
 
-    self.stop_nfs_export()
-    self.unmount_dvd()
+        self.stop_nfs_export()
+        self.unmount_dvd()
 
-  def check_commandline_args(self, args):
-    if (len(args) != 2):
-        raise Exception("Enter the hostname of the server to install")
-    else:
-      self.hostname = args[1]
+    def check_commandline_args(self, args):
+        if (len(args) != 2):
+            raise Exception("Enter the hostname of the server to install")
+        else:
+            self.hostname = args[1]
 
-  def check_if_host_is_installed(self):
-    result = x("virsh list --all")
-    if (self.hostname in result):
-      raise Exception(self.hostname + " already installed")
+    def check_if_host_is_installed(self):
+        result = x("virsh list --all")
+        if (self.hostname in result):
+            raise Exception(self.hostname + " already installed")
 
-  def init_host_options_from_config(self):
-    '''
-    Initialize all used options from install.cfg.
+    def init_host_options_from_config(self):
+        '''
+        Initialize all used options from install.cfg.
 
-    If the options are invalid, app and config will throw exceptions,
-    that will be forwarded to the starter app.
+        If the options are invalid, app and config will throw exceptions,
+        that will be forwarded to the starter app.
 
-    '''
-    # The ip connected to the admin net, from which the nfs
-    # export is done.
-    self.kvm_host_ip = net.get_lan_ip()
+        '''
+        # The ip connected to the admin net, from which the nfs
+        # export is done.
+        self.kvm_host_ip = net.get_lan_ip()
 
-    self.ram = str(config.host(self.hostname).get_ram())
-    self.cpu = str(config.host(self.hostname).get_cpu())
-    self.cpu_max = str(config.host(self.hostname).get_cpu_max())
+        self.ram = str(config.host(self.hostname).get_ram())
+        self.cpu = str(config.host(self.hostname).get_cpu())
+        self.cpu_max = str(config.host(self.hostname).get_cpu_max())
 
-    self.set_kickstart_options()
+        self.set_kickstart_options()
 
-  def set_kickstart_options(self):
-    '''
-    Properties that will be used to replace ${XXX} vars in kickstart file.
+    def set_kickstart_options(self):
+        '''
+        Properties that will be used to replace ${XXX} vars in kickstart file.
 
-    '''
-    prop = {}
-    prop['\$hostname'] = self.hostname
+        '''
+        prop = {}
+        prop['\$hostname'] = self.hostname
 
-    prop['\$front_ip'] = config.host(self.hostname).get_front_ip()
-    prop['\$front_netmask'] = config.general.get_front_netmask()
-    prop['\$front_gateway'] = config.general.get_front_gateway_ip()
-    prop['\$front_nameserver'] = config.general.get_front_resolver_ip()
+        if config.general.is_back_enabled():
 
-    prop['\$back_ip'] = config.host(self.hostname).get_back_ip()
-    prop['\$back_netmask'] = config.general.get_back_netmask()
-    prop['\$back_gateway'] = config.general.get_back_gateway_ip()
-    prop['\$back_nameserver'] = config.general.get_back_resolver_ip()
+            back_line = \
+                "network --bootproto=static --ip=" + \
+                config.host(self.hostname).get_back_ip() + \
+                " --netmask=" + \
+                config.general.get_back_netmask() + \
+                " --hostname=" + \
+                self.hostname + \
+                " --device=eth0 --onboot=on --noipv6"
 
-    prop['\$default_password_crypted'] = app.get_root_password_hash()
+            #Resolver and gateway optional on back net
+            if config.general.get_back_resolver_ip() is not None:
+                back_line += " --nameserver=" + \
+                    config.general.get_back_resolver_ip()
 
-    prop['\$disk_swap_mb'] = config.host(self.hostname).get_disk_swap_mb()
-    prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
-    prop['\$disk_log_mb'] = config.host(self.hostname).get_disk_log_mb()
-    prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
-    prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
-    prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
-    prop['\$vol_group'] = config.host(self.hostname).get_vol_group()
+            if config.general.get_back_gateway_ip() is not None:
+                back_line += " --gateway=" + \
+                    config.general.get_back_gateway_ip()
 
-    self.property_list = prop
+            front_if = "eth1"
+        else:
+            back_line = ""
+            front_if = "eth0"
 
-  def mount_dvd(self):
-    if (not os.access("/media/dvd", os.F_OK)):
-      x("mkdir /media/dvd")
+        front_line = \
+            "network --bootproto=static --ip=" + \
+            config.host(self.hostname).get_front_ip() + \
+            " --netmask=" + \
+            config.general.get_front_netmask() + \
+            " --gateway=" + \
+            config.general.get_front_gateway_ip() + \
+            " --hostname=" + \
+            self.hostname + \
+            " --device=" + \
+            front_if + \
+            " --onboot=on --nameserver=" + \
+            config.general.get_front_resolver_ip() + \
+            " --noipv6"
 
-    if (not os.path.ismount("/media/dvd")):
-      x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
+        prop['\$backnet_kickstart_line'] = back_line
+        prop['\$frontnet_kickstart_line'] = front_line
 
-    if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
-      raise Exception("Couldn't mount dvd")
+        prop['\$default_password_crypted'] = app.get_root_password_hash()
 
-  def unmount_dvd(self):
-    x("umount /media/dvd")
+        prop['\$disk_swap_mb'] = config.host(self.hostname).get_disk_swap_mb()
+        prop['\$disk_var_mb'] = config.host(self.hostname).get_disk_var_mb()
+        prop['\$disk_log_mb'] = config.host(self.hostname).get_disk_log_mb()
+        prop['\$total_disk_mb'] = config.host(self.hostname).get_total_disk_mb()
+        prop['\$total_disk_gb'] = config.host(self.hostname).get_total_disk_gb()
+        prop['\$boot_device'] = config.host(self.hostname).get_boot_device("vda")
+        prop['\$vol_group'] = config.host(self.hostname).get_vol_group()
 
-  def create_kickstart(self):
-      '''
-      Create the kickstart file that should be used during installation.
+        self.property_list = prop
 
-      '''
-      ks_folder = app.SYCO_PATH + "var/kickstart/generated/"
-      hostname_ks_file = ks_folder + self.hostname + ".ks"
-      dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
+    def mount_dvd(self):
+        if (not os.access("/media/dvd", os.F_OK)):
+            x("mkdir /media/dvd")
 
-      x("mkdir -p " + ks_folder)
-      x("cp " + dvd_ks_file + " " + hostname_ks_file)
-      x("chmod 744 %s" % hostname_ks_file)
+        if (not os.path.ismount("/media/dvd")):
+            x("mount -o ro -t iso9660 /dev/dvd /media/dvd")
 
-      set_config_property_batch(hostname_ks_file, self.property_list, False)
+        if (not os.access("/media/dvd/RPM-GPG-KEY-CentOS-6", os.F_OK)):
+            raise Exception("Couldn't mount dvd")
 
-  def start_nfs_export(self):
-      nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
-      nfs.add_export("dvd", "/media/dvd/")
-      nfs.configure_with_static_ip()
-      nfs.restart_services()
-      nfs.add_iptables_rules()
+    def unmount_dvd(self):
+        x("umount /media/dvd")
 
-  def stop_nfs_export(self):
-      nfs.remove_iptables_rules()
-      nfs.stop_services()
-      time.sleep(1)
-      nfs.remove_export("kickstart")
-      nfs.remove_export('dvd')
+    def create_kickstart(self):
+        '''
+        Create the kickstart file that should be used during installation.
 
-  def create_kvm_host(self):
-      devicename = disk.create_lvm_volumegroup(
-          self.hostname,
-          int(self.property_list['\$total_disk_gb']) + 1,
-          config.host(self.hostname).get_vol_group())
+        '''
+        ks_folder = app.SYCO_PATH + "var/kickstart/generated/"
+        hostname_ks_file = ks_folder + self.hostname + ".ks"
+        dvd_ks_file = app.SYCO_PATH + "var/kickstart/dvd-guest.ks"
 
-      cmd =  " virt-install"
-      cmd += " -d --connect qemu:///system"
-      cmd += " --name " + self.hostname
-      cmd += " --ram " + self.ram
-      cmd += " --vcpus=" + self.cpu
-      if self.cpu_max is not None and self.cpu_max != "": cmd += ",maxvcpus=" + self.cpu_max
-      cmd += " --vnc --noautoconsole"
-      cmd += " --hvm"
-      cmd += " --virt-type=kvm"
-      cmd += " --autostart"
-      cmd += " --disk path=" + devicename
-      cmd += " --os-variant=rhel6"
-      cmd += " --arch x86_64"
-      if config.general.is_back_enabled(): cmd += " --network bridge:br0"
-      cmd += " --network bridge:br1"
-      cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
-      cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
-      cmd += ' ksdevice=eth1'
-      cmd += ' ip=' + self.property_list['\$front_ip']
-      cmd += ' netmask=' + self.property_list['\$front_netmask']
-      cmd += ' dns=' + config.general.get_front_resolver_ip()
-      cmd += ' gateway=' + self.kvm_host_ip
-      cmd += ' "'
+        x("mkdir -p " + ks_folder)
+        x("cp " + dvd_ks_file + " " + hostname_ks_file)
+        x("chmod 744 %s" % hostname_ks_file)
 
-      x(cmd)
-      self.wait_for_installation_to_complete()
-      self.autostart_guests()
+        set_config_property_batch(hostname_ks_file, self.property_list, False)
 
-  def wait_for_installation_to_complete(self):
-    '''
-    Waiting for the installation process to complete, and halt the guest.
+    def start_nfs_export(self):
+        nfs.add_export("kickstart", app.SYCO_PATH + "var/kickstart/generated/")
+        nfs.add_export("dvd", "/media/dvd/")
+        nfs.configure_with_static_ip()
+        nfs.restart_services()
+        nfs.add_iptables_rules()
 
-    '''
-    app.print_verbose("Wait for installation of " + self.hostname +
-                      " to complete", new_line=False)
-    while(True):
-      time.sleep(10)
-      print ".",
-      sys.stdout.flush()
-      result = x("virsh list", output=False)
-      if (self.hostname not in result):
-        print "Now installed"
-        break
+    def stop_nfs_export(self):
+        nfs.remove_iptables_rules()
+        nfs.stop_services()
+        time.sleep(1)
+        nfs.remove_export("kickstart")
+        nfs.remove_export('dvd')
 
-  def autostart_guests(self):
-    # Autostart guests.
-    x("virsh autostart " + self.hostname)
-    x("virsh start " + self.hostname)
+    def create_kvm_host(self):
+        devicename = disk.create_lvm_volumegroup(
+            self.hostname,
+            int(self.property_list['\$total_disk_gb']) + 1,
+            config.host(self.hostname).get_vol_group())
+
+        cmd =  " virt-install"
+        cmd += " -d --connect qemu:///system"
+        cmd += " --name " + self.hostname
+        cmd += " --ram " + self.ram
+        cmd += " --vcpus=" + self.cpu
+        if self.cpu_max is not None and self.cpu_max != "": cmd += ",maxvcpus=" + self.cpu_max
+        cmd += " --vnc --noautoconsole"
+        cmd += " --hvm"
+        cmd += " --virt-type=kvm"
+        cmd += " --autostart"
+        cmd += " --disk path=" + devicename
+        cmd += " --os-variant=rhel6"
+        cmd += " --arch x86_64"
+        if config.general.is_back_enabled(): cmd += " --network bridge:br0"
+        cmd += " --network bridge:br1"
+        cmd += " --location nfs:" + self.kvm_host_ip + ":/dvd"
+        cmd += ' -x "ks=nfs:' + self.kvm_host_ip + ':/kickstart/' + self.hostname + '.ks'
+        cmd += ' ksdevice=eth1'
+        cmd += ' ip=' + config.host(self.hostname).get_front_ip()
+        cmd += ' netmask=' + config.general.get_front_netmask()
+        cmd += ' dns=' + config.general.get_front_resolver_ip()
+        cmd += ' gateway=' + self.kvm_host_ip
+        cmd += ' "'
+
+        x(cmd)
+        self.wait_for_installation_to_complete()
+        self.autostart_guests()
+
+    def wait_for_installation_to_complete(self):
+        '''
+        Waiting for the installation process to complete, and halt the guest.
+
+        '''
+        app.print_verbose("Wait for installation of " + self.hostname +
+                          " to complete", new_line=False)
+        while(True):
+            time.sleep(10)
+            print ".",
+            sys.stdout.flush()
+            result = x("virsh list", output=False)
+            if (self.hostname not in result):
+                print "Now installed"
+                break
+
+    def autostart_guests(self):
+        # Autostart guests.
+        x("virsh autostart " + self.hostname)
+        x("virsh start " + self.hostname)
