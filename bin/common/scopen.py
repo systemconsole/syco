@@ -29,7 +29,7 @@ class scOpen:
         self.filename = filename
 
     def esc(self, value):
-        return value.replace('\n', '\\\n').replace("/", "\/")
+        return value.replace('\n', '\\\n').replace("/", "\/").replace("&", "&&")
 
     def add(self, value):
         '''
