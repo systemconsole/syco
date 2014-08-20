@@ -198,7 +198,7 @@ def _get_push_routes():
     return push_routes
 
 
-def _parse_routes(route_str)
+def _parse_routes(route_str):
     '''
     Parse a route string to a dict of routes
     Different routes are separated by comma and network/mask are seperated by colon
