@@ -112,17 +112,19 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
   create_install_dir()
   if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-    cmd = "-O " + app.INSTALL_DIR + dst
+    cmd = "-o " + app.INSTALL_DIR + dst
     if (remote_user):
-      cmd += " --user=" + remote_user
+      cmd += " --user \"" + remote_user
 
-    if (remote_password):
-      cmd += " --password=\"" + remote_password + "\""
+      if (remote_password):
+        cmd += ":" + remote_password
+      cmd += "\""
 
-    if (cookie):
-      cmd += ' --no-cookies --header "Cookie: %s"' % cookie
+    # TODO: Support cookies using curl
+    #if (cookie):
+    # cmd += ' --no-cookies --header "Cookie: %s"' % cookie
 
-    shell_exec("wget " + cmd + " " + src, user=user)
+    shell_exec("curl -L " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
     # making the script not able to read the file immediatley after it's
     # downloaded. A sleep fixes this.

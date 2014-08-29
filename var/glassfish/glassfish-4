@@ -1,0 +1,269 @@
+#!/bin/env python
+#
+# glassfish    Startup script for the Glassfish java application server.
+#
+# chkconfig: 2345 85 15
+# description: GlassFish is an open source application server project started \
+#              by Sun Microsystems for the Java EE platform and now sponsored \
+#              by Oracle Corporation. The supported version is called Oracle \
+#              GlassFish Server. GlassFish is free software, dual-licensed \
+#              under two free software licences: the Common Development and \
+#              Distribution License (CDDL) and the GNU General Public License \
+#              (GPL) with the classpath exception. (This text is from wikipedia)
+# processname: glassfish
+# pidfile: /var/run/glassfish.pid
+
+#
+# Used and tested on centos 6.
+#
+# Author: daniel@cybercow.se
+#
+
+# These values should be changed to reflect your mysql servers ip.
+MYSQL_IPS = []
+#MYSQL_IPS.append("${MYSQL_PRIMARY}")
+#MYSQL_IPS.append("${MYSQL_SECONDARY}")
+MYSQL_IPS.append("10.101.2.105")
+MYSQL_IPS.append("10.101.1.105")
+
+# The linux user whish glassfish should be started with.
+OWNER="glassfish";
+
+# The path to where you have your glassfish server installed.
+GLASSFISH_PATH="/usr/local/glassfish4"
+
+# Import used python modules.
+from socket import *
+import sys
+import os
+import pwd
+import datetime
+import time
+import subprocess
+import shlex
+from optparse import OptionParser
+
+# String codes affecting output to shell.
+BOLD = "\033[1m"
+RESET = "\033[0;0m"
+
+# Globals set with set_global_options_and_args.
+OPTIONS = None
+ARGS = None
+
+def print_verbose(message, verbose = 1, add_new_line=True):
+    if (verbose <= OPTIONS.verbose):
+        if (add_new_line):
+            message += "\n"
+        sys.stdout.write(message)
+        sys.stdout.flush()
+
+def is_server_alive(server, port):
+    '''
+    Check if PORT on SERVER is responding, this assumes the server is alive.
+
+    '''
+    result = -1
+    try:
+        s = socket(AF_INET, SOCK_STREAM)
+        s.settimeout(5)
+        result = s.connect_ex((server, int(port)))
+    finally:
+        s.shutdown(2)
+        s.close()
+
+    return (result == 0)
+
+def wait_for_server_to_start(server, port):
+    '''
+    Wait until SERVER PORT gets opened.
+
+    '''
+    message = "Wait until port %s on server %s opens" % (port, server)
+    print_verbose(message, 1, False)
+    sys.stdout.flush()
+    while(not is_server_alive(server, port)):
+        print_verbose(".", 1, False)
+        time.sleep(5)
+    print_verbose(".", 1)
+
+def wait_for_mysql_to_start():
+    '''
+    Wait for all mysql servers defined in global MYSQL_IPS to start.
+
+    '''
+    for ip in MYSQL_IPS:
+        wait_for_server_to_start(ip, 3306)
+
+def is_glassfish_user():
+    '''
+    Is this program executed by the user defined in global OWNER?
+
+    '''
+    return (pwd.getpwuid(os.getuid()) == OWNER)
+
+def shellquote(s):
+    return "'" + s.replace("'", "'\\''") + "'"
+
+def x(cmd, user=None):
+    '''
+    Execute the shell command CMD as the user defined in global OWNER.
+
+    '''
+    if user is None and not is_glassfish_user():
+        user = OWNER
+    if user:
+        cmd = "su %s -c %s" % (user, shellquote(cmd))
+
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    return (stdout, stderr, p.pid)
+
+def write_to_log(domain_name, message, verbose=1):
+    '''
+    Write MESSAGE to screen and the startup log for the gf domain DOMAIN_NAME.
+
+    The logs are stored in
+    GLASSFISH_PATH/glassfish/domains/DOMAIN_NAME/logs/startup.log
+
+    '''
+    print_verbose(message, verbose)
+
+    file_name = "%s/glassfish/domains/%s/logs/startup.log" % (GLASSFISH_PATH, domain_name)
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    message = now + " - " + message;
+
+    cmd = "echo '%s' >> %s" % (message, file_name)
+    print_verbose(BOLD + "Command: " + RESET + cmd, 3)
+
+    (stdout, stderr, pid) = x(cmd)
+    result = stdout + stderr
+    if (result):
+        print_verbose(result, 1)
+
+def asadmin_exec(domain_name, command):
+    '''
+    Execute COMMAND with glassfish asadmin.
+
+    '''
+    asacmd = "%s/bin/asadmin %s" % (GLASSFISH_PATH, command)
+
+    print_verbose(BOLD + "Command: " + RESET + asacmd, 2)
+    write_to_log(domain_name, "Command: " + asacmd, 99)
+
+    (stdout, stderr, pid) = x(asacmd)
+    if (stdout):
+        write_to_log(domain_name, stdout, 2)
+    if (stderr):
+        write_to_log(domain_name, stderr, 1)
+
+    return pid
+
+def set_permission():
+    '''
+    Set all permissions for all glassfish related files.
+
+    This to be sure that no invalid persmissions has ben set when somebody
+    has been fildeling around with the files. Apps or sysops.
+
+    '''
+    print_verbose("Set permissions.")
+    x("chmod -R 770 " + GLASSFISH_PATH, 'root')
+    x("chown -R 200:200 " + GLASSFISH_PATH, 'root')
+    x("restorecon -R " + GLASSFISH_PATH, 'root')
+
+def enable_ha_proxy(domain_name):
+    """When ha proxy can access this file it starts to send requests."""
+    print_verbose("Enable ha proxy")
+    x("chown 200:200 /usr/local/glassfish4/glassfish/domains/%s/docroot/ha" %
+        domain_name)
+
+def disable_ha_proxy(domain_name):
+    """When ha proxy can't access this file it stops to send new requests.
+       But current sessions/requests continues."""
+    print_verbose("Disable ha proxy")
+    x("chown root:root /usr/local/glassfish4/glassfish/domains/%s/docroot/ha" %
+        domain_name)
+    wait_for_server_to_stop_recive_request()
+
+def wait_for_server_to_stop_recive_request():
+    '''
+    Wait until the server doesn't get any inbound requests to apache httpd.
+    '''
+    message = "Wait until httpd doesn't get any inbound requests."
+    print_verbose(message, 1, False)
+    sys.stdout.flush()
+
+    while(not is_reciving_requests()):
+        print_verbose(".", 1, False)
+        time.sleep(5)
+    print_verbose(".", 1)
+
+def is_reciving_requests():
+    cmd = "lsof -n -P -a -u apache -i :80 | grep ESTABLISHED | wc -l"
+    (stdout, _, _) = x(cmd)
+    return (stdout != 0)
+
+def start(domain_name):
+    write_to_log(domain_name, "Starting Glassfish (%s)." % domain_name)
+    asadmin_exec(domain_name, "start-domain " + domain_name)
+    enable_ha_proxy(domain_name)
+    write_to_log(domain_name, "Started.", 2)
+
+def stop(domain_name):
+    disable_ha_proxy(domain_name)
+    write_to_log(domain_name, "Stopping Glassfish (%s)." % domain_name)
+    asadmin_exec(domain_name, "stop-domain " + domain_name)
+    write_to_log(domain_name, "Stopped.", 2)
+
+def restart(domain_name):
+    write_to_log(domain_name, "Retart Glassfish (%s)." % domain_name)
+    asadmin_exec(domain_name, "restart-domain " + domain_name)
+    write_to_log(domain_name, "Restarted.", 2)
+
+def set_global_options_and_args():
+    '''
+    Set cmd line arguments in global vars OPTIONS and ARGS.
+
+    '''
+    global OPTIONS, ARGS
+
+    usage = "usage: %prog [-anvqh] {start|stop|restart}"
+
+    parser = OptionParser(usage=usage)
+    parser.add_option("-n", "--no-db-check", action="store_true",
+                      help="Don't check for a started database server.")
+
+    parser.add_option("-v", "--verbose", default=1,
+                      action="count", dest="verbose",
+                      help="Makes the output more verbose. Add more v:s for " +
+                           "verbosity. Mostly useful for debugging.")
+
+    parser.add_option("-q", "--quiet",
+                      action="store_const", const=0, dest="verbose",
+                      help="Don't print any output.")
+
+    (OPTIONS, ARGS) = parser.parse_args()
+
+    if len(ARGS) != 1:
+        parser.error("incorrect number of arguments")
+
+def main():
+    set_global_options_and_args()
+
+    # Check for all mysql servers to start before starting glassfish.
+    # This might be neceasary if your applications uses mysql.
+    if not OPTIONS.no_db_check:
+        wait_for_mysql_to_start()
+
+    # Handle the dynamic arguments on from the command line.
+    commands = {'start' : start, 'stop': stop, 'restart' : restart}
+    command = ARGS[0].lower()
+    if command in commands:
+        if (command != 'stop'):
+            set_permission()
+        commands[command]('domain1')
+
+if __name__ == "__main__":
+    main()
