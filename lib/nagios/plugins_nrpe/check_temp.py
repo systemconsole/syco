@@ -20,12 +20,12 @@ extapp = subprocess.Popen(["/usr/bin/checktemp","-c"], stdout=subprocess.PIPE)
 temp = extapp.communicate()[0]
 
 if temp >= sys.argv[1]:
-   if temp >= sys.argv[2]:
-      print("TEMP CRITICAL: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
-      sys.exit(2)
-   else:
-      print("TEMP WARNING: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
-      sys.exit(1)
+    if temp >= sys.argv[2]:
+        print("TEMP CRITICAL: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
+        sys.exit(2)
+    else:
+        print("TEMP WARNING: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
+        sys.exit(1)
 else:
-   print("TEMP OK: Temperature is {0}c | 'Temp'={0)".format(temp.strip()))
-   sys.exit(0)
+    print("TEMP OK: Temperature is {0}c | 'Temp'={0)".format(temp.strip()))
+     sys.exit(0)
