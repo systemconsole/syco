@@ -36,6 +36,7 @@ import install
 from general import x
 from scopen import scOpen
 import socket
+
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 2
@@ -46,6 +47,10 @@ GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
 GLASSFISH_REPO_URL     = "http://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
 GLASSFISH_INSTALL_PATH = "/usr/local/glassfish4"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_INSTALL_PATH + "/glassfish/domains/"
+GLASSFISH_USER         = "glassfish"
+
+#Icinga plugins directory
+ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 
 # The directory where JAVA stores temporary files.
 # Default is /tmp, but the partion that dir is stored on is set to "noexec", and
@@ -92,17 +97,57 @@ def install_glassfish(arg):
   general.create_install_dir()
 
   if False ==_is_glassfish_user_installed():
-    x('adduser glassfish')
+    x("adduser {0}".format(GLASSFISH_USER))
 
   _install_jdk()
   _install_glassfish()
   _setup_glassfish4()
   _install_mysql_connect()
   _install_guice()
+  _install_icinga_ulimit_check(GLASSFISH_USER)
   #
   initialize_passwords()
   _set_domain_passwords()
 
+def _install_icinga_ulimit_check(username):
+  nrpe_sudo_path = "/etc/sudoers.d/nrpe"
+  common_cfg_path = "/etc/nagios/nrpe.d/common.cfg"
+  icinga_script = "check_ulimit.py"
+
+  # Does the checkscript already exist? Otherwise copy it in place.
+  if False == os.path.isfile("{0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)):
+    x("cp {0}lib/nagios/plugins_nrpe/{2} {1}{2}".format(app.SYCO_PATH, ICINGA_PLUGINS_DIR, icinga_script))
+
+  # Set permissions and SELinux rules to the checkscript. Can be runned multiple times without problem.
+  x("chmod 755 {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("chown nrpe:nrpe {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("chcon -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("semanage fcontext -a -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+
+  # Add lines to sudoers, common.cfg if they dont already exist. Can only be runned once.
+  nrpe_string_1 = "nrpe ALL=NOPASSWD: {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)
+  nrpe_string_2 = "nrpe ALL=({0}) NOPASSWD: /bin/cat".format(username)
+  nrpe_string_3 = "command[check_ulimit_{1}]={0}check_ulimit.py {1} 60 80".format(ICINGA_PLUGINS_DIR, username)
+
+  sudoers_nrpe = open("nrpe_sudo_path", "r+")
+  if sudoers_nrpe.read().find(nrpe_string_1) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_1, nrpe_sudo_path))
+  if sudoers_nrpe.read().find(nrpe_string_2) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_2, nrpe_sudo_path))
+  sudoers_nrpe.close()
+
+  common_cfg = open(common_cfg_path, "r+")
+  if common_cfg.read().find(nrpe_string_3) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_3, common_cfg_path))
+  common_cfg.close()
+
+  # Finally restart the nrpe service to load the new check.
+  x("service nrpe restart")
+
+  '''
+  If icinga is configured to check this server with check_ulimit_glassfish it will now get current status.
+
+  '''
 
 def _is_glassfish_user_installed():
   '''
