@@ -27,5 +27,5 @@ if temp >= sys.argv[1]:
         print("TEMP WARNING: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
         sys.exit(1)
 else:
-    print("TEMP OK: Temperature is {0}c | 'Temp'={0)".format(temp.strip()))
+    print("TEMP OK: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
      sys.exit(0)
