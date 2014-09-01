@@ -11,7 +11,7 @@ Version: 0.000.0.0.1 Beta
 Filename: 
   /usr/lib64/nagios/plugins/check_ulimit.py
 
-Manual commands: (To be sycofied together with glassfish installation)
+Manual commands: (To be sycofied together with install.cfg server installation)
   chmod 755 /usr/lib64/nagios/plugins/check_ulimit.py
   chown nrpe:nrpe /usr/lib64/nagios/plugins/check_ulimit.py
   chcon -t nagios_unconfined_plugin_exec_t /usr/lib64/nagios/plugins/check_ulimit.py
@@ -21,7 +21,7 @@ Manual commands: (To be sycofied together with glassfish installation)
   echo "nrpe ALL=(glassfish) NOPASSWD: /bin/cat" >> /etc/sudoers.d/nrpe
   service nrpe restart
 
-The manual commands will be sycofied togheter with the glassfish installation and will be default monitoring for glashfish suite.
+The manual commands will be sycofied togheter with the install.cfg server installation and will be default monitoring for glashfish suite.
 
 '''
 
