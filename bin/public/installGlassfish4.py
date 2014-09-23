@@ -129,7 +129,7 @@ def _install_icinga_ulimit_check(username):
   nrpe_string_2 = "nrpe ALL=({0}) NOPASSWD: /bin/cat".format(username)
   nrpe_string_3 = "command[check_ulimit_{1}]={0}check_ulimit.py {1} 60 80".format(ICINGA_PLUGINS_DIR, username)
 
-  sudoers_nrpe = open("nrpe_sudo_path", "r+")
+  sudoers_nrpe = open(nrpe_sudo_path, "r+")
   if sudoers_nrpe.read().find(nrpe_string_1) == -1:
     x("echo \"{0}\" >> {1}".format(nrpe_string_1, nrpe_sudo_path))
   if sudoers_nrpe.read().find(nrpe_string_2) == -1:
