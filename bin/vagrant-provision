@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Bootstraped from VagrantFile, and installs syco on the box.
+#
+
+
+__author__="daniel.lindh@amivono.com"
+__copyright__="Copyright 2014, Amivono AB"
+
+
+#
+echo "Bootstrap vagrant box"
+echo
+
+
+# The vagrant virtual box uses DHCP, this ensures that the box resolves
+# dns with google dns.
+#
+grep 8.8.8.8  /etc/sysconfig/network-scripts/ifcfg-eth0 > /dev/null || \
+(
+    echo  "Set 8.8.8.8 to dns in sysconfig"
+    echo "PEERDNS=yes" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+    echo "DNS1=8.8.8.8" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+)
+
+grep 8.8.8.8  /etc/resolv.conf > /dev/null || \
+(
+    echo "Set 8.8.8.8 to dns in resolver"
+    echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+)
+
+
+#
+# Install syco
+#
+echo
+echo
+rm -f /opt/syco/etc/general.cfg 2> /dev/null
+rm -f /opt/syco/etc/install.cfg 2> /dev/null
+ln -s /opt/syco/usr/mod-template/etc/minimal-general.cfg /opt/syco/etc/general.cfg
+ln -s /opt/syco/usr/mod-template/etc/minimal-install.cfg /opt/syco/etc/install.cfg
+/opt/syco/bin/syco.py install-syco
