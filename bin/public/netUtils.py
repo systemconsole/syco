@@ -100,7 +100,7 @@ def net_setup_bond_br(args):
     if len(front_interfaces) < 1:
         # Use default eth interfaces
         # Also, if you don't specify front net interfaces, you may not specify back net interfaces.
-        if_per_net_count = math.floor(num_of_if / net_count)
+        if_per_net_count = int(math.floor(num_of_if / net_count))
 
         if net_count > 1:
             back_interfaces = []
