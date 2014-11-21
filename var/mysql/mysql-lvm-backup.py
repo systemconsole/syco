@@ -115,6 +115,7 @@ def snapshot():
 	clean()
 	print "Do snapshot"
     x("LANG=en date > /var/lib/mysql/snap_time")
+    x("chmod 666 /var/lib/mysql/snap_time")
     x("modprobe dm-snapshot")
 	x("""mysql -ubackup << EOF
 flush tables;
