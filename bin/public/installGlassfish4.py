@@ -246,6 +246,7 @@ def _setup_glassfish4():
   asadmin_exec("create-jvm-options '-XX\:MaxPermSize=1024m'")
   asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
   asadmin_exec("create-jvm-options '-XX\:+UseParallelGC'")
+  asadmin_exec("create-jvm-options -Dcom.sun.enterprise.web.connector.grizzly.linger=-1")
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
