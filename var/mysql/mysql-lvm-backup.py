@@ -27,7 +27,7 @@ If you are going to use rsnapshot to create the backup, add the following lines
 to /etc/rsnapshot.conf. Remember to setup the ssh-keys.
 
 backup_script   /usr/bin/ssh root@example.com "/opt/syco/var/mysql/mysql-lvm-backup.py snapshot" unused0/
-backup          root@example.com:/mnt/mysqlbackup/                      			     	     example.com/
+backup          root@example.com:/mnt/mysqlbackup/                                               example.com/
 backup_script   /usr/bin/ssh root@example.com "/opt/syco/var/mysql/mysql-lvm-backup.py clean"    unused1/
 
 READ MORE
@@ -108,39 +108,39 @@ def set_global_options_and_args():
         parser.error("incorrect number of arguments")
 
 def snapshot():
-	'''
-	Flush mysql tables, do the snapshot and mount the snapshot.
+    '''
+    Flush mysql tables, do the snapshot and mount the snapshot.
 
-	'''
-	clean()
-	print "Do snapshot"
+    '''
+    clean()
+    print "Do snapshot"
     x("LANG=en date > /var/lib/mysql/snap_time")
     x("chmod 666 /var/lib/mysql/snap_time")
     x("modprobe dm-snapshot")
-	x("""mysql -ubackup << EOF
+    x("""mysql -ubackup << EOF
 flush tables;
 FLUSH TABLES WITH READ LOCK;
 system lvcreate -L%s -s -n %sbackup /dev/%s/%s
 SHOW MASTER STATUS;
 UNLOCK TABLES;
 EOF""" % (snapshotSize, lvName, vgName, lvName))
-	x("mkdir -p %s" % backupMountPath)
-	x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
-	x("chmod 777 -R " + backupMountPath)
+    x("mkdir -p %s" % backupMountPath)
+    x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
+    x("chmod 777 -R " + backupMountPath)
 
 def clean():
-	'''
-	Remove mounts and snapshots.
+    '''
+    Remove mounts and snapshots.
 
-	'''
-	print "Remove last snapshot."
+    '''
+    print "Remove last snapshot."
 
-	if (os.path.ismount(backupMountPath)):
-		x("umount %s" % backupMountPath)
+    if (os.path.ismount(backupMountPath)):
+        x("umount %s" % backupMountPath)
 
-	backupPath = "/dev/%s/%sbackup" % (vgName, lvName)
-	if (os.path.exists(backupPath)):
-		x("lvremove -f %s" % backupPath)
+    backupPath = "/dev/%s/%sbackup" % (vgName, lvName)
+    if (os.path.exists(backupPath)):
+        x("lvremove -f %s" % backupPath)
 
 def x(cmd):
     '''
