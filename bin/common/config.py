@@ -301,9 +301,13 @@ class Config(object):
 
             return self._get_service_ip("ntp")
 
-        def get_mailrelay_server_ip(self):
+        def get_mailrelay_server_front_ip(self):
 
-            return self._get_service_ip("mailrelay")
+            return self._get_service_ip("mailrelay.front")
+
+        def get_mailrelay_server_back_ip(self):
+
+            return self._get_service_ip("mailrelay.back")
 
         def get_mail_relay_domain_name(self):
             return self.get_option("mailrelay.domain_name")
