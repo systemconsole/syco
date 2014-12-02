@@ -95,9 +95,9 @@ def prepare_installation():
     x("chmod 600 /var/log/clamav/*")
 
     # Create database dir
-    x("mkdir -p /usr/local/share/clamav/")
-    x("chown clamav:clamav /usr/local/share/clamav/")
-    x("chmod 700 /usr/local/share/clamav/")
+    x("mkdir -p /var/lib/clamav/")
+    x("chown clamav:clamav /var/lib/clamav/")
+    x("chmod 700 /var/lib/clamav/")
 
 
 def download_and_install(clam_version):
@@ -160,6 +160,7 @@ def setup_clam_and_freshclam():
     clamd.replace("^[#]\?User.*",               "User clamav")
     clamd.replace("^[#]\?LocalSocket.*",        "LocalSocket /var/run/clamav/clamd.socket")
     clamd.replace("^[#]\?PidFile.*",            "PidFile /var/run/clamav/clamd.pid")
+    clamd.replace("^[#]\?DatabaseDirectory.*",  "DatabaseDirectory /var/lib/clamav")
 
     x("cp /usr/local/etc/freshclam.conf.sample /usr/local/etc/freshclam.conf")
     freshclam = scOpen("/usr/local/etc/freshclam.conf")
@@ -171,7 +172,7 @@ def setup_clam_and_freshclam():
     freshclam.replace("^[#]\?PidFile.*",        "PidFile /var/run/clamav/freshclam.pid")
     freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror db.se.clamav.net")
     freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
-
+    freshclam.replace("^[#]\?DatabaseDirectory.*", "DatabaseDirectory /var/lib/clamav")
 
 def setup_crontab():
     #
