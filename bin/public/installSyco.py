@@ -15,7 +15,7 @@ __status__ = "Production"
 
 import os, sys
 import app
-from app import SYCO_ETC_PATH, SYCO_USR_PATH
+from app import SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
 from general import x
 
 def build_commands(commands):
@@ -33,6 +33,7 @@ def install_syco(args):
     app.print_verbose("Create symlink /sbin/syco")
     os.symlink(sys.path[0] + '/syco.py', '/sbin/syco')
     x("chmod o+x {0}".format("/opt/syco"))
+    x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
   else:
     app.print_verbose("   Already installed")
 
