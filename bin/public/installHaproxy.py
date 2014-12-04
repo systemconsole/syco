@@ -25,7 +25,9 @@ import app
 import password
 import version
 import scopen
-import netifaces as ni
+import socket
+import fcntl
+import struct
 
 script_version = 1
 
@@ -80,13 +82,8 @@ def _configure_haproxy():
     x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(KEEPALIVED_CONF_DIR))
     x("cp {0}var/haproxy/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_FO_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
 
-    scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", _get_system_ip())
+    scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", get_ip_address('eth1'))
 
-    iptables.iptables("-A syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-A syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.iptables("-A syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.save()
     _chkconfig("haproxy","on")
     _service("haproxy","restart")
 
@@ -96,12 +93,16 @@ def _copy_certificate_files():
     if HAPROXY_ENV == "rentalfront":
         copy = 1
 
-def _configure_iptables(args):
+def _configure_iptables():
     '''
-    * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to 
+    * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to
         be opened. So first we remove the multicast blocks and then open them up.
     * VRRP is known as Protocol 112 in iptables.
     '''
+    iptables.iptables("-A syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
+    iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
+    iptables.iptables("-A syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
+    iptables.iptables("-A syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
     iptables.iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP")
     iptables.iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP")
     iptables.iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
@@ -110,12 +111,15 @@ def _configure_iptables(args):
     iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT")
     iptables.save()
 
-def _get_system_ip():
-    ni.ifaddresses('eth1')
-    ip = ni.ifaddresses('eth1')[2][0]['addr']
-    return ip  
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
 
-def uninstall_haproxy(args):
+def uninstall_haproxy():
     '''
     Remove HA Proxy from the server.
     '''
