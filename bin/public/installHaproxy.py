@@ -25,7 +25,6 @@ import app
 import password
 import version
 import scopen
-import socket
 import fcntl
 import struct
 
