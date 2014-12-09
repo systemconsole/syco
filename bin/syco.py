@@ -42,7 +42,8 @@ if (os.access(app.SYCO_USR_PATH, os.F_OK)):
   for plugin in os.listdir(app.SYCO_USR_PATH):
     plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/bin/")
     sys.path.append(plugin_path)
-    command_dir += os.listdir(plugin_path)
+    if os.path.isdir(plugin_path):
+        command_dir += os.listdir(plugin_path)
 
 for module in command_dir:
   if (module == '__init__.py' or
@@ -175,15 +176,16 @@ class Commands:
 
     '''
     modules=[]
-    for module in os.listdir(commands_path):
-      if (module == '__init__.py' or
-          module[-4:] == '.pyc' or
-          module[-3:] == '.sh' or
-          module[-3:] == 'led'):
-        continue
-      module = module.replace('.py', '')
-      obj = getattr(sys.modules[__name__], module)
-      modules.append(obj)
+    if os.path.isdir(commands_path):
+        for module in os.listdir(commands_path):
+          if (module == '__init__.py' or
+              module[-4:] == '.pyc' or
+              module[-3:] == '.sh' or
+              module[-3:] == 'led'):
+            continue
+          module = module.replace('.py', '')
+          obj = getattr(sys.modules[__name__], module)
+          modules.append(obj)
 
     return modules
 
