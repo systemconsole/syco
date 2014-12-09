@@ -29,9 +29,9 @@ __version__ = "1.0.1"
 __status__ = "Development"
 
 
-HP_HEALTH_FILENAME="hp-health-9.1.0.42-54.rhel6.x86_64.rpm"
-HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/psp/RedHatEnterpriseES/6.0/packages/x86_64/{0}".format(HP_HEALTH_FILENAME)
-HP_HEALTH_MD5="0bc2a9932c3080829a96ab7bb4727089"
+HP_HEALTH_FILENAME="hp-health-10.00-1688.34.rhel6.x86_64.rpm"
+HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/repo/spp/rhel/6.6Server/x86_64/current/{0}".format(HP_HEALTH_FILENAME)
+HP_HEALTH_MD5="9e2ac21bf648c14b7ebb46121ece4a12"
 
 PLG_PATH="/usr/lib64/nagios/plugins/"
 
