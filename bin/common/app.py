@@ -42,6 +42,25 @@ install.package("python-crypto")
 from password import *
 
 
+def get_syco_plugin_paths(subfolder=None):
+    """
+    Generator of full path to all syco plugins folders containing a specific sub folder
+    or the root paths all plugins if no subfolder is specified
+
+    subfolder -- Path starting with leading / relative to syco's plugin dir (/usr)
+
+    """
+    if os.access(SYCO_USR_PATH, os.F_OK):
+        for plugin in os.listdir(SYCO_USR_PATH):
+            if subfolder:
+                plugin_path = os.path.abspath(SYCO_USR_PATH + plugin + subfolder)
+            else:
+                plugin_path = os.path.abspath(SYCO_USR_PATH + plugin)
+
+            if os.access(plugin_path, os.F_OK):
+                yield plugin_path
+
+
 def print_error(message, verbose_level=1):
     """
     Print bold error text to stdout, affected by the verbolse level.

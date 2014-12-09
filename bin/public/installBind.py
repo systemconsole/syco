@@ -254,24 +254,12 @@ def _copy_conf(file_ext, to_folder, active_dc):
         bind_config_subdir = "/" + bind_config_subdir
 
     app.print_verbose("\nCopy config/zone files from all syco plugin modules into a named folder.")
-    for plugin_path in get_syco_plugin_paths():
+    for plugin_path in app.get_syco_plugin_paths("/var/dns"):
         for zone_fn in os.listdir(plugin_path + bind_config_subdir):
             if zone_fn.endswith(file_ext):
                 app.print_verbose("\nConfigure file {0}".format(zone_fn))
                 x("cp {0}/{1} {2}".format(plugin_path + bind_config_subdir, zone_fn, to_folder))
                 _replace_tags("{0}{1}".format(to_folder, zone_fn), active_dc)
-
-
-def get_syco_plugin_paths():
-    '''
-    Generator of fullpath to all syco plugins /var/dns folder.
-
-    '''
-    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
-        for plugin in os.listdir(app.SYCO_USR_PATH):
-            plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/var/dns/")
-            if (os.access(plugin_path, os.F_OK)):
-                yield plugin_path
 
 
 def _replace_tags(filename, active_dc):
