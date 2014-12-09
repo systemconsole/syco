@@ -76,7 +76,7 @@ def _configure_keepalived():
 
     x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
     x("mv {0}keepalived.conf {1}org.keepalived.conf".format(KEEPALIVED_CONF_DIR, KEEPALIVED_CONF_DIR))
-    x("cp {0}var/redis/keepalived.conf {1}keepalived.conf".format(KEEPALIVED_CONF_DIR, KEEPALIVED_CONF_DIR))
+    x("cp {0}var/redis/keepalived.conf {1}keepalived.conf".format(SYCO_FO_PATH, KEEPALIVED_CONF_DIR))
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${REDIS_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${REDIS_SERVER_NAME_DN}", socket.gethostname().lower())
     _chkconfig("keepalived","on")
