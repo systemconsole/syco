@@ -27,13 +27,25 @@ import version
 import scopen
 import fcntl
 import struct
+import sys
+import getopt
 
 script_version = 1
 
+if len(sys.argv) != 3:
+    print_killmessage()
+
 SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
 HAPROXY_CONF_DIR = "/etc/haproxy/"
-HAPROXY_ENV = "eff"
+HHAPROXY_ENV = sys.argv[2]
 KEEPALIVED_CONF_DIR = "/etc/keepalived/"
+
+def print_killmessage():
+    print "Enviroment needed\n"
+    print "Usage: syco install-haproxy <env>"
+    print "Valid enviroments: eff, rentalfront"
+    sys.exit(0)
+
 
 def build_commands(commands):
     '''
@@ -49,6 +61,10 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_haproxy(args):
+
+    if HAPROXY_ENV.lower() != ("eff" or "rentalfront"):
+        print_killmessage()
+
     app.print_verbose("Install HA Proxy version: %d" % script_version)
     version_obj = version.Version("InstallHaproxy", script_version)
     version_obj.check_executed()
@@ -80,6 +96,7 @@ def _configure_keepalived():
 def _configure_haproxy():
     x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(KEEPALIVED_CONF_DIR))
     x("cp {0}var/haproxy/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_FO_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
+    x("cp {0}var/haproxy/error.html {2}error.html".format(SYCO_FO_PATH, HAPROXY_CONF_DIR))
 
     scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", get_ip_address('eth1'))
 
@@ -87,10 +104,21 @@ def _configure_haproxy():
     _service("haproxy","restart")
 
 def _copy_certificate_files():
+    '''
+    Currently the certificate must be copied manually during a fresh install since the PEM format
+    is a littlebit different. Support for this will come at a later time. This will also cause the
+    haproxy process to fail startup after installation if it is terminating HTTPS.
+
+    Enviroments that need certificate:
+      * EFF (Wildcardcert *.myehtrip.com)
+      * Rentalfront (Wildcartcert *.fareoffice.com)
+    '''
     if HAPROXY_ENV == "eff":
-        copy = 1
+        #Code to copy and create EFF Certificate PEM to HA Proxy will be here.
+        copy = 0
     if HAPROXY_ENV == "rentalfront":
-        copy = 1
+        #Code to copy and create RF Certificate PEM to HA Proxy will be here.
+        copy = 0
 
 def _configure_iptables():
     '''
