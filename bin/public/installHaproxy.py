@@ -18,6 +18,8 @@ __status__ = "Production"
 
 import os
 from general import x, urlretrive
+import ssh
+import config
 import iptables
 import socket
 import install
@@ -28,34 +30,9 @@ import scopen
 import fcntl
 import struct
 import sys
-import getopt
 import re
-import glob
-import fnmatch
 
 script_version = 1
-
-HAPROXY_CONF_DIR = "/etc/haproxy/"
-KEEPALIVED_CONF_DIR = "/etc/keepalived/"
-
-### MOVE TO SEPARATE CONFIG FILE ###
-
-# Better solution to hide this reference?
-SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
-
-# Do we have a cert to copy or plain HTTP, and where to copy from.
-HAPROXY_ENV_CERT = True
-CERT_SERVER = "10.101.2.2"  ### general.install_server ?
-CERT_SERVER_PATH = "/etc/syco/ssl/haproxy-ssl"
-CERT_COPY_TO_PATH = "/etc/ssl/certs"
-
-# Which enviroments do we accept?
-ACCEPTED_HAPROXY_ENV = [
-    'eff',
-    'rentalfront'
-]
-
-### END MOVE ###
 
 def print_killmessage():
     print "Please specify enviroment"
@@ -71,31 +48,25 @@ def print_enviroments():
         print "    - " + env
 
 def get_enviroments():
-
-
-    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
-        for plugin in os.listdir(app.SYCO_USR_PATH):
-            #print plugin
-            plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/var/haproxy/")
-            if (os.access(plugin_path, os.F_OK)):
-                enviroment_path = plugin_path
-
-
-    files=[]
-    for file in os.listdir(enviroment_path):
+    enviroments = []
+    for file in os.listdir(SYCO_PLUGIN_PATH):
         foo = re.search('(.*)\.haproxy\.cfg', file)
         if foo:
-            files.append(foo.group(1))
-    print files
-
-print get_enviroments()
-sys.exit()
-
+            enviroments.append(foo.group(1))
+    return enviroments
 
 if len(sys.argv) != 3:
     print_killmessage()
 else:
     HAPROXY_ENV = sys.argv[2]
+
+HAPROXY_CONF_DIR = "/etc/haproxy/"
+KEEPALIVED_CONF_DIR = "/etc/keepalived/"
+ACCEPTED_HAPROXY_ENV = get_enviroments()
+CERT_SERVER = config.general.get_cert_server_ip()
+CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
+CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
+SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
 
 def build_commands(commands):
     '''
@@ -121,9 +92,9 @@ def install_haproxy(args):
 
     x("yum install -y tcl haproxy keepalived")
     _configure_iptables()
+    _copy_certificate_files()
     _configure_keepalived()
     _configure_haproxy()
-    _copy_certificate_files()
 
     version_obj.mark_executed()
 
@@ -136,7 +107,7 @@ def _configure_keepalived():
     x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
     x("sysctl -p")
     x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KEEPALIVED_CONF_DIR))
-    x("cp {0}var/haproxy/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_FO_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
+    x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_DN}", socket.gethostname().lower())
     _chkconfig("keepalived","on")
@@ -144,8 +115,8 @@ def _configure_keepalived():
 
 def _configure_haproxy():
     x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(HAPROXY_CONF_DIR))
-    x("cp {0}var/haproxy/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_FO_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
-    x("cp {0}var/haproxy/error.html {1}error.html".format(SYCO_FO_PATH, HAPROXY_CONF_DIR))
+    x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
+    x("cp {0}/error.html {1}error.html".format(SYCO_PLUGIN_PATH, HAPROXY_CONF_DIR))
 
     scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", get_ip_address('eth1'))
 
@@ -153,9 +124,10 @@ def _configure_haproxy():
     _service("haproxy","restart")
 
 def _copy_certificate_files():
-    if HAPROXY_ENV_CERT == True:
-        #x("scp {0}:{1}/{3}.pem {2}/{3}.pem".format(CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, HAPROXY_ENV))
-        copy = 1
+    copyfrom = "root@{0}".format(CERT_SERVER)
+    copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, HAPROXY_ENV)
+    copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV)
+    ssh.scp_from(copyfrom, copyremotefile, copylocalfile)
 
 def _configure_iptables():
     '''
@@ -198,7 +170,7 @@ def uninstall_haproxy(args=""):
     x("yum -y remove haproxy keepalived")
     x("rm -rf {0}*".format(HAPROXY_CONF_DIR))
     x("rm -rf {0}*".format(KEEPALIVED_CONF_DIR))
-
+    x("rm -rf {0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV))
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
