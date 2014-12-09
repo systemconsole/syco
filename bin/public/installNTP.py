@@ -106,8 +106,8 @@ def install_ntp(ntp_server_ip = False):
     general.set_config_property("/etc/ntp.conf", ".*tinker panic.*", "tinker panic 0")
   else:
     app.print_verbose("Configure /etc/ntp.conf as a server")
-    general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server 0.se.pool.ntp.org")
-    general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server 1.se.pool.ntp.org")
+    general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server ntp3.sp.se")
+    general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server ntp1.sth.netnod.se")
     general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server " + config.general.get_slave_ntp_server())
 
 
