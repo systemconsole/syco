@@ -178,9 +178,9 @@ class Commands:
         if os.path.isdir(commands_path):
             for module in os.listdir(commands_path):
                 if (module == '__init__.py' or
-                            module[-4:] == '.pyc' or
-                            module[-3:] == '.sh' or
-                            module[-3:] == 'led'):
+                        module[-4:] == '.pyc' or
+                        module[-3:] == '.sh' or
+                        module[-3:] == 'led'):
                     continue
                 module = module.replace('.py', '')
                 obj = getattr(sys.modules[__name__], module)
