@@ -40,12 +40,10 @@ sys.path.append(app.SYCO_PUBLIC_PATH)
 command_dir = os.listdir(app.SYCO_PUBLIC_PATH)
 
 # Files only available in private user repos.
-if os.access(app.SYCO_USR_PATH, os.F_OK):
-    for plugin in os.listdir(app.SYCO_USR_PATH):
-        plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/bin/")
-        sys.path.append(plugin_path)
-        if os.path.isdir(plugin_path):
-            command_dir += os.listdir(plugin_path)
+for plugin_path in app.get_syco_plugin_paths("/bin/"):
+    sys.path.append(plugin_path)
+    if os.path.isdir(plugin_path):
+        command_dir += os.listdir(plugin_path)
 
 for module in command_dir:
     if (module == '__init__.py' or
@@ -162,16 +160,14 @@ class Commands:
                 app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
 
         self.current_type = "private"
-        if os.access(app.SYCO_USR_PATH, os.F_OK):
-            for plugin in os.listdir(app.SYCO_USR_PATH):
-                plugin_path = os.path.abspath(app.SYCO_USR_PATH + "/" + plugin + "/bin/")
-                for obj in self._get_modules(plugin_path):
-                    try:
-                        obj.build_commands(self)
-                    except AttributeError, e:
-                        app.print_error("   Problem with obj, error:: " + repr(e.args))
-                    except NameError, e:
-                        app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
+        for plugin_path in app.get_syco_plugin_paths("/bin/"):
+            for obj in self._get_modules(plugin_path):
+                try:
+                    obj.build_commands(self)
+                except AttributeError, e:
+                    app.print_error("   Problem with obj, error:: " + repr(e.args))
+                except NameError, e:
+                    app.print_error("   Problem with " + repr(obj) + ", error: " + repr(e.args))
 
     def _get_modules(self, commands_path):
         """
