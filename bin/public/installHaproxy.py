@@ -64,11 +64,6 @@ HAPROXY_CONF_DIR = "/etc/haproxy/"
 KEEPALIVED_CONF_DIR = "/etc/keepalived/"
 ACCEPTED_HAPROXY_ENV = get_environments()
 
-if len(sys.argv) != 3:
-    print_killmessage()
-else:
-    HAPROXY_ENV = sys.argv[2]
-
 def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
@@ -83,6 +78,11 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_haproxy(args):
+    if len(sys.argv) != 3:
+        print_killmessage()
+    else:
+        HAPROXY_ENV = sys.argv[2]
+
     if HAPROXY_ENV.lower() not in ACCEPTED_HAPROXY_ENV:
         print_killmessage()
 
