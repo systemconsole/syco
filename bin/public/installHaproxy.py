@@ -2,9 +2,9 @@
 '''
 This script will install HA Proxy on the targeted server.
 
-This script is dependent on the following config files in syco-private for this script to work.
-    var/haproxy/[enviroment].keepalived.conf
-    var/haproxy/[enviroment].haproxy.conf
+This script is dependent on the following config files for this script to work.
+    var/haproxy/[environment].keepalived.conf
+    var/haproxy/[environment].haproxy.conf
 '''
 
 __author__ = "David Skeppstedt"
@@ -18,6 +18,8 @@ __status__ = "Production"
 
 import os
 from general import x, urlretrive
+import ssh
+import config
 import iptables
 import socket
 import install
@@ -28,24 +30,44 @@ import scopen
 import fcntl
 import struct
 import sys
-import getopt
+import re
 
 script_version = 1
 
-if len(sys.argv) != 3:
-    print_killmessage()
-
-SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
-HAPROXY_CONF_DIR = "/etc/haproxy/"
-HHAPROXY_ENV = sys.argv[2]
-KEEPALIVED_CONF_DIR = "/etc/keepalived/"
+CERT_SERVER = config.general.get_cert_server_ip()
+CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
+CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
+SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
 
 def print_killmessage():
-    print "Enviroment needed\n"
-    print "Usage: syco install-haproxy <env>"
-    print "Valid enviroments: eff, rentalfront"
+    print "Please specify environment"
+    print_environments()
+    print " "
+    print "Usage: syco install-haproxy <environment>"
+    print ""
     sys.exit(0)
 
+def print_environments():
+    print " Valid environments:"
+    for env in ACCEPTED_HAPROXY_ENV:
+        print "    - " + env
+
+def get_environments():
+    environments = []
+    for file in os.listdir(SYCO_PLUGIN_PATH):
+        foo = re.search('(.*)\.haproxy\.cfg', file)
+        if foo:
+            environments.append(foo.group(1))
+    return environments
+
+HAPROXY_CONF_DIR = "/etc/haproxy/"
+KEEPALIVED_CONF_DIR = "/etc/keepalived/"
+ACCEPTED_HAPROXY_ENV = get_environments()
+
+if len(sys.argv) != 3:
+    print_killmessage()
+else:
+    HAPROXY_ENV = sys.argv[2]
 
 def build_commands(commands):
     '''
@@ -61,8 +83,7 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_haproxy(args):
-
-    if HAPROXY_ENV.lower() != ("eff" or "rentalfront"):
+    if HAPROXY_ENV.lower() not in ACCEPTED_HAPROXY_ENV:
         print_killmessage()
 
     app.print_verbose("Install HA Proxy version: %d" % script_version)
@@ -72,31 +93,31 @@ def install_haproxy(args):
 
     x("yum install -y tcl haproxy keepalived")
     _configure_iptables()
+    _copy_certificate_files()
     _configure_keepalived()
     _configure_haproxy()
-    _copy_certificate_files()
 
-    x("sysctl -p")
     version_obj.mark_executed()
 
 def _configure_keepalived():
     '''
     * Keepalived needs the possibility to bind on non local adresses.
     * It will replace the variables in the config file with the hostname.
-    * It is not enviromental dependent and can be installed on any server.
+    * It is not environmental dependent and can be installed on any server.
     '''
     x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
+    x("sysctl -p")
     x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KEEPALIVED_CONF_DIR))
-    x("cp {0}var/haproxy/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_FO_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
+    x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_DN}", socket.gethostname().lower())
     _chkconfig("keepalived","on")
     _service("keepalived","restart")
 
 def _configure_haproxy():
-    x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(KEEPALIVED_CONF_DIR))
-    x("cp {0}var/haproxy/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_FO_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
-    x("cp {0}var/haproxy/error.html {2}error.html".format(SYCO_FO_PATH, HAPROXY_CONF_DIR))
+    x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(HAPROXY_CONF_DIR))
+    x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, HAPROXY_CONF_DIR))
+    x("cp {0}/error.html {1}error.html".format(SYCO_PLUGIN_PATH, HAPROXY_CONF_DIR))
 
     scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", get_ip_address('eth1'))
 
@@ -104,21 +125,10 @@ def _configure_haproxy():
     _service("haproxy","restart")
 
 def _copy_certificate_files():
-    '''
-    Currently the certificate must be copied manually during a fresh install since the PEM format
-    is a littlebit different. Support for this will come at a later time. This will also cause the
-    haproxy process to fail startup after installation if it is terminating HTTPS.
-
-    Enviroments that need certificate:
-      * EFF (Wildcardcert *.myehtrip.com)
-      * Rentalfront (Wildcartcert *.fareoffice.com)
-    '''
-    if HAPROXY_ENV == "eff":
-        #Code to copy and create EFF Certificate PEM to HA Proxy will be here.
-        copy = 0
-    if HAPROXY_ENV == "rentalfront":
-        #Code to copy and create RF Certificate PEM to HA Proxy will be here.
-        copy = 0
+    copyfrom = "root@{0}".format(CERT_SERVER)
+    copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, HAPROXY_ENV)
+    copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV)
+    ssh.scp_from(copyfrom, copyremotefile, copylocalfile)
 
 def _configure_iptables():
     '''
@@ -146,7 +156,7 @@ def get_ip_address(ifname):
         struct.pack('256s', ifname[:15])
     )[20:24])
 
-def uninstall_haproxy():
+def uninstall_haproxy(args=""):
     '''
     Remove HA Proxy from the server.
     '''
@@ -161,7 +171,7 @@ def uninstall_haproxy():
     x("yum -y remove haproxy keepalived")
     x("rm -rf {0}*".format(HAPROXY_CONF_DIR))
     x("rm -rf {0}*".format(KEEPALIVED_CONF_DIR))
-
+    x("rm -rf {0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV))
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
