@@ -3,8 +3,8 @@
 This script will install HA Proxy on the targeted server.
 
 This script is dependent on the following config files for this script to work.
-    var/haproxy/[enviroment].keepalived.conf
-    var/haproxy/[enviroment].haproxy.conf
+    var/haproxy/[environment].keepalived.conf
+    var/haproxy/[environment].haproxy.conf
 '''
 
 __author__ = "David Skeppstedt"
@@ -35,25 +35,25 @@ import re
 script_version = 1
 
 def print_killmessage():
-    print "Please specify enviroment"
-    print_enviroments()
+    print "Please specify environment"
+    print_environments()
     print " "
-    print "Usage: syco install-haproxy <enviroment>"
+    print "Usage: syco install-haproxy <environment>"
     print ""
     sys.exit(0)
 
-def print_enviroments():
-    print " Valid enviroments:"
+def print_environments():
+    print " Valid environments:"
     for env in ACCEPTED_HAPROXY_ENV:
         print "    - " + env
 
-def get_enviroments():
-    enviroments = []
+def get_environments():
+    environments = []
     for file in os.listdir(SYCO_PLUGIN_PATH):
         foo = re.search('(.*)\.haproxy\.cfg', file)
         if foo:
-            enviroments.append(foo.group(1))
-    return enviroments
+            environments.append(foo.group(1))
+    return environments
 
 if len(sys.argv) != 3:
     print_killmessage()
@@ -62,7 +62,7 @@ else:
 
 HAPROXY_CONF_DIR = "/etc/haproxy/"
 KEEPALIVED_CONF_DIR = "/etc/keepalived/"
-ACCEPTED_HAPROXY_ENV = get_enviroments()
+ACCEPTED_HAPROXY_ENV = get_environments()
 CERT_SERVER = config.general.get_cert_server_ip()
 CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
 CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
@@ -102,7 +102,7 @@ def _configure_keepalived():
     '''
     * Keepalived needs the possibility to bind on non local adresses.
     * It will replace the variables in the config file with the hostname.
-    * It is not enviromental dependent and can be installed on any server.
+    * It is not environmental dependent and can be installed on any server.
     '''
     x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
     x("sysctl -p")
