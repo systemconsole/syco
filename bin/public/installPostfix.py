@@ -44,8 +44,8 @@ SCRIPT_VERSION = 1
 
 class init_properties():
 
-    server_front_ip = config.general.host(mailrelay).get_front_ip()
-    server_back_ip = config.general.host(mailrelay).get_back_ip()
+    server_front_ip = config.host(net.get_hostname()).get_front_ip()
+    server_back_ip = config.host(net.get_hostname()).get_back_ip()
 
     server_network_front = net.get_network_cidr(server_front_ip,
         config.general.get_front_netmask())
