@@ -67,7 +67,6 @@ ACCEPTED_HAPROXY_ENV = get_environments()
 if len(sys.argv) == 3:
     HAPROXY_ENV = sys.argv[2]
 
-
 def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
@@ -85,8 +84,6 @@ def install_haproxy(args):
 
     if len(sys.argv) != 3:
         print_killmessage()
-    else:
-        HAPROXY_ENV = sys.argv[2]
 
     if HAPROXY_ENV.lower() not in ACCEPTED_HAPROXY_ENV:
         print_killmessage()
@@ -116,6 +113,7 @@ def _configure_keepalived():
     x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_DN}", socket.gethostname().lower())
+
     _chkconfig("keepalived","on")
     _service("keepalived","restart")
 
@@ -183,6 +181,8 @@ def uninstall_haproxy(args=""):
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
     iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
     iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
+    iptables.iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+    iptables.iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")    
     iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
     iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
     iptables.save()
