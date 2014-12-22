@@ -5,6 +5,7 @@
 ._*
 /usr/*
 !/usr/mod-template/
+.vagrant/*
 /etc/install.cfg
 /etc/general.cfg
 /etc/passwordstore*
