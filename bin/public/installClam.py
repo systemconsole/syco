@@ -44,8 +44,7 @@ def install_clam(args):
 
     app.print_verbose("Install antivirus (clamav and freshclam).")
 
-    exec_version = `SCRIPT_VERSION` + "-" + clam_version
-    version_obj = version.Version("InstallClamAntiVirus", exec_version)
+    version_obj = version.Version("InstallClamAntiVirus", SCRIPT_VERSION, clam_version)
     version_obj.check_executed()
 
     prepare_installation()

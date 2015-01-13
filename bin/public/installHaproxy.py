@@ -34,10 +34,7 @@ import re
 
 script_version = 1
 
-CERT_SERVER = config.general.get_cert_server_ip()
-CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
-CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
-SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
+CERT_SERVER = CERT_SERVER_PATH =  CERT_COPY_TO_PATH = SYCO_PLUGIN_PATH = None
 
 def print_killmessage():
     print "Please specify environment"
@@ -62,7 +59,7 @@ def get_environments():
 
 HAPROXY_CONF_DIR = "/etc/haproxy/"
 KEEPALIVED_CONF_DIR = "/etc/keepalived/"
-ACCEPTED_HAPROXY_ENV = get_environments()
+ACCEPTED_HAPROXY_ENV = None
 
 def build_commands(commands):
     '''
@@ -78,6 +75,14 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_haproxy(args):
+    global CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, SYCO_PLUGIN_PATH, ACCEPTED_HAPROXY_ENV
+
+    CERT_SERVER = config.general.get_cert_server_ip()
+    CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
+    CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
+    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
+    ACCEPTED_HAPROXY_ENV = get_environments()
+
     if len(sys.argv) != 3:
         print_killmessage()
     else:

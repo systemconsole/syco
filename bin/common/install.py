@@ -107,13 +107,13 @@ def rpm(name, url):
 
 
 def _package(name, command):
-  version_obj = version.Version("package-" + name, SCRIPT_VERSION)
-  if (not version_obj.is_executed()):
+  version_obj = version.Version("package-" + name, 1)
+  if not version_obj.is_executed():
     print("\t" + BOLD + "Command: " + RESET + command)
-    if (not is_rpm_installed(name)):
+    if not is_rpm_installed(name):
       x(command)
 
-    if (is_rpm_installed(name)):
+    if is_rpm_installed(name):
       version_obj.mark_executed()
     else:
       raise Exception("Failed to install " + name + ".")

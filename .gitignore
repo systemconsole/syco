@@ -12,3 +12,5 @@
 /etc/version.cfg
 /var/kickstart/generated
 /tmp/
+/docs-coverage/
+.coverage
