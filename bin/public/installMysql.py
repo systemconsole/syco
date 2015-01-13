@@ -124,15 +124,6 @@ def install_mysql(args):
     current_host_config = config.host(net.get_hostname())
     repl_peer = current_host_config.get_option("repl_peer")
 
-    mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
-               "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-               "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-               "'root'@'" + current_host_config.get_front_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'" +
-               ("" if repl_peer is None else (", 'root'@'" + repl_peer + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'")) +
-               " WITH GRANT OPTION"
-
-    )
-
     # Used by monitor services (icingas nrpe plugin etc.)
     mysql_exec("GRANT REPLICATION CLIENT ON *.* " +
                "TO 'monitor'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_monitor_password() + "'"
@@ -147,8 +138,16 @@ def install_mysql(args):
     mysql_exec("DROP DATABASE test;")
     mysql_exec("SELECT host,user FROM mysql.db;")
     mysql_exec("SELECT host,user FROM mysql.user;")
-    mysql_exec("RESET MASTER;")
-    mysql_exec("FLUSH PRIVILEGES;")
+    mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
+               "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+               "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
+               "'root'@'" + current_host_config.get_front_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'" +
+               ("" if repl_peer is None else (", 'root'@'" + repl_peer + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'")) +
+               " WITH GRANT OPTION"
+
+    )
+    mysql_exec("RESET MASTER;", with_user=True)
+    mysql_exec("FLUSH PRIVILEGES;", with_user=True)
 
     version_obj.mark_executed()
 
