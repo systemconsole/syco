@@ -3,7 +3,6 @@
 Test cases for version.py
 
 """
-import os
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2014, The System Console project"
@@ -14,7 +13,9 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Test"
 
+
 import pytest
+import os
 
 
 # Need to be included before version, to prevent circular import
