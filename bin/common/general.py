@@ -489,3 +489,12 @@ def use_original_file(filename):
         bak_folder = bak_file.rsplit('/', 1)[0]
         x("mkdir -p {0}".format(bak_folder))
         x("cp -f {0} {1}".format(filename, bak_file))
+
+
+def require_linux_user(required_user):
+  """Check if script is executed as root, raise Exception if not."""
+  user = x("whoami", output = X_OUTPUT_NONE).strip()
+  if required_user != user:
+    raise Exception("Invalid user, you are %s but need to be %s. " % (
+        user, required_user
+    ))
