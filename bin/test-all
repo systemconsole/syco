@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# Run all unit tests for renter-ng
+#
+# Executes all unit tests that are found in the project. It will recursively
+# go through all directories looking for files matching the pattern test*.py.
+
+__author__="daniel.lindh@amivono.com"
+__copyright__="Copyright 2013, Amivono AB"
+
+
+## CONFIG BEGIN
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+## CONFIG END
+
+
+COVERAGE='coverage'
+PYTEST='py.test'
+
+
+#
+cd /opt/syco/bin/
+
+
+#
+echo "Create coverage report by executing all unittests."
+echo "  TODO - run coverage with --branch"
+$COVERAGE run --rcfile=/opt/syco/etc/coverage.cfg -m py.test -m "not skip_coverage"
+$COVERAGE report
+$COVERAGE html -d ../docs-coverage
+$COVERAGE erase
+
+#
+echo "Run skipped tests"
+$PYTEST test -m "skip_coverage"
+
+
+# Test if PEP8 compatible --pep8
+# Profiling, find the slowest tests.
+# py.test --durations=3
+
+
+#
+echo "Coverage data stored in /opt/syco/docs-coverage"

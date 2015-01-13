@@ -27,8 +27,10 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
+
 import ConfigParser
 import socket
+import os
 
 import app
 
@@ -111,3 +113,8 @@ class Version:
         config_file = open(self.config_file_name, 'wb')
         config.write(config_file)
         config_file.close()
+
+    def reset_version_file(self):
+        """Remove the version file"""
+        os.remove(self.config_file_name)
+
