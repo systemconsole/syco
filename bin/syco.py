@@ -32,6 +32,8 @@ sys.path.append(sys.path[0] + "/common/")
 
 import app
 import version
+import general
+general.require_linux_user("root")
 
 # Files published to public repos.
 sys.path.append(app.SYCO_PUBLIC_PATH)

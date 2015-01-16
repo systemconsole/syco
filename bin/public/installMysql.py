@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Install a secure mysql server.
 
 Read more
@@ -8,7 +8,7 @@ http://dev.mysql.com/doc/refman/5.0/en/security-against-attack.html
 http://dev.mysql.com/doc/refman/5.0/en/mysqld-option-tables.html
 http://www.learn-mysql-tutorial.com/SecureInstall.cfm
 
-'''
+"""
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -22,7 +22,6 @@ __status__ = "Production"
 import fileinput
 import net
 import os
-import re
 import shutil
 
 from general import x
@@ -35,7 +34,7 @@ import version
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
@@ -46,15 +45,15 @@ def build_commands(commands):
 
 
 def install_mysql(args):
-    '''
+    """
     Install and configure the mysql-server on the local host.
 
-    '''
+    """
     app.print_verbose("Install mysql version: %d" % SCRIPT_VERSION)
     version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    if (len(args) != 3):
+    if len(args) != 3:
         raise Exception("syco install-mysql [server-id] [innodb-buffer-pool-size]")
 
     server_id=args[1]
@@ -64,11 +63,11 @@ def install_mysql(args):
     app.init_mysql_passwords()
 
     # Install the mysql-server packages.
-    if (not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK)):
+    if not os.access("/usr/bin/mysqld_safe", os.W_OK|os.X_OK):
         x("yum -y install mysql-server hdparm")
 
         x("/sbin/chkconfig mysqld on ")
-        if (not os.access("/usr/bin/mysqld_safe", os.F_OK)):
+        if not os.access("/usr/bin/mysqld_safe", os.F_OK):
             raise Exception("Couldn't install mysql-server")
 
     # Configure iptables
@@ -76,18 +75,18 @@ def install_mysql(args):
     iptables.save()
 
     # Disable mysql history logging
-    if (os.access("/root/.mysql_history", os.F_OK)):
+    if os.access("/root/.mysql_history", os.F_OK):
         x("rm /root/.mysql_history")
     x("ln -s /dev/null /root/.mysql_history")
 
-    # Used to log slow queries, configed in my.cnf with log-slow-queries=
+    # Used to log slow queries, configured in my.cnf with log-slow-queries=
     x("touch /var/log/mysqld-slow.log")
     x("chown mysql:mysql /var/log/mysqld-slow.log")
     x("chmod 0640 /var/log/mysqld-slow.log")
     x("chcon system_u:object_r:mysqld_log_t:s0 /var/log/mysqld-slow.log")
 
     # Not used at the moment, just preventing mysql to load any modules.
-    if (not os.access("/usr/share/mysql/plugins", os.W_OK|os.X_OK)):
+    if not os.access("/usr/share/mysql/plugins", os.W_OK|os.X_OK):
         os.mkdir("/usr/share/mysql/plugins")
         os.chmod("/usr/share/mysql/plugins", 0)
         os.chown("/usr/share/mysql/plugins", 0, 0)
@@ -96,7 +95,7 @@ def install_mysql(args):
     # can get lost when computer get power-failures. Beware that some drives or
     # disk controllers may be unable to disable the write-back cache.
     #
-    # TODO: Might need to be done from bios?
+    app.print_verbose("TODO: Might need to be done from bios?")
     x("hdparm -W0 /dev/mapper/VolGroup00-var")
 
     app.print_verbose("Install /etc/my.cnf")
@@ -122,42 +121,64 @@ def install_mysql(args):
     mysql_exec("truncate mysql.user")
 
     current_host_config = config.host(net.get_hostname())
-    repl_peer = current_host_config.get_option("repl_peer")
-
-    mysql_exec("GRANT ALL PRIVILEGES ON *.* " +
-               "TO 'root'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-               "'root'@'localhost' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "', "
-               "'root'@'" + current_host_config.get_front_ip() + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'" +
-               ("" if repl_peer is None else (", 'root'@'" + repl_peer + "' " + "IDENTIFIED BY '" + app.get_mysql_root_password() + "'")) +
-               " WITH GRANT OPTION"
-
-    )
 
     # Used by monitor services (icingas nrpe plugin etc.)
-    mysql_exec("GRANT REPLICATION CLIENT ON *.* " +
-               "TO 'monitor'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_monitor_password() + "'"
+    mysql_exec(
+        "GRANT REPLICATION CLIENT ON *.* " +
+        "TO 'monitor'@'127.0.0.1' IDENTIFIED BY '%s'" % (
+            app.get_mysql_monitor_password()
+        )
     )
 
     # Used by backup scripts to flush master and check slave status etc. when
     # doing an lvm backup.
-    mysql_exec("GRANT RELOAD,SUPER,REPLICATION CLIENT ON *.* " +
-               "TO 'backup'@'127.0.0.1' " + "IDENTIFIED BY '" + app.get_mysql_backup_password() + "'"
+    mysql_exec(
+        "GRANT RELOAD,SUPER,REPLICATION CLIENT ON *.* " +
+        "TO 'backup'@'127.0.0.1' IDENTIFIED BY '%s'" % (
+            app.get_mysql_backup_password()
+        )
     )
 
     mysql_exec("DROP DATABASE test;")
     mysql_exec("SELECT host,user FROM mysql.db;")
     mysql_exec("SELECT host,user FROM mysql.user;")
-    mysql_exec("RESET MASTER;")
-    mysql_exec("FLUSH PRIVILEGES;")
+    mysql_exec(
+        "GRANT ALL PRIVILEGES ON *.* TO "
+        "'root'@'127.0.0.1' IDENTIFIED BY '%s', "
+        "'root'@'localhost' IDENTIFIED BY '%s', "
+        "'root'@'%s' IDENTIFIED BY '%s'"
+        " WITH GRANT OPTION" % (
+           app.get_mysql_root_password(),
+           app.get_mysql_root_password(),
+           current_host_config.get_front_ip(),
+           app.get_mysql_root_password()
+        )
+    )
+
+    repl_peer = current_host_config.get_option("repl_peer")
+    if repl_peer:
+        mysql_exec(
+            "GRANT ALL PRIVILEGES ON *.* TO "
+            "'root'@'%s' IDENTIFIED BY '%s'"
+            "WITH GRANT OPTION" % (
+                repl_peer,
+                app.get_mysql_root_password()
+            ),
+            with_user=True
+        )
+
+    mysql_exec("RESET MASTER;", with_user=True)
+    mysql_exec("FLUSH PRIVILEGES;", with_user=True)
 
     version_obj.mark_executed()
 
+
 def uninstall_mysql(args):
-    '''
+    """
     Uninstall mysql
 
-    '''
-    if (os.access("/etc/init.d/mysqld", os.F_OK)):
+    """
+    if os.access("/etc/init.d/mysqld", os.F_OK):
         x("/etc/init.d/mysqld stop")
     x("yum -y groupremove MySQL Database")
     x("rm -f /root/.mysql_history")
@@ -167,20 +188,18 @@ def uninstall_mysql(args):
     x("rm -f /var/log/mysqld.log")
     x("rm -f /etc/my.cnf")
 
-    # Don't need to delete, provided by mysql-libs
-    #x("rm -fr /usr/share/mysql")
-
     version_obj = version.Version("InstallMysql", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
 
+
 def install_mysql_replication(args):
-    '''
+    """
     Setup and start the database replication in master-master mode.
 
     This function should be executed on the secondary master, after the
     primary master has been configured.
 
-    '''
+    """
     app.print_verbose("Install mysql replication version: %d" % SCRIPT_VERSION)
     version_obj = version.Version("install-mysql-replication", SCRIPT_VERSION)
     version_obj.check_executed()
@@ -209,22 +228,22 @@ def install_mysql_replication(args):
 
 
 def test_mysql(args):
-    '''
+    """
     Run all mysql unittests, to test the MySQL daemon on the current hardware.
 
-    '''
+    """
     x("yum -y install mysql-test")
     x("perl /usr/share/mysql-test/mysql-test-run.pl")
     x("yum -y remove mysql-test")
 
 
 def mysql_exec(command, with_user=False, host="127.0.0.1", escape=True):
-    '''
+    """
     Execute a MySQL query, through the command line mysql console.
 
     todo: Don't send password on command line.
 
-    '''
+    """
 
     if escape:
         command = command.replace('\\', '\\\\')
@@ -232,18 +251,18 @@ def mysql_exec(command, with_user=False, host="127.0.0.1", escape=True):
 
     cmd="mysql "
 
-    if (host):
+    if host:
         cmd+= "-h" + host + " "
 
-    if (with_user):
+    if with_user:
         cmd+='-uroot -p"{0}" '.format(app.get_mysql_root_password())
 
     return x(cmd + '-e "{0}"'.format(command))
 
 
 def install_mysql_client():
-    '''
+    """
     Install mysql command line client.
 
-    '''
+    """
     x("yum -y install mysql.x86_64")

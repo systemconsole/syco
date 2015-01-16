@@ -37,6 +37,8 @@ echo
 echo
 rm -f /opt/syco/etc/general.cfg 2> /dev/null
 rm -f /opt/syco/etc/install.cfg 2> /dev/null
+rm -f /opt/syco/etc/passwordstore 2> /dev/null
 ln -s /opt/syco/usr/mod-template/etc/minimal-general.cfg /opt/syco/etc/general.cfg
 ln -s /opt/syco/usr/mod-template/etc/minimal-install.cfg /opt/syco/etc/install.cfg
+ln -s /opt/syco/usr/mod-template/etc/minimal-passwordstore /opt/syco/etc/passwordstore
 /opt/syco/bin/syco.py install-syco
