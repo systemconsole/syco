@@ -42,7 +42,7 @@ import socket
 SCRIPT_VERSION = 2
 
 # NOTE: Remember to change path in "var/glassfish/glassfish-3.1.1"
-GLASSFISH_VERSION      = "glassfish-4.0"
+GLASSFISH_VERSION      = "glassfish-4.1"
 GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
 GLASSFISH_REPO_URL     = "http://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
 GLASSFISH_INSTALL_PATH = "/usr/local/glassfish4"
@@ -58,14 +58,14 @@ ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 JAVA_TEMP_PATH = GLASSFISH_INSTALL_PATH + "tmp"
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-7u40-linux-x64.tar.gz"
+JDK_INSTALL_FILE = "jdk-8u25-linux-x64.tar.gz"
 JDK_REPO_URL     = "http://packages.fareoffice.com/java/%s" % (JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.7.0_40"
-JDK_VERSION = "jdk1.7.0_40"
+JDK_INSTALL_PATH = "/usr/java/jdk1.8.0_25"
+JDK_VERSION = "jdk1.8.0_25"
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-MYSQL_FILE_NAME="mysql-connector-java-5.1.26"
+MYSQL_FILE_NAME="mysql-connector-java-5.1.34"
 MYSQL_CONNECTOR_REPO_URL    = "http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
 
 
@@ -104,7 +104,7 @@ def install_glassfish(arg):
   _setup_glassfish4()
   _install_mysql_connect()
   _install_guice()
-  _install_icinga_ulimit_check(GLASSFISH_USER)
+#  _install_icinga_ulimit_check(GLASSFISH_USER)
   #
   initialize_passwords()
   _set_domain_passwords()
@@ -179,7 +179,7 @@ def _install_jdk():
   if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.download_file(JDK_REPO_URL, user="glassfish")
+      general.download_file(JDK_REPO_URL)
 
       x("chmod u+rx " + JDK_INSTALL_FILE)
 
@@ -214,7 +214,7 @@ def _install_glassfish():
   if (not os.access(GLASSFISH_INSTALL_PATH + "/glassfish", os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(GLASSFISH_INSTALL_FILE, os.F_OK)):
-      general.download_file(GLASSFISH_REPO_URL, user="glassfish")
+      general.download_file(GLASSFISH_REPO_URL)
 
     # Set executeion permissions and run the installation.
     if ".zip" in GLASSFISH_INSTALL_FILE:
@@ -237,16 +237,13 @@ def _setup_glassfish4():
   Setting Glassfish 4 properties
   '''
   asadmin_exec("delete-jvm-options -client")
-  asadmin_exec("delete-jvm-options '-XX\:MaxPermSize=192m'")
   asadmin_exec("delete-jvm-options -Xmx512m")
   
   asadmin_exec("create-jvm-options -server")
   asadmin_exec("create-jvm-options -Xmx6144m")
   asadmin_exec("create-jvm-options -Xms1024m")
-  asadmin_exec("create-jvm-options '-XX\:MaxPermSize=1024m'")
   asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
   asadmin_exec("create-jvm-options '-XX\:+UseParallelGC'")
-  asadmin_exec("create-jvm-options -Dcom.sun.enterprise.web.connector.grizzly.linger=-1")
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
