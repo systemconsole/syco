@@ -33,9 +33,6 @@ import config
 import general
 import version
 
-INSTALLATION_SERVER = config.general.get_installation_server()
-
-
 SNORT_FILENAME="snort-2.9.4.tar.gz"
 SNORT_URL="http://www.snort.org/downloads/2112"
 SNORT_MD5="e79ee6b4fbb32edc5dfed2d7dfcc6813"
@@ -49,8 +46,6 @@ LIBNET_URL="https://libdnet.googlecode.com/files/libdnet-1.12.tgz"
 LIBNET_MD5="9253ef6de1b5e28e9c9a62b882e44cc9"
 
 RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
-RULE_URL="http://{0}/files/{1}".format(
-    INSTALLATION_SERVER, RULE_FILENAME)
 RULE_MD5="1254317ba5c51a6b8f2b5ba711eecfeb"
 
 # The version of this module, used to prevent the same script version to be
@@ -59,24 +54,30 @@ script_version = 1
 
 
 def build_commands(commands):
-    '''
+    """
     Defines the commands that can be executed through the syco.py shell script.
 
-    '''
+    """
     commands.add("install-snort",  install_snort, help="Install Snort.")
 
 
 def download():
-    '''
+    """
     Download all files required by snort.
 
     Note: Should be modified to download files to install server.
 
-    '''
+    """
+
+    installation_server = config.general.get_installation_server()
+
+    rule_url = "http://{0}/files/{1}".format(
+        installation_server, RULE_FILENAME)
+
     general.download_file(SNORT_URL, SNORT_FILENAME, md5=SNORT_MD5)
     general.download_file(DAQ_URL, DAQ_FILENAME, md5=DAQ_MD5)
     general.download_file(LIBNET_URL, LIBNET_FILENAME, md5=LIBNET_MD5)
-    general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
+    general.download_file(rule_url, RULE_FILENAME, md5=RULE_MD5)
 
 
 def install_snort(args):
