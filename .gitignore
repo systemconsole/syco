@@ -5,9 +5,12 @@
 ._*
 /usr/*
 !/usr/mod-template/
+.vagrant/*
 /etc/install.cfg
 /etc/general.cfg
 /etc/passwordstore*
 /etc/version.cfg
 /var/kickstart/generated
 /tmp/
+/docs-coverage/
+.coverage

@@ -97,3 +97,16 @@ The flow of the "syco remote-install"
 
 
 
+Unit test 
+---------
+
+        Download and intsall virtualbox (https://www.virtualbox.org/wiki/Downloads)
+        Download and intsall vagrant (https://www.vagrantup.com/downloads.html)
+        vagrant box add mattiashem/syco_prep_centos6
+        vagrant up
+        vagrant ssh
+        sudo rpm -Uhv http://mirrors.se.eu.kernel.org/fedora-epel/6/x86_64/epel-release-6-8.noarch.rpm
+        sudo yum install python-pip
+        sudo yum install python-devel
+        sudo pip install pytest coverage
+        /opt/syco/bin/test-all
