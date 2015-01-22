@@ -188,6 +188,10 @@ def _install_mod_security():
 
   # Install mode-sec config files.
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
+  # Setup logrotate for modsec_audit.log
+  x("cp " + app.SYCO_PATH + "var/httpd/logrotate.d/modsec /etc/logrotate.d/")
+  x("chown root:root /etc/logrotate.d/modsec")
+  x("chmod 644 /etc/logrotate.d/modsec")
 
 def _update_modsec_rules():
   general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".zip")

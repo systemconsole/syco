@@ -1,0 +1,8 @@
+/var/log/modsec_audit.log {
+    weekly
+    copytruncate
+    create 0600 root root
+    dateext
+    rotate 4
+    compress
+}
