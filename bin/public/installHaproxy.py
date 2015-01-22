@@ -3,7 +3,6 @@
 This script will install HA Proxy on the targeted server.
 
 This script is dependent on the following config files for this script to work.
-    var/haproxy/[environment].keepalived.conf
     var/haproxy/[environment].haproxy.conf
 '''
 
@@ -58,7 +57,6 @@ def get_environments():
     return environments
 
 HAPROXY_CONF_DIR = "/etc/haproxy/"
-KEEPALIVED_CONF_DIR = "/etc/keepalived/"
 ACCEPTED_HAPROXY_ENV = None
 
 def build_commands(commands):
@@ -96,28 +94,12 @@ def install_haproxy(args):
     version_obj.check_executed()
     os.chdir("/")
 
-    x("yum install -y tcl haproxy keepalived")
+    x("yum install -y tcl haproxy")
     _configure_iptables()
     _copy_certificate_files()
-    _configure_keepalived()
     _configure_haproxy()
 
     version_obj.mark_executed()
-
-def _configure_keepalived():
-    '''
-    * Keepalived needs the possibility to bind on non local adresses.
-    * It will replace the variables in the config file with the hostname.
-    * It is not environmental dependent and can be installed on any server.
-    '''
-    x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
-    x("sysctl -p")
-    x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KEEPALIVED_CONF_DIR))
-    x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, KEEPALIVED_CONF_DIR))
-    scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_UP}", socket.gethostname().upper())
-    scopen.scOpen(KEEPALIVED_CONF_DIR + "keepalived.conf").replace("${HAPROXY_SERVER_NAME_DN}", socket.gethostname().lower())
-    _chkconfig("keepalived","on")
-    _service("keepalived","restart")
 
 def _configure_haproxy():
     x("mv {0}haproxy.cfg {0}org.haproxy.cfg".format(HAPROXY_CONF_DIR))
@@ -136,21 +118,10 @@ def _copy_certificate_files():
     ssh.scp_from(copyfrom, copyremotefile, copylocalfile)
 
 def _configure_iptables():
-    '''
-    * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to
-        be opened. So first we remove the multicast blocks and then open them up.
-    * VRRP is known as Protocol 112 in iptables.
-    '''
     iptables.iptables("-A syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-A syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
     iptables.iptables("-A syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP")
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP")
-    iptables.iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT")
     iptables.save()
 
 def get_ip_address(ifname):
@@ -170,21 +141,14 @@ def uninstall_haproxy(args=""):
 
     _chkconfig("haproxy","off")
     _service("haproxy","stop")
-    _chkconfig("keepalived","off")
-    _service("keepalived","stop")
 
-    x("yum -y remove haproxy keepalived")
+    x("yum -y remove haproxy")
     x("rm -rf {0}*".format(HAPROXY_CONF_DIR))
-    x("rm -rf {0}*".format(KEEPALIVED_CONF_DIR))
     x("rm -rf {0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV))
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
     iptables.save()
 
 
