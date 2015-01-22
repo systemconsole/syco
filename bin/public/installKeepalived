@@ -148,6 +148,8 @@ def uninstall_keepalived(args=""):
     x("rm -rf {0}*".format(KA_CONF_DIR))
     iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
     iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
+    iptables.iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+    iptables.iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
     iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
     iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
     iptables.save()
