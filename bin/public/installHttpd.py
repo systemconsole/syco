@@ -192,6 +192,7 @@ def _install_mod_security():
   x("cp " + app.SYCO_PATH + "var/httpd/logrotate.d/modsec /etc/logrotate.d/")
   x("chown root:root /etc/logrotate.d/modsec")
   x("chmod 644 /etc/logrotate.d/modsec")
+  x("chcon system_u:object_r:etc_t:s0 /etc/logrotate.d/modsec")
 
 def _update_modsec_rules():
   general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".zip")

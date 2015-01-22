@@ -1,8 +1,13 @@
 /var/log/modsec_audit.log {
-    weekly
-    copytruncate
+    daily
     create 0600 root root
     dateext
-    rotate 4
+    rotate 14
     compress
+    size 100M
+    missingok
+    notifempty
+postrotate
+        /sbin/service httpd reload > /dev/null 2>/dev/null || true
+    endscript
 }
