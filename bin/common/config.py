@@ -245,7 +245,7 @@ class Config(object):
             if self.get_nameserver_server_ip():
                 resolvers.append(self.get_nameserver_server_ip())
 
-            return resolvers
+            return _remove_duplicates_from_list(resolvers)
 
         def get_first_dns_resolver(self):
             '''ip of primary dns-resolver. TODO remove use get_front/get_back_resolver'''
@@ -711,6 +711,11 @@ def get_hosts():
 
 def get_switches():
     return config.get_switches()
+
+def _remove_duplicates_from_list(list):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in list if not (x in seen or seen_add(x))]
 
 def get_devices():
     return config.get_devices()
