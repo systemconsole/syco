@@ -230,23 +230,26 @@ class Config(object):
             '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
             return str(self.get_back_resolver_ip())
 
-        def get_dns_resolvers(self, limiter=" "):
-            '''
+        def get_dns_resolvers(self):
+            """
             Ip list of all dns resolvers that are configured on all servers.
 
-            '''
-            resolvers = "{0} {1} {2}".format(
-                self.get_front_resolver_ip(), self.get_back_resolver_ip(),
-                self.get_nameserver_server_ip()
-            )
+            """
+            resolvers = []
+            if self.get_front_resolver_ip():
+                resolvers.append(self.get_front_resolver_ip())
 
-            if (limiter != " "):
-                resolvers = resolvers.replace(' ', limiter)
+            if self.is_back_enabled() and self.get_back_resolver_ip():
+                resolvers.append(self.get_back_resolver_ip())
+
+            if self.get_nameserver_server_ip():
+                resolvers.append(self.get_nameserver_server_ip())
+
             return resolvers
 
         def get_first_dns_resolver(self):
             '''ip of primary dns-resolver. TODO remove use get_front/get_back_resolver'''
-            return self.get_dns_resolvers().split(None, 1)[0]
+            return self.get_dns_resolvers()[0]
 
         def get_resolv_domain(self):
             return self.get_option("resolv.domain")
@@ -396,15 +399,17 @@ class Config(object):
             if service_ip == "":
                 '''If IP is not configured, try to get IP from guest configuration for this host'''
                 hostname_method = getattr(self, "get_" + service_name + "_server")
-                service_host_name = hostname_method()
-                service_ip = self.host(service_host_name).get_front_ip()
+                try:
+                    service_host_name = hostname_method()
+                    service_ip = self.host(service_host_name).get_front_ip()
+                except:
+                    pass
 
             return service_ip
 
     class HostConfig(SycoConfig):
         '''
         Access functions for the hosts in the install.cfg.
-
         '''
 
         hostname = None
@@ -441,8 +446,8 @@ class Config(object):
             return ret 
 
         def get_front_ip(self):
-            '''Get ip for a specific host, as it is defined in install.cfg'''
-            return self.get_option("front.ip")
+            """Get ip for a specific host, as it is defined in install.cfg"""
+            return self.get_option("front.ip", "")
 
         def get_front_mac(self):
             '''Get network mac address for a specific host, as it is defined in install.cfg'''
