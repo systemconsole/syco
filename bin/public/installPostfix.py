@@ -42,21 +42,16 @@ import version
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
 
-class PostFixProperties():
-    server_front_ip = None
-    server_back_ip = None
-    server_network_front = None
-    server_network_back = None
+class init_properties():
 
-    def __init__(self):
-        server_front_ip = config.host(net.get_hostname()).get_front_ip()
-        server_back_ip = config.host(net.get_hostname()).get_back_ip()
+    server_front_ip = config.host(net.get_hostname()).get_front_ip()
+    server_back_ip = config.host(net.get_hostname()).get_back_ip()
 
-        server_network_front = net.get_network_cidr(server_front_ip,
-            config.general.get_front_netmask())
+    server_network_front = net.get_network_cidr(server_front_ip,
+        config.general.get_front_netmask())
 
-        server_network_back = net.get_network_cidr(server_back_ip,
-            config.general.get_back_netmask())
+    server_network_back = net.get_network_cidr(server_back_ip,
+        config.general.get_back_netmask())
 
 def build_commands(commands):
   commands.add("install-postfix-server", install_mail_server, help="Install postfix/mail-relay server on the current server.")
@@ -76,7 +71,7 @@ def install_mail_server(args):
   version_obj.check_executed()
   app.print_verbose("Installing postfix-server version: {0}".format(SCRIPT_VERSION))
 
-  init_properties = PostFixProperties()
+  init_properties()
 
   # Install required packages
   install.package("postfix")
