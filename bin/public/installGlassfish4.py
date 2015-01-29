@@ -256,7 +256,7 @@ def _setup_glassfish4():
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.ejb-container=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.http-service=LOW")
-  asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")
+  #asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")#not available
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jdbc-connection-pool=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jms-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jvm=LOW")
