@@ -249,7 +249,7 @@ def _setup_glassfish4():
   asadmin_exec("set-log-attributes --target server-config com.sun.enterprise.server.logging.GFFileHandler.formatter=ulf")
   asadmin_exec("set server.admin-service.das-config.autodeploy-enabled=false")
   asadmin_exec("set server.admin-service.das-config.dynamic-reload-enabled=false")
-  asadmin_exec("create-system-properties --target server-config com.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true", admin_port)
+  asadmin_exec("create-system-properties --target server-config com.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true")
 
   #Setting monitors levels
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-connection-pool=LOW")
