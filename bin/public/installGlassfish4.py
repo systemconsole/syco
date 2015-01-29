@@ -210,15 +210,14 @@ def _install_glassfish():
   Installation of the glassfish application server.
 
   '''
-  x("yum install zip -y")
+
   if (not os.access(GLASSFISH_INSTALL_PATH + "/glassfish", os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(GLASSFISH_INSTALL_FILE, os.F_OK)):
       general.download_file(GLASSFISH_REPO_URL)
 
     # Set executeion permissions and run the installation.
-    if ".zip" in GLASSFISH_INSTALL_FILE:
-      install.package("unzip")
+      x("yum install unzip -y")
       x("unzip " + GLASSFISH_INSTALL_FILE + " -d /usr/local/")
       x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH)
     else:
@@ -314,6 +313,7 @@ def _install_guice():
   x("cp "+GUICE_NAME+ "/aopalliance* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("cp "+GUICE_NAME+ "/javax.inject* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/*")
+  x("yum remove unzip -y")
 
 
 
