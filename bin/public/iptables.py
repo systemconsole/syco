@@ -358,7 +358,7 @@ def setup_dns_resolver_rules():
 
     '''
     app.print_verbose("Setup DNS resolver INPUT/OUTPUT rule.")
-    for resolver_ip in config.general.get_dns_resolvers().split(" "):
+    for resolver_ip in config.general.get_dns_resolvers():
         if resolver_ip.lower() != "none":
             iptables("-A syco_output -p udp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_udp")
             iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_tcp")
