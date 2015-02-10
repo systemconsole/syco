@@ -122,7 +122,7 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
     if (cookie):
       cmd += ' --no-cookies --header "Cookie: %s"' % cookie
 
-    shell_exec("wget " + cmd + " " + src, user=user)
+    shell_exec("wget -U syco " + cmd + " " + src, user=user)
     # Looks like the file is not flushed to disk immediatley,
     # making the script not able to read the file immediatley after it's
     # downloaded. A sleep fixes this.
