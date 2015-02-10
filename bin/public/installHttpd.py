@@ -48,7 +48,7 @@ import iptables
 SCRIPT_VERSION = 1
 
 MODSEC_INSTALL_FILE = "modsecurity-2.8.0"
-MODSEC_REPO_URL = "https://www.modsecurity.org/tarball/2.8.0/" + MODSEC_INSTALL_FILE + ".tar.gz"
+MODSEC_REPO_URL = "http://packages.fareoffice.com/modsecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
 MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
 MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".sha256"
