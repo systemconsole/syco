@@ -37,10 +37,13 @@ def install_es(args):
 	'''
 	Install setup Elasticsearch
 	'''
+	x('syco install-java')
 	x('yum install wget -y')
 	x('wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-'+ES_VERSION +'.noarch.rpm ')
 	x('yum localinstall elasticsearch-'+ES_VERSION +'.noarch.rpm -y')
 	x('rm -rf elasticsearch-'+ES_VERSION +'.noarch.rpm ')
 	x('/etc/init.d/elasticsearch restart')
 	x('chkconfig elasticsearch on')
+
+
 
