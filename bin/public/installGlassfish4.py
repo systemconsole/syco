@@ -104,7 +104,7 @@ def install_glassfish(arg):
   _setup_glassfish4()
   _install_mysql_connect()
   _install_guice()
-#  _install_icinga_ulimit_check(GLASSFISH_USER)
+  _install_icinga_ulimit_check(GLASSFISH_USER)
   #
   initialize_passwords()
   _set_domain_passwords()
