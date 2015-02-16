@@ -184,11 +184,6 @@ class PasswordStore:
                 sys.stderr.write("Error: blank passwords aren't allowed.\n")
                 password = None
                 continue
-            if len(password) > self.BLOCK_SIZE:
-                # block size of AES is less than 32
-                sys.stderr.write("Error: password can't be longer than 32.\n")
-                password = None
-                continue
             break
         return password
 
@@ -209,7 +204,7 @@ class PasswordStore:
         Add extra padding to a password, to be valid for AES.
 
         """
-        padding_length = self.BLOCK_SIZE - len(s)
+        padding_length = self.BLOCK_SIZE - (len(s) % self.BLOCK_SIZE)
         if padding_length > 0:
             return s + (padding_length % self.BLOCK_SIZE) * self.PADDING
         else:
@@ -280,7 +275,7 @@ if __name__ == "__main__":
     pws = PasswordStore("/tmp/test.conf")
 
     # Don't ask the user for the password
-    encoded = pws.set_password('mysql', 'root', 'This is my password')
+    encoded = pws.set_password('mysql', 'root', 'This is my very long password thats longer than the block size -long!')
     print 'Encrypted string:', encoded
     decoded = pws.get_password('mysql', 'root')
     print 'Decrypted string:', decoded
