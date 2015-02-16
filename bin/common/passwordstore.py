@@ -109,7 +109,7 @@ class PasswordStore:
         if self.master_password is None:
             crypted_file_password = self._get_from_file("general", "keystore_pass")
 
-            if len(crypted_file_password == 0):
+            if len(crypted_file_password) == 0:
                 # If no password where stored in the config file, ask the user for
                 # a new master password.
                 master_password = self.get_password_from_user("Enter the SYCO master password: ")
@@ -275,7 +275,7 @@ class PasswordStore:
         return "".join(escape_char(c) for c in value)
 
 # Test the functionality
-if (__name__ == "__main__"):
+if __name__ == "__main__":
     pws = PasswordStore("/tmp/test.conf")
 
     # Don't ask the user for the password
