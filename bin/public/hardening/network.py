@@ -67,6 +67,9 @@ def disable_ip6_support():
   network = scOpen("/etc/sysconfig/network")
   network.replace_add("^NETWORKING_IPV6=.*$", "NETWORKING_IPV6=no")
 
+  x("/sbin/sysctl -w net.ipv6.conf.default.disable_ipv6=1")
+  x("/sbin/sysctl -w net.ipv6.conf.all.disable_ipv6=1")
+
 
 def configure_resolv_conf():
   app.print_verbose("Configure /etc/resolv.conf")
