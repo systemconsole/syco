@@ -153,7 +153,8 @@ class PasswordStore:
         user_password = self.cipher.decrypt(base64.b64decode(crypted_file_password)).rstrip(self.PADDING)
 
         if len(user_password) == 0:
-            user_password = self.get_password_from_user('Enter password for service "' + service + '" with username "' + user_name + '":')
+            user_password = self.get_password_from_user('Enter password for service "' + service + '" with username "' +
+                                                        user_name + '":')
             self.set_password(service, user_name, user_password)
 
         if len(user_password) == 0:
@@ -169,12 +170,12 @@ class PasswordStore:
         If True, the user has to type the password twice for veryfication.
 
         """
-        while (True):
+        while True:
             password = getpass.getpass(password_caption)
 
-            if (verify_password):
+            if verify_password:
                 verify_password = getpass.getpass(password_caption + '(again) ')
-                if (password != verify_password):
+                if password != verify_password:
                     sys.stderr.write("Error: Your passwords didn't match\n")
                     password = verify_password
                     continue
@@ -196,11 +197,11 @@ class PasswordStore:
         Store all passwords to file.
 
         """
-        if (self.config_file_is_modified):
+        if self.config_file_is_modified:
             config_file = open(self.file_path, 'w')
             self.config.write(config_file)
 
-            if (config_file):
+            if config_file:
                 config_file.close()
 
     def _pad(self, s):
@@ -219,9 +220,9 @@ class PasswordStore:
         Build a ConfigParser with the password file data parsed.
 
         """
-        if (not self.config):
+        if not self.config:
             self.config = ConfigParser.RawConfigParser()
-            if (os.path.exists(self.file_path)):
+            if os.path.exists(self.file_path):
                 self.config.read(self.file_path)
         return self.config
 
@@ -234,7 +235,7 @@ class PasswordStore:
         option = self._escape_for_ini(option)
         config = self._build_config_parser()
 
-        if (config.has_section(section) and config.has_option(section, option)):
+        if config.has_section(section) and config.has_option(section, option):
             return config.get(section, option)
         else:
             return ""
@@ -250,7 +251,7 @@ class PasswordStore:
         option = self._escape_for_ini(option)
         config = self._build_config_parser()
 
-        if (not config.has_section(section)):
+        if not config.has_section(section):
             config.add_section(section)
 
         config.set(section, option, value)
