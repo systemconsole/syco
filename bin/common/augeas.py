@@ -51,7 +51,7 @@ def find_aug_entry_by_name(search_path, name):
     """
     lines = x("augtool match %s" % search_path).split("\n")
     for line in lines:
-        split_line = line.split("=")
+        split_line = line.split("=", 1)
         value = split_line[1].strip()
         if value == name:
             return split_line[0].strip()
@@ -60,7 +60,7 @@ def find_aug_entry_by_name(search_path, name):
 def _resolve_enhanced_path(enhanced_path):
     remainder = enhanced_path
     resolved_path = ""
-    while "{[" in remainder:
+    while "[{" in remainder:
         first = remainder.split("[{", 1)
         search_path = resolved_path + first[0]
         second = first[1].split("}]", 1)

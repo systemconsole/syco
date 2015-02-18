@@ -148,36 +148,36 @@ def configured_sssd():
     # cached log-ins (in days). This value is measured from the last successful
     # online log-in. If not specified, defaults to 0 (no limit).
     # We want to cache credentials even though noone has logged in.
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/offline_credentials_expiration", "0")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/offline_credentials_expiration", "0")
 
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
 
     # Configure client certificate auth.
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_key", "/etc/openldap/cacerts/client.pem")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_reqcert", "demand")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_key", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_reqcert", "demand")
 
     # Only users with this employeeType are allowed to login to this computer.
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/access_provider", "ldap")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_access_filter", "(employeeType=Sysop)")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/access_provider", "ldap")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_access_filter", "(employeeType=Sysop)")
 
     # Login to ldap with a specified user.
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_bind_dn",
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_bind_dn",
                             "cn=sssd," + config.general.get_ldap_dn())
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type", "password")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type",
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type", "password")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type",
                             app.get_ldap_sssd_password())
 
     #Enable caching of sudo rules
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/sudo_provider", "ldap")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_full_refresh_interval", "86400")
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_smart_refresh_interval", "3600")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/sudo_provider", "ldap")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_full_refresh_interval", "86400")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_smart_refresh_interval", "3600")
 
     #sssd section settings
-    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{sssd}]/services", "nss,pam,sudo")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{sssd}]/services", "nss,pam,sudo")
 
     # Need to change the modified date before restarting, to tell sssd to reload
     # the config file.
