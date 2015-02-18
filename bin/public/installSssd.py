@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-'''
+# -*- coding: utf-8 -*-
+
+"""
 Install sssd that will connect to an LDAP-server.
 
 This script can be executed on both the LDAP-server and it's clients.
@@ -9,22 +11,21 @@ This script is based on information from at least the following links.
   http://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/chap-SSSD_User_Guide-Introduction.html
   http://directory.fedoraproject.org/wiki/Howto:PAM
 
-'''
+"""
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
-__maintainer__ = "Daniel Lindh"
+__maintainer__ = "Daniel Lindh, Kristofer Borgström"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os
-
 import app
 import config
 import general
+import augeas
 from general import x
 from general import shell_run
 from scopen import scOpen
@@ -34,7 +35,7 @@ import installOpenLdap
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 def build_commands(commands):
     commands.add("install-sssd-client", install_sssd, help="Install sssd (ldap client).")
@@ -73,6 +74,7 @@ def install_sssd(args):
 
     version_obj.mark_executed()
 
+
 def uninstall_sssd(args):
     app.print_verbose("Uninstall sssd script-version: %d" % SCRIPT_VERSION)
     x("yum -y remove openldap-clients sssd")
@@ -84,16 +86,18 @@ def uninstall_sssd(args):
     version_obj = version.Version("InstallSssd", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
 
+
 def install_packages():
-    x("yum -y install openldap openldap-clients authconfig pam_ldap sssd")
+    x("yum -y install openldap openldap-clients authconfig pam_ldap sssd augeas")
+
 
 def download_cert(filename):
-    '''
+    """
     Get certificate from ldap server.
 
     This is not needed to be done on the server.
 
-    '''
+    """
     #Creating certs folder
     x("mkdir -p /etc/openldap/cacerts")
 
@@ -138,55 +142,42 @@ def authconfig():
         )
     )
 
+
 def configured_sssd():
     # If the authentication provider is offline, specifies for how long to allow
     # cached log-ins (in days). This value is measured from the last successful
     # online log-in. If not specified, defaults to 0 (no limit).
-    scOpen("/etc/sssd/sssd.conf").remove("^offline_credentials_expiration.*")
-    x("sed -i '/\[pam\]/a offline_credentials_expiration=5' /etc/sssd/sssd.conf")
+    # We want to cache credentials even though noone has logged in.
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/offline_credentials_expiration", "0")
 
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
-    scOpen("/etc/sssd/sssd.conf").remove("^enumerate=true")
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]","\[domain/default\]\nenumerate=true")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
 
     # Configure client certificate auth.
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_cert.*")
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_key.*")
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_tls_reqcert.*")
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
-        "\[domain/default\]\n" +
-        "ldap_tls_cert = /etc/openldap/cacerts/client.pem\n" +
-        "ldap_tls_key = /etc/openldap/cacerts/client.pem\n" +
-        "ldap_tls_reqcert = demand"
-    )
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_key", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_tls_reqcert", "demand")
 
     # Only users with this employeeType are allowed to login to this computer.
-    scOpen("/etc/sssd/sssd.conf").remove("^access_provider.*")
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_access_filter.*")
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
-        "\[domain/default\]\n" +
-        "access_provider = ldap\n" +
-        "ldap_access_filter = (employeeType=Sysop)"
-    )
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/access_provider", "ldap")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_access_filter", "(employeeType=Sysop)")
 
     # Login to ldap with a specified user.
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_bind_dn.*")
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_authtok_type.*")
-    scOpen("/etc/sssd/sssd.conf").remove("^ldap_default_authtok.*")
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
-        "\[domain/default\]\n" +
-        "ldap_default_bind_dn = cn=sssd," + config.general.get_ldap_dn()
-    )
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
-        "\[domain/default\]\n" +
-        "ldap_default_authtok_type = password"
-    )
-    scOpen("/etc/sssd/sssd.conf").replace("\[domain/default\]",
-        "\[domain/default\]\n" +
-        "ldap_default_authtok = " + app.get_ldap_sssd_password()
-    )
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_bind_dn",
+                            "cn=sssd," + config.general.get_ldap_dn())
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type", "password")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type",
+                            app.get_ldap_sssd_password())
+
+    #Enable caching of sudo rules
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/sudo_provider", "ldap")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_full_refresh_interval", "86400")
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_smart_refresh_interval", "3600")
+
+    #sssd section settings
+    augeas.aug_set_enhanced("/files/sssd/sssd.conf/target[{sssd}]/services", "nss,pam,sudo")
 
     # Need to change the modified date before restarting, to tell sssd to reload
     # the config file.
@@ -202,9 +193,13 @@ def configured_sssd():
 ###########################################################
 # Configure the client to use sudo
 ###########################################################
+
+
 def configured_sudo():
-    scOpen("/etc/nsswitch.conf").remove("^sudoers.*")
-    scOpen("/etc/nsswitch.conf").add("sudoers: ldap files")
+
+    augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[1]", "ldap")
+    augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[2]", "files")
+    augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[3]", "sss")
 
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
