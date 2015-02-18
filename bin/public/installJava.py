@@ -25,11 +25,11 @@ import os
 SCRIPT_VERSION = 1
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-7u40-linux-x64.tar.gz"
-JDK_REPO_URL     = "http://packages.fareoffice.com/java/%s" % (JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.7.0_40"
-JDK_VERSION = "jdk1.7.0_40"
-
+# go to http://www.oracle.com/technetwork/java/javase/downloads/index.html and get the correct
+# jdp version and extension nummer.
+#
+JDK_VERSION = "8u31"
+JDK_EXTENSION ="b13"
 def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
@@ -45,36 +45,9 @@ def install_java(args):
 	'''
 
 	x('yum install wget -y')
-	x('mkdir /opt/syco/installtemp')
+	os.system('wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/'+JDK_VERSION+'-'+JDK_EXTENSION+'/jdk-'+JDK_VERSION+'-linux-x64.rpm')
+	x('yum localinstall jdk-'+JDK_VERSION+'-linux-x64.rpm -y')
+	x('rm -rf jdk-'+JDK_VERSION+'-linux-x64.rpm')
+	x('java -version')
 
-	if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
-	    os.chdir(app.INSTALL_DIR)
-	    if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-	      general.download_file(JDK_REPO_URL)
 	
-	      x("chmod u+rx " + JDK_INSTALL_FILE)
-	
-	    if (os.access(JDK_INSTALL_FILE, os.F_OK)):
-	          x("tar -zxvf "+JDK_INSTALL_FILE )
-	          x("mkdir /usr/java")
-	          x("mv "+JDK_VERSION+" /usr/java")
-	          x("rm -f /usr/java/default")
-	          x("rm -f /usr/java/latest")
-	          x("ln -s /usr/java/"+JDK_VERSION+" /usr/java/default")
-	          x("ln -s /usr/java/default /usr/java/latest")
-	          x("chown root:glassfish -R /usr/java/"+JDK_VERSION)
-	          x("chmod 774 -R /usr/java/"+JDK_VERSION)
-	          x("chmod 701 /usr/java")
-	          x("alternatives --install /usr/bin/javac javac /usr/java/latest/bin/javac 20000")
-	          x("alternatives --install /usr/bin/jar jar /usr/java/latest/bin/jar 20000")
-	          x("alternatives --install /usr/bin/java java /usr/java/latest/jre/bin/java 20000")
-	          x("alternatives --install /usr/bin/javaws javaws /usr/java/latest/jre/bin/javaws 20000")
-	          x('chown root:root -R /usr/java/latest')
-			  x('chmod 775 -R /usr/java/latest')
-	
-	
-	
-	    else:
-	      raise Exception("Not able to download " + JDK_INSTALL_FILE)
-
-	x('rm -rf /opt/syco/installtemp')
