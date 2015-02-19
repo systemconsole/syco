@@ -1,0 +1,80 @@
+
+
+[ ca ]
+dir = .
+certificate = cacert.pem
+database = index.txt
+new_certs_dir = $dir
+private_key = cakey.pem
+serial = serial
+
+default_crl_days = 7
+default_days = 365
+default_md = sha1
+default_ca = default_ca
+policy = ca_policy
+x509_extensions = certificate_extensions
+
+
+[default_ca]
+serial = serial
+policy = default_policy
+default_crl_days = 7
+default_days = 365
+default_md = sha1
+dir = .
+database = index.txt
+new_certs_dir = .
+certificate = cacert.pem
+private_key = cakey.pem
+commonName = supplied
+stateOrProvinceName = optional
+countryName = optional
+emailAddress = optional
+organizationName = optional
+organizationalUnitName = optional
+
+
+[ ca_policy ]
+commonName = supplied
+stateOrProvinceName = optional
+countryName = optional
+emailAddress = optional
+organizationName = optional
+organizationalUnitName = optional
+
+[ default_policy ]
+commonName = supplied
+stateOrProvinceName = optional
+countryName = optional
+emailAddress = optional
+organizationName = optional
+organizationalUnitName = optional
+
+[ certificate_extensions ]
+basicConstraints = CA:false
+
+[ req ]
+default_bits = 2048
+default_keyfile = cakey.pem
+default_md = sha1
+prompt = yes
+distinguished_name = root_ca_distinguished_name
+x509_extensions = root_ca_extensions
+
+[ root_ca_distinguished_name ]
+commonName = hostname
+
+[ root_ca_extensions ]
+basicConstraints = CA:true
+keyUsage = keyCertSign, cRLSign
+
+[ client_ca_extensions ]
+basicConstraints = CA:false
+keyUsage = digitalSignature
+extendedKeyUsage = 1.3.6.1.5.5.7.3.2
+
+[ server_ca_extensions ]
+basicConstraints = CA:false
+keyUsage = keyEncipherment
+extendedKeyUsage = 1.3.6.1.5.5.7.3.1
