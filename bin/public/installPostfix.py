@@ -122,8 +122,8 @@ def install_mail_client(args):
   See line comments in install_mail_server
 
   '''
+  init_properties = PostFixProperties()
 
-  init_properties()
 
   if config.host(net.get_hostname()).has_command_re("install-postfix-server"):
     app.print_verbose(
