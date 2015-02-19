@@ -148,7 +148,7 @@ def configured_sssd():
     # cached log-ins (in days). This value is measured from the last successful
     # online log-in. If not specified, defaults to 0 (no limit).
     # We want to cache credentials even though noone has logged in.
-    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/offline_credentials_expiration", "0")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{pam}]/offline_credentials_expiration", "0")
 
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,

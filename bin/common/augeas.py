@@ -54,7 +54,7 @@ def aug_set_enhanced(enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_CHA
 
     #Check for duplicates
     all_results = find_aug_entries(resolved_path)
-    if len(all_results <= 1):
+    if len(all_results) <= 1:
         #No duplicates, just do a normal set
         aug_set(resolved_path, value)
     elif duplicate_policy == DUPLICATE_POLICY_CHANGE_FIRST:
