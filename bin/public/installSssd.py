@@ -153,7 +153,8 @@ def configured_sssd():
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
-    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true",
+                            augeas.DUPLICATE_POLICY_REMOVE_DUPLICATES)
 
     # Configure client certificate auth.
     augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")

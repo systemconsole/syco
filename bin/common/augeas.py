@@ -4,6 +4,14 @@
 from general import x
 import sys
 
+DUPLICATE_POLICY_CHANGE_FIRST = 0
+DUPLICATE_POLICY_CHANGE_LAST = 1
+DUPLICATE_POLICY_REMOVE_DUPLICATES = 2
+
+
+def aug_remove(path):
+    return x("augtool rm \"%s\"" % path)
+
 
 def aug_set(path, value):
     """
@@ -29,17 +37,36 @@ def aug_set(path, value):
     return result
 
 
-def aug_set_enhanced(enhanced_path, value):
+def aug_set_enhanced(enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_CHANGE_FIRST):
     """
     Wraps around aug_set adding the following features:
 
     Supports referencing numbered nodes by their value
     Syntax: <augeas-path>[{<node-value>}]<continued-path>
 
+    Allows specifying a duplicate policy for what action to take if the fully resolved augeas path has several nodes
+
     Example referencing service[sssd] node of /etc/sssd/sssd.conf:
     /files/etc/sssd/sssd.conf/target[{sssd}]/services
     """
-    return aug_set(_resolve_enhanced_path(enhanced_path), value)
+
+    resolved_path = _resolve_enhanced_path(enhanced_path)
+
+    #Check for duplicates
+    all_results = find_aug_entries_by_name(resolved_path)
+    if len(all_results <= 1):
+        #No duplicates, just do a normal set
+        aug_set(resolved_path, value)
+    elif duplicate_policy == DUPLICATE_POLICY_CHANGE_FIRST:
+        aug_set(all_results[0], value)
+    elif duplicate_policy == DUPLICATE_POLICY_CHANGE_LAST:
+        aug_set(all_results[len(all_results) - 1], value)
+    elif duplicate_policy == DUPLICATE_POLICY_REMOVE_DUPLICATES:
+        aug_set(all_results[0], value)
+        #Remove remaining results, should be safest to start with the last in case indices are affected by removal
+        for to_remove in reversed(all_results[1:]):
+            aug_remove(to_remove)
+
 
 def find_aug_entry_by_name(search_path, name):
     """
@@ -49,12 +76,32 @@ def find_aug_entry_by_name(search_path, name):
     :param name:       the name of the subentry to return the path for
     :return:           the augeas path to the found entry
     """
+    results = find_aug_entries_by_name(search_path, name)
+
+    if len(results) > 0:
+        return results[0]
+
+    return None
+
+
+def find_aug_entries_by_name(search_path, name):
+    """
+
+    :param searchPath: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
+                       numbered database entries
+    :param name:       the name of the subentry to return the path for
+    :return:           list of augeas paths
+    """
     lines = x("augtool match %s" % search_path).split("\n")
+    result = []
     for line in lines:
+        if line.strip() == "(no matches)":
+            #No matches found, return the empty list
+            return result
         split_line = line.split("=", 1)
         value = split_line[1].strip()
         if value == name:
-            return split_line[0].strip()
+            return result.append(split_line[0].strip())
 
 
 def _resolve_enhanced_path(enhanced_path):
