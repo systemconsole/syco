@@ -16,7 +16,7 @@ def aug_remove(path):
 def aug_set(path, value):
     """
     Util function for safely set config settings using augeas. This function sets the specified value and also verifies
-    that it was set successfully since augeas sometimes silently fails to store data.
+    that it was set successfully since augeas sometimes silently fails to :store data.
 
     Alternative to current algorithm: script augeas interactive mode since failure to save with one-liners seems to
      work when in interactive mode and followed by the "save" command explicitly.
@@ -53,7 +53,7 @@ def aug_set_enhanced(enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_CHA
     resolved_path = _resolve_enhanced_path(enhanced_path)
 
     #Check for duplicates
-    all_results = find_aug_entries_by_name(resolved_path)
+    all_results = find_aug_entries(resolved_path)
     if len(all_results <= 1):
         #No duplicates, just do a normal set
         aug_set(resolved_path, value)
@@ -76,7 +76,7 @@ def find_aug_entry_by_name(search_path, name):
     :param name:       the name of the subentry to return the path for
     :return:           the augeas path to the found entry
     """
-    results = find_aug_entries_by_name(search_path, name)
+    results = find_aug_entries(search_path, name)
 
     if len(results) > 0:
         return results[0]
@@ -84,12 +84,13 @@ def find_aug_entry_by_name(search_path, name):
     return None
 
 
-def find_aug_entries_by_name(search_path, name):
+def find_aug_entries(search_path, name=None):
     """
 
     :param searchPath: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
                        numbered database entries
-    :param name:       the name of the subentry to return the path for
+    :param name:       the name of the subentry to return the path for, if not set all nodes matching this path are
+                        returned
     :return:           list of augeas paths
     """
     lines = x("augtool match %s" % search_path).split("\n")
@@ -98,10 +99,15 @@ def find_aug_entries_by_name(search_path, name):
         if line.strip() == "(no matches)":
             #No matches found, return the empty list
             return result
+        if line.strip() == "":
+            #Ignore empty lines
+            continue
         split_line = line.split("=", 1)
         value = split_line[1].strip()
-        if value == name:
-            return result.append(split_line[0].strip())
+        if name is None or value == name:
+            result.append(split_line[0].strip())
+
+    return result
 
 
 def _resolve_enhanced_path(enhanced_path):
