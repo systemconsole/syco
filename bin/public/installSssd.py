@@ -196,15 +196,13 @@ def configured_sssd():
 
 def configure_sudo():
 
-    #The database sudoers node doesn't appear to be insertable without a service value so we need to check manually
-    # and set the service value right away
+    #The database sudoers node doesn't appear to be insertable with a one liner so we have to echo it in
     if not augeas.find_aug_entry_by_name("/files/etc/nsswitch.conf/database", "sudoers"):
-        augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[last()+1]/service[1]", "ldap")
+        x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
     else:
         augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[1]", "ldap")
-
-    augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[2]", "files")
-    augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[3]", "sss")
+        augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[2]", "files")
+        augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[3]", "sss")
 
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
