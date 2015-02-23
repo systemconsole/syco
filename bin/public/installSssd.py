@@ -28,7 +28,6 @@ import general
 import augeas
 from general import x
 from general import shell_run
-from scopen import scOpen
 import iptables
 import version
 import installOpenLdap
@@ -70,7 +69,7 @@ def install_sssd(args):
 
     installOpenLdap.configure_client_cert_for_ldaptools()
     configured_sssd()
-    configured_sudo()
+    configure_sudo()
 
     version_obj.mark_executed()
 
@@ -153,8 +152,7 @@ def configured_sssd():
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
-    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true",
-                            augeas.DUPLICATE_POLICY_REMOVE_DUPLICATES)
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
 
     # Configure client certificate auth.
     augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")
@@ -169,7 +167,7 @@ def configured_sssd():
     augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_bind_dn",
                             "cn=sssd," + config.general.get_ldap_dn())
     augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type", "password")
-    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type",
+    augeas.aug_set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok",
                             app.get_ldap_sssd_password())
 
     #Enable caching of sudo rules
@@ -196,7 +194,7 @@ def configured_sssd():
 ###########################################################
 
 
-def configured_sudo():
+def configure_sudo():
 
     augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[1]", "ldap")
     augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[2]", "files")
@@ -205,21 +203,15 @@ def configured_sudo():
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
     x("chmod 644 /etc/ldap.conf")
-    scOpen("/etc/ldap.conf").remove(
-        "^sudoers_base.*\|^binddn.*\|^bindpw.*\|^ssl.*\|^tls_cacertdir.*\|" +
-        "^tls_cert.*\|^tls_key.*\|sudoers_debug.*"
-    )
-    scOpen("/etc/ldap.conf").add(
-        "uri ldaps://" + config.general.get_ldap_hostname() + "\n" +
-        "base " + config.general.get_ldap_dn() + "\n" +
-        "ssl on\n" +
-        "tls_cacertdir /etc/openldap/cacerts\n" +
-        "tls_cert /etc/openldap/cacerts/client.pem\n" +
-        "tls_key /etc/openldap/cacerts/client.pem\n" +
-        "sudoers_base ou=SUDOers," + config.general.get_ldap_dn() + "\n" +
-        "binddn cn=sssd," + config.general.get_ldap_dn() + "\n" +
-        "bindpw " + app.get_ldap_sssd_password()
-    )
+
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/uri", "ldaps://%s" % config.general.get_ldap_hostname())
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/base",  config.general.get_ldap_dn())
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/ssl",  "on")
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/tls_cacertdir", "/etc/openldap/cacerts")
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/tls_cert", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/sudoers_base", "/etc/openldap/cacerts/client.pem")
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/binddn", "cn=sssd,%s" % config.general.get_ldap_dn())
+    augeas.aug_set_enhanced("/files/etc/ldap.conf/bindpw", app.get_ldap_sssd_password())
 
     # SUDO now uses it's own ldap config file.
     x("cp /etc/ldap.conf /etc/sudo-ldap.conf")

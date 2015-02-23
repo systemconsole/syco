@@ -37,7 +37,7 @@ def aug_set(path, value):
     return result
 
 
-def aug_set_enhanced(enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_CHANGE_FIRST):
+def aug_set_enhanced(enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_REMOVE_DUPLICATES):
     """
     Wraps around aug_set adding the following features:
 
