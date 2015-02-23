@@ -198,7 +198,7 @@ def configure_sudo():
 
     #The database sudoers node doesn't appear to be insertable without a service value so we need to check manually
     # and set the service value right away
-    if len(augeas.find_aug_entry_by_name("/files/etc/nsswitch.conf/database", "sudoers")) == 0:
+    if not augeas.find_aug_entry_by_name("/files/etc/nsswitch.conf/database", "sudoers"):
         augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[last()+1]/service[1]", "ldap")
     else:
         augeas.aug_set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[1]", "ldap")
