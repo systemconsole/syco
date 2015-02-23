@@ -192,6 +192,8 @@ def _install_nrpe_plugins_dependencies():
 
         x("service hp-health start")
 
+    # Dependency for check_ulimit
+    x("yum install -y lsof")
 
     # Kernel wont parse anything but read-only in sudoers. So chmod it.
     x("chmod 0440 /etc/sudoers.d/nrpe")
