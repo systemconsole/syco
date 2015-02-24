@@ -69,7 +69,7 @@ class Augeas:
             for to_remove in reversed(all_results[1:]):
                 self.remove(to_remove)
 
-    def find_entry_by_name(self, search_path):
+    def find_entry(self, search_path):
         """
 
         :param search_path: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many

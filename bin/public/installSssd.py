@@ -208,7 +208,7 @@ def configure_sssd(augeas):
 def configure_sudo(augeas):
 
     #The database sudoers node doesn't appear to be insertable with a one liner so we have to echo it in
-    if not augeas.find_aug_entry_by_name("/files/etc/nsswitch.conf/database", "sudoers"):
+    if not augeas.find_entry("/files/etc/nsswitch.conf/database[. = 'sudoers']"):
         x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
     else:
         augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "ldap")
