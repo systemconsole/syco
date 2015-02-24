@@ -169,7 +169,7 @@ def configure_sssd(augeas):
 
     # Only users with this employeeType are allowed to login to this computer.
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/access_provider", "ldap")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default'}]/ldap_access_filter",
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_access_filter",
                         "(employeeType=Sysop)")
 
     # Login to ldap with a specified user.
