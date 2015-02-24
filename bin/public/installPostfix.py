@@ -123,7 +123,7 @@ def install_mail_client(args):
 
   '''
 
-  init_properties()
+  init_properties = PostFixProperties()
 
   if config.host(net.get_hostname()).has_command_re("install-postfix-server"):
     app.print_verbose(
