@@ -153,37 +153,41 @@ def configure_sssd(augeas):
     # cached log-ins (in days). This value is measured from the last successful
     # online log-in. If not specified, defaults to 0 (no limit).
     # We want to cache credentials even though noone has logged in.
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{pam}]/offline_credentials_expiration", "0")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'pam']/offline_credentials_expiration", "0")
 
     # Enumeration means that the entire set of available users and groups on the
     # remote source is cached on the local machine. When enumeration is disabled,
     # users and groups are only cached as they are requested.
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/enumerate", "true")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/enumerate", "true")
 
     # Configure client certificate auth.
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_cert", "/etc/openldap/cacerts/client.pem")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_key", "/etc/openldap/cacerts/client.pem")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_tls_reqcert", "demand")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_tls_cert",
+                        "/etc/openldap/cacerts/client.pem")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_tls_key",
+                        "/etc/openldap/cacerts/client.pem")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_tls_reqcert", "demand")
 
     # Only users with this employeeType are allowed to login to this computer.
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/access_provider", "ldap")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_access_filter", "(employeeType=Sysop)")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/access_provider", "ldap")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default'}]/ldap_access_filter",
+                        "(employeeType=Sysop)")
 
     # Login to ldap with a specified user.
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_bind_dn",
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_default_bind_dn",
                             "cn=sssd," + config.general.get_ldap_dn())
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok_type", "password")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_default_authtok",
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_default_authtok_type", "password")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_default_authtok",
                             app.get_ldap_sssd_password())
 
     #Enable caching of sudo rules
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/sudo_provider", "ldap")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_full_refresh_interval", "86400")
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{domain/default}]/ldap_sudo_smart_refresh_interval", "3600")
-
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/sudo_provider", "ldap")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_full_refresh_interval",
+                        "86400")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_smart_refresh_interval",
+                        "3600")
 
     #sssd section settings
-    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[{sssd}]/services", "nss,pam,sudo")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'sssd']/services", "nss,pam,sudo")
 
     # Need to change the modified date before restarting, to tell sssd to reload
     # the config file.
@@ -207,9 +211,9 @@ def configure_sudo(augeas):
     if not augeas.find_aug_entry_by_name("/files/etc/nsswitch.conf/database", "sudoers"):
         x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
     else:
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[1]", "ldap")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[2]", "files")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[{sudoers}]/service[3]", "sss")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "ldap")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "files")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[3]", "sss")
 
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")

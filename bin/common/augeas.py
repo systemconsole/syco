@@ -41,7 +41,7 @@ class Augeas:
 
         return result
 
-    def set_enhanced(self, enhanced_path, value, duplicate_policy=DUPLICATE_POLICY_REMOVE_DUPLICATES):
+    def set_enhanced(self, path, value, duplicate_policy=DUPLICATE_POLICY_REMOVE_DUPLICATES):
         """
         Wraps around aug_set adding the following features:
 
@@ -54,13 +54,11 @@ class Augeas:
         /files/etc/sssd/sssd.conf/target[{sssd}]/services
         """
 
-        resolved_path = self._resolve_enhanced_path(enhanced_path)
-
         #Check for duplicates
-        all_results = self.find_entries(resolved_path)
+        all_results = self.find_entries(path)
         if len(all_results) <= 1:
             #No duplicates, just do a normal set
-            self.set(resolved_path, value)
+            self.set(path, value)
         elif duplicate_policy == DUPLICATE_POLICY_CHANGE_FIRST:
             self.set(all_results[0], value)
         elif duplicate_policy == DUPLICATE_POLICY_CHANGE_LAST:
@@ -71,22 +69,21 @@ class Augeas:
             for to_remove in reversed(all_results[1:]):
                 self.remove(to_remove)
 
-    def find_entry_by_name(self, search_path, name):
+    def find_entry_by_name(self, search_path):
         """
 
         :param search_path: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
                            numbered database entries
-        :param name:       the name of the subentry to return the path for
         :return:           the augeas path to the found entry
         """
-        results = self.find_entries(search_path, name)
+        results = self.find_entries(search_path)
 
         if len(results) > 0:
             return results[0]
 
         return None
 
-    def find_entries(self, search_path, name=None):
+    def find_entries(self, search_path):
         """
 
         :param searchPath: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
@@ -104,28 +101,10 @@ class Augeas:
             if line.strip() == "":
                 #Ignore empty lines
                 continue
-            split_line = line.split("=", 1)
-            value = split_line[1].strip()
-            if name is None or value == name:
-                result.append(split_line[0].strip())
+
+            result.append(line.split("=", 1)[0].strip())
 
         return result
 
     def _execute(self, cmd):
         return self.execute_function(cmd)
-
-    def _resolve_enhanced_path(self, enhanced_path):
-        remainder = enhanced_path
-        resolved_path = ""
-        while "[{" in remainder:
-            first = remainder.split("[{", 1)
-            search_path = resolved_path + first[0]
-            second = first[1].split("}]", 1)
-            value = second[0]
-            remainder = second[1]
-            resolved_path = self.find_entry_by_name(search_path, value)
-
-        if remainder != "":
-            resolved_path += remainder
-
-        return resolved_path
