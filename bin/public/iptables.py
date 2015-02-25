@@ -728,10 +728,9 @@ def add_nrpe_chain():
     iptables("-A syco_input  -p ALL -j nrpe_input")
 
     monitor_listen_port = "5666"
-    monitor_server_hostname = config.general.get_monitor_server_hostname()
     monitor_server_ip = config.general.get_monitor_server_ip()
 
-    app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_hostname))
+    app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_ip))
     iptables("-A nrpe_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
 
 
