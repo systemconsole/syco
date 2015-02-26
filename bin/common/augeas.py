@@ -16,6 +16,12 @@ class Augeas:
         self.execute_function = execute_function
 
     def remove(self, path):
+
+        entries = self.find_entries(path)
+        if len(entries) == 0:
+            print "Could not find node: %s, cancelling rm action" % path
+            return None
+
         return self._execute("augtool rm \"%s\"" % path)
 
     def set(self, path, value):
@@ -92,7 +98,7 @@ class Augeas:
                             returned
         :return:           list of augeas paths
         """
-        lines = self._execute("augtool match %s" % search_path).split("\n")
+        lines = self._execute("augtool match \"%s\"" % search_path).split("\n")
         result = []
         for line in lines:
             if line.strip() == "(no matches)":

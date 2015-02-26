@@ -28,6 +28,7 @@ import smtplib
 
 from general import set_config_property, set_config_property2, x
 from net import get_public_ip, get_hostname
+from augeas import Augeas
 import app
 import config
 import general
@@ -37,16 +38,20 @@ import iptables
 import net
 import scopen
 import version
+import sys
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
+
 
 class PostFixProperties():
     server_front_ip = None
     server_back_ip = None
     server_network_front = None
     server_network_back = None
+    virtual_alias_domains = None
+    virtual_aliases = {}
 
     def __init__(self):
         server_front_ip = config.host(net.get_hostname()).get_front_ip()
@@ -57,6 +62,16 @@ class PostFixProperties():
 
         server_network_back = net.get_network_cidr(server_back_ip,
             config.general.get_back_netmask())
+
+        self.virtual_alias_domains = config.general.get_option("mailrelay.virtual_alias_domains", "")
+
+        for alias_row in config.general.get_option("mailrelay.virtual_alias", "").split(";"):
+            split_row = alias_row.split(" ", 1)
+            if len(split_row != 2):
+                app.print_error("Expected mailrelay.virtual_alias to be two words seperated by space, several entries"
+                                "separated by semicolon")
+                sys.exit(1)
+            self.virtual_aliases[split_row[0]] = split_row[1]
 
 def build_commands(commands):
   commands.add("install-postfix-server", install_mail_server, help="Install postfix/mail-relay server on the current server.")
@@ -102,6 +117,21 @@ def install_mail_server(args):
   # Stop warning about IPv6.
   postfix_main_cf.replace("inet_protocols = all", "inet_protocols = ipv4")
 
+  augeas = Augeas(x)
+  #Set virtual_alias_maps and virtual_alias_domains in main.cf
+  augeas.set("/files/etc/postfix/main.cf/virtual_alias_maps", "hash:/etc/postfix/virtual")
+
+  if init_properties.virtual_alias_domains:
+    augeas.set("/files/etc/postfix/main.cf/virtual_alias_domains", init_properties.virtual_alias_domains)
+
+  #Add virtual aliases if they do not already exist
+  for virt_alias_from, virt_alias_to in init_properties.virtual_aliases:
+      existing = augeas.find_entries("/files/etc/postfix/virtual/pattern[. = '%s']" % virt_alias_from)
+      if len(existing) == 0:
+          x("echo \"%s %s\" >> /etc/postfix/virtual" % (virt_alias_from, virt_alias_to))
+
+  if len(init_properties.virtual_aliases) > 0:
+      x("postmap /etc/postfix/virtual")
   # Install a simple mail CLI-tool
   install_mailx()
 
