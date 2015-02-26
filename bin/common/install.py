@@ -101,6 +101,15 @@ def _yum_protect_base():
 def package(name):
   _package(name, "yum -y install " + name)
 
+def packages(package_names):
+    """
+    Yum install packages
+
+    package_names - space separated list of packages to install
+    """
+    for name in package_names.split():
+        package(name)
+
 
 def rpm(name, url):
   _package(name, "rpm -Uhv " + url)
