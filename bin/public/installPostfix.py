@@ -233,7 +233,7 @@ def install_mailx():
   install.package("mailx")
 
 
-def uninstall_mail_relay():
+def uninstall_mail_relay(args):
   '''
   Uninstalls postfix and mailx.
 
