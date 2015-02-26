@@ -66,7 +66,7 @@ JDK_VERSION = "jdk1.8.0_25"
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
 MYSQL_FILE_NAME="mysql-connector-java-5.1.34"
-MYSQL_CONNECTOR_REPO_URL    = "http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
+MYSQL_CONNECTOR_REPO_URL="http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
 
 
 # Google Guice
