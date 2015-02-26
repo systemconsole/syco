@@ -79,7 +79,7 @@ class PostFixProperties():
 
         self.virtual_alias_domains = config.general.get_option("mailrelay.virtual_alias_domains", "")
 
-        for alias_row in config.general.get_option("mailrelay.virtual_alias", "").split(";"):
+        for alias_row in config.general.get_option("mailrelay.virtual_aliases", "").split(";"):
             if len(alias_row.strip()) == 0:
                 #Don't process empty rows
                 break
@@ -146,10 +146,12 @@ def install_mail_server(args):
     augeas.set("/files/etc/postfix/main.cf/virtual_alias_domains", init_properties.virtual_alias_domains)
 
   #Add virtual aliases if they do not already exist
-  for virt_alias_from, virt_alias_to in init_properties.virtual_aliases:
+  for virt_alias_from, virt_alias_to in init_properties.virtual_aliases.iteritems():
       existing = augeas.find_entries("/files/etc/postfix/virtual/pattern[. = '%s']" % virt_alias_from)
       if len(existing) == 0:
           x("echo \"%s %s\" >> /etc/postfix/virtual" % (virt_alias_from, virt_alias_to))
+      else:
+          augeas.set_enhanced("/files/etc/postfix/virtual/pattern[. = '%s']" % virt_alias_from, virt_alias_to)
 
   if len(init_properties.virtual_aliases) > 0:
       x("postmap /etc/postfix/virtual")
@@ -163,7 +165,9 @@ def install_mail_server(args):
   x("service postfix restart")
 
   # Send test mail to the syco admin
-  send_test_mail((None, config.general.get_admin_email()))
+  # and to any virtual alias emails
+  send_test_mail((None, config.general.get_admin_email()),
+                 init_properties.virtual_aliases.keys())
 
 
 def install_mail_client(args):
@@ -234,7 +238,6 @@ def uninstall_mail_relay():
   Uninstalls postfix and mailx.
 
   '''
-  init_properties()
   app.print_verbose("Removing mail-relay chain")
 
   # Remove package and rpmsave of cfg
@@ -246,7 +249,7 @@ def uninstall_mail_relay():
   iptables.save()
 
 
-def send_test_mail(args):
+def send_test_mail(args, additional_emails_to_test=[]):
   '''
   Sends a test-email either to admin email or argv email if present using mailx.
 
@@ -258,4 +261,9 @@ def send_test_mail(args):
   except IndexError:
     email = config.general.get_admin_email()
 
-  x('echo "" | mail -s "Test email from {0}" {1}'.format(get_hostname(), email))
+  x('echo "" | mail -s "Test email from {0}" {1}. Installation complete!'.format(get_hostname(), email))
+
+  for email in additional_emails_to_test:
+    app.print_verbose("Send additional test mail to: %s" % email)
+    x('echo "" | mail -s "Test email to {0}" {0}.'.format(email))
+
