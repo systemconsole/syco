@@ -46,30 +46,47 @@ SCRIPT_VERSION = 1
 
 
 class PostFixProperties():
-    server_front_ip = None
-    server_back_ip = None
-    server_network_front = None
-    server_network_back = None
+    server_ips = []
+    server_networks = []
     virtual_alias_domains = None
     virtual_aliases = {}
 
     def __init__(self):
-        server_front_ip = config.host(net.get_hostname()).get_front_ip()
-        server_back_ip = config.host(net.get_hostname()).get_back_ip()
 
-        server_network_front = net.get_network_cidr(server_front_ip,
-            config.general.get_front_netmask())
+        netmasks = {}
 
-        server_network_back = net.get_network_cidr(server_back_ip,
-            config.general.get_back_netmask())
+        #Add localhost IP/netmask
+        local_ip = "127.0.0.1"
+        self.server_ips.append(local_ip)
+        netmasks[local_ip] = "255.0.0.0"
+
+        #Add IPs for front/back net if they exist.
+        front_ip = config.host(net.get_hostname()).get_front_ip()
+        if front_ip:
+            self.server_ips.append(front_ip)
+            netmasks[front_ip] = config.general.get_front_netmask()
+        back_ip = config.host(net.get_hostname()).get_back_ip()
+        if config.general.is_back_enabled() and back_ip:
+            self.server_ips.append(back_ip)
+            netmasks[back_ip] = config.general.get_back_netmask()
+
+        if len(self.server_ips) < 2:
+            app.print_error("Didn't find any valid IP addresses from front or back net. Exiting")
+            sys.exit(1)
+
+        for ip in self.server_ips:
+            self.server_networks.append(net.get_network_cidr(ip, netmasks[ip]))
 
         self.virtual_alias_domains = config.general.get_option("mailrelay.virtual_alias_domains", "")
 
         for alias_row in config.general.get_option("mailrelay.virtual_alias", "").split(";"):
+            if len(alias_row.strip()) == 0:
+                #Don't process empty rows
+                break
             split_row = alias_row.split(" ", 1)
-            if len(split_row != 2):
-                app.print_error("Expected mailrelay.virtual_alias to be two words seperated by space, several entries"
-                                "separated by semicolon")
+            if len(split_row) != 2:
+                app.print_error("Expected mailrelay.virtual_alias to be two words separated by space, several entries "
+                                "separated by semicolon. Found \"%s\"" % alias_row)
                 sys.exit(1)
             self.virtual_aliases[split_row[0]] = split_row[1]
 
@@ -94,7 +111,10 @@ def install_mail_server(args):
   init_properties = PostFixProperties()
 
   # Install required packages
-  install.package("postfix")
+  install.package("postfix augeas")
+
+  #Initialize augeas
+  augeas = Augeas(x)
 
   # Set config file parameters
   #
@@ -106,9 +126,11 @@ def install_mail_server(args):
   postfix_main_cf.replace("#mydomain = domain.tld", "mydomain = {0}".format(config.general.get_resolv_domain())) # syco.com
   postfix_main_cf.replace("#myorigin = $mydomain", "myorigin = $myhostname")
 
-  # Accept email from frontnet and backnet
-  postfix_main_cf.replace("inet_interfaces = localhost", "inet_interfaces = 127.0.0.1,{0},{1}".format(init_properties.server_front_ip,init_properties.server_back_ip))
-  postfix_main_cf.replace("#mynetworks = 168.100.189.0/28, 127.0.0.0/8", "mynetworks = {0}, {1}, 127.0.0.0/8".format(init_properties.server_network_front,init_properties.server_network_back))
+  # Accept email from all IP addresses for this server
+  augeas.set_enhanced("/files/etc/postfix/main.cf/inet_interfaces", ",".join(init_properties.server_ips))
+
+  #Allow networks
+  augeas.set_enhanced("/files/etc/postfix/main.cf/mynetworks", ",".join(init_properties.server_networks))
 
   # Do not relay anywhere special, i.e straight to internet.
   postfix_main_cf.replace("#relay_domains = $mydestination", "relay_domains =")
@@ -117,7 +139,6 @@ def install_mail_server(args):
   # Stop warning about IPv6.
   postfix_main_cf.replace("inet_protocols = all", "inet_protocols = ipv4")
 
-  augeas = Augeas(x)
   #Set virtual_alias_maps and virtual_alias_domains in main.cf
   augeas.set("/files/etc/postfix/main.cf/virtual_alias_maps", "hash:/etc/postfix/virtual")
 
