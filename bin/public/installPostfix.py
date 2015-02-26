@@ -111,7 +111,7 @@ def install_mail_server(args):
   init_properties = PostFixProperties()
 
   # Install required packages
-  install.packages("postfix augeas")
+  x("yum install -y postfix augeas")
 
   #Initialize augeas
   augeas = Augeas(x)
@@ -230,7 +230,7 @@ def install_mailx():
   Installs mailx for classic "mail -s "subject" destemail" from terminal.
 
   '''
-  install.package("mailx")
+  x("yum install -y mailx")
 
 
 def uninstall_mail_relay(args):
@@ -261,7 +261,7 @@ def send_test_mail(args, additional_emails_to_test=[]):
   except IndexError:
     email = config.general.get_admin_email()
 
-  x('echo "" | mail -s "Test email from {0}" {1}. Installation complete!'.format(get_hostname(), email))
+  x('echo "" | mail -s "Test email from {0}. Installation complete!" {1}'.format(get_hostname(), email))
 
   for email in additional_emails_to_test:
     app.print_verbose("Send additional test mail to: %s" % email)
