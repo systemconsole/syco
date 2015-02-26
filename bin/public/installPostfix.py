@@ -42,7 +42,7 @@ import sys
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 
 
 class PostFixProperties():
@@ -111,7 +111,7 @@ def install_mail_server(args):
   init_properties = PostFixProperties()
 
   # Install required packages
-  install.package("postfix augeas")
+  install.packages("postfix augeas")
 
   #Initialize augeas
   augeas = Augeas(x)
