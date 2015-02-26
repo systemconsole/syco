@@ -151,7 +151,8 @@ def install_mail_server(args):
       if len(existing) == 0:
           x("echo \"%s %s\" >> /etc/postfix/virtual" % (virt_alias_from, virt_alias_to))
       else:
-          augeas.set_enhanced("/files/etc/postfix/virtual/pattern[. = '%s']" % virt_alias_from, virt_alias_to)
+          augeas.set_enhanced("/files/etc/postfix/virtual/pattern[. = '%s']/destination" % virt_alias_from,
+                              virt_alias_to)
 
   if len(init_properties.virtual_aliases) > 0:
       x("postmap /etc/postfix/virtual")
