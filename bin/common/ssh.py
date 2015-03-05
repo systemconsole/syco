@@ -68,7 +68,7 @@ class Ssh:
     key_is_installed = False
 
     # Configuration of the SSH command.
-    ssh_options = "-o StrictHostKeychecking=no -o BatchMode=yes -o PasswordAuthentication=no -o GSSAPIAuthentication=no -o PermitRootLogin=no"
+    ssh_options = "-o StrictHostKeychecking=no -o BatchMode=yes -o PasswordAuthentication=no -o GSSAPIAuthentication=no"
 
     def __init__(self, server, password, mysql_password=None):
         '''
