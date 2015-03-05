@@ -51,7 +51,7 @@ def print_environments():
 def get_environments():
     environments = []
     for file in os.listdir(SYCO_PLUGIN_PATH):
-        foo = re.search('(.*)\.keepalived\.cfg', file)
+        foo = re.search('(.*)\.keepalived\.conf', file)
         if foo:
             environments.append(foo.group(1))
     return environments
