@@ -34,6 +34,9 @@ import re
 script_version = 1
 
 SYCO_PLUGIN_PATH = None
+KA_CONF_DIR = "/etc/keepalived/"
+ACCEPTED_KA_ENV = None
+ka_env = None
 
 def print_killmessage():
     print "Please specify environment"
@@ -51,13 +54,10 @@ def print_environments():
 def get_environments():
     environments = []
     for file in os.listdir(SYCO_PLUGIN_PATH):
-        foo = re.search('(.*)\.keepalived\.cfg', file)
+        foo = re.search('(.*)\.keepalived\.conf', file)
         if foo:
             environments.append(foo.group(1))
     return environments
-
-KA_CONF_DIR = "/etc/keepalived/"
-ACCEPTED_KA_ENV = None
 
 def build_commands(commands):
     '''
@@ -73,7 +73,7 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_keepalived(args):
-    global SYCO_PLUGIN_PATH, ACCEPTED_KA_ENV
+    global SYCO_PLUGIN_PATH, ACCEPTED_KA_ENV, ka_env
 
     SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/keepalived/").next()
     ACCEPTED_KA_ENV = get_environments()
@@ -81,9 +81,9 @@ def install_keepalived(args):
     if len(sys.argv) != 3:
         print_killmessage()
     else:
-        KA_ENV = sys.argv[2]
+        ka_env = sys.argv[2]
 
-    if KA_ENV.lower() not in ACCEPTED_KA_ENV:
+    if ka_env.lower() not in ACCEPTED_KA_ENV:
         print_killmessage()
 
     app.print_verbose("Install Keepalived version: %d" % script_version)
@@ -106,7 +106,7 @@ def _configure_keepalived():
     x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
     x("sysctl -p")
     x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KA_CONF_DIR))
-    x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, HAPROXY_ENV, KA_CONF_DIR))
+    x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, ka_env, KA_CONF_DIR))
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", socket.gethostname().lower())
     _chkconfig("keepalived","on")
