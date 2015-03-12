@@ -92,25 +92,55 @@ class Augeas:
     def find_entries(self, search_path):
         """
 
-        :param searchPath: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
+        :param search_path: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
                            numbered database entries
-        :param name:       the name of the subentry to return the path for, if not set all nodes matching this path are
-                            returned
         :return:           list of augeas paths
         """
-        lines = self._execute("augtool match \"%s\"" % search_path).split("\n")
+
+        lines = self._search(search_path)
+
         result = []
         for line in lines:
+            result.append(line.split("=", 1)[0].strip())
+
+        return result
+
+    def find_values(self, search_path):
+        """
+
+        :param search_path: the augeas path to search for example /files/etc/nsswitch.conf/database where there are many
+                           numbered database entries
+        :return:           list of augeas values matching the search path
+        """
+        lines = self._search(search_path)
+
+        result = []
+        for line in lines:
+            print line
+            result.append(line.split("=", 1)[1].strip())
+
+        return result
+
+    def _execute(self, cmd):
+        return self.execute_function(cmd)
+
+    def _search(self, path):
+
+        lines = self._execute("augtool match \"%s\"" % path).split("\n")
+        result = []
+
+        for line in lines:
+            print line
             if line.strip() == "(no matches)":
                 #No matches found, return the empty list
                 return result
             if line.strip() == "":
                 #Ignore empty lines
                 continue
+            if "=" not in line:
+                #Ignore any random output that is not augeas output of format <path> = <value>
+                continue
 
-            result.append(line.split("=", 1)[0].strip())
+            result.append(line)
 
         return result
-
-    def _execute(self, cmd):
-        return self.execute_function(cmd)
