@@ -224,7 +224,8 @@ def configure_sudo(augeas):
     augeas.set_enhanced("/files/etc/ldap.conf/ssl",  "on")
     augeas.set_enhanced("/files/etc/ldap.conf/tls_cacertdir", "/etc/openldap/cacerts")
     augeas.set_enhanced("/files/etc/ldap.conf/tls_cert", "/etc/openldap/cacerts/client.pem")
-    augeas.set_enhanced("/files/etc/ldap.conf/sudoers_base", "/etc/openldap/cacerts/client.pem")
+    augeas.set_enhanced("/files/etc/ldap.conf/tls_key", "/etc/openldap/cacerts/client.pem")
+    augeas.set_enhanced("/files/etc/ldap.conf/sudoers_base", "ou=SUDOers,dc=fareoffice,dc=com")
     augeas.set_enhanced("/files/etc/ldap.conf/binddn", "cn=sssd,%s" % config.general.get_ldap_dn())
     augeas.set_enhanced("/files/etc/ldap.conf/bindpw", app.get_ldap_sssd_password())
 
