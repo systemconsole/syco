@@ -52,7 +52,7 @@ def _get_external_repo_files(repopath = "/etc/yum.repos.d/"):
     for repofilename in os.listdir("/etc/yum.repos.d/"):
         # Exclude things that do not end with ".repo" such as mirror lists. 
         # Exclude the Centos repos (base, updates etc) which are not external. 
-        if re.match(r'.*repo$', repofilename) and not re.match(r'CentOS', repofilename):
+        if re.match(r'.*repo$', repofilename) and not re.match(r'CentOS', repofilename) and not re.match(r'epel', repofilename):
             yield "{0}{1}".format(repopath , repofilename)
            
 
