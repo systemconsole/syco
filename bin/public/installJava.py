@@ -44,6 +44,10 @@ def install_java(args):
 	
 	'''
 
+	if (len(args) != 3):
+		raise Exception("syco install-mysql b13 8u31 jdk_extension, jdk_version http://www.oracle.com/technetwork/java/javase/downloads/index.html")
+	JDK_VERSION = args[2]
+	JDK_EXTENSION = args[1]
 	x('yum install wget -y')
 	os.system('wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/'+JDK_VERSION+'-'+JDK_EXTENSION+'/jdk-'+JDK_VERSION+'-linux-x64.rpm')
 	x('yum localinstall jdk-'+JDK_VERSION+'-linux-x64.rpm -y')
