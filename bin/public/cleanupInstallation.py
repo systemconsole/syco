@@ -21,16 +21,17 @@ import version
 
 SCRIPT_VERSION = 1
 
+
 def build_commands(commands):
-  commands.add("cleanup-installation", cleanup_installation,  help="Hardening server")
+    commands.add("cleanup-installation", cleanup_installation,  help="Hardening server")
   
 
 def cleanup_installation(args):
-    '''
-    Clean up a host installation. Disabe external repos (so user needds to explicitly update external packages).
-    Harden SSH. Remove temp files. 
+    """
+    Clean up a host installation. Disable external repos (so user needs to explicitly update external packages).
+    Harden SSH. Remove temp files.
 
-    '''
+    """
     # Should only be run once!
     app.print_verbose("Cleanup version: %d" % SCRIPT_VERSION)
     version_obj = version.Version("cleanup", SCRIPT_VERSION)
