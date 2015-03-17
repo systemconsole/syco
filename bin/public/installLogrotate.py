@@ -18,6 +18,7 @@ from general import x
 from scopen import scOpen
 import app
 import version
+import constant
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -43,5 +44,7 @@ def install_logrotate(args):
 
     sc = scOpen("/etc/logrotate.conf")
     sc.replace('#compress', 'compress')
+
+    x("cp --remove-destination {0}syco-private/var/logrotate/* /etc/logrotate.d/".format(constant.SYCO_USR_PATH))
 
     version_obj.mark_executed()
