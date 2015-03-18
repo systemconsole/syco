@@ -115,7 +115,7 @@ def _install_nrpe_plugins():
     nrpe_config.replace("($LDAPURL)", config.general.get_ldap_hostname())
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
-    x("chmod -R 750 /usr/lib64/nagios/plugins/")
+    x("chmod -R 550 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl/iptables
