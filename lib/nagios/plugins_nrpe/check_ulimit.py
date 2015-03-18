@@ -45,7 +45,7 @@ crit = int(sys.argv[3])
 limit = int(subprocess.Popen("sudo -u {0} cat /proc/self/limits | grep 'open files' | awk '{ print $4 }'".format(username), shell=True, stdout=subprocess.PIPE).stdout.read().strip())
 current = int(subprocess.Popen("sudo lsof | grep ' {0} ' | awk '{print $NF}' | sort | wc -l".format(username), shell=True, stdout=subprocess.PIPE).stdout.read().strip())
 
-percent =  int(round(((float(current) / float(limit)) * 100),0))
+percent = int(round(((float(current) / float(limit)) * 100),0))
 
 if percent >= warn:
     if percent >= crit:
