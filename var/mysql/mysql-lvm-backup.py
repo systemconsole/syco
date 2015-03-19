@@ -18,6 +18,8 @@ line (ps aux) or in this script.
 user=backup
 password="<password>"
 
+Run this or similiar on the mysql server to grant backup user permissions to the database.
+
 grant RELOAD,SUPER,REPLICATION CLIENT on *.* TO 'backup'@'localhost' IDENTIFIED BY '<password>';
 
 RSNAPSHOT
