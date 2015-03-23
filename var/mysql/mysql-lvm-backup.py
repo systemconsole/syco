@@ -13,10 +13,16 @@ This file needs to be created, to do it possible for the mysql client to
 login to the mysql database without exposing the mysql password on command
 line (ps aux) or in this script.
 
+NOTE: The environment variable $HOME must point to /root or the folder that contains
+      my.cnf for mysql client to be able to find the file. HOME for cron might be
+      something different.
+
 #/root/.my.cnf
 [client]
 user=backup
 password="<password>"
+
+Run this or similiar on the mysql server to grant backup user permissions to the database.
 
 grant RELOAD,SUPER,REPLICATION CLIENT on *.* TO 'backup'@'localhost' IDENTIFIED BY '<password>';
 
