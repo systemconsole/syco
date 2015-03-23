@@ -48,7 +48,7 @@ import iptables
 SCRIPT_VERSION = 1
 
 MODSEC_INSTALL_FILE = "modsecurity-2.8.0"
-MODSEC_REPO_URL = "https://www.modsecurity.org/tarball/2.8.0/" + MODSEC_INSTALL_FILE + ".tar.gz"
+MODSEC_REPO_URL = "http://packages.fareoffice.com/modsecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
 MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
 MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".sha256"
@@ -188,6 +188,11 @@ def _install_mod_security():
 
   # Install mode-sec config files.
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
+  # Setup logrotate for modsec_audit.log
+  x("cp " + app.SYCO_PATH + "var/httpd/logrotate.d/modsec /etc/logrotate.d/")
+  x("chown root:root /etc/logrotate.d/modsec")
+  x("chmod 644 /etc/logrotate.d/modsec")
+  x("chcon system_u:object_r:etc_t:s0 /etc/logrotate.d/modsec")
 
 def _update_modsec_rules():
   general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".zip")

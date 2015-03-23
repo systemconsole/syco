@@ -36,7 +36,7 @@ from net import get_hostname
 from scopen import scOpen
 import app
 import general
-import installGlassfish31
+import installGlassfish4
 import net
 import version
 
@@ -653,7 +653,7 @@ def del_glassfish_chain():
 def add_glassfish_chain():
     del_glassfish_chain()
 
-    if (not os.path.exists("/etc/init.d/" + installGlassfish31.GLASSFISH_VERSION)):
+    if (not os.path.exists("/etc/init.d/" + installGlassfish4.GLASSFISH_VERSION)):
         return
 
     app.print_verbose("Add iptables chain for glassfish")
