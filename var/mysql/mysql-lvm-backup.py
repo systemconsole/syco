@@ -49,7 +49,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 # Folder where the snapshot will be mounted.
-backupMountPath="/mnt/mysqlbackup"
+backupMountPath = "/mnt/mysqlbackup"
 
 # Volgroup where the lvm Logical Volume are stored. (find with lvdisplay)
 # ie. VolGroup00 in /dev/VolGroup00/var
@@ -77,29 +77,26 @@ RESET = "\033[0;0m"
 OPTIONS = None
 ARGS = None
 
-def main():
-    '''
-    Starts the script.
 
-    '''
+def main():
+    """Starts the script."""
     check_requirements()
     set_global_options_and_args()
 
     # Handle the dynamic arguments from the command line.
-    commands = {'snapshot' : snapshot, 'clean': clean}
+    commands = {'snapshot': snapshot, 'clean': clean}
     command = ARGS[0].lower()
     if command in commands:
         commands[command]()
 
+
 def check_requirements():
-    if (not os.path.exists('/root/.my.cnf')):
+    if not os.path.exists('/root/.my.cnf'):
         raise Exception("Requires an /root/.my.cnf")
 
-def set_global_options_and_args():
-    '''
-    Set cmd line arguments in global vars OPTIONS and ARGS.
 
-    '''
+def set_global_options_and_args():
+    """Set cmd line arguments in global vars OPTIONS and ARGS."""
     global OPTIONS, ARGS
     parser = OptionParser(usage="usage: %prog {snapshot|clean}")
     (OPTIONS, ARGS) = parser.parse_args()
@@ -107,11 +104,9 @@ def set_global_options_and_args():
     if len(ARGS) != 1:
         parser.error("incorrect number of arguments")
 
-def snapshot():
-    '''
-    Flush mysql tables, do the snapshot and mount the snapshot.
 
-    '''
+def snapshot():
+    """Flush mysql tables, do the snapshot and mount the snapshot."""
     clean()
     print "Do snapshot"
     x("LANG=en date > /var/lib/mysql/snap_time")
@@ -128,34 +123,32 @@ EOF""" % (snapshotSize, lvName, vgName, lvName))
     x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
     x("chmod 777 -R " + backupMountPath)
 
-def clean():
-    '''
-    Remove mounts and snapshots.
 
-    '''
+def clean():
+    """Remove mounts and snapshots."""
     print "Remove last snapshot."
 
-    if (os.path.ismount(backupMountPath)):
+    if os.path.ismount(backupMountPath):
         x("umount %s" % backupMountPath)
 
-    backupPath = "/dev/%s/%sbackup" % (vgName, lvName)
-    if (os.path.exists(backupPath)):
-        x("lvremove -f %s" % backupPath)
+    path = "/dev/%s/%sbackup" % (vgName, lvName)
+    if os.path.exists(path):
+        x("lvremove -f %s" % path)
+
 
 def x(cmd):
-    '''
-    Execute the shell command CMD.
-
-    '''
+    """Execute the shell command CMD."""
     print(BOLD + "Command: " + RESET + cmd)
 
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     (stdout, stderr) = p.communicate()
-    (stdout, stderr, p.pid)
-    if (stdout):
+    if stdout:
         print(stdout)
-    if (stderr):
+    if stderr:
         print(stderr)
+
 
 if __name__ == "__main__":
     main()
