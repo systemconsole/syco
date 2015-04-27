@@ -30,24 +30,41 @@ import subprocess
 import sys
 
 if len(sys.argv) != 4:
-    sys.exit('Usage: {0} [username] [warn_percent] [crit_percent] :: Example: {0} glassfish 60 80'.format(sys.argv[0],sys.argv[0]))
+    print('Usage: {0} [username] [warn_percent] [crit_percent] :: Example: {0} glassfish 60 80'.format(
+        sys.argv[0], sys.argv[0]))
+    sys.exit(2)
+
+if os.geteuid() != 0:
+    print('Must be run as root or using sudo!')
+    sys.exit(2)
 
 username = sys.argv[1]
 warn = int(sys.argv[2])
 crit = int(sys.argv[3])
 
-limit =  int(subprocess.Popen("sudo -u {0} cat /proc/self/limits | grep 'open files' | awk '{ print $4 }'".format(username), shell=True, stdout=subprocess.PIPE).stdout.read().strip())
-current = int(subprocess.Popen("sudo lsof | grep ' {0} ' | awk '{print $NF}' | sort | wc -l".format(username), shell=True, stdout=subprocess.PIPE).stdout.read().strip())
+limit = int(subprocess.Popen("sudo -u {0} cat /proc/self/limits | grep 'open files' | awk '{ print $4 }'".format(
+    username), shell=True, stdout=subprocess.PIPE).stdout.read().strip())
+current = int(subprocess.Popen("sudo lsof | grep ' {0} ' | awk '{print $NF}' | sort | wc -l".format(username),
+                               shell=True, stdout=subprocess.PIPE).stdout.read().strip())
 
-percent =  int(round(((float(current) / float(limit)) * 100),0))
+percent = int(round(((float(current) / float(limit)) * 100),0))
 
 if percent >= warn:
     if percent >= crit:
-        print("ULIMIT CRITICAL: Openfiles for {0} is {1} ({2}%) of {3} allowed | 'Openfiles'={1}".format(username,current,percent,limit))
+        print("ULIMIT CRITICAL: Openfiles for {0} is {1} ({2}%) of {3} allowed | 'Openfiles'={1}".format(username,
+                                                                                                         current,
+                                                                                                         percent,
+                                                                                                         limit))
         sys.exit(2)
     else:
-        print("ULIMIT WARNING: Openfiles for {0} is {1} ({2}%) of {3} allowed | 'Openfiles'={1}".format(username,current,percent,limit))
+        print("ULIMIT WARNING: Openfiles for {0} is {1} ({2}%) of {3} allowed | 'Openfiles'={1}".format(username,
+                                                                                                        current,
+                                                                                                        percent,
+                                                                                                        limit))
         sys.exit(1)
 else:
-    print("ULIMIT OK: Openfiles for {0} is {1} ({2}%) of {3} allowed; | 'Openfiles'={1}".format(username,current,percent,limit))
+    print("ULIMIT OK: Openfiles for {0} is {1} ({2}%) of {3} allowed; | 'Openfiles'={1}".format(username,
+                                                                                                current,
+                                                                                                percent,
+                                                                                                limit))
     sys.exit(0)
