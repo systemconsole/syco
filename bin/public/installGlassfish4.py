@@ -42,7 +42,7 @@ import socket
 SCRIPT_VERSION = 2
 
 # NOTE: Remember to change path in "var/glassfish/glassfish-3.1.1"
-GLASSFISH_VERSION      = "glassfish-4.0"
+GLASSFISH_VERSION      = "glassfish-4.1"
 GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
 GLASSFISH_REPO_URL     = "http://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
 GLASSFISH_INSTALL_PATH = "/usr/local/glassfish4"
@@ -58,15 +58,15 @@ ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 JAVA_TEMP_PATH = GLASSFISH_INSTALL_PATH + "tmp"
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-7u40-linux-x64.tar.gz"
+JDK_INSTALL_FILE = "jdk-8u40-linux-x64.tar.gz"
 JDK_REPO_URL     = "http://packages.fareoffice.com/java/%s" % (JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.7.0_40"
-JDK_VERSION = "jdk1.7.0_40"
+JDK_INSTALL_PATH = "/usr/java/jdk1.8.0_40"
+JDK_VERSION = "jdk1.8.0_40"
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-MYSQL_FILE_NAME="mysql-connector-java-5.1.26"
-MYSQL_CONNECTOR_REPO_URL    = "http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
+MYSQL_FILE_NAME="mysql-connector-java-5.1.34"
+MYSQL_CONNECTOR_REPO_URL="http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
 
 
 # Google Guice
@@ -179,7 +179,7 @@ def _install_jdk():
   if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.download_file(JDK_REPO_URL, user="glassfish")
+      general.download_file(JDK_REPO_URL)
 
       x("chmod u+rx " + JDK_INSTALL_FILE)
 
@@ -210,15 +210,14 @@ def _install_glassfish():
   Installation of the glassfish application server.
 
   '''
-  x("yum install zip -y")
+
   if (not os.access(GLASSFISH_INSTALL_PATH + "/glassfish", os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(GLASSFISH_INSTALL_FILE, os.F_OK)):
-      general.download_file(GLASSFISH_REPO_URL, user="glassfish")
+      general.download_file(GLASSFISH_REPO_URL)
 
     # Set executeion permissions and run the installation.
-    if ".zip" in GLASSFISH_INSTALL_FILE:
-      install.package("unzip")
+      x("yum install unzip -y")
       x("unzip " + GLASSFISH_INSTALL_FILE + " -d /usr/local/")
       x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH)
     else:
@@ -237,30 +236,30 @@ def _setup_glassfish4():
   Setting Glassfish 4 properties
   '''
   asadmin_exec("delete-jvm-options -client")
-  asadmin_exec("delete-jvm-options '-XX\:MaxPermSize=192m'")
   asadmin_exec("delete-jvm-options -Xmx512m")
   
   asadmin_exec("create-jvm-options -server")
   asadmin_exec("create-jvm-options -Xmx6144m")
   asadmin_exec("create-jvm-options -Xms1024m")
-  asadmin_exec("create-jvm-options '-XX\:MaxPermSize=1024m'")
   asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
-  asadmin_exec("create-jvm-options '-XX\:+UseParallelGC'")
-  asadmin_exec("create-jvm-options -Dcom.sun.enterprise.web.connector.grizzly.linger=-1")
+  asadmin_exec("create-jvm-options '-XX\:+AggressiveOpts'")
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
   asadmin_exec("set-log-attributes --target server-config com.sun.enterprise.server.logging.GFFileHandler.formatter=ulf")
   asadmin_exec("set server.admin-service.das-config.autodeploy-enabled=false")
   asadmin_exec("set server.admin-service.das-config.dynamic-reload-enabled=false")
-  asadmin_exec(" --host 127.0.0.1 --port 4848 enable-secure-admin")
-  
+  asadmin_exec("create-system-properties --target server-config com.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true")
+
+  #Change product name to hide server information
+  asadmin_exec("create-jvm-options -Dproduct.name=warpspeed")
+
   #Setting monitors levels
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-connection-pool=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.ejb-container=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.http-service=LOW")
-  asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")
+  #asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")#not available
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jdbc-connection-pool=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jms-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jvm=LOW")
@@ -295,6 +294,10 @@ def _setup_glassfish4():
   #Needs to be tested more together with ulimit settings before implementation.
   #asadmin_exec("set server-config.network-config.transports.transport.tcp.acceptor-threads=4")
 
+  #Remove x-powered by to hide server information
+  asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false")
+  asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false")
+
 
 def _install_mysql_connect():
   '''
@@ -318,6 +321,7 @@ def _install_guice():
   x("cp "+GUICE_NAME+ "/aopalliance* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("cp "+GUICE_NAME+ "/javax.inject* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/*")
+  x("yum remove unzip -y")
 
 
 
@@ -380,3 +384,4 @@ def _set_domain_passwords():
     })
   asadmin_exec("stop-domain ")
   asadmin_exec("start-domain ")
+
