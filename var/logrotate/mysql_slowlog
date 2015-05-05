@@ -1,0 +1,17 @@
+/var/log/mysqld-slow.log
+{
+    rotate 10
+    size 100M
+    compress
+    create 660 mysql mysql
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+    # run if mysqld is running
+    if test -n "`ps acx|grep mysqld`"; then
+    /usr/bin/mysqladmin flush-logs
+    fi
+    endscript
+    olddir /var/log/archive
+}
