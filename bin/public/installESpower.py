@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 '''
-Install/update Elastic Passer.
+Install DHCP Server
 
-Recives logs and que logs and then pass to elasticsearch.
+This dhcp server is mainly used to get KVM guest installation to work with
+kickstarts.
+
+http://www.yolinux.com/TUTORIALS/DHCP-Server.html
+http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch08_:_Configuring_the_DHCP_Server
+http://www.howtoforge.com/dhcp_server_linux_debian_sarge
 
 '''
 
@@ -25,18 +30,14 @@ import os
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
-LOG_SOURCE='/opt/syco/usr/syco-private/var/'
-
+CONF_SOURCE='/opt/syco/usr/syco-private/var/'
 
 def build_commands(commands):
-    '''
-    Defines the commands that can be executed through the syco.py shell script.
-
-    '''
-    commands.add("install-espasser", install_espass, help="Install Elasticsearch Passer.(req epel,java)")
+    commands.add("install-espower", install_espower, help="Install power modules for elastcisearch")
+    commands.add("uninstall-espower", uninstall_espower, help="Uninstall the power modules for elastic search")
 
 
-def install_espass(args):
+def install_espower(args):
 	'''
 	Installation of Elastic search passing rule
 	
@@ -48,6 +49,16 @@ def install_espass(args):
 
 
 	print("Go to http://ip-address:15672 for rabbit mq ")
+
+def uninstall_espower(args):
+	x('yum remove rabbitmq-server -y')
+	x('yum remove erlang -y')
+	x('rm -rf /opt/logstash')
+	x('rm -rf /etc/logstash')
+	x('rm -rf /etc/rabbitmq')
+
+
+
 
 def install_rabbit():
 	'''
@@ -85,7 +96,7 @@ def config_logstash():
 	2. syco var defult config
 	''' 
 
-	x('cp -r %slogstash /etc/' %LOG_SOURCE)
+	x('cp -r %slogstash /etc/' %CONF_SOURCE)
 
 
 def config_rabbitmq():
@@ -95,8 +106,8 @@ def config_rabbitmq():
 	1. First from syco-private
 	2. syco var defult config
 	'''
-	x('cp -r %srabbitmq /etc/' %LOG_SOURCE)
+	x('cp -r %srabbitmq /etc/' %CONF_SOURCE)
 	x('/etc/init.d/rabbitmq-server restart')
 	x('iptables -I INPUT 3 -p tcp --dport 5671 -j ACCEPT')
 	x('iptables -I INPUT 3 -p tcp --dport 15672 -j ACCEPT')
-    x('setsebool -P nis_enabled 1')
+	x('setsebool -P nis_enabled 1')
