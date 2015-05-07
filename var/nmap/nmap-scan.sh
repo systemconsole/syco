@@ -11,7 +11,7 @@
 
 NETWORK_NAME="${NMAP_NAME}"
 TARGETS="${NMAP_TARGETS}"
-OPTIONS="-v -T4 -F -sV"
+OPTIONS="-T4 -F -sV"
 DATE=`date +%F`
 
 nmap $OPTIONS $TARGETS -oX /var/lib/nmap/scans/$NETWORK_NAME-$DATE-scan.xml
