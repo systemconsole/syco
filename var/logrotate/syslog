@@ -8,7 +8,7 @@
 {
 	rotate 10
 	size 100M
-    nocompress
+    compress
     notifempty
     missingok
     sharedscripts
