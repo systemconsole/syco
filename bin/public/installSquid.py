@@ -34,29 +34,7 @@ import re
 
 script_version = 1
 
-def print_killmessage():
-    print "Please specify environment"
-    print_environments()
-    print " "
-    print "Usage: syco install-haproxy <environment>"
-    print ""
-    sys.exit(0)
-
-def print_environments():
-    print " Valid environments:"
-    for env in ACCEPTED_SQUID_ENV:
-        print "    - " + env
-
-def get_environments():
-    environments = []
-    for file in os.listdir(SYCO_PLUGIN_PATH):
-        foo = re.search('(.*)\.squid\.cfg', file)
-        if foo:
-            environments.append(foo.group(1))
-    return environments
-
 SQUID_CONF_DIR = "/etc/squid/"
-ACCEPTED_SQUID_ENV = None
 
 def build_commands(commands):
     '''
@@ -74,16 +52,7 @@ def _chkconfig(service,command):
 def install_haproxy(args):
     global SYCO_PLUGIN_PATH, ACCEPTED_SQUID_ENV
 
-    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
-    ACCEPTED_SQUID_ENV = get_environments()
-
-    if len(sys.argv) != 3:
-        print_killmessage()
-    else:
-        SQUID_ENV = sys.argv[2]
-
-    if SQUID_ENV.lower() not in ACCEPTED_SQUID_ENV:
-        print_killmessage()
+    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/squid/").next()
 
     app.print_verbose("Install Squid Caching Proxy version: %d" % script_version)
     version_obj = version.Version("InstallSquid", script_version)
@@ -108,8 +77,12 @@ def _configure_haproxy():
     _service("squid","restart")
 
 def _configure_iptables():
+    '''
+    Accept TCP traffic on 3128 from localnets and allow output to anywhere on port 80 and 443
+
+    '''
     iptables.iptables("-A syco_input -p tcp -m multiport --dports 3128 -j allowed_tcp")
-    iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443,3128 -j allowed_tcp")
+    iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.save()
 
 def get_ip_address(ifname):
@@ -133,7 +106,7 @@ def uninstall_haproxy(args=""):
     x("yum -y remove squid")
     x("rm -rf {0}*".format(SQUID_CONF_DIR))
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 3128 -j allowed_tcp")
-    iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443,3128 -j allowed_tcp")
+    iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.save()
 
 
