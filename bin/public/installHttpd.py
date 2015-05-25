@@ -47,14 +47,14 @@ import iptables
 # once on the same host.
 SCRIPT_VERSION = 1
 
-MODSEC_INSTALL_FILE = "modsecurity-apache_2.7.1"
-MODSEC_REPO_URL = "https://github.com/downloads/SpiderLabs/ModSecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
+MODSEC_INSTALL_FILE = "modsecurity-2.9.0"
+MODSEC_REPO_URL = "http://packages.fareoffice.com/modsecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
-MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.md5"
-MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".md5"
+MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
+MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".sha256"
 
-MODSEC_RULES_FILE = "v2.2.6"
-MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/{0}.tar.gz".format(MODSEC_RULES_FILE)
+MODSEC_RULES_FILE = "master"
+MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/{0}.zip".format(MODSEC_RULES_FILE)
 
 
 def build_commands(commands):
@@ -163,7 +163,7 @@ def _install_mod_security():
     general.download_file(MODSEC_MD5_REPO_URL)
 
     os.chdir(app.INSTALL_DIR)
-    signature = x("md5sum -c " + MODSEC_MD5_FILE)
+    signature = x("sha256sum -c " + MODSEC_MD5_FILE)
     if (MODSEC_INSTALL_FILE + '.tar.gz: OK' not in signature):
       raise Exception("Invalid signature.")
 
@@ -190,14 +190,15 @@ def _install_mod_security():
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
-  general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz")
+  general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".zip")
   os.chdir(app.INSTALL_DIR)
-
+  x("yum -y install unzip")
   x("rm -fR /etc/httpd/modsecurity.d")
   x("mkdir -p /etc/httpd/rules_tmp")
-  x("tar zxvf " + MODSEC_RULES_FILE + ".tar.gz -C /etc/httpd/rules_tmp")
+  x("unzip " + MODSEC_RULES_FILE + ".zip -d /etc/httpd/rules_tmp")
   x("mv /etc/httpd/rules_tmp/*/ /etc/httpd/modsecurity.d")
   x("rm -rf /etc/httpd/rules_tmp")
+  x("yum -y erase unzip")
 
   # Install customized rules.
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")

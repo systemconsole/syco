@@ -16,6 +16,7 @@ __status__ = "Production"
 
 from general import x
 from scopen import scOpen
+import os
 import app
 import version
 
@@ -44,4 +45,34 @@ def install_logrotate(args):
     sc = scOpen("/etc/logrotate.conf")
     sc.replace('#compress', 'compress')
 
+    x("mkdir /var/log/archive")
+    x("cp %s var/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
+
+    httpd_rotate()
+    mysqld_rotate()
+    auditd_rotate()
+
     version_obj.mark_executed()
+
+def httpd_rotate():
+    if (not os.path.exists('/etc/init.d/httpd')):
+       return
+
+    app.print_verbose("Adding httpd logrotate")
+    x("mkdir /var/log/httpd/archive")
+    x("cp %s var/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
+
+def mysqld_rotate():
+    if (not os.path.exists('/etc/init.d/mysqld')):
+       return
+
+    app.print_verbose("Adding mysqld-slow logrotate")
+    x("cp %s var/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
+
+def auditd_rotate():
+    if (not os.path.exists('/etc/init.d/auditd')):
+       return
+
+    app.print_verbose("Adding audit logrotate")
+    x("mkdir /var/log/audit/archive")
+    x("cp %s var/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)

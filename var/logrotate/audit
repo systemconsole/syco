@@ -1,0 +1,12 @@
+/var/log/audit/audit.log.*
+{
+	rotate 10
+	size 100M
+    compress
+    notifempty
+    missingok
+    prerotate
+		bash -c "[[ ! $1 =~ audit.log.1 ]]"
+	endscript
+	olddir /var/log/audit/archive
+}

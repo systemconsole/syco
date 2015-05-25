@@ -34,5 +34,28 @@ __status__ = "Production"
     <regex>Permissions changed from ‘\D\D\D\D\D\D\Dw\D’ to ‘\D+’</regex>
     <description>World-writable File</description>
   </rule>
+
+  <!--
+       Ignore mimecast as they always block with this error message the first time. /Kristofer
+  -->
+  <rule id="100020" level="0">
+    <if_sid>3330</if_sid>
+    <match>Mimecast_SMTP_Error_Codes</match>
+    <description>Ignore mimecast as they always block the first time.</description>
+  </rule>
+
+  <!--
+       Don't alert if "failure" is on seperate hosts. This is needed since even successful
+       ldap logins are logged as failures by pam_unix before pam_ldap is even attempted.
+       Without this fabric logins on parallell hosts generate OSSEC alerts. /Kristofer
+  -->
+  <rule id="5551" level="10" frequency="6" timeframe="180" overwrite="yes">
+    <if_matched_sid>5503</if_matched_sid>
+    <same_source_ip />
+    <same_location />
+    <description>Multiple failed logins in a small period of time on the same host.</description>
+    <group>authentication_failures,</group>
+  </rule>
+
 </group>
 <!-- EOF -->

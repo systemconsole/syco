@@ -36,16 +36,21 @@ import install
 from general import x
 from scopen import scOpen
 import socket
+
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 2
 
 # NOTE: Remember to change path in "var/glassfish/glassfish-3.1.1"
-GLASSFISH_VERSION      = "glassfish-4.0"
+GLASSFISH_VERSION      = "glassfish-4.1"
 GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
 GLASSFISH_REPO_URL     = "http://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
 GLASSFISH_INSTALL_PATH = "/usr/local/glassfish4"
 GLASSFISH_DOMAINS_PATH = GLASSFISH_INSTALL_PATH + "/glassfish/domains/"
+GLASSFISH_USER         = "glassfish"
+
+#Icinga plugins directory
+ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 
 # The directory where JAVA stores temporary files.
 # Default is /tmp, but the partion that dir is stored on is set to "noexec", and
@@ -53,15 +58,15 @@ GLASSFISH_DOMAINS_PATH = GLASSFISH_INSTALL_PATH + "/glassfish/domains/"
 JAVA_TEMP_PATH = GLASSFISH_INSTALL_PATH + "tmp"
 
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-7u40-linux-x64.tar.gz"
+JDK_INSTALL_FILE = "jdk-8u40-linux-x64.tar.gz"
 JDK_REPO_URL     = "http://packages.fareoffice.com/java/%s" % (JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.7.0_40"
-JDK_VERSION = "jdk1.7.0_40"
+JDK_INSTALL_PATH = "/usr/java/jdk1.8.0_40"
+JDK_VERSION = "jdk1.8.0_40"
 
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-MYSQL_FILE_NAME="mysql-connector-java-5.1.26"
-MYSQL_CONNECTOR_REPO_URL    = "http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
+MYSQL_FILE_NAME="mysql-connector-java-5.1.34"
+MYSQL_CONNECTOR_REPO_URL="http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
 
 
 # Google Guice
@@ -89,18 +94,60 @@ def install_glassfish(arg):
   '''
   Install glassfish4
   '''
+  general.create_install_dir()
+
   if False ==_is_glassfish_user_installed():
-    x('adduser glassfish')
+    x("adduser {0}".format(GLASSFISH_USER))
 
   _install_jdk()
   _install_glassfish()
   _setup_glassfish4()
   _install_mysql_connect()
   _install_guice()
+  _install_icinga_ulimit_check(GLASSFISH_USER)
   #
   initialize_passwords()
   _set_domain_passwords()
 
+def _install_icinga_ulimit_check(username):
+  nrpe_sudo_path = "/etc/sudoers.d/nrpe"
+  common_cfg_path = "/etc/nagios/nrpe.d/common.cfg"
+  icinga_script = "check_ulimit.py"
+
+  # Does the checkscript already exist? Otherwise copy it in place.
+  if False == os.path.isfile("{0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)):
+    x("cp {0}lib/nagios/plugins_nrpe/{2} {1}{2}".format(app.SYCO_PATH, ICINGA_PLUGINS_DIR, icinga_script))
+
+  # Set permissions and SELinux rules to the checkscript. Can be runned multiple times without problem.
+  x("chmod 755 {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("chown nrpe:nrpe {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("chcon -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+  x("semanage fcontext -a -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
+
+  # Add lines to sudoers, common.cfg if they dont already exist. Can only be runned once.
+  nrpe_string_1 = "nrpe ALL=NOPASSWD: {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)
+  nrpe_string_2 = "nrpe ALL=({0}) NOPASSWD: /bin/cat".format(username)
+  nrpe_string_3 = "command[check_ulimit_{1}]={0}check_ulimit.py {1} 60 80".format(ICINGA_PLUGINS_DIR, username)
+
+  sudoers_nrpe = open(nrpe_sudo_path, "r+")
+  if sudoers_nrpe.read().find(nrpe_string_1) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_1, nrpe_sudo_path))
+  if sudoers_nrpe.read().find(nrpe_string_2) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_2, nrpe_sudo_path))
+  sudoers_nrpe.close()
+
+  common_cfg = open(common_cfg_path, "r+")
+  if common_cfg.read().find(nrpe_string_3) == -1:
+    x("echo \"{0}\" >> {1}".format(nrpe_string_3, common_cfg_path))
+  common_cfg.close()
+
+  # Finally restart the nrpe service to load the new check.
+  x("service nrpe restart")
+
+  '''
+  If icinga is configured to check this server with check_ulimit_glassfish it will now get current status.
+
+  '''
 
 def _is_glassfish_user_installed():
   '''
@@ -132,7 +179,7 @@ def _install_jdk():
   if (not os.access(JDK_INSTALL_PATH, os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(JDK_INSTALL_FILE, os.F_OK)):
-      general.download_file(JDK_REPO_URL, user="glassfish")
+      general.download_file(JDK_REPO_URL)
 
       x("chmod u+rx " + JDK_INSTALL_FILE)
 
@@ -163,15 +210,14 @@ def _install_glassfish():
   Installation of the glassfish application server.
 
   '''
-  x("yum install zip -y")
+
   if (not os.access(GLASSFISH_INSTALL_PATH + "/glassfish", os.F_OK)):
     os.chdir(app.INSTALL_DIR)
     if (not os.access(GLASSFISH_INSTALL_FILE, os.F_OK)):
-      general.download_file(GLASSFISH_REPO_URL, user="glassfish")
+      general.download_file(GLASSFISH_REPO_URL)
 
     # Set executeion permissions and run the installation.
-    if ".zip" in GLASSFISH_INSTALL_FILE:
-      install.package("unzip")
+      x("yum install unzip -y")
       x("unzip " + GLASSFISH_INSTALL_FILE + " -d /usr/local/")
       x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH)
     else:
@@ -190,27 +236,30 @@ def _setup_glassfish4():
   Setting Glassfish 4 properties
   '''
   asadmin_exec("delete-jvm-options -client")
-  asadmin_exec("delete-jvm-options '-XX\:MaxPermSize=192m'")
   asadmin_exec("delete-jvm-options -Xmx512m")
   
   asadmin_exec("create-jvm-options -server")
-  asadmin_exec("create-jvm-options -Xmx2048m")
+  asadmin_exec("create-jvm-options -Xmx6144m")
   asadmin_exec("create-jvm-options -Xms1024m")
-  asadmin_exec("create-jvm-options '-XX\:MaxPermSize=1024m'")
+  asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
+  asadmin_exec("create-jvm-options '-XX\:+AggressiveOpts'")
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
   asadmin_exec("set-log-attributes --target server-config com.sun.enterprise.server.logging.GFFileHandler.formatter=ulf")
   asadmin_exec("set server.admin-service.das-config.autodeploy-enabled=false")
   asadmin_exec("set server.admin-service.das-config.dynamic-reload-enabled=false")
-  asadmin_exec(" --host 127.0.0.1 --port 4848 enable-secure-admin")
-  
+  asadmin_exec("create-system-properties --target server-config com.sun.xml.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=true")
+
+  #Change product name to hide server information
+  asadmin_exec("create-jvm-options -Dproduct.name=warpspeed")
+
   #Setting monitors levels
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-connection-pool=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.connector-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.ejb-container=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.http-service=LOW")
-  asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")
+  #asadmin_exec("set server.monitoring-service.module-monitoring-levels.sip-service=LOW")#not available
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jdbc-connection-pool=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jms-service=LOW")
   asadmin_exec("set server.monitoring-service.module-monitoring-levels.jvm=LOW")
@@ -226,8 +275,28 @@ def _setup_glassfish4():
   asadmin_exec("create-jvm-options -Dcom.sun.management.jmxremote.authenticate=false")
   asadmin_exec("create-jvm-options -Dcom.sun.management.jmxremote.ssl=false")
   asadmin_exec("create-jvm-options -Djava.rmi.server.hostname=192.168.0.8")
+  
+  # Allow glassfish to make more than 32 outgoing connections.
+  asadmin_exec("set server.ejb-container.property.thread-core-pool-size=64")
+  asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
+  asadmin_exec("set server.ejb-container.property.thread-keep-alive-seconds=60")
+  asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
 
+  #Increase thread pool sizes
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=200")
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.min-thread-pool-size=50")
+  asadmin_exec("set server.thread-pools.thread-pool.http-thread-pool.max-queue-size=2048")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.max-thread-pool-size=200")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.min-thread-pool-size=50")
+  asadmin_exec("set server.thread-pools.thread-pool.thread-pool-1.max-queue-size=2048")
 
+  #Increase http acceptor threads, recomended is same as number of cpu cores.
+  #Needs to be tested more together with ulimit settings before implementation.
+  #asadmin_exec("set server-config.network-config.transports.transport.tcp.acceptor-threads=4")
+
+  #Remove x-powered by to hide server information
+  asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false")
+  asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false")
 
 
 def _install_mysql_connect():
@@ -252,6 +321,7 @@ def _install_guice():
   x("cp "+GUICE_NAME+ "/aopalliance* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("cp "+GUICE_NAME+ "/javax.inject* "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/")
   x("chown glassfish:glassfish -R "+GLASSFISH_INSTALL_PATH+"/glassfish/domains/domain1/lib/ext/*")
+  x("yum remove unzip -y")
 
 
 
@@ -314,3 +384,4 @@ def _set_domain_passwords():
     })
   asadmin_exec("stop-domain ")
   asadmin_exec("start-domain ")
+
