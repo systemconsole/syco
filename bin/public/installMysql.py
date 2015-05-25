@@ -155,12 +155,14 @@ def install_mysql(args):
         )
     )
 
+    mysql_exec("flush privileges;", )
+
     repl_peer = current_host_config.get_option("repl_peer")
     if repl_peer:
         mysql_exec(
             "GRANT ALL PRIVILEGES ON *.* TO "
             "'root'@'%s' IDENTIFIED BY '%s'"
-            "WITH GRANT OPTION" % (
+            " WITH GRANT OPTION" % (
                 repl_peer,
                 app.get_mysql_root_password()
             ),
@@ -180,7 +182,7 @@ def uninstall_mysql(args):
     """
     if os.access("/etc/init.d/mysqld", os.F_OK):
         x("/etc/init.d/mysqld stop")
-    x("yum -y groupremove MySQL Database")
+    x("yum -y remove mysql-server")
     x("rm -f /root/.mysql_history")
     x("rm -fr /var/lib/mysql")
     x("rm -f /var/log/mysqld-slow.log")

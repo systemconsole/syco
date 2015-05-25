@@ -15,6 +15,9 @@ class Augeas:
     def __init__(self, execute_function):
         self.execute_function = execute_function
 
+    def ins(self, path):
+        return self._execute("augtool ins %s" % path)
+
     def remove(self, path):
 
         entries = self.find_entries(path)
