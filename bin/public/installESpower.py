@@ -44,9 +44,9 @@ def install_espower(args):
 	'''
 	install_rabbit()
 	install_logstash()
-	config_logstash()
 	config_rabbitmq()
-
+	config_logstash()
+	
 
 	print("Go to http://ip-address:15672 for rabbit mq ")
 
@@ -95,9 +95,17 @@ def config_logstash():
 	1. First from syco-private
 	2. syco var defult config
 	''' 
-
+	x('adduse logstash')
 	x('cp -r %slogstash /etc/' %CONF_SOURCE)
-
+	x('chown logstash:logstash -R /opt/logstash')
+	x('cp /opt/syco/usr/syco-private/var/rabbitmq/start/shipper /etc/init.d/')
+	x('cp /opt/syco/usr/syco-private/var/rabbitmq/start/index /etc/init.d/')
+	x('chkconfig --add shipper')
+	x('chkconfig --add index')
+	x('chkconfig shipper on')
+	x('chkconfig index on')
+	x('/etc/init.d/shipper start')
+	x('/etc/init.d/index start')
 
 def config_rabbitmq():
 	'''
@@ -106,7 +114,21 @@ def config_rabbitmq():
 	1. First from syco-private
 	2. syco var defult config
 	'''
+	x('mkdir -p /etc/rabbitmq/ssl/private')
+	x('openssl req -x509 -config /opt/syco/usr/syco-private/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes')
+	x('openssl x509 -in /etc/rabbitmq/ssl/cacert.pem -out /etc/rabbitmq/ssl/cacert.cer -outform DER')
+	x('openssl genrsa -out /etc/rabbitmq/ssl/key.pem 4096')
+	x('cp /etc/rabbitmq/ssl/private/* /etc/rabbitmq/ssl/')
+	x('openssl req -new -key /etc/rabbitmq/ssl/key.pem -out /etc/rabbitmq/ssl/req.pem -outform PEM -subj /CN=$(hostname)/O=server/ -nodes')
+	x('touch /etc/rabbitmq/ssl/index.txt')
+	x('echo 01 > /etc/rabbitmq/ssl/serial')
+	x('openssl ca -config /opt/syco/usr/syco-private/var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions')
+	x('openssl pkcs12 -export -out /etc/rabbitmq/ssl/keycert.p12 -in /etc/rabbitmq/ssl/cert.pem -inkey /etc/rabbitmq/ssl/key.pem -passout pass:MySecretPassword')
+
+
+
 	x('cp -r %srabbitmq /etc/' %CONF_SOURCE)
+	
 	x('/etc/init.d/rabbitmq-server restart')
 	x('iptables -I INPUT 3 -p tcp --dport 5671 -j ACCEPT')
 	x('iptables -I INPUT 3 -p tcp --dport 15672 -j ACCEPT')
