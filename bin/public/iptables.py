@@ -1021,6 +1021,36 @@ def add_ossec_chain():
       config.general.get_ossec_server_ip()
     )
 
+def del_rabbitmq_chain():
+  app.print_verbose("Delete iptables chain for RabbitMQ")
+
+  iptables("-D syco_input -p udp -j rabbitmq_in", general.X_OUTPUT_CMD)
+  iptables("-F rabbitmq_in", general.X_OUTPUT_CMD)
+  iptables("-X rabbitmq_in", general.X_OUTPUT_CMD)
+
+  iptables("-D syco_output -p udp -j rabbitmq_out", general.X_OUTPUT_CMD)
+  iptables("-F rabbitmq_out", general.X_OUTPUT_CMD)
+  iptables("-X rabbitmq_out", general.X_OUTPUT_CMD)
+
+def add_rabbitmq_chain():
+  '''
+  RabbitMQ server 
+
+
+  '''
+  del_rabbitmq_chain
+
+  if not os.path.exists('/etc/rabbitmq'):
+    return
+
+  app.print_verbose("Add iptables chain for RabbitMQ")
+    # Create chains.
+  iptables("-N rabbitmq_in")
+  iptables("-N rabbitmq_out")
+  iptables("-A syco_input -p udp -j rabbitmq_in")
+  iptables("-A syco_output -p udp -j rabbitmq_out")
+  iptables("-A rabbitmq_in -m state --state NEW -p tcp --dport 5671 -j allowed_tcp")
+  iptables("-A rabbitmq_in -m state --state NEW -p tcp --dport 156712 -j allowed_tcp")
 
 
 

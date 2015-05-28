@@ -26,6 +26,7 @@ from scopen import scOpen
 import app
 import version
 import os
+import iptables
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -46,16 +47,21 @@ def install_espower(args):
 	install_logstash()
 	config_rabbitmq()
 	config_logstash()
+	# Adding iptables rules
+	iptables.add_rabbitmq_chain()
+	iptables.save()
 	
 
 	print("Go to http://ip-address:15672 for rabbit mq ")
 
 def uninstall_espower(args):
 	x('yum remove rabbitmq-server -y')
-	x('yum remove erlang -y')
+	#x('yum remove erlang -y')
 	x('rm -rf /opt/logstash')
 	x('rm -rf /etc/logstash')
 	x('rm -rf /etc/rabbitmq')
+	x('rm -rf /etc/init.d/shipper')
+	x('rm -rf /etc/init.d/index') 
 
 
 
@@ -95,11 +101,12 @@ def config_logstash():
 	1. First from syco-private
 	2. syco var defult config
 	''' 
-	x('adduse logstash')
 	x('cp -r %slogstash /etc/' %CONF_SOURCE)
 	x('chown logstash:logstash -R /opt/logstash')
-	x('cp /opt/syco/usr/syco-private/var/rabbitmq/start/shipper /etc/init.d/')
-	x('cp /opt/syco/usr/syco-private/var/rabbitmq/start/index /etc/init.d/')
+	x('cp /opt/syco/usr/syco-private/var/logstash/start/shipper /etc/init.d/')
+	x('cp /opt/syco/usr/syco-private/var/logstash/start/index /etc/init.d/')
+	x('chmod 700 /etc/init.d/shipper')
+	x('chmod 700 /etc/init.d/index')
 	x('chkconfig --add shipper')
 	x('chkconfig --add index')
 	x('chkconfig shipper on')
@@ -114,6 +121,9 @@ def config_rabbitmq():
 	1. First from syco-private
 	2. syco var defult config
 	'''
+	#Remove old certs
+	x('rm -rf /etc/rabbitmq/ssl')
+
 	x('mkdir -p /etc/rabbitmq/ssl/private')
 	x('openssl req -x509 -config /opt/syco/usr/syco-private/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes')
 	x('openssl x509 -in /etc/rabbitmq/ssl/cacert.pem -out /etc/rabbitmq/ssl/cacert.cer -outform DER')
@@ -130,6 +140,4 @@ def config_rabbitmq():
 	x('cp -r %srabbitmq /etc/' %CONF_SOURCE)
 	
 	x('/etc/init.d/rabbitmq-server restart')
-	x('iptables -I INPUT 3 -p tcp --dport 5671 -j ACCEPT')
-	x('iptables -I INPUT 3 -p tcp --dport 15672 -j ACCEPT')
 	x('setsebool -P nis_enabled 1')
