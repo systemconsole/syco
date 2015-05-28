@@ -45,6 +45,8 @@ def install_logrotate(args):
     sc = scOpen("/etc/logrotate.conf")
     sc.replace('#compress', 'compress')
 
+    x("mv /etc/cron.daily/logrotate /etc/cron.hourly/")
+
     x("mkdir /var/log/archive")
     x("cp %s var/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
 

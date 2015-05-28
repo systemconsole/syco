@@ -1,7 +1,7 @@
 /var/log/audit/audit.log.*
 {
-	rotate 10
-	size 100M
+	rotate 50
+	size 45M
     compress
     notifempty
     missingok
