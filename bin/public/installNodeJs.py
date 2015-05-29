@@ -78,7 +78,7 @@ def deploy_nodejs(args):
 		raise Exception("syco deply-nodejs mattiashem/r-pi ")
 	#Getting app from git
 	os.chdir('/var/www/html')
-	#x('git clone git@github.com:{0}'.format(args[1]))
+	x('git clone git@github.com:{0}'.format(args[1]))
 	
 	#Getting the app name
 	apps = args[1].split('/')
