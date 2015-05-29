@@ -28,7 +28,7 @@ SCRIPT_VERSION = 1
 
 def build_commands(commands):
     commands.add("install-nodejs", install_nodejs, help="Install nodejs on server (install-nodejs 10.4)")
-    commands.add("deploy-nodejs", deploy_nodejs, help="Uninstall the power modules for elastic search")
+    commands.add("deploy-nodejs", deploy_nodejs, help="deploy github app to server")
 
 
 
@@ -38,9 +38,9 @@ def install_nodejs(args):
 	if len(args) != 2:
 		raise Exception("syco install-nodejs [version]")
 
-	#x('yum install wget gcc-c++ -y')
-	#os.chdir('/usr/src')
-	#x('wget http://nodejs.org/dist/v0.{0}/node-v0.{0}.tar.gz -O /usr/src/nodejs_latest.tar.gz'.format(args[1]))
+	x('yum install wget gcc-c++ -y')
+	os.chdir('/usr/src')
+	x('wget http://nodejs.org/dist/v0.{0}/node-v0.{0}.tar.gz -O /usr/src/nodejs_latest.tar.gz'.format(args[1]))
 	x('tar -zxvf nodejs_latest.tar.gz')
 	x('rm -rf nodejs')
 	x('mv node-v* nodejs')
