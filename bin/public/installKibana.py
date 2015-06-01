@@ -54,6 +54,8 @@ def install_kibana(args):
 	x('chkconfig --add kibana')
 	x('chkconfig kibana on')
 	x('/etc/init.d/kibana start')
+	iptables.add_kibana_chain()
+	iptables.save()
 
 
 
