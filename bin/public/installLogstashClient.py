@@ -32,6 +32,7 @@ def build_commands(commands):
 
     '''
     commands.add("install-logstash-syslog", install_logstash_syslog, help="Install logstash extension to syslog. [syco install-logstash-syslog 1.5.0]")
+    commands.add("uninstall-logstash-syslog", uninstall_logstash_syslog, help="Uninstall logstash extension to syslog.")
 
 
 
