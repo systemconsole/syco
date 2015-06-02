@@ -11,7 +11,6 @@ from general import x
 import app
 import config
 import constant
-import general
 import install
 import iptables
 import net
@@ -25,17 +24,13 @@ __maintainer__ = "daniel@cybercow.se"
 __email__ = "above"
 __credits__ = ["Daniel & Mattias"]
 __license__ = "???"
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __status__ = "Development"
 
 
-HP_HEALTH_FILENAME="hp-health-10.00-1688.34.rhel6.x86_64.rpm"
-HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/repo/spp/rhel/6.6Server/x86_64/current/{0}".format(HP_HEALTH_FILENAME)
-HP_HEALTH_MD5="9e2ac21bf648c14b7ebb46121ece4a12"
+PLG_PATH = "/usr/lib64/nagios/plugins/"
 
-PLG_PATH="/usr/lib64/nagios/plugins/"
-
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
 
 
 def build_commands(commands):
@@ -160,7 +155,7 @@ def _install_nrpe_plugins_dependencies():
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}get_services".format(PLG_PATH))
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files".format(PLG_PATH))
     nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs".format(PLG_PATH))
-    
+
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
 
@@ -170,24 +165,12 @@ def _install_nrpe_plugins_dependencies():
     # Dependency for hosts/firewall hardware checks
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
-
-        # Create an installname and filenames
-        install_dir = general.get_install_dir()
-
-        # Download and install HP health monitoring package
-        general.download_file(
-            HP_HEALTH_URL, HP_HEALTH_FILENAME, md5=HP_HEALTH_MD5
-        )
-        x("yum install {0} -y".format(HP_HEALTH_FILENAME))
-
-        # Remove their evil crontab
-        x("rm -f /etc/cron.d/hp-health")
+        install.hp_repo()
+        x("yum -y install hp-health")
 
         # Let nrpe run hpasmcli
         nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli")
         nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_hpasm".format(PLG_PATH))
-
-        x("service hp-health start")
 
     # Dependency for check_ulimit
     x("yum install -y lsof")
