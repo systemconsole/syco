@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """
-Install nrpe
-
+Install nrpe client
 
 """
 
@@ -62,7 +61,8 @@ def _install_nrpe(args):
     # Confusing that nagios-plugins-all does not really include all plugins
     x(
         "yum install -y nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap "
-        "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc"
+        "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable"
+        "perl-Date-Calc policycoreutils-python"
     )
 
     # Move object structure and prepare conf-file
@@ -70,9 +70,6 @@ def _install_nrpe(args):
     x("rm -rf /etc/nagios/nrpe.cfg")
     x("cp -r {0}syco-private/var/nagios/nrpe.d /etc/nagios/".format(constant.SYCO_USR_PATH))
     x("cp {0}syco-private/var/nagios/nrpe.cfg /etc/nagios/".format(constant.SYCO_USR_PATH))
-
-    # Set permissions for read/execute under NRPE-user
-    x("chown -R root:nrpe /etc/nagios/")
 
     # Extra plugins installed
     _install_nrpe_plugins()
@@ -82,6 +79,9 @@ def _install_nrpe(args):
     app.print_verbose("Set monitor server: %s" % monitor_server_front_ip)
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.cfg")
     nrpe_config.replace("$(MONITORIP)", monitor_server_front_ip)
+
+    # Set permissions for read/execute under nagios-user
+    x("chown -R root:nagios /etc/nagios/")
 
     # Allow nrpe to listen on UDP port 5666
     iptables.add_nrpe_chain()
@@ -106,11 +106,12 @@ def _install_nrpe_plugins():
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
-    nrpe_config.replace("($LDAPURL)", config.general.get_ldap_hostname())
+    nrpe_config.replace("$(LDAPURL)", config.general.get_ldap_hostname())
+    nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password().replace("&","\&").replace("/","\/"))
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
-    x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
+    x("chown -R nagios:nagios /usr/lib64/nagios/plugins/")
 
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl.
     # Corresponding .te-files summarize rule content
@@ -125,18 +126,15 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_services_plugin_exec_t",   "check_ldap.php")
     _fix_selinux("nagios_services_plugin_exec_t",   "check_iptables.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_clam*")
-    _fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
-    _fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
-    _fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
+    # TODO??
+    #_fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
+    #_fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
+    #_fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_connections.pl")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hpasm")
-
-    # Set MySQL password, if running MySQL.
-    nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
-    nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password().replace("&","\&").replace("/","\/"))
 
 
 def _install_nrpe_plugins_dependencies():
@@ -145,16 +143,19 @@ def _install_nrpe_plugins_dependencies():
     x("yum install -y MySQL-python")
 
     # Dependency for check_clamav
-    x("yum install -y nagios-plugins-perl perl-Net-DNS-Resolver-Programmable sudo yum install perl-suidperl")
+    x("yum install -y nagios-plugins-perl perl-Net-DNS-Resolver-Programmable")
+    x("yum install -y perl-suidperl")
 
-    nrpe_sudoers_file = scopen.scOpen("/etc/sudoers.d/nrpe")
-    nrpe_sudoers_file.add("Defaults:nrpe !requiretty")
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamav".format(PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_clamscan".format(PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_disk".format(PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}get_services".format(PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files".format(PLG_PATH))
-    nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs".format(PLG_PATH))
+    x("""cat > /etc/sudoers.d/nrpe << EOF
+Defaults:nagios !requiretty
+nagios ALL=NOPASSWD:{0}check_clamav
+nagios ALL=NOPASSWD:{0}check_clamscan
+nagios ALL=NOPASSWD:{0}check_disk
+nagios ALL=NOPASSWD:{0}get_services
+nagios ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
+nagios ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
+EOF
+""".format(PLG_PATH))
 
     # Dependency for check_clamscan
     x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
@@ -169,8 +170,11 @@ def _install_nrpe_plugins_dependencies():
         x("yum -y install hp-health")
 
         # Let nrpe run hpasmcli
-        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:/sbin/hpasmcli")
-        nrpe_sudoers_file.add("nrpe ALL=NOPASSWD:{0}check_hpasm".format(PLG_PATH))
+    x("""cat >> /etc/sudoers.d/nrpe << EOF
+nagios ALL=NOPASSWD:/sbin/hpasmcli
+nagios ALL=NOPASSWD:{0}check_hpasm"
+EOF
+""".format(PLG_PATH))
 
     # Dependency for check_ulimit
     x("yum install -y lsof")
