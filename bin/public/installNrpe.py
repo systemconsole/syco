@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-'''
+"""
 Install nrpe
 
 
-'''
+"""
 
 import os
 
-from general import generate_password, get_install_dir, x
+from general import x
 import app
 import config
 import constant
@@ -21,11 +21,11 @@ import version
 
 __author__ = "elis.kullberg@netlight.com"
 __copyright__ = "Copyright 2012, Fareoffice Car Rental Solutions AB"
-__maintainer__ = "Elis Kullberg"
+__maintainer__ = "daniel@cybercow.se"
 __email__ = "above"
 __credits__ = ["Daniel & Mattias"]
 __license__ = "???"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __status__ = "Development"
 
 
@@ -43,10 +43,7 @@ def build_commands(commands):
 
 
 def install_nrpe(args):
-    '''
-    Install a hardened NRPE server (to be run on every host), plugins and commands.
-
-    '''
+    """Install a hardened NRPE server, plugins and commands."""
     app.print_verbose("Installing nrpe")
     version_obj = version.Version("installNrpe", SCRIPT_VERSION)
     version_obj.check_executed()
@@ -55,20 +52,23 @@ def install_nrpe(args):
 
 
 def _install_nrpe(args):
-    '''
-    The nrpe installation is quite standard - except that the stock NRPE.conf is replaced with a prepped one.
-    Server only listens to this IP. Not super safe but better than nothing. Also, argument parsing is _disabled_.
+    """
+    The nrpe installation is quite standard . Except that the stock NRPE.conf
+    is replaced with a prepped one. Server only listens to this IP. Not super
+    safe but better than nothing. Also, argument parsing is _disabled_.
 
-    '''
-    # Initialize all passwords at the beginning of the script.
+    """
+    # Initialize all used passwords at the beginning of the script.
     app.get_ldap_sssd_password()
     app.get_mysql_monitor_password()
 
     install.epel_repo()
 
     # Confusing that nagios-plugins-all does not really include all plugins
-    x("yum install nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc -y")
-
+    x(
+        "yum install -y nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap "
+        "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable perl-Date-Calc"
+    )
 
     # Move object structure and prepare conf-file
     x("rm -rf /etc/nagios/nrpe.d")
@@ -84,7 +84,7 @@ def _install_nrpe(args):
 
     # Allow only monitor to query NRPE
     monitor_server_front_ip = config.general.get_monitor_server_ip()
-    app.print_verbose("Setting monitor server:" + monitor_server_front_ip)
+    app.print_verbose("Set monitor server: %s" % monitor_server_front_ip)
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.cfg")
     nrpe_config.replace("$(MONITORIP)", monitor_server_front_ip)
 
@@ -96,15 +96,14 @@ def _install_nrpe(args):
     x("/sbin/chkconfig --level 3 nrpe on")
     x("service nrpe restart")
 
+
 def _fix_selinux(type, filename):
     x("chcon -t {0} {1}{2}".format(type, PLG_PATH, filename))
     x("semanage fcontext -a -t {0} '{1}{2}'".format(type, PLG_PATH, filename))
 
-def _install_nrpe_plugins():
-    '''
-    Install NRPE-plugins (to be executed remoteley) and SELinux-rules.
 
-    '''
+def _install_nrpe_plugins():
+    """Install NRPE-plugins (to be executed remoteley) and SELinux-rules."""
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
     x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
@@ -118,7 +117,7 @@ def _install_nrpe_plugins():
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
-    # Set SELinux roles to allow NRPE execution of binaries such as python/perl/iptables
+    # Set SELinux roles to allow NRPE execution of binaries such as python/perl.
     # Corresponding .te-files summarize rule content
     x("mkdir -p /var/lib/syco_selinux_modules")
     rule_path_list = list_plugin_files("/var/nagios/selinux_rules")
@@ -126,7 +125,7 @@ def _install_nrpe_plugins():
         x("cp {0}/*.pp /var/lib/syco_selinux_modules/".format(path))
     x("semodule -i /var/lib/syco_selinux_modules/*.pp")
 
-    #Fix some SELinux rules on custom plugins.
+    # Fix some SELinux rules on custom plugins.
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_disk")
     _fix_selinux("nagios_services_plugin_exec_t",   "check_ldap.php")
     _fix_selinux("nagios_services_plugin_exec_t",   "check_iptables.py")
@@ -146,10 +145,7 @@ def _install_nrpe_plugins():
 
 
 def _install_nrpe_plugins_dependencies():
-    '''
-    Install libraries/binaries that the NRPE-plugins depend on.
-
-    '''
+    """Install libraries/binaries that the NRPE-plugins depend on."""
     # Dependency for check_rsyslog
     x("yum install -y MySQL-python")
 
@@ -196,7 +192,7 @@ def _install_nrpe_plugins_dependencies():
     # Dependency for check_ulimit
     x("yum install -y lsof")
 
-    #Set ulimit values to take affect after reboot
+    # Set ulimit values to take affect after reboot
     x("printf '\n*\tsoft\tnofile\t8196\n*\thard\tnofile\t16392\n' >> /etc/security/limits.conf")
 
     # Kernel wont parse anything but read-only in sudoers. So chmod it.
@@ -204,13 +200,9 @@ def _install_nrpe_plugins_dependencies():
 
 
 def list_plugin_files(path):
-    '''
-    Returns a full file-path for every plugin with the sub-path defined.
-
-    '''
-    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+    """Returns a full file-path for every plugin with the sub-path defined."""
+    if os.access(app.SYCO_USR_PATH, os.F_OK):
         for plugin in os.listdir(app.SYCO_USR_PATH):
             plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + path)
-            if (os.access(plugin_path, os.F_OK)):
+            if os.access(plugin_path, os.F_OK):
                 yield plugin_path
-
