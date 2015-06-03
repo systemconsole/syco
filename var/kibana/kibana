@@ -27,7 +27,7 @@ start() {
 
 stop() {
         echo -n "Shutting down $prog: "
-        echo -n "Dont work fins and kill pid"
+        echo -n "Dont work find and kill pid"
         RETVAL=$?
         [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
         echo
