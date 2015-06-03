@@ -42,7 +42,6 @@ def install_kibana(args):
 	x('yum install wget -y')
 	#Clean out old kibana
 	x('rm -rf /var/www/kibana*')
-	x('')
 	#Installin the new kibana
 	x('mkdir -p /var/www')
 	x('wget https://download.elastic.co/kibana/kibana/kibana-{0}-linux-x64.tar.gz -O /tmp/kibana.tar.gz'.format(args[1]))
