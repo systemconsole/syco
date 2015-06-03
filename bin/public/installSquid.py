@@ -49,7 +49,7 @@ def _service(service,command):
 def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
-def install_haproxy(args):
+def install_squid(args):
     global SYCO_PLUGIN_PATH, ACCEPTED_SQUID_ENV
 
     SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/squid/").next()
@@ -65,7 +65,7 @@ def install_haproxy(args):
 
     version_obj.mark_executed()
 
-def _configure_haproxy():
+def _configure_squid():
     x("mv {0}squid.conf {0}org.squid.conf".format(SQUID_CONF_DIR))
     x("cp {0}/squid.conf {2}squid.conf".format(SYCO_PLUGIN_PATH, SQUID_ENV, SQUID_CONF_DIR))
     x("mkdir -p {0}/acl".format(SQUID_CONF_DIR))
@@ -93,7 +93,7 @@ def get_ip_address(ifname):
         struct.pack('256s', ifname[:15])
     )[20:24])
 
-def uninstall_haproxy(args=""):
+def uninstall_squid(args=""):
     '''
     Remove Squid Caching Proxy from the server.
     '''
