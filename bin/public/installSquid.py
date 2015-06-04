@@ -52,7 +52,7 @@ def _chkconfig(service,command):
 def install_squid(args):
     global SYCO_PLUGIN_PATH, ACCEPTED_SQUID_ENV
 
-    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/squid/").next()
+    SYCO_PLUGIN_PATH = str(app.get_syco_plugin_paths("/var/squid/").next())
 
     app.print_verbose("Install Squid Caching Proxy version: %d" % script_version)
     version_obj = version.Version("InstallSquid", script_version)
@@ -66,10 +66,10 @@ def install_squid(args):
     version_obj.mark_executed()
 
 def _configure_squid():
-    x("mv {0}squid.conf {0}org.squid.conf".format(SQUID_CONF_DIR))
-    x("cp {0}/squid.conf {2}squid.conf".format(SYCO_PLUGIN_PATH, SQUID_ENV, SQUID_CONF_DIR))
-    x("mkdir -p {0}/acl".format(SQUID_CONF_DIR))
-    x("cp {0}/acl/* {1}acl/".format(SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
+    x("rm -rf /etc/squid/*")
+    x("cp %s/*.conf %s" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
+    x("mkdir -p %s/acl" % (SQUID_CONF_DIR))
+    x("cp %s/acl/* %sacl/" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
 
     scopen.scOpen(SQUID_CONF_DIR + "squid.conf").replace("${ENV_IP}", get_ip_address('eth0'))
 
@@ -104,7 +104,7 @@ def uninstall_squid(args=""):
     _service("squid","stop")
 
     x("yum -y remove squid")
-    x("rm -rf {0}*".format(SQUID_CONF_DIR))
+    x("rm -rf %s*" % (SQUID_CONF_DIR))
     iptables.iptables("-D syco_input -p tcp -m multiport --dports 3128 -j allowed_tcp")
     iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
     iptables.save()
