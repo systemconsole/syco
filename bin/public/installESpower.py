@@ -24,7 +24,7 @@ import iptables
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
-CONF_SOURCE='/opt/syco/usr/syco-private/var/'
+CONF_SOURCE='var/'
 
 def build_commands(commands):
     commands.add("install-espower", install_espower, help="Install power modules for elastcisearch install-espower logstash version")
@@ -38,13 +38,13 @@ def install_espower(args):
 	'''
 	if (len(args) != 2):
 		raise Exception("syco install-espower Logstash Version [syco install-es 1.4.2]")
-	#install_rabbit()
-	#install_logstash(args[1])
+	install_rabbit()
+	install_logstash(args[1])
 	config_rabbitmq()
-	#config_logstash()
+	config_logstash()
 	# Adding iptables rules
-	#iptables.add_rabbitmq_chain()
-	#iptables.save()
+	iptables.add_rabbitmq_chain()
+	iptables.save()
 	
 
 	print("Go to http://ip-address:15672 for rabbit mq ")
@@ -99,7 +99,7 @@ def config_logstash():
 	''' 
 	#Remove old
 	
-	if  os.path.isdir('{0}logstash'.format(CONF_SOURCE)):
+	if  os.path.isdir('{0}logstash'.format(	)):
 		x('cp -r {0}logstash /etc/'.format(CONF_SOURCE))
 	else:
 		x('cp -r {0}var/logstash /etc/'.format(app.SYCO_PATH))
