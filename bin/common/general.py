@@ -99,7 +99,7 @@ def get_install_dir():
   return app.INSTALL_DIR
 
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None):
+def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None, sha1=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
 
@@ -133,6 +133,10 @@ def download_file(src, dst=None, user="", remote_user=None, remote_password=None
 
   if md5 != None and md5checksum(app.INSTALL_DIR + dst) != md5:
     raise Exception("MD5 Checksum dont match for " + dst)
+
+  if sha1 != None and sha1checksum(app.INSTALL_DIR + dst) != sha1:
+    raise Exception("SHA! Checksum dont match for " + dst)
+
 
 
 def urlretrive(src_url, dst_filename):
@@ -466,6 +470,15 @@ def md5checksum(filePath):
         m.update(data)
     return m.hexdigest()
 
+def sha1checksum(filePath):
+    fh = open(filePath, 'rb')
+    m = hashlib.sha1()
+    while True:
+        data = fh.read(8192)
+        if not data:
+            break
+        m.update(data)
+    return m.hexdigest()
 
 def use_original_file(filename):
     '''

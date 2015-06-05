@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+#
+# LogstashS    Logstash Shipper
+#
+# chkconfig: 345 70 30
+# description: Logstash shipper service
+# processname: logstashs
+
+. /etc/init.d/functions
+
+RETVAL=0
+prog="shipper"
+LOCKFILE=/var/lock/subsys/$prog
+export JAVA_OPTS="-Djava.io.tmpdir=/opt/logstash/tmp"
+export LS_JAVA_OPTS="-Djava.io.tmpdir=/opt/logstash/tmp"
+
+
+
+start() {
+        echo -n "Starting $prog: "
+        daemon /opt/logstash/bin/logstash -f /etc/logstash/logstash_shipper.conf  & >/var/log/logstash_shipper
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch $LOCKFILE
+        echo
+        return $RETVAL
+}
+
+stop() {
+        echo -n "Shutting down $prog: "
+        echo -n "Dont work "
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
+        echo
+        return $RETVAL
+}
+
+status() {
+        echo -n "Checking $prog status: "
+        ps aux | grep logstash
+        RETVAL=$?
+        return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $RETVAL

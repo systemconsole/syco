@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 '''
-Install DHCP Server
-
-This dhcp server is mainly used to get KVM guest installation to work with
-kickstarts.
-
-http://www.yolinux.com/TUTORIALS/DHCP-Server.html
-http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch08_:_Configuring_the_DHCP_Server
-http://www.howtoforge.com/dhcp_server_linux_debian_sarge
+Install Elasticsearch power using RammitMQ and Logstash.
 
 '''
 
@@ -21,7 +14,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import general
-from general import x
+from general import x,download_file
 from scopen import scOpen
 import app
 import version
@@ -34,7 +27,7 @@ SCRIPT_VERSION = 1
 CONF_SOURCE='/opt/syco/usr/syco-private/var/'
 
 def build_commands(commands):
-    commands.add("install-espower", install_espower, help="Install power modules for elastcisearch")
+    commands.add("install-espower", install_espower, help="Install power modules for elastcisearch install-espower logstash version")
     commands.add("uninstall-espower", uninstall_espower, help="Uninstall the power modules for elastic search")
 
 
@@ -43,20 +36,22 @@ def install_espower(args):
 	Installation of Elastic search passing rule
 	
 	'''
-	install_rabbit()
-	install_logstash()
+	if (len(args) != 2):
+		raise Exception("syco install-espower Logstash Version [syco install-es 1.4.2]")
+	#install_rabbit()
+	#install_logstash(args[1])
 	config_rabbitmq()
-	config_logstash()
+	#config_logstash()
 	# Adding iptables rules
-	iptables.add_rabbitmq_chain()
-	iptables.save()
+	#iptables.add_rabbitmq_chain()
+	#iptables.save()
 	
 
 	print("Go to http://ip-address:15672 for rabbit mq ")
 
 def uninstall_espower(args):
 	x('yum remove rabbitmq-server -y')
-	#x('yum remove erlang -y')
+	x('yum remove erlang -y')
 	x('rm -rf /opt/logstash')
 	x('rm -rf /etc/logstash')
 	x('rm -rf /etc/rabbitmq')
@@ -81,12 +76,13 @@ def install_rabbit():
 
 
 
-def install_logstash():
+def install_logstash(version):
     '''
     Download and install logstash
     '''
-    x("curl -O  https://download.elasticsearch.org/logstash/logstash/logstash-1.4.2.tar.gz")
-    x('mv logstash-1.4.2.tar.gz /opt/logstash.tar.gz')
+    #x("curl -O  https://download.elasticsearch.org/logstash/logstash/logstash-{0}.tar.gz".format(version))
+    download_file("https://download.elasticsearch.org/logstash/logstash/logstash-{0}.tar.gz".format(version))
+    x('mv /opt/syco/installtemp/logstash-{0}.tar.gz /opt/logstash.tar.gz'.format(version))
     x('tar -zxvf /opt/logstash.tar.gz -C /opt/')
     x('rm /opt/logstash.tar.gz')
     x('rm -rf /opt/logstash')
@@ -101,10 +97,16 @@ def config_logstash():
 	1. First from syco-private
 	2. syco var defult config
 	''' 
-	x('cp -r %slogstash /etc/' %CONF_SOURCE)
+	#Remove old
+	
+	if  os.path.isdir('{0}logstash'.format(CONF_SOURCE)):
+		x('cp -r {0}logstash /etc/'.format(CONF_SOURCE))
+	else:
+		x('cp -r {0}var/logstash /etc/'.format(app.SYCO_PATH))
+
 	x('chown logstash:logstash -R /opt/logstash')
-	x('cp /opt/syco/usr/syco-private/var/logstash/start/shipper /etc/init.d/')
-	x('cp /opt/syco/usr/syco-private/var/logstash/start/index /etc/init.d/')
+	x('cp {0}var/logstash/start/shipper /etc/init.d/'.format(app.SYCO_PATH))
+	x('cp {0}var/logstash/start/index /etc/init.d/'.format(app.SYCO_PATH))
 	x('chmod 700 /etc/init.d/shipper')
 	x('chmod 700 /etc/init.d/index')
 	x('chkconfig --add shipper')
@@ -125,14 +127,21 @@ def config_rabbitmq():
 	x('rm -rf /etc/rabbitmq/ssl')
 
 	x('mkdir -p /etc/rabbitmq/ssl/private')
-	x('openssl req -x509 -config /opt/syco/usr/syco-private/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes')
+	if  os.path.isdir('{0}rabbitmq'.format(CONF_SOURCE)):
+		x('openssl req -x509 -config {0}usr/syco-private/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(app.SYCO_PATH))
+	else:
+		x('openssl req -x509 -config {0}/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(app.SYCO_PATH))
+
 	x('openssl x509 -in /etc/rabbitmq/ssl/cacert.pem -out /etc/rabbitmq/ssl/cacert.cer -outform DER')
 	x('openssl genrsa -out /etc/rabbitmq/ssl/key.pem 4096')
 	x('cp /etc/rabbitmq/ssl/private/* /etc/rabbitmq/ssl/')
 	x('openssl req -new -key /etc/rabbitmq/ssl/key.pem -out /etc/rabbitmq/ssl/req.pem -outform PEM -subj /CN=$(hostname)/O=server/ -nodes')
 	x('touch /etc/rabbitmq/ssl/index.txt')
 	x('echo 01 > /etc/rabbitmq/ssl/serial')
-	x('openssl ca -config /opt/syco/usr/syco-private/var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions')
+	if  os.path.isdir('{0}rabbitmq'.format(CONF_SOURCE)):
+		x('openssl ca -config {0}usr/syco-private/var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(app.SYCO_PATH))
+	else:
+		x('openssl ca -config {0}var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(app.SYCO_PATH))
 	x('openssl pkcs12 -export -out /etc/rabbitmq/ssl/keycert.p12 -in /etc/rabbitmq/ssl/cert.pem -inkey /etc/rabbitmq/ssl/key.pem -passout pass:MySecretPassword')
 
 
