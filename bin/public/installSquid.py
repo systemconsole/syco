@@ -69,7 +69,9 @@ def _configure_squid():
     x("rm -rf /etc/squid/*")
     x("cp %s/*.conf %s" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
     x("mkdir -p %s/acl" % (SQUID_CONF_DIR))
+    x("mkdir -p %s/services" % (SQUID_CONF_DIR))
     x("cp %s/acl/* %sacl/" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
+    x("cp %s/services/* %sservices/" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
 
     scopen.scOpen(SQUID_CONF_DIR + "squid.conf").replace("${ENV_IP}", get_ip_address('eth0'))
 
