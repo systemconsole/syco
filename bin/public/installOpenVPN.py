@@ -42,7 +42,8 @@ import version
 
 # EASY RSA DOWNLOAD URL
 EASY_RSA_DOWNLOAD = "https://github.com/OpenVPN/easy-rsa/archive/v2.2.0.zip"
-EASY_RSA_MD5 = 'd2e760402541e4b534b4bab5f92455aa'
+#EASY_RSA_MD5 = 'd2e760402541e4b534b4bab5f92455aa'
+EASY_RSA_MD5 = 'e52a1f85fffeda82a0af332076ea81f6'
 
 SCRIPT_VERSION = 1
 
@@ -53,15 +54,13 @@ def build_commands(commands):
 def copy_easy_rsa():
 
     # Downloading and md5 checking
-    download_file(EASY_RSA_DOWNLOAD, "v2.2.0.zip",md5=EASY_RSA_MD5)
+    download_file('https://github.com/OpenVPN/easy-rsa/archive/release/2.x.zip')
+    x('unzip /opt/syco/installtemp/2.x.zip')
+    x('mv /opt/syco/installtemp/easy-rsa-release-2.x/easy-rsa/2.0/ /etc/openvpn/easy-rsa')
+    #x('cp -R /usr/share/doc/openvpn-2.2.2/easy-rsa/2.0/ /etc/openvpn/easy-rsa')
+    x('chmod 700 /etc/openvpn/easy-rsa/*')
 
-    # Unzipping and moving easy-rsa files
-    install_dir = get_install_dir()
-    x("yum -y install unzip")
-    x("unzip {0}{1} -d {0}".format(install_dir,"v2.2.0.zip"))
-    x("mv {0}easy-rsa-2.2.0/easy-rsa/2.0 /etc/openvpn/easy-rsa".format(install_dir))
-    x("yum -y remove unzip")
-
+    
 def install_openvpn_server(args):
     '''
     The actual installation of openvpn server.
@@ -88,7 +87,7 @@ def install_openvpn_server(args):
         x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % server_conf)
         scOpen(server_conf).replace('${EXTERN_IP}',  net.get_public_ip())
         scOpen(server_conf).replace('${OPENVPN_NETWORK}',  config.general.get_openvpn_network())
-        scOpen(server_conf).replace('${PUSH_ROUTES}',  _get_push_routes())
+        #scOpen(server_conf).replace('${PUSH_ROUTES}',  _get_push_routes())
 
         ccd_enabled = config.general.get_option("openvpn.ccd.enable", "false").lower()
         ccd_dir = ""
@@ -101,9 +100,10 @@ def install_openvpn_server(args):
             c2c = "client-to-client"
 
         scOpen(server_conf).replace('${CCD_DIR}', ccd_dir)
-        scOpen(server_conf).replace('${CLIENT_ROUTES}', client_routes)
+        scOpen(server_conf).replace('${CLIENT_ROUTES}', str(client_routes))
         scOpen(server_conf).replace('${CLIENT_TO_CLIENT}', c2c)
         scOpen(server_conf).replace('${DHCP_DNS_SERVERS}', _get_dhcp_dns_servers())
+        scOpen(server_conf).replace('*dh.*dh1024.pem}', 'dh4096.pem')
 
         # Prepare the ca cert generation.
         fn = "/etc/openvpn/easy-rsa/vars"
@@ -113,6 +113,9 @@ def install_openvpn_server(args):
         scOpen(fn).replace('[\s]*export KEY_ORG.*',      'export KEY_ORG="' + config.general.get_organization_name() + '"')
         scOpen(fn).replace('[\s]*export KEY_OU.*',       'export KEY_OU="' + config.general.get_organizational_unit_name() + '"')
         scOpen(fn).replace('[\s]*export KEY_EMAIL.*',    'export KEY_EMAIL="' + config.general.get_admin_email() + '"')
+        scOpen(fn).replace('[\s]*export HASH_ALGO.*',    'export HASH_ALGO=sha256')
+        scOpen(fn).replace('[\s]*export KEY_SIZE.*',    'export KEY_SIZE=4096')
+
 
         # Can't find the current version of openssl.cnf.
         scOpen("/etc/openvpn/easy-rsa/whichopensslcnf").replace("\[\[\:alnum\:\]\]", "[[:alnum:]]*")
@@ -120,7 +123,7 @@ def install_openvpn_server(args):
         # Generate CA cert
         os.chdir("/etc/openvpn/easy-rsa/")
         x(". ./vars;./clean-all;./build-ca --batch;./build-key-server --batch server;./build-dh")
-        x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh1024.pem} /etc/openvpn/")
+        x("cp /etc/openvpn/easy-rsa/keys/{ca.crt,ca.key,server.crt,server.key,dh4096.pem} /etc/openvpn/")
 
         #Generation TLS key
         os.chdir("/etc/openvpn/")
@@ -135,8 +138,8 @@ def install_openvpn_server(args):
     if enable_ldap:
         _setup_ldap()
 
-    iptables.add_openvpn_chain()
-    iptables.save()
+    #iptables.add_openvpn_chain()
+    #iptables.save()
 
     x("/etc/init.d/openvpn restart")
     x("/sbin/chkconfig openvpn on")
@@ -243,6 +246,7 @@ def _setup_ldap():
 
 def build_client_certs(args):
     install.package("zip")
+    x('mkdir /etc/openvpn/easy-rsa/keys')
     os.chdir("/etc/openvpn/easy-rsa/keys")
     general.set_config_property("/etc/cronjob", "01 * * * * root run-parts syco build_client_certs", "01 * * * * root run-parts syco build_client_certs")
 
