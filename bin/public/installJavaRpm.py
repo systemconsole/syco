@@ -35,7 +35,7 @@ def build_commands(commands):
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-java", install_java, help="Install/configure Java.")
+    commands.add("install-java-rpm", install_java, help="Install/configure Java.")
 
 
 def install_java(args):
