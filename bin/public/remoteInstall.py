@@ -174,10 +174,23 @@ class RemoteInstall:
         global _commands_obj_reference
 
         for hostname in self._servers:
-            commands = config.host(hostname).get_commands(app.options.verbose >= 2)
+            commands = config.host(hostname).get_commands()
             for command in commands:
                 #Assume second word is the command name
-                syco_command = command.split(" ")[1]
+                split_commands = command.split(" ")
+                if len(split_commands) < 1:
+                    app.print_verbose("Did not understand command: %s, skipping" % command)
+                    continue
+                elif split_commands[0].lower() == "syco":
+                    if len(split_commands) < 2:
+                        app.print_verbose("Did not understand syco command: %s, skipping" % command)
+                        continue
+                else:
+                    #This is not a syco command, ignoring it.
+                    continue
+
+                #else, this is a syco command and arg[1] should be the name of the command
+                syco_command = split_commands[1]
 
                 #Find the passwords for command
                 passwords = _commands_obj_reference.get_command_passwords(syco_command)
@@ -186,7 +199,6 @@ class RemoteInstall:
                     app.print_verbose("Retrieving passwords for command %s" % command)
 
                 for password_combo in passwords:
-
                     app.get_custom_password(password_combo[0], password_combo[1])
 
 
