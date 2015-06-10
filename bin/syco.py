@@ -73,12 +73,14 @@ class Commands:
         func_list = {}
         arguments_list = {}
         help_list = {}
+        password_list = {}
 
         def __init__(self):
             self.name_list = {}
             self.func_list = {}
             self.arguments_list = {}
             self.help_list = {}
+            self.password_list = {}
 
     # Lists of all public and private commands
     commands = {"public": CommandList(), "private": CommandList}
@@ -89,7 +91,7 @@ class Commands:
     # The maximum char length of name + argument
     name_length = 0
 
-    def add(self, name, func, arguments="", help=""):
+    def add(self, name, func, arguments="", help="", password_list=[]):
         """
         Add a command that are able to be executed from the syco command line.
 
@@ -99,6 +101,7 @@ class Commands:
         self.commands[self.current_type].name_list[name] = name.lower()
         self.commands[self.current_type].func_list[name] = func
         self.commands[self.current_type].arguments_list[name] = arguments.strip("[]")
+        self.commands[self.current_type].password_list[name] = password_list
         if self.commands[self.current_type].arguments_list[name]:
             self.commands[self.current_type].arguments_list[name] = "{" + \
                 self.commands[self.current_type].arguments_list[name] + "}"
@@ -118,6 +121,17 @@ class Commands:
             self.commands["public"].func_list[command](args)
         elif command in self.commands["private"].name_list:
             self.commands["private"].func_list[command](args)
+        else:
+            app.parser.error('Unknown command %s' % command)
+
+    def get_command_passwords(self, command):
+        """
+        Get a list of all passwords registered with this command
+        """
+        if command in self.commands["public"].name_list:
+            return self.commands["public"].password_list[command]
+        elif command in self.commands["private"].name_list:
+            return self.commands["private"].password_list[command]
         else:
             app.parser.error('Unknown command %s' % command)
 
