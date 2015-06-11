@@ -61,7 +61,7 @@ def httpd_rotate():
 
     app.print_verbose("Adding httpd logrotate")
     x("mkdir /var/log/httpd/archive")
-    x("cp %s var/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
 
 def mysqld_rotate():
     if (not os.path.exists('/etc/init.d/mysqld')):
