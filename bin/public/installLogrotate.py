@@ -68,7 +68,7 @@ def mysqld_rotate():
        return
 
     app.print_verbose("Adding mysqld-slow logrotate")
-    x("cp %s var/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
 
 def auditd_rotate():
     if (not os.path.exists('/etc/init.d/auditd')):
