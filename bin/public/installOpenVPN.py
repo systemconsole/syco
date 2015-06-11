@@ -57,7 +57,6 @@ def copy_easy_rsa():
     download_file('https://github.com/OpenVPN/easy-rsa/archive/release/2.x.zip')
     x('unzip /opt/syco/installtemp/2.x.zip')
     x('mv /opt/syco/installtemp/easy-rsa-release-2.x/easy-rsa/2.0/ /etc/openvpn/easy-rsa')
-    #x('cp -R /usr/share/doc/openvpn-2.2.2/easy-rsa/2.0/ /etc/openvpn/easy-rsa')
     x('chmod 700 /etc/openvpn/easy-rsa/*')
 
     
@@ -103,7 +102,11 @@ def install_openvpn_server(args):
         scOpen(server_conf).replace('${CLIENT_ROUTES}', str(client_routes))
         scOpen(server_conf).replace('${CLIENT_TO_CLIENT}', c2c)
         scOpen(server_conf).replace('${DHCP_DNS_SERVERS}', _get_dhcp_dns_servers())
-        scOpen(server_conf).replace('*dh.*dh1024.pem}', 'dh4096.pem')
+        scOpen(server_conf).replace('^dh.*dh1024.pem', 'dh dh4096.pem')
+        scOpen(server_conf).add('\n')
+        scOpen(server_conf).add('tls-cipher DHE-RSA-AES256-SHA256')
+        scOpen(server_conf).add('thtls-cipher DHE-DSS-AES256-SHA256')
+
 
         # Prepare the ca cert generation.
         fn = "/etc/openvpn/easy-rsa/vars"
@@ -252,10 +255,10 @@ def build_client_certs(args):
 
     # Create client.conf
     clientConf = "/etc/openvpn/easy-rsa/keys/client.conf"
-    x("cp " + app.SYCO_PATH + "/var/openvpn/client.conf %s" % clientConf)
+    x("cp " + app.SYCO_PATH + "var/openvpn/client.conf %s" % clientConf)
     scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
 
-    x("cp " + app.SYCO_PATH + "/doc/openvpn/install.txt .")
+    #x("cp " + app.SYCO_PATH + "doc/openvpn/install.txt .")
 
     for user in os.listdir("/home"):
         cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
@@ -278,7 +281,7 @@ def build_client_certs(args):
             general.set_config_property("/etc/openvpn/easy-rsa/keys/client.conf", "^key.*key", "key " + user + ".key")
 
             os.chdir("/etc/openvpn/easy-rsa/keys")
-            x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf install.txt /etc/openvpn/ta.key")
+            x("zip /home/" + user +"/openvpn_client_keys.zip ca.crt " + user + ".crt " + user + ".key " + user + ".p12 client.conf /etc/openvpn/ta.key")
             # Set permission for the user who now owns the file.
             os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
             general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")
