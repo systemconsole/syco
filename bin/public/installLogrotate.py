@@ -51,6 +51,7 @@ def install_logrotate(args):
     httpd_rotate()
     mysqld_rotate()
     auditd_rotate()
+    install_SELinux()
 
     version_obj.mark_executed()
 
@@ -76,3 +77,16 @@ def auditd_rotate():
     app.print_verbose("Adding audit logrotate")
     x("mkdir /var/log/audit/archive")
     x("cp %s var/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
+    X("restorecon -r /etc/logrotate.d/audit")
+
+def install_SELinux():
+    '''
+    Install SELinux policies for logrotate of audit logs.
+    See .te files for policy details.
+    '''
+
+    # Create a local dir for SELinux modules
+    x("mkdir -p /var/lib/syco_selinux_modules/server")
+    module_path = "{0}var/logrotate/SELinux_modules".format(app.SYCO_PATH)
+    x("cp {0}/*.pp /var/lib/syco_selinux_modules/server".format(module_path))
+    x("semodule -i /var/lib/syco_selinux_modules/server/logrotate*.pp")
