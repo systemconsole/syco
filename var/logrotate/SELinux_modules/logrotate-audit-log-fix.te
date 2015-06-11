@@ -1,17 +1,12 @@
 
-module logrotatefix 1.0;
+module logrotate-audit-log-fix 1.0;
 
 require {
-	type keepalived_t;
 	type logrotate_t;
 	type auditd_log_t;
-	class dir { read write search add_name remove_name };
+	class dir { read write add_name remove_name };
 	class file { rename setattr read create ioctl write getattr unlink open };
 }
-
-#============= keepalived_t ==============
-allow keepalived_t logrotate_t:dir search;
-allow keepalived_t logrotate_t:file { read getattr open };
 
 #============= logrotate_t ==============
 #!!!! The source type 'logrotate_t' can write to a 'dir' of the following types:
