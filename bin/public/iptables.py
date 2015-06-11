@@ -159,6 +159,7 @@ def iptables_setup(args):
     setup_dns_resolver_rules()
     _setup_gpg_rules()
     setup_installation_server_rules()
+    setup_proxy_rules()
 
     add_service_chains()
 
@@ -387,6 +388,17 @@ def setup_installation_server_rules():
 
     # Need to have this, until all repos are on the installation server.
     iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
+
+
+def setup_proxy_rules():
+    """
+    Open access to proxy if it exists
+    """
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+
+    if proxy_host and proxy_port:
+        iptables("-A syco_output -p tcp -m multiport -d {0} --dports {1} -j allowed_tcp".format(proxy_host, proxy_port))
 
 
 def del_ntp_chain():
