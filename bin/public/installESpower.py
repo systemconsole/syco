@@ -24,7 +24,7 @@ import iptables
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
-CONF_SOURCE='var/'
+CONF_SOURCE=SYCO_PLUGIN_PATH = str(app.get_syco_plugin_paths("/var").next())
 
 def build_commands(commands):
     commands.add("install-espower", install_espower, help="Install power modules for elastcisearch install-espower logstash version")
@@ -97,16 +97,12 @@ def config_logstash():
 	1. First from syco-private
 	2. syco var defult config
 	''' 
-	#Remove old
 	
-	if  os.path.isdir('{0}logstash'.format(	)):
-		x('cp -r {0}logstash /etc/'.format(CONF_SOURCE))
-	else:
-		x('cp -r {0}var/logstash /etc/'.format(app.SYCO_PATH))
-
+	x('cp -r {0}logstash /etc/'.format(CONF_SOURCE))
+	
 	x('chown logstash:logstash -R /opt/logstash')
-	x('cp {0}var/logstash/start/shipper /etc/init.d/'.format(app.SYCO_PATH))
-	x('cp {0}var/logstash/start/index /etc/init.d/'.format(app.SYCO_PATH))
+	x('cp {0}logstash/start/shipper /etc/init.d/'.format(CONF_SOURCE))
+	x('cp {0}logstash/start/index /etc/init.d/'.format(CONF_SOURCE))
 	x('chmod 700 /etc/init.d/shipper')
 	x('chmod 700 /etc/init.d/index')
 	x('chkconfig --add shipper')
@@ -127,10 +123,9 @@ def config_rabbitmq():
 	x('rm -rf /etc/rabbitmq/ssl')
 
 	x('mkdir -p /etc/rabbitmq/ssl/private')
-	if  os.path.isdir('{0}rabbitmq'.format(CONF_SOURCE)):
-		x('openssl req -x509 -config {0}usr/syco-private/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(app.SYCO_PATH))
-	else:
-		x('openssl req -x509 -config {0}/var/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(app.SYCO_PATH))
+	
+
+	x('openssl req -x509 -config {0}/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(CONF_SOURCE))
 
 	x('openssl x509 -in /etc/rabbitmq/ssl/cacert.pem -out /etc/rabbitmq/ssl/cacert.cer -outform DER')
 	x('openssl genrsa -out /etc/rabbitmq/ssl/key.pem 4096')
@@ -138,15 +133,13 @@ def config_rabbitmq():
 	x('openssl req -new -key /etc/rabbitmq/ssl/key.pem -out /etc/rabbitmq/ssl/req.pem -outform PEM -subj /CN=$(hostname)/O=server/ -nodes')
 	x('touch /etc/rabbitmq/ssl/index.txt')
 	x('echo 01 > /etc/rabbitmq/ssl/serial')
-	if  os.path.isdir('{0}rabbitmq'.format(CONF_SOURCE)):
-		x('openssl ca -config {0}usr/syco-private/var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(app.SYCO_PATH))
-	else:
-		x('openssl ca -config {0}var/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(app.SYCO_PATH))
+
+	x('openssl ca -config {0}/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(CONF_SOURCE))
 	x('openssl pkcs12 -export -out /etc/rabbitmq/ssl/keycert.p12 -in /etc/rabbitmq/ssl/cert.pem -inkey /etc/rabbitmq/ssl/key.pem -passout pass:MySecretPassword')
 
 
 
-	x('cp -r %srabbitmq /etc/' %CONF_SOURCE)
+	x('cp -r {0}rabbitmq /etc/'.format(CONF_SOURCE))
 	
 	x('/etc/init.d/rabbitmq-server restart')
 	x('setsebool -P nis_enabled 1')
