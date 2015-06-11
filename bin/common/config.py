@@ -387,6 +387,12 @@ class Config(object):
             '''The ip of the ossec server.'''
             return self._get_service_ip("ossec")
 
+        def get_proxy_host(self):
+            return self.get_option("http.proxy.host")
+
+        def get_proxy_port(self):
+            return self.get_option("http.proxy.port")
+
         '''
         Get the IP of a service by:
         A) Looking for a general section property called <service-name>.server.ip
