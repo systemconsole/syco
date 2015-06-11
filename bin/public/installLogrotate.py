@@ -46,7 +46,7 @@ def install_logrotate(args):
     sc.replace('#compress', 'compress')
 
     x("mkdir /var/log/archive")
-    x("cp %s var/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
 
     httpd_rotate()
     mysqld_rotate()
