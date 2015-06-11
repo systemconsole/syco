@@ -76,8 +76,8 @@ def auditd_rotate():
 
     app.print_verbose("Adding audit logrotate")
     x("mkdir /var/log/audit/archive")
-    x("cp %s var/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
-    X("restorecon -r /etc/logrotate.d/audit")
+    x("cp %svar/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
+    x("restorecon -r /etc/logrotate.d/audit")
 
 def install_SELinux():
     '''
