@@ -10,13 +10,19 @@ REQUIREMENTS
 ============
 
 This file needs to be created, to do it possible for the mysql client to
-login to the mysql database without exposeing the mysql password on command
+login to the mysql database without exposing the mysql password on command
 line (ps aux) or in this script.
+
+NOTE: The environment variable $HOME must point to /root or the folder that contains
+      my.cnf for mysql client to be able to find the file. HOME for cron might be
+      something different.
 
 #/root/.my.cnf
 [client]
 user=backup
 password="<password>"
+
+Run this or similiar on the mysql server to grant backup user permissions to the database.
 
 grant RELOAD,SUPER,REPLICATION CLIENT on *.* TO 'backup'@'localhost' IDENTIFIED BY '<password>';
 
@@ -27,7 +33,7 @@ If you are going to use rsnapshot to create the backup, add the following lines
 to /etc/rsnapshot.conf. Remember to setup the ssh-keys.
 
 backup_script   /usr/bin/ssh root@example.com "/opt/syco/var/mysql/mysql-lvm-backup.py snapshot" unused0/
-backup          root@example.com:/mnt/mysqlbackup/                      			     	     example.com/
+backup          root@example.com:/mnt/mysqlbackup/                                               example.com/
 backup_script   /usr/bin/ssh root@example.com "/opt/syco/var/mysql/mysql-lvm-backup.py clean"    unused1/
 
 READ MORE
@@ -49,7 +55,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 # Folder where the snapshot will be mounted.
-backupMountPath="/mnt/mysqlbackup"
+backupMountPath = "/mnt/mysqlbackup"
 
 # Volgroup where the lvm Logical Volume are stored. (find with lvdisplay)
 # ie. VolGroup00 in /dev/VolGroup00/var
@@ -77,29 +83,26 @@ RESET = "\033[0;0m"
 OPTIONS = None
 ARGS = None
 
-def main():
-    '''
-    Starts the script.
 
-    '''
+def main():
+    """Starts the script."""
     check_requirements()
     set_global_options_and_args()
 
     # Handle the dynamic arguments from the command line.
-    commands = {'snapshot' : snapshot, 'clean': clean}
+    commands = {'snapshot': snapshot, 'clean': clean}
     command = ARGS[0].lower()
     if command in commands:
         commands[command]()
 
+
 def check_requirements():
-    if (not os.path.exists('/root/.my.cnf')):
+    if not os.path.exists('/root/.my.cnf'):
         raise Exception("Requires an /root/.my.cnf")
 
-def set_global_options_and_args():
-    '''
-    Set cmd line arguments in global vars OPTIONS and ARGS.
 
-    '''
+def set_global_options_and_args():
+    """Set cmd line arguments in global vars OPTIONS and ARGS."""
     global OPTIONS, ARGS
     parser = OptionParser(usage="usage: %prog {snapshot|clean}")
     (OPTIONS, ARGS) = parser.parse_args()
@@ -107,53 +110,51 @@ def set_global_options_and_args():
     if len(ARGS) != 1:
         parser.error("incorrect number of arguments")
 
-def snapshot():
-	'''
-	Flush mysql tables, do the snapshot and mount the snapshot.
 
-	'''
-	clean()
-	print "Do snapshot"
-	x("modprobe dm-snapshot")
-	x("""mysql -ubackup << EOF
+def snapshot():
+    """Flush mysql tables, do the snapshot and mount the snapshot."""
+    clean()
+    print "Do snapshot"
+    x("LANG=en date > /var/lib/mysql/snap_time")
+    x("chmod 666 /var/lib/mysql/snap_time")
+    x("modprobe dm-snapshot")
+    x("""mysql -ubackup << EOF
 flush tables;
 FLUSH TABLES WITH READ LOCK;
 system lvcreate -L%s -s -n %sbackup /dev/%s/%s
 SHOW MASTER STATUS;
 UNLOCK TABLES;
 EOF""" % (snapshotSize, lvName, vgName, lvName))
-	x("mkdir -p %s" % backupMountPath)
-	x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
-	x("chmod 777 -R " + backupMountPath)
+    x("mkdir -p %s" % backupMountPath)
+    x("mount /dev/%s/%sbackup %s" % (vgName, lvName, backupMountPath))
+    x("chmod 777 -R " + backupMountPath)
+
 
 def clean():
-	'''
-	Remove mounts and snapshots.
+    """Remove mounts and snapshots."""
+    print "Remove last snapshot."
 
-	'''
-	print "Remove last snapshot."
+    if os.path.ismount(backupMountPath):
+        x("umount %s" % backupMountPath)
 
-	if (os.path.ismount(backupMountPath)):
-		x("umount %s" % backupMountPath)
+    path = "/dev/%s/%sbackup" % (vgName, lvName)
+    if os.path.exists(path):
+        x("lvremove -f %s" % path)
 
-	backupPath = "/dev/%s/%sbackup" % (vgName, lvName)
-	if (os.path.exists(backupPath)):
-		x("lvremove -f %s" % backupPath)
 
 def x(cmd):
-    '''
-    Execute the shell command CMD.
-
-    '''
+    """Execute the shell command CMD."""
     print(BOLD + "Command: " + RESET + cmd)
 
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     (stdout, stderr) = p.communicate()
-    (stdout, stderr, p.pid)
-    if (stdout):
+    if stdout:
         print(stdout)
-    if (stderr):
+    if stderr:
         print(stderr)
+
 
 if __name__ == "__main__":
     main()

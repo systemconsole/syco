@@ -24,7 +24,7 @@ import iptables
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
-CONF_SOURCE=SYCO_PLUGIN_PATH = str(app.get_syco_plugin_paths("/var").next())
+CONF_SOURCE= str(app.get_syco_plugin_paths("/var").next())
 
 def build_commands(commands):
     commands.add("install-espower", install_espower, help="Install power modules for elastcisearch install-espower logstash version")
@@ -98,11 +98,11 @@ def config_logstash():
 	2. syco var defult config
 	''' 
 	
-	x('cp -r {0}logstash /etc/'.format(CONF_SOURCE))
+	x('cp -r {0}/logstash /etc/'.format(CONF_SOURCE))
 	
 	x('chown logstash:logstash -R /opt/logstash')
-	x('cp {0}logstash/start/shipper /etc/init.d/'.format(CONF_SOURCE))
-	x('cp {0}logstash/start/index /etc/init.d/'.format(CONF_SOURCE))
+	x('cp {0}/logstash/start/shipper /etc/init.d/'.format(CONF_SOURCE))
+	x('cp {0}/logstash/start/index /etc/init.d/'.format(CONF_SOURCE))
 	x('chmod 700 /etc/init.d/shipper')
 	x('chmod 700 /etc/init.d/index')
 	x('chkconfig --add shipper')
@@ -139,7 +139,7 @@ def config_rabbitmq():
 
 
 
-	x('cp -r {0}rabbitmq /etc/'.format(CONF_SOURCE))
+	x('cp -r {0}/rabbitmq /etc/'.format(CONF_SOURCE))
 	
 	x('/etc/init.d/rabbitmq-server restart')
 	x('setsebool -P nis_enabled 1')

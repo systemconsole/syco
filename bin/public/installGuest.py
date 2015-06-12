@@ -107,7 +107,10 @@ def _install_guest(guest_name):
   # + 1 because it looks like the guest os needs a little bit more space
   # than it uses inside the guest. Could proably be optimized, and lowered
   # maybe just a few MB..
-  devicename = disk.create_lvm_volumegroup(guest_name, int(config.host(guest_name).get_total_disk_gb()) + 1 )
+  disk.create_lvm_volumegroup(
+      guest_name,
+      int(config.host(guest_name).get_total_disk_gb()) + 1,
+      config.host(guest_name).get_vol_group())
 
   x(
     "koan --server=" + config.general.get_installation_server_ip() +

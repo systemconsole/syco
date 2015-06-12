@@ -249,29 +249,17 @@ def _copy_conf(file_ext, to_folder, active_dc):
             zone files. That might fuck up the installation.
 
     '''
-    bind_config_subdir = config.host(config.general.get_resolv_nameserver_server()).get_bind_conf_subdir()
+    bind_config_subdir = config.host(config.general.get_nameserver_server()).get_bind_conf_subdir()
     if len(bind_config_subdir) > 0 and not bind_config_subdir.startswith('/'):
         bind_config_subdir = "/" + bind_config_subdir
 
     app.print_verbose("\nCopy config/zone files from all syco plugin modules into a named folder.")
-    for plugin_path in get_syco_plugin_paths():
+    for plugin_path in app.get_syco_plugin_paths("/var/dns"):
         for zone_fn in os.listdir(plugin_path + bind_config_subdir):
             if zone_fn.endswith(file_ext):
                 app.print_verbose("\nConfigure file {0}".format(zone_fn))
                 x("cp {0}/{1} {2}".format(plugin_path + bind_config_subdir, zone_fn, to_folder))
                 _replace_tags("{0}{1}".format(to_folder, zone_fn), active_dc)
-
-
-def get_syco_plugin_paths():
-    '''
-    Generator of fullpath to all syco plugins /var/dns folder.
-
-    '''
-    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
-        for plugin in os.listdir(app.SYCO_USR_PATH):
-            plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/var/dns/")
-            if (os.access(plugin_path, os.F_OK)):
-                yield plugin_path
 
 
 def _replace_tags(filename, active_dc):
@@ -316,19 +304,19 @@ def install_bind_client(args):
 
     # Iptables is already configured with iptables._setup_dns_resolver_rules
 
-    general.wait_for_server_to_start(config.general.get_resolv_nameserver_server_ip(), "53")
+    general.wait_for_server_to_start(config.general.get_nameserver_server_ip(), "53")
 
     # Set what resolver to use (this will be rewritten by networkmanager at
     # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
-    resolv.add("nameserver {0} ".format(config.general.get_resolv_nameserver_server_ip()))
+    resolv.add("nameserver {0} ".format(config.general.get_nameserver_server_ip()))
 
     # Change config files for networkmanager.
     x("""
         grep -irl dns ifcfg*|xargs \
         sed -i 's/.*\(dns.*\)[=].*/\\1={0}/ig'""".format(
-            config.general.get_resolv_nameserver_server_ip()
+            config.general.get_nameserver_server_ip()
         ), cwd = "/etc/sysconfig/network-scripts"
     )
 
