@@ -59,6 +59,23 @@ def copy_easy_rsa():
     x('mv /opt/syco/installtemp/easy-rsa-release-2.x/easy-rsa/2.0/ /etc/openvpn/easy-rsa')
     x('chmod 700 /etc/openvpn/easy-rsa/*')
 
+
+
+def build_openvpn(args):
+    '''
+    Download and build openvpn
+    '''
+    x('yum install openssl-devel lzo-devel pam-devel')
+    os.chdir('/opt')
+    x('wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.7.tar.gz')
+    x('tar zxvf openvpn-2.3.7.tar.gz')
+    x('mv /opt/openvpn-2.3.7 /opt/openvpn')
+    os.chdir('/opt/openvpn')
+    x('./configure')
+    x('make')
+    x('make install')
+    x('mv /usr/sbin/openvpn /usr/sbin/openvpn_old')
+
     
 def install_openvpn_server(args):
     '''
@@ -71,7 +88,10 @@ def install_openvpn_server(args):
 
     # Initialize all passwords
     enable_ldap = config.general.get_option("openvpn.ldap.enable", "false")
-    x("yum -y install openvpn")
+    build_openvpn(args)
+    x('mkdir /etc/openvpn')
+    x('')
+    #x("yum -y install openvpn")
 
     if enable_ldap:
         app.get_ldap_sssd_password()
@@ -86,7 +106,7 @@ def install_openvpn_server(args):
         x("cp " + app.SYCO_PATH + "/var/openvpn/server.conf %s" % server_conf)
         scOpen(server_conf).replace('${EXTERN_IP}',  net.get_public_ip())
         scOpen(server_conf).replace('${OPENVPN_NETWORK}',  config.general.get_openvpn_network())
-        #scOpen(server_conf).replace('${PUSH_ROUTES}',  _get_push_routes())
+        scOpen(server_conf).replace('${PUSH_ROUTES}',  _get_push_routes())
 
         ccd_enabled = config.general.get_option("openvpn.ccd.enable", "false").lower()
         ccd_dir = ""
@@ -97,6 +117,7 @@ def install_openvpn_server(args):
             ccd_dir = "client-config-dir ccd"
             client_routes = _get_client_routes()
             c2c = "client-to-client"
+            x('mkdir /etc/openvpn/ccd')
 
         scOpen(server_conf).replace('${CCD_DIR}', ccd_dir)
         scOpen(server_conf).replace('${CLIENT_ROUTES}', str(client_routes))
@@ -104,8 +125,8 @@ def install_openvpn_server(args):
         scOpen(server_conf).replace('${DHCP_DNS_SERVERS}', _get_dhcp_dns_servers())
         scOpen(server_conf).replace('^dh.*dh1024.pem', 'dh dh4096.pem')
         scOpen(server_conf).add('\n')
-        scOpen(server_conf).add('tls-cipher DHE-RSA-AES256-SHA256')
-        scOpen(server_conf).add('thtls-cipher DHE-DSS-AES256-SHA256')
+        scOpen(server_conf).add('tls-version-min 1.2')
+
 
 
         # Prepare the ca cert generation.
@@ -130,7 +151,7 @@ def install_openvpn_server(args):
 
         #Generation TLS key
         os.chdir("/etc/openvpn/")
-        x("openvpn --genkey --secret ta.key")
+        x("/usr/local/sbin/openvpn --genkey --secret ta.key")
 
         # To prevent error "TXT_DB error number 2" when running ./build-key-pkcs12 --batch xxx"
         scOpen("/etc/openvpn/easy-rsa/keys/index.txt.attr").replace("unique_subject.*", "unique_subject = no")
