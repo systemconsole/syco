@@ -67,9 +67,9 @@ def build_openvpn(args):
     '''
     x('yum install openssl-devel lzo-devel pam-devel')
     os.chdir('/opt')
-    x('wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.7.tar.gz')
-    x('tar zxvf openvpn-2.3.7.tar.gz')
-    x('mv /opt/openvpn-2.3.7 /opt/openvpn')
+    x('wget https://swupdate.openvpn.org/community/releases/openvpn-{0}.tar.gz'.format(args[1]))
+    x('tar zxvf openvpn-{0}.tar.gz'.format(args[1]))
+    x('mv /opt/openvpn-{0} /opt/openvpn'.format(args[1]))
     os.chdir('/opt/openvpn')
     x('./configure')
     x('make')
@@ -85,6 +85,9 @@ def install_openvpn_server(args):
     app.print_verbose("Install openvpn server version: %d" % SCRIPT_VERSION)
     version_obj = version.Version("InstallOpenvpnServer", SCRIPT_VERSION)
     version_obj.check_executed()
+
+    if len(args) != 2:
+        raise Exception("syco install-openvpn-server 2.3.7")
 
     # Initialize all passwords
     enable_ldap = config.general.get_option("openvpn.ldap.enable", "false")
