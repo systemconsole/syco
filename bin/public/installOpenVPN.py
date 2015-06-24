@@ -93,8 +93,7 @@ def install_openvpn_server(args):
     enable_ldap = config.general.get_option("openvpn.ldap.enable", "false")
     build_openvpn(args)
     x('mkdir /etc/openvpn')
-    x('')
-    #x("yum -y install openvpn")
+
 
     if enable_ldap:
         app.get_ldap_sssd_password()
@@ -165,8 +164,8 @@ def install_openvpn_server(args):
     if enable_ldap:
         _setup_ldap()
 
-    #iptables.add_openvpn_chain()
-    #iptables.save()
+    iptables.add_openvpn_chain()
+    iptables.save()
 
     x("/etc/init.d/openvpn restart")
     x("/sbin/chkconfig openvpn on")
@@ -282,7 +281,6 @@ def build_client_certs(args):
     x("cp " + app.SYCO_PATH + "var/openvpn/client.conf %s" % clientConf)
     scOpen(clientConf).replace('${OPENVPN.HOSTNAME}',  config.general.get_openvpn_hostname())
 
-    #x("cp " + app.SYCO_PATH + "doc/openvpn/install.txt .")
 
     for user in os.listdir("/home"):
         cert_already_installed=os.access("/home/" + user +"/openvpn_client_keys.zip", os.F_OK)
