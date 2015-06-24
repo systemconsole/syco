@@ -46,11 +46,12 @@ def install_logrotate(args):
     sc.replace('#compress', 'compress')
 
     x("mkdir /var/log/archive")
-    x("cp %s var/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
 
     httpd_rotate()
     mysqld_rotate()
     auditd_rotate()
+    install_SELinux()
 
     version_obj.mark_executed()
 
@@ -60,14 +61,14 @@ def httpd_rotate():
 
     app.print_verbose("Adding httpd logrotate")
     x("mkdir /var/log/httpd/archive")
-    x("cp %s var/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
 
 def mysqld_rotate():
     if (not os.path.exists('/etc/init.d/mysqld')):
        return
 
     app.print_verbose("Adding mysqld-slow logrotate")
-    x("cp %s var/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
 
 def auditd_rotate():
     if (not os.path.exists('/etc/init.d/auditd')):
@@ -75,4 +76,17 @@ def auditd_rotate():
 
     app.print_verbose("Adding audit logrotate")
     x("mkdir /var/log/audit/archive")
-    x("cp %s var/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
+    x("cp %svar/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
+    x("restorecon -r /etc/logrotate.d/audit")
+
+def install_SELinux():
+    '''
+    Install SELinux policies for logrotate of audit logs.
+    See .te files for policy details.
+    '''
+
+    # Create a local dir for SELinux modules
+    x("mkdir -p /var/lib/syco_selinux_modules/server")
+    module_path = "{0}var/logrotate/SELinux_modules".format(app.SYCO_PATH)
+    x("cp {0}/*.pp /var/lib/syco_selinux_modules/server".format(module_path))
+    x("semodule -i /var/lib/syco_selinux_modules/server/logrotate*.pp")

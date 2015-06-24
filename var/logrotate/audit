@@ -1,12 +1,13 @@
-/var/log/audit/audit.log.*
+/var/log/audit/audit.log.[2-9]
+/var/log/audit/audit.log.[0-9][0-9]
+/var/log/audit/audit.log.[0-9][0-9][0-9]
 {
-	rotate 10
-	size 100M
-    compress
-    notifempty
-    missingok
-    prerotate
-		bash -c "[[ ! $1 =~ audit.log.1 ]]"
-	endscript
-	olddir /var/log/audit/archive
+rotate 50
+size 0M
+compress
+ifempty
+nocreate
+nodateext
+missingok
+olddir /var/log/audit/archive
 }
