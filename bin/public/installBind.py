@@ -294,10 +294,10 @@ def _set_permissions():
 
 
 def install_bind_client(args):
-    '''
+    """
     Setup current server to use syco dns server as recursive name server.
 
-    '''
+    """
     app.print_verbose("Install bind client.")
     version_obj = version.Version("InstallBindClient", SCRIPT_VERSION)
     version_obj.check_executed()
@@ -310,7 +310,8 @@ def install_bind_client(args):
     # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
-    resolv.add("nameserver {0} ".format(config.general.get_nameserver_server_ip()))
+    for ip in config.general.get_nameserver_server_ips(prefer_back_net=True):
+        resolv.add("nameserver {0} ".format(ip))
 
     # Change config files for networkmanager.
     x("""
