@@ -230,7 +230,7 @@ class Config(object):
             '''ip list of dns resolvers inside the syco net that are configured on all servers. TODO get_back_dns_resolver_ip'''
             return str(self.get_back_resolver_ip())
 
-        def get_dns_resolvers(self):
+        def get_dns_resolvers(self, prefer_back_net=False):
             """
             Ip list of all dns resolvers that are configured on all servers.
 
@@ -242,8 +242,8 @@ class Config(object):
             if self.is_back_enabled() and self.get_back_resolver_ip():
                 resolvers.append(self.get_back_resolver_ip())
 
-            if self.get_nameserver_server_ip():
-                resolvers.append(self.get_nameserver_server_ip())
+            if self.get_nameserver_server_ips():
+                resolvers.extend(self.get_nameserver_server_ips(prefer_back_net=prefer_back_net))
 
             return _remove_duplicates_from_list(resolvers)
 
@@ -260,12 +260,16 @@ class Config(object):
         def get_nameserver_server(self):
             return self.get_option("nameserver.server")
 
-        def get_nameserver_server_ip(self):
+        def get_nameserver_server_ip(self, prefer_back_net=False):
 
-            return self._get_service_ip("nameserver")
+            return self.get_nameserver_server_ips(prefer_back_net=prefer_back_net).next()
+
+        def get_nameserver_server_ips(self, prefer_back_net=False):
+
+            return self._get_service_ips("nameserver", prefer_back_net=prefer_back_net)
 
         def get_ldap_server(self):
-            '''The hostname of the ldap server.'''
+            """The hostname of the ldap server."""
             return self.get_option("ldap.server")
 
         def get_ldap_server_ip(self):
@@ -393,25 +397,44 @@ class Config(object):
         def get_proxy_port(self):
             return self.get_option("http.proxy.port")
 
-        '''
-        Get the IP of a service by:
-        A) Looking for a general section property called <service-name>.server.ip
-        B) Finding front-net IP by host name which is retrieved through a function in this class called: get_<service>_server()
-        '''
-        def _get_service_ip(self, service_name):
+        def _get_service_ip(self, service_name, prefer_back_net=False):
+            """
+            Get the IP of a service by:
+            A) Looking for a general section property called <service-name>.server.ip
+            B) Finding front-net (or back-net if specified) IP by host name which is
+            retrieved through a function in this class called: get_<service>_server()
+            """
 
             service_ip = self.get_option(service_name + ".server.ip", "")
 
             if service_ip == "":
-                '''If IP is not configured, try to get IP from guest configuration for this host'''
+                """If IP is not configured, try to get IP from guest configuration for this host"""
                 hostname_method = getattr(self, "get_" + service_name + "_server")
                 try:
                     service_host_name = hostname_method()
-                    service_ip = self.host(service_host_name).get_front_ip()
+                    if prefer_back_net and self.is_back_enabled():
+                        service_ip = self.host(service_host_name).get_back_ip()
+                    else:
+                        service_ip = self.host(service_host_name).get_front_ip()
                 except:
                     pass
 
             return service_ip
+
+        '''
+        Get a list of IPs of a service by:
+        A) Looking for a general section property called <service-name>.server.ips
+        B) Includes results from _get_service_ip() if <service-name>.server.ips does not exist
+        '''
+        def _get_service_ips(self, service_name, prefer_back_net=False):
+
+            #Get IPs, split on comma (,) and strip away any whitespace
+            service_ips = map(str.strip, self.get_option(service_name + ".server.ips", "").split(","))
+            #Fall back to finding one IP
+            if not service_ips:
+                service_ips = [self._get_service_ip(service_name, prefer_back_net)]
+
+            return service_ips
 
     class HostConfig(SycoConfig):
         '''

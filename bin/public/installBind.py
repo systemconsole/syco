@@ -310,7 +310,8 @@ def install_bind_client(args):
     # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
-    resolv.add("nameserver {0} ".format(config.general.get_nameserver_server_ip()))
+    for ip in config.general.get_nameserver_server_ip(prefer_back_net=True):
+        resolv.add("nameserver {0} ".format(ip))
 
     # Change config files for networkmanager.
     x("""
