@@ -262,7 +262,7 @@ class Config(object):
 
         def get_nameserver_server_ip(self, prefer_back_net=False):
 
-            return self.get_nameserver_server_ips(prefer_back_net=prefer_back_net).next()
+            return iter(self.get_nameserver_server_ips(prefer_back_net=prefer_back_net)).next()
 
         def get_nameserver_server_ips(self, prefer_back_net=False):
 
