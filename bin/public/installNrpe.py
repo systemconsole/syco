@@ -171,6 +171,9 @@ def _install_nrpe_plugins_dependencies():
     # Dependency for check_ldap
     x("yum install -y php-ldap php-cli")
 
+    # Dependency for check_iostat
+    x("yum install -y sysstat")
+
     # Dependency for hosts/firewall hardware checks
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
