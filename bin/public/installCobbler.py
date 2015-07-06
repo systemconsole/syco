@@ -179,7 +179,7 @@ def _modify_cobbler_settings():
   shutil.copyfile(app.SYCO_PATH + "/var/dhcp/dhcp.template", "/etc/cobbler/dhcp.template")
 
   # Config crontab to update repo automagically
-  general.set_config_property2("/etc/crontab", "01 4 * * * syco install-cobbler-repo")
+  general.set_config_property2("/etc/crontab", "01 4 * * *  root       syco install-cobbler-refresh")
 
   # Set apache servername
   general.set_config_property("/etc/httpd/conf/httpd.conf", "#ServerName www.example.com:80", "ServerName " + config.general.get_installation_server() + ":80")

@@ -114,6 +114,13 @@ def _install_nrpe_plugins():
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
     nrpe_config.replace("$(LDAPURL)", config.general.get_ldap_hostname())
 
+    # Set name of main disk
+    host_config = config.host(net.get_hostname())
+    if host_config.is_guest():
+        nrpe_config.replace("${MAINDISK}", "vda")
+    elif host_config.is_firewall() or host_config.is_host():
+        nrpe_config.replace("${MAINDISK}", "sda")
+
     # Change ownership of plugins to nrpe (from icinga/nagios)
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
@@ -170,6 +177,9 @@ def _install_nrpe_plugins_dependencies():
 
     # Dependency for check_ldap
     x("yum install -y php-ldap php-cli")
+
+    # Dependency for check_iostat
+    x("yum install -y sysstat")
 
     # Dependency for hosts/firewall hardware checks
     host_config_object = config.host(net.get_hostname())
