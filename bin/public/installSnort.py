@@ -33,20 +33,22 @@ import config
 import general
 import version
 
-SNORT_FILENAME="snort-2.9.4.tar.gz"
-SNORT_URL="http://www.snort.org/downloads/2112"
-SNORT_MD5="e79ee6b4fbb32edc5dfed2d7dfcc6813"
 
-DAQ_FILENAME="daq-2.0.0.tar.gz"
-DAQ_URL="http://www.snort.org/downloads/2103"
-DAQ_MD5="a00855a153647df76d47f1ea454f74ae"
+SNORT_FILENAME="snort-2.9.7.3.tar.gz"
+SNORT_URL="https://snort.org/downloads/snort/snort-2.9.7.3.tar.gz"
+SNORT_MD5="839e648607fd32726b2f7965134bf0a4"
+
+DAQ_FILENAME="daq-2.0.5.tar.gz"
+DAQ_URL="https://snort.org/downloads/snort/daq-2.0.5.tar.gz"
+DAQ_MD5="75c00d23f9536bc8da419375f38222cb"
 
 LIBNET_FILENAME="libnet-1.12.tgz"
 LIBNET_URL="https://libdnet.googlecode.com/files/libdnet-1.12.tgz"
 LIBNET_MD5="9253ef6de1b5e28e9c9a62b882e44cc9"
 
-RULE_FILENAME="snortrules-snapshot-2931.tar.gz"
-RULE_MD5="1254317ba5c51a6b8f2b5ba711eecfeb"
+RULE_FILENAME="snortrules-snapshot-2973.tar.gz"
+RULE_URL="http://packages.fareoffice.com/snort/snortrules-snapshot-2973.tar.gz"
+RULE_MD5="16fdd3b29ecdcaba4444e19d05ddb9a4"
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -69,15 +71,10 @@ def download():
 
     """
 
-    installation_server = config.general.get_installation_server()
-
-    rule_url = "http://{0}/files/{1}".format(
-        installation_server, RULE_FILENAME)
-
     general.download_file(SNORT_URL, SNORT_FILENAME, md5=SNORT_MD5)
     general.download_file(DAQ_URL, DAQ_FILENAME, md5=DAQ_MD5)
     general.download_file(LIBNET_URL, LIBNET_FILENAME, md5=LIBNET_MD5)
-    general.download_file(rule_url, RULE_FILENAME, md5=RULE_MD5)
+    general.download_file(RULE_URL, RULE_FILENAME, md5=RULE_MD5)
 
 
 def install_snort(args):
