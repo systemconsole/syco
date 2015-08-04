@@ -49,7 +49,8 @@ SCRIPT_VERSION = 3
 
 def build_commands(commands):
     commands.add("iptables-clear", iptables_clear, help="Clear all iptables rules.")
-    commands.add("iptables-setup", iptables_setup, help="Setup an iptable firewall, customized for installed services.")
+    commands.add("iptables-setup", iptables_setup, help="Setup an iptables firewall, customized for installed "
+                                                        "services.")
 
 
 def iptables(args, output = True):
