@@ -64,6 +64,14 @@ class Config(object):
 
         return sorted(hosts)
 
+    def get_general_fw_config(self):
+        conf_dict = {}
+        for option in self.general.options("fw"):
+            conf_dict[option] = self.general.get("fw", option)
+
+        return conf_dict
+
+
     def get_servers(self):
         '''
         A list of all servers that are defined in install.cfg.
@@ -127,6 +135,7 @@ class Config(object):
             Get an option from the install.cfg file.
 
             '''
+
             value = None
 
             if (self.has_section(section)):
@@ -392,10 +401,10 @@ class Config(object):
             return self._get_service_ip("ossec")
 
         def get_proxy_host(self):
-            return self.get_option("http.proxy.host")
+            return self.get_option("http.proxy.host", "")
 
         def get_proxy_port(self):
-            return self.get_option("http.proxy.port")
+            return self.get_option("http.proxy.port", "")
 
         def _get_service_ip(self, service_name, prefer_back_net=False):
             """
