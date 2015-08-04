@@ -10,7 +10,7 @@ __maintainer__ = "Daniel Lindh"
 __email__ = "syco@cybercow.se"
 __credits__ = ["???"]
 __license__ = "???"
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __status__ = "Production"
 
 import os
@@ -22,7 +22,7 @@ from constant import BOLD, RESET
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
 
 
 def epel_repo():
@@ -51,19 +51,36 @@ def rforge_repo():
     if not is_rpm_installed(package):
         _yum_protect_base()
 
-
         # Install DAG's GPG key
         x("rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt")
 
         # Verify the package you have downloaded
-        # Security warning: The rpmforge-release package imports GPG keys into your RPM
-        # database. As long as you have verified the md5sum of the key injection package,
-        # and trust Dag, et al., then it should be as safe as your trust of them extends.
+        # Security warning: The rpmforge-release package imports GPG keys into
+        # your RPM database. As long as you have verified the md5sum of the key
+        # injection package, and trust Dag, et al., then it should be as safe
+        # as your trust of them extends.
         if "(sha1) dsa sha1 md5 gpg OK" not in x("rpm -K %s" % fn):
             raise Exception("Invalid checksum for package %s." % fn)
 
         # Download rpmforge packages.
         rpm(package, fn)
+
+
+def hp_repo():
+    """Install HPs Software Delivery Repository Repo"""
+    x("rpm --import http://downloads.linux.hp.com/SDR/hpPublicKey1024.pub")
+    x("rpm --import http://downloads.linux.hp.com/SDR/hpPublicKey2048.pub")
+    x("rpm --import http://downloads.linux.hp.com/SDR/hpPublicKey2048_key1.pub")
+
+    x("""cat > /etc/yum.repos.d/hp.repo << EOF
+[HP-Proliant]
+name=Software Delivery Repository \$releasever - \$basearch
+baseurl=https://downloads.linux.hp.com/SDR/repo/spp/rhel/\$releasever/\$basearch/current/
+enabled=1
+gpgcheck=0
+gpgkey=https://downloads.linux.hp.com/SDR/repo/spp/GPG-KEY-SPP
+EOF""")
+
 
 
 def atomic_repo():

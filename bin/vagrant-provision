@@ -13,6 +13,12 @@ echo "Bootstrap vagrant box"
 echo
 
 
+#
+echo "Override the hostname to vagrant-centos6"
+sed "s/HOSTNAME.*/HOSTNAME=vagrant-centos6/g" /etc/sysconfig/network
+hostname vagrant-centos6
+
+
 # The vagrant virtual box uses DHCP, this ensures that the box resolves
 # dns with google dns.
 #
@@ -36,6 +42,7 @@ yum install pexpect python-crypto -y
 #
 echo
 echo
+rm -f /opt/syco/etc/version.cfg 2> /dev/null
 rm -f /opt/syco/etc/general.cfg 2> /dev/null
 rm -f /opt/syco/etc/install.cfg 2> /dev/null
 rm -f /opt/syco/etc/passwordstore 2> /dev/null
