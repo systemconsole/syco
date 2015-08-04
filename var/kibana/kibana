@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+#
+#
+# Start Kibana
+#
+# chkconfig: 345 70 30
+# description: Kibana
+# processname: Kibana
+
+. /etc/init.d/functions
+
+RETVAL=0
+prog="index"
+LOCKFILE=/var/lock/subsys/$prog
+
+
+
+start() {
+        echo -n "Starting $prog: "
+        daemon /var/www/kibana/bin/kibana &
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch $LOCKFILE
+        echo
+        return $RETVAL
+}
+
+stop() {
+        echo -n "Shutting down $prog: "
+        echo -n "Dont work find and kill pid"
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
+        echo
+        return $RETVAL
+}
+
+status() {
+        echo -n "Checking $prog status: "
+        ps aux | grep kibana
+        RETVAL=$?
+        return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        stop
+        ;;
+    *)
+        echo "Usage: $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $RETVAL 
