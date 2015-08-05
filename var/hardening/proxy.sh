@@ -5,5 +5,7 @@ echo "Proxy username:"
 read -e username
 echo "password:"
 read -es password
-export http_proxy="http://$username:$password@10.100.10.17:3128/"
+proxyhost=$(grep http.proxy.host /opt/syco/etc/general.cfg |cut -c18-32)
+proxyport=$(grep http.proxy.port /opt/syco/etc/general.cfg |cut -c18-22)
+export http_proxy="http://$username:$password@$proxyhost:$proxyport/"
 }
