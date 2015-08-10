@@ -41,6 +41,7 @@ from hardening.permissions import setup_permissions
 from hardening.service import disable_services
 
 from hardening.ssh import setup_ssh
+from hardening.proxy import install_proxy_setup
 
 
 # The version of this module, used to prevent the same script version to be
@@ -71,6 +72,7 @@ def harden(args):
     harden_password()
     setup_permissions()
     disable_services()
+    install_proxy_setup()
 
     version_obj.mark_executed()
 
