@@ -59,7 +59,7 @@ def install_kibana(args):
 
 
 
-def uninstall-kibana(args):
+def uninstall_kibana(args):
 	'''
 	Uninstall kibana from server
 	'''
