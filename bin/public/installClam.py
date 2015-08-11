@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
 Installs clam antivirus
 
 Read more:
   http://wiki.mattrude.com/ClamAV
 
-'''
+"""
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -18,13 +18,15 @@ __status__ = "Production"
 
 
 # Path to clam installation.
-CLAM_AV_URL="http://sourceforge.net/projects/clamav/files/clamav/{0}/clamav-{0}.tar.gz/download?use_mirror=heanet"
+CLAM_AV_URL = "http://sourceforge.net/projects/clamav/files/clamav/{0}/clamav-{0}.tar.gz/download?use_mirror=heanet"
 
 import app
 from general import x, urlretrive
 import config
 from scopen import scOpen
 import version
+import os.path
+from augeas import Augeas
 
 
 # The version of this module, used to prevent
@@ -55,16 +57,18 @@ def install_clam(args):
 
     version_obj.mark_executed()
 
+
 def check_arguments(args):
 
-    if (len(args) != 2):
+    if len(args) != 2:
         raise Exception("Invalid arguments. syco install-clam-client [version]")
 
+
 def is_user_installed(username):
-    '''
+    """
     Check if linux user is installed.
 
-    '''
+    """
     for line in open("/etc/passwd"):
         if username in line:
             return True
@@ -130,10 +134,9 @@ def download_and_install(clam_version):
     #
     # Remove packages needed for compilation.
     #
-    x
-    (
+    x(
         "yum remove zlib-devel bzip2-devel ncurses-devel " +
-        "gcc make cloog-ppl cpp glibc-devel glibc-headers kernel-headers "+
+        "gcc make cloog-ppl cpp glibc-devel glibc-headers kernel-headers " +
         "libgomp mpfr ppl gcc-c++ libstdc++-devel"
     )
 
@@ -173,6 +176,24 @@ def setup_clam_and_freshclam():
     freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
     freshclam.replace("^[#]\?DatabaseDirectory.*", "DatabaseDirectory /var/lib/clamav")
 
+    #TODO: Change replace statements above to augeas since that tends to be more stable.
+    app.print_verbose("  Install augeas and add clam lens that is not available on CentOS 6")
+    x("yum install -y augeas")
+    x("cp %s/augeas/lenses/clamav.aug /usr/share/augeas/lenses/dist/" % app.SYCO_VAR_PATH)
+
+    #Help augeas find freshclam.conf
+    if not os.path.exists("/etc/freshclam.conf"):
+        x("ln -s /usr/local/etc/freshclam.conf /etc/")
+
+    #Initialize augeas
+    augeas = Augeas(x)
+
+    if config.general.get_proxy_host() and config.general.get_proxy_port():
+        app.print_verbose("  Configure proxy for freshclam")
+        augeas.set_enhanced("/files/etc/freshclam.conf/HTTPProxyPort", "%s" % config.general.get_proxy_port())
+        augeas.set_enhanced("/files/etc/freshclam.conf/HTTPProxyServer", "%s" % config.general.get_proxy_host())
+
+
 def setup_crontab():
     #
     # Setup crontab
@@ -185,7 +206,6 @@ def setup_crontab():
 
     # https://redmine.fareoffice.com/issues/61041
     x("/bin/chmod 0755 /etc/cron.daily/viruscan.sh")
-
 
 
 def setup_autostart_and_start():
