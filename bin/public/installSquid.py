@@ -29,8 +29,7 @@ import version
 import scopen
 import fcntl
 import struct
-import sys
-import re
+import net
 
 script_version = 1
 
@@ -65,6 +64,7 @@ def install_squid(args):
 
     version_obj.mark_executed()
 
+
 def _configure_squid():
     x("rm -rf /etc/squid/*")
     x("cp %s/*.conf %s" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
@@ -73,10 +73,18 @@ def _configure_squid():
     x("cp %s/acl/* %sacl/" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
     x("cp %s/services/* %sservices/" % (SYCO_PLUGIN_PATH, SQUID_CONF_DIR))
 
-    scopen.scOpen(SQUID_CONF_DIR + "squid.conf").replace("${ENV_IP}", get_ip_address('eth0'))
+    env_ip = config.host(net.get_hostname()).get_front_ip()
+    if config.general.is_back_enabled():
+        #prefer backnet if enabled
+        env_ip = config.host(net.get_hostname()).get_back_ip()
 
-    _chkconfig("squid","on")
-    _service("squid","restart")
+    scopen.scOpen(SQUID_CONF_DIR + "squid.conf").replace("${ENV_IP}", env_ip)
+    #Some setups require the front IP as well
+    scopen.scOpen(SQUID_CONF_DIR + "squid.conf").replace("${FRONT_IP}", config.host(net.get_hostname()).get_front_ip())
+
+    _chkconfig("squid", "on")
+    _service("squid", "restart")
+
 
 def _configure_iptables():
     '''
