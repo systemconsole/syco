@@ -15,6 +15,13 @@ class Augeas:
     def __init__(self, execute_function):
         self.execute_function = execute_function
 
+    def has_value(self, path, expected_value):
+        values = self.find_values(path)
+        for value in values:
+            if value == expected_value:
+                return True
+        return False
+
     def ins(self, path):
         return self._execute("augtool ins %s" % path)
 
