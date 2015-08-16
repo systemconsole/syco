@@ -1,8 +1,8 @@
 /var/log/httpd/*.log
 /var/log/modsec_audit.log
 {
-	rotate 10
-	size 100M
+    rotate 10
+    size 100M
     missingok
     notifempty
     sharedscripts
@@ -10,5 +10,5 @@
     postrotate
         /sbin/service httpd reload > /dev/null 2>/dev/null || true
     endscript
-    olddir /var/httpd/archive
+    olddir /var/log/httpd/archive
 }
