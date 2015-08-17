@@ -6,8 +6,8 @@
 /var/log/spooler
 /var/log/unused.log
 {
-	rotate 10
-	size 100M
+    rotate 10
+    size 100M
     compress
     notifempty
     missingok
