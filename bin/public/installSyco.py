@@ -17,25 +17,43 @@ import os, sys
 import app
 from app import SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
 from general import x
+import version
+
+# The version of this module, used to prevent the same script version to be 
+# executed more then once on the same host.
+SCRIPT_VERSION = 1
+
 
 def build_commands(commands):
   commands.add("install-syco", install_syco, help="Install the syco script on the current server.")
   commands.add("passwords",    passwords, help="Set all passwords used by syco.")
   commands.add("change-env",   change_env, "[env]", help="Set syco environment.")
 
+
 def install_syco(args):
   '''
   Install/configure this script on the current computer.
 
   '''
-  app.print_verbose("Install syco")
-  if (os.access('/sbin/syco', os.F_OK) == False):
-    app.print_verbose("Create symlink /sbin/syco")
-    os.symlink(sys.path[0] + '/syco.py', '/sbin/syco')
-    x("chmod o+x {0}".format("/opt/syco"))
-    x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
-  else:
-    app.print_verbose("   Already installed")
+  app.print_verbose("Install syco version: %d" % SCRIPT_VERSION)
+  version_obj = version.Version("InstallSYCO", SCRIPT_VERSION)
+  version_obj.check_executed()
+
+  app.print_verbose("Create symlink /sbin/syco")
+  set_syco_permissions()
+  os.symlink(sys.path[0] + '/syco.py', '/sbin/syco')    
+  x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
+
+  version_obj.mark_executed()
+
+
+def set_syco_permissions():
+  '''Set permissions on all syco files'''
+  x("chmod 0750 /opt/syco")
+  x("chmod 0750 /opt/syco/var")
+  x("chmod 0750 /opt/syco/var/mysql")
+  x("chmod 0750 /opt/syco/var/mysql/mysql-lvm-backup.py")
+  x("chmod 0750 /opt/syco/var/mysql/mysqldump-backup.sh")
 
 
 def passwords(args):
@@ -56,7 +74,6 @@ def passwords(args):
   print "mysql_backup: ",app.get_mysql_backup_password()
   print "mysql_monitor: ",app.get_mysql_monitor_password()
   print "switch_icmp: ",app.get_switch_icmp_password()
-
 
 
 def change_env(args):
