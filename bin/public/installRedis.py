@@ -8,6 +8,8 @@ This script is dependent on the following config files in syco-private for this 
     var/redis/check-redis
 
 It is also dependent on the EPEL repo since Redis is not available on CentOS official Repo.
+
+TODO: EPEL contains a very old version of redis, should we use a newer.
 '''
 
 __author__ = "David Skeppstedt"
@@ -28,6 +30,8 @@ import app
 import password
 import version
 import scopen
+import selinux
+
 
 script_version = 1
 
@@ -58,6 +62,7 @@ def install_redis(args):
     password.get_redis_production_password()
 
     install.packages("tcl redis keepalived")
+    _configure_selinux()
     _configure_iptables()
     _configure_keepalived()
     _configure_redis()
@@ -67,12 +72,24 @@ def install_redis(args):
     version_obj.mark_executed()
 
 
+def _configure_selinux():
+    """SELinux for redis is not configured correct in repo
+    TODO: This might be removable in future
+
+    """
+    install.package("policycoreutils")
+
+    selinux.custom_module("%s/var/redis" % app.SYCO_PATH, "keepalived")
+    selinux.custom_module("%s/var/redis" % app.SYCO_PATH, "redis")
+
+
 def _configure_iptables():
     """
     * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to
         be opened. So first we remove the multicast blocks and then open them up.
     * VRRP is known as Protocol 112 in iptables.
     * Redis uses port 6379 and need to be opened.
+    TODO: Use kribors new iptables setup.
 
     """
     iptables.iptables("-A syco_input -p tcp -m multiport --dports 6379 -j allowed_tcp")
