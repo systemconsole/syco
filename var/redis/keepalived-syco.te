@@ -1,0 +1,13 @@
+
+module keepalived-syco 1.0;
+
+require {
+	type redis_t;
+	type keepalived_t;
+	class process signull;
+	class capability sys_ptrace;
+}
+
+#============= keepalived_t ==============
+allow keepalived_t redis_t:process signull;
+allow keepalived_t self:capability sys_ptrace;
