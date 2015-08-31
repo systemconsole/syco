@@ -24,11 +24,11 @@ import config
 import constant
 import general
 import install
-import iptables
 import mysqlUtils
 import net
 import scopen
 import version
+from iptables import OutboundFirewallRule
 
 
 __author__ = "elis.kullberg@netlight.com"
@@ -44,7 +44,9 @@ SCRIPT_VERSION = 1
 
 
 def build_commands(commands):
-    commands.add("install-icinga", install_icinga, help="Installs a icinga poller and web-interface for monitoring of remote hosts.")
+    commands.add("install-icinga", install_icinga,
+                 help="Installs a icinga poller and web-interface for monitoring of remote hosts.",
+                 firewall_config=get_icinga_fw_config())
     commands.add("reload-icinga", reload_icinga, help="Reloads the icinga object structure.")
 
 
@@ -121,10 +123,6 @@ def _install_icinga_core(args):
     general.set_config_property("/etc/icinga/ido2db.cfg","db_pass=icinga","db_pass={0}".format(icinga_sql_password, False))
     x("cp --remove-destination {0}syco-private/var/nagios/icinga.cfg /etc/icinga/icinga.cfg".format(constant.SYCO_USR_PATH))
     x("chown icinga:icinga /etc/icinga/icinga.cfg")
-
-    # Add icinga-server iptables chain
-    iptables.add_icinga_chain()
-    iptables.save()
 
     # Reload the icinga object structure
     _reload_icinga(args,reload=False)
@@ -441,6 +439,17 @@ def _install_SELinux():
 
     # Enable SELinux after successfil installation
     x("setenforce 1")
+
+
+def get_icinga_fw_config():
+    fw_config = [OutboundFirewallRule(service="icinga", ports=["5666"], src="front-ip")]
+
+    #Open SNMP to switches: port 161
+    for switch in config.get_switches():
+        switch_ip = config.host(switch).get_back_ip()
+        fw_config.append(OutboundFirewallRule(service="icinga", ports=["161"], protocol="udp", dst=switch_ip))
+
+    return fw_config
 
 
 class host():

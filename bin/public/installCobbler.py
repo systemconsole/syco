@@ -24,19 +24,21 @@ import app
 import config
 import general
 from general import x
-import iptables
 import version
 import install
+from iptables import FirewallModule, InboundFirewallRule, OutboundFirewallRule
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
 SCRIPT_VERSION = 3
 
+
 def build_commands(commands):
-  commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.")
-  commands.add("install-cobbler-refresh", setup_all_systems, help="Refresh settings and repo info.")
-  commands.add("install-cobbler-conf-refresh", refresh_configs, help="Refresh settings.")
+    commands.add("install-cobbler",        install_cobbler, help="Install cobbler on the current server.",
+                 firewall_config=get_cobbler_fw_config())
+    commands.add("install-cobbler-refresh", setup_all_systems, help="Refresh settings and repo info.")
+    commands.add("install-cobbler-conf-refresh", refresh_configs, help="Refresh settings.")
 
 def install_cobbler(args):
   '''
@@ -55,9 +57,6 @@ def install_cobbler(args):
   general.set_config_property("/etc/selinux/config", '^SELINUX=.*', "SELINUX=permissive")
 
   _install_cobbler()
-
-  iptables.add_cobbler_chain()
-  iptables.save()
 
   _modify_cobbler_settings()
 
@@ -390,3 +389,23 @@ def _install_custom_selinux_policy():
   # x("semodule -i %s" % pp)
 
   x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
+
+
+def get_cobbler_fw_config():
+    #Port 53: DNS - Why would this be needed?
+    #Port 69: TFTP
+    #Port 123: NTP, why?
+    #Port 68: DHCP TODO: In/Out
+    #Port 80/443: HTTP(S)
+    #Port 25150: Syslog for cobbler,  why?
+    #Port 25151/25152: KOAN XMLRPC
+    #Port 873: rsync
+
+    return [
+        FirewallModule("nf_conntrack_tftp"),
+        InboundFirewallRule(service="cobbler", ports=["53", "69", "80", "443", "25151", "25152"], src="local-nets",
+                            protocol="tcp"),
+        InboundFirewallRule(service="cobbler", ports=["53", "69", "123", "68", "25150"], src="local-nets",
+                            protocol="udp"),
+        OutboundFirewallRule(service="cobbler", ports=["873"])
+    ]

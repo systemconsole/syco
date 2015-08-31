@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Install NTP Client/Server
 
 http://www.cyberciti.biz/faq/rhel-fedora-centos-configure-ntp-client-server/
@@ -16,7 +16,7 @@ TODO
 * Anything speial that needs to be done on KVM guests?
 * SSL or other keys to the ntp server?
 
-'''
+"""
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -32,101 +32,121 @@ import os
 import app
 import config
 import general
-import iptables
 import net
 import version
+
+from iptables import *
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
 # once on the same host.
 SCRIPT_VERSION = 1
 
+
 def build_commands(commands):
-  commands.add("install-ntp-server", install_ntp_server, help="Install ntp server on the current server.")
-  commands.add("install-ntp-client", install_ntp_client, help="Install ntp client on the current server.")
-  commands.add("uninstall-ntp", uninstall_ntp, help="Uninstall ntp server on the current server.")
+    commands.add("install-ntp-server", install_ntp_server, firewall_config=ntp_server_firewall_rules(),
+                 help="Install ntp server on the current server.")
+    commands.add("install-ntp-client", install_ntp_client, firewall_config=ntp_client_firewall_rules(),
+                 help="Install ntp client on the current server.")
+    commands.add("uninstall-ntp", uninstall_ntp, help="Uninstall ntp server on the current server.")
 
-def install_ntp_server(args):
-  install_ntp()
 
-def install_ntp_client(args):
-  if config.host(net.get_hostname()).has_command_re("install-ntp-server"):
-    app.print_verbose(
-      "This server will later install the ntp server, abort client installation."
-    )
-    return
-  ip = config.general.get_ntp_server_ip()
-  install_ntp(ip)
+def install_ntp_server():
+    install_ntp()
+
+
+def install_ntp_client():
+    if config.host(net.get_hostname()).has_command_re("install-ntp-server"):
+        app.print_verbose(
+            "This server will later install the ntp server, abort client installation."
+        )
+        return
+    ip = config.general.get_ntp_server_ip()
+    install_ntp(ip)
+
 
 def install_ntp(ntp_server_ip = False):
-  '''
-  Install and configure the ntp-server on the local host.
+    """
+    Install and configure the ntp-server on the local host.
 
-  '''
-  app.print_verbose("Install NTP version: %d" % SCRIPT_VERSION)
-  version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
-  version_obj.check_executed()
+    """
+    app.print_verbose("Install NTP version: %d" % SCRIPT_VERSION)
+    version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
+    version_obj.check_executed()
 
-  # Install the NTP packages.
-  if (not os.access("/etc/ntp.conf", os.F_OK)):
-    general.shell_exec("yum -y install ntp")
+    # Install the NTP packages.
+    if not os.access("/etc/ntp.conf", os.F_OK):
+        general.shell_exec("yum -y install ntp")
 
-  general.shell_exec("/sbin/chkconfig ntpd on")
+    general.shell_exec("/sbin/chkconfig ntpd on")
 
-  iptables.add_ntp_chain()
-  iptables.save()
+    # Set ntp-server configs
+    #
+    # For restrict info: http://www.eecis.udel.edu/~mills/ntp/html/accopt.html
+    #
+    if ntp_server_ip:
+        app.print_verbose("Configure /etc/ntp.conf as a client")
 
-  # Set ntp-server configs
-  #
-  # For restrict info: http://www.eecis.udel.edu/~mills/ntp/html/accopt.html
-  #
-  if (ntp_server_ip):
-    app.print_verbose("Configure /etc/ntp.conf as a client")
+        # Deny packets of all kinds, including ntpq(8) and ntpdc(8) queries.
+        general.set_config_property("/etc/ntp.conf", "restrict default.*", "restrict default ignore")
+        general.set_config_property("/etc/ntp.conf", "restrict -6 default.*", "restrict -6 default ignore")
 
-    # Deny packets of all kinds, including ntpq(8) and ntpdc(8) queries.
-    general.set_config_property("/etc/ntp.conf", "restrict default.*", "restrict default ignore")
-    general.set_config_property("/etc/ntp.conf", "restrict -6 default.*", "restrict -6 default ignore")
+        # Using only internal NTP-server.
+        general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server " + ntp_server_ip + " burst")
+        general.set_config_property("/etc/ntp.conf", ".*server 1.*ntp.org", "#server 1.se.pool.ntp.org")
+        general.set_config_property("/etc/ntp.conf", ".*server 2.*ntp.org", "#server 2.se.pool.ntp.org")
 
-    # Using only internal NTP-server.
-    general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server " + ntp_server_ip + " burst")
-    general.set_config_property("/etc/ntp.conf", ".*server 1.*ntp.org", "#server 1.se.pool.ntp.org")
-    general.set_config_property("/etc/ntp.conf", ".*server 2.*ntp.org", "#server 2.se.pool.ntp.org")
+        # Allow access to/from the ntp-server. You may use either a hostname or IP address
+        # on the server line. You must use an IP address on the restrict line. Or do I??
+        general.set_config_property("/etc/ntp.conf", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery")
 
-    # Allow access to/from the ntp-server. You may use either a hostname or IP address
-    # on the server line. You must use an IP address on the restrict line. Or do I??
-    general.set_config_property("/etc/ntp.conf", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery", "restrict " + ntp_server_ip + " kod nomodify notrap nopeer noquery")
+        # Don't use fudge server
+        general.set_config_property("/etc/ntp.conf", ".*server.*127.127.1.0.*", "#server 127.127.1.0")
+        general.set_config_property("/etc/ntp.conf", ".*fudge.*127.127.1.0.*", "#fudge  127.127.1.0 stratum 10")
 
-    # Don't use fudge server
-    general.set_config_property("/etc/ntp.conf", ".*server.*127.127.1.0.*", "#server 127.127.1.0")
-    general.set_config_property("/etc/ntp.conf", ".*fudge.*127.127.1.0.*", "#fudge  127.127.1.0 stratum 10")
+        # This command modifies the ntpd panic threshold (which is normally 1024
+        # seconds). Setting this to 0 disables the panic sanity check and a clock
+        # offset of any value will be accepted.
+        general.set_config_property("/etc/ntp.conf", ".*tinker panic.*", "tinker panic 0")
+    else:
+        app.print_verbose("Configure /etc/ntp.conf as a server")
+        general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server ntp3.sptime.se")
+        general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server ntp4.sptime.se")
+        general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server ntp1.sth.netnod.se")
+        general.set_config_property("/etc/ntp.conf", "server 3.*ntp.org", "server " + config.general.get_slave_ntp_server())
 
-    # This command modifies the ntpd panic threshold (which is normally 1024
-    # seconds). Setting this to 0 disables the panic sanity check and a clock
-    # offset of any value will be accepted.
-    general.set_config_property("/etc/ntp.conf", ".*tinker panic.*", "tinker panic 0")
-  else:
-    app.print_verbose("Configure /etc/ntp.conf as a server")
-    general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server ntp3.sptime.se")
-    general.set_config_property("/etc/ntp.conf", "server 1.*ntp.org", "server ntp4.sptime.se")
-    general.set_config_property("/etc/ntp.conf", "server 2.*ntp.org", "server ntp1.sth.netnod.se")
-    general.set_config_property("/etc/ntp.conf", "server 3.*ntp.org", "server " + config.general.get_slave_ntp_server())
+    general.shell_exec("service ntpd start")
 
+    version_obj.mark_executed()
 
-  general.shell_exec("service ntpd start")
-
-  version_obj.mark_executed()
 
 def uninstall_ntp(args):
-  '''
-  Uninstall NTP
+    """
+    Uninstall NTP
 
-  '''
-  if (os.access("/etc/ntp.conf", os.F_OK)):
-    general.shell_exec("service ntpd stop")
-  general.shell_exec("yum -y remove ntp ")
+    """
+    if os.access("/etc/ntp.conf", os.F_OK):
+        general.shell_exec("service ntpd stop")
+    general.shell_exec("yum -y remove ntp ")
 
-  iptables.del_ntp_chain()
-  iptables.save()
+    version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
+    version_obj.mark_uninstalled()
 
-  version_obj = version.Version("InstallNTP", SCRIPT_VERSION)
-  version_obj.mark_uninstalled()
+
+def ntp_client_firewall_rules():
+    if config.general.get_ntp_server_ip():
+        return [OutboundFirewallRule(service="ntp", ports="123", dst=config.general.get_ntp_server_ip(),
+                                     protocol="udp")]
+
+
+def ntp_server_firewall_rules():
+    rules = []
+    #Only allow inbound traffic on official on the NTP server IP
+    if config.general.get_ntp_server_ip():
+        rules.append(InboundFirewallRule(service="ntp", ports="123", dst=config.general.get_ntp_server_ip(),
+                                         protocol="udp"))
+
+    #Allow outbound traffic to all hosts
+    rules.append(OutboundFirewallRule(service="ntp", ports="123", protocol="udp"))
+
+

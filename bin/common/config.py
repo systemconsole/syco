@@ -18,6 +18,7 @@ import os
 import re
 
 import net
+import app
 
 
 class ConfigException(Exception):
@@ -166,7 +167,7 @@ class Config(object):
             self.etc_path = etc_path
             self.usr_path = usr_path
 
-        def get_option(self, option, default_value = None):
+        def get_option(self, option, default_value=None):
             return Config.SycoConfig.get_option(self, "general", option, default_value)
 
         def host(self, hostname):
@@ -267,7 +268,7 @@ class Config(object):
             return self.get_option("resolv.search")
 
         def get_nameserver_server(self):
-            return self.get_option("nameserver.server")
+            return self.get_option("nameserver.server", "")
 
         def get_nameserver_server_ip(self, prefer_back_net=False):
 
@@ -374,11 +375,8 @@ class Config(object):
         def get_admin_email(self):
             return self.get_option("admin_email")
 
-        def get_log_server_hostname1(self):
-            return self.get_option("log.hostname1")
-
-        def get_log_server_hostname2(self):
-            return self.get_option("log.hostname2")
+        def get_log_server_ip(self):
+            return self._get_service_ip("log")
 
         def get_subnet(self):
             '''The subnet of the data center'''
@@ -678,6 +676,32 @@ class Config(object):
                 ret_commands.append(value)
 
             return ret_commands
+
+        def get_syco_command_names(self):
+            """
+            Get name of all syco commands for this host excluding all arguments etc.
+            """
+
+            syco_command_names = []
+            commands = self.get_commands()
+            for command in commands:
+                #Assume second word is the command name
+                split_commands = command.split(" ")
+                if len(split_commands) < 1:
+                    app.print_verbose("Did not understand command: %s, skipping" % command)
+                    continue
+                elif split_commands[0].lower() == "syco":
+                    if len(split_commands) < 2:
+                        app.print_verbose("Did not understand syco command: %s, skipping" % command)
+                        continue
+                else:
+                    #This is not a syco command, ignoring it.
+                    continue
+
+                #else, this is a syco command and arg[1] should be the name of the command
+                syco_command_names.append(split_commands[1])
+
+            return syco_command_names
 
         def has_command_re(self, cmd_pattern):
             '''

@@ -28,8 +28,9 @@ from general import x
 import app
 import config
 import general
-import iptables
 import version
+from iptables import InboundFirewallRule
+from iptables import OutboundFirewallRule
 
 
 # The version of this module, used to prevent the same script version to be
@@ -38,10 +39,14 @@ SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
-    commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]", help="Install mysql server on the current server.")
-    commands.add("uninstall-mysql",           uninstall_mysql,           help="Uninstall mysql server on the current server.")
-    commands.add("install-mysql-replication", install_mysql_replication, help="Start repliaction from secondary master.")
-    commands.add("test-mysql",                test_mysql,                help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
+    commands.add("install-mysql",             install_mysql, "[server-id, innodb-buffer-pool-size]",
+                 help="Install mysql server on the current server.", firewall_config=get_mysql_firewall_rules())
+    commands.add("uninstall-mysql",           uninstall_mysql,
+                 help="Uninstall mysql server on the current server.")
+    commands.add("install-mysql-replication", install_mysql_replication,
+                 help="Start repliaction from secondary master.")
+    commands.add("test-mysql",                test_mysql,
+                 help="Run all mysql unittests, to test the MySQL daemon on the current hardware.")
 
 
 def install_mysql(args):
@@ -69,10 +74,6 @@ def install_mysql(args):
         x("/sbin/chkconfig mysqld on ")
         if not os.access("/usr/bin/mysqld_safe", os.F_OK):
             raise Exception("Couldn't install mysql-server")
-
-    # Configure iptables
-    iptables.add_mysql_chain()
-    iptables.save()
 
     # Disable mysql history logging
     if os.access("/root/.mysql_history", os.F_OK):
@@ -268,3 +269,18 @@ def install_mysql_client():
 
     """
     x("yum -y install mysql.x86_64")
+
+
+def get_mysql_firewall_rules():
+
+    #Allow clients to connect
+    rules = [InboundFirewallRule(service="mysql", ports="3306")]
+
+    # Open connection to replication peer if configured.
+    current_host_config = config.host(net.get_hostname())
+    repl_peer = current_host_config.get_option("repl_peer", "")
+
+    if repl_peer:
+        rules.append(OutboundFirewallRule(service="mysql", ports="3306", dst=repl_peer))
+
+    return rules

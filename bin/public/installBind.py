@@ -96,11 +96,11 @@ from time import gmtime, strftime
 
 import app
 import version
-import iptables
 import config
 import general
 from general import x
 from scopen import scOpen
+from iptables import InboundFirewallRule, OutboundFirewallRule
 
 
 # The version of this module, used to prevent the same script version to be
@@ -137,8 +137,6 @@ def install_bind(args):
     _generate_rndc_key()
     _prepare_chroot()
     _copy_all_configs(active_dc)
-    iptables.add_bind_chain()
-    iptables.save()
 
     # Restarting bind to load new settings.
     x("/etc/init.d/named restart")
@@ -359,3 +357,15 @@ def audit_bind(args):
         app.print_verbose("Fail - named didn't pass audit.")
     else:
         app.print_verbose("Ok - named did pass audit.")
+
+
+def get_bind_server_firewall_rules():
+
+    rules = [
+        InboundFirewallRule(service="dns", ports="53"),
+        InboundFirewallRule(service="dns", ports="53", protocol="udp"),
+        OutboundFirewallRule(service="dns", ports="53"),
+        OutboundFirewallRule(service="dns", ports="53", protocol="udp")
+    ]
+
+    return rules

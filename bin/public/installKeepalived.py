@@ -17,7 +17,6 @@ __status__ = "Production"
 
 import os
 from general import x
-import iptables
 import socket
 import app
 import version
@@ -26,6 +25,7 @@ import fcntl
 import struct
 import sys
 import re
+from iptables import MulticastConfig
 
 script_version = 1
 
@@ -95,7 +95,6 @@ def install_keepalived(args):
     os.chdir("/")
 
     x("yum install -y keepalived")
-    _configure_iptables()
     _configure_keepalived()
 
     version_obj.mark_executed()
@@ -115,21 +114,6 @@ def _configure_keepalived():
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", socket.gethostname().lower())
     _chkconfig("keepalived","on")
     _service("keepalived","restart")
-
-
-def _configure_iptables():
-    """
-    * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to
-        be opened. So first we remove the multicast blocks and then open them up.
-    * VRRP is known as Protocol 112 in iptables.
-    """
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP")
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP")
-    iptables.iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT")
-    iptables.save()
 
 
 def get_ip_address(ifname):
@@ -153,13 +137,12 @@ def uninstall_keepalived(args=""):
 
     x("yum -y remove keepalived")
     x("rm -rf {0}*".format(KA_CONF_DIR))
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
-    iptables.iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
-    iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
-    iptables.save()
+
+
+def get_keepalived_fw_config():
+    return [
+        MulticastConfig("224.0.0.0/8", "vrrp")
+    ]
 
 """
 End of Keepalived installation script.

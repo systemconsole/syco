@@ -31,6 +31,7 @@ from general import shell_run
 import iptables
 import version
 import installOpenLdap
+from iptables import *
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -38,7 +39,9 @@ SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
-    commands.add("install-sssd-client", install_sssd, help="Install sssd (ldap client).")
+    commands.add("install-sssd-client", install_sssd, help="Install sssd (ldap client).",
+                 firewall_config=[OutboundFirewallRule(service="ldap", ports="636",
+                                                      dst=config.general.get_ldap_server_ip())])
     commands.add("uninstall-sssd-client", uninstall_sssd, help="Uninstall sssd.")
 
 
@@ -57,8 +60,6 @@ def install_sssd(args):
     install_packages()
 
     installOpenLdap.setup_hosts()
-    iptables.add_ldap_chain()
-    iptables.save()
 
     ip = config.general.get_ldap_server_ip()
     general.wait_for_server_to_start(ip, "636")
@@ -186,6 +187,11 @@ def configure_sssd(augeas):
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_smart_refresh_interval",
                         "3600")
 
+    #Set low timeout levels to ensure that cache is used when ldap is slow/down
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_search_timeout", "5")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_enumeration_search_timeout", "5")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_network_timeout", "5")
+
     #sssd section settings
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'sssd']/services", "nss,pam,sudo")
 
@@ -209,11 +215,10 @@ def configure_sudo(augeas):
 
     #The database sudoers node doesn't appear to be insertable with a one liner so we have to echo it in
     if not augeas.find_entry("/files/etc/nsswitch.conf/database[. = 'sudoers']"):
-        x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
+        x("echo \"sudoers: files sss\" >> /etc/nsswitch.conf")
     else:
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "ldap")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "files")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[3]", "sss")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "files")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "sss")
 
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
@@ -264,3 +269,4 @@ def configure_sudo(augeas):
 
 # Test if sudo is using LDAP.
 # sudo -l
+

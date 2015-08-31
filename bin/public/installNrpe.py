@@ -11,10 +11,10 @@ import app
 import config
 import constant
 import install
-import iptables
 import net
 import scopen
 import version
+from iptables import InboundFirewallRule
 
 
 __author__ = "elis.kullberg@netlight.com"
@@ -29,11 +29,14 @@ __status__ = "Development"
 
 PLG_PATH = "/usr/lib64/nagios/plugins/"
 
-SCRIPT_VERSION = 3
+SCRIPT_VERSION = 4
 
 
 def build_commands(commands):
-    commands.add("install-nrpe-client", install_nrpe, help="Installs NRPE daemon and nagios plugins for monitoring by remote server.")
+    commands.add("install-nrpe-client", install_nrpe,
+                 help="Installs NRPE daemon and nagios plugins for monitoring by remote server.",
+                 firewall_config=[InboundFirewallRule(service="nrpe", ports="5666",
+                                                     src=config.general.get_monitor_server_ip())])
 
 
 def install_nrpe(args):
@@ -82,10 +85,6 @@ def _install_nrpe(args):
 
     # Set permissions for read/execute under nagios-user
     x("chown -R root:nagios /etc/nagios/")
-
-    # Allow nrpe to listen on UDP port 5666
-    iptables.add_nrpe_chain()
-    iptables.save()
 
     # Make nrpe-server startup stateful and restart
     x("/sbin/chkconfig --level 3 nrpe on")

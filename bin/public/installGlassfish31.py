@@ -31,10 +31,10 @@ import app
 import config
 import general
 import version
-import iptables
 import install
 from general import x
 from scopen import scOpen
+#from iptables import InboundFirewallRule
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -71,8 +71,11 @@ def build_commands(commands):
   Defines the commands that can be executed through the syco.py shell script.
 
   '''
-  commands.add("install-" + GLASSFISH_VERSION, install_glassfish, help="Install " + GLASSFISH_VERSION + " on the current server.")
-  commands.add("uninstall-glassfish", uninstall_glassfish, help="Uninstall " + GLASSFISH_VERSION + " servers on the current server.")
+  commands.add("install-" + GLASSFISH_VERSION, install_glassfish,
+               help="Install " + GLASSFISH_VERSION + " on the current server.",
+               firewall_config=get_gf31_fw_config())
+  commands.add("uninstall-glassfish", uninstall_glassfish,
+               help="Uninstall " + GLASSFISH_VERSION + " servers on the current server.")
 
 def install_glassfish(args):
   '''
@@ -91,9 +94,6 @@ def install_glassfish(args):
     _set_env_vars()
 
     _install_software()
-
-    iptables.add_glassfish_chain()
-    iptables.save()
 
     for domain_name, port_base in [["domain1", "6000"], ["domain2", "7000"]]:
       admin_port = str(int(port_base) + 48)
@@ -163,9 +163,6 @@ def uninstall_glassfish(args):
     x("rpm -e sun-javadb-core-10.6.2-1.1.i386")
     x("rpm -e sun-javadb-common-10.6.2-1.1.i386")
     x("rpm -e jdk-6u29-linux-amd64")
-
-  iptables.del_glassfish_chain()
-  iptables.save()
 
   version_obj = version.Version("Install" + GLASSFISH_VERSION, SCRIPT_VERSION)
   version_obj.mark_uninstalled()
@@ -503,7 +500,15 @@ def _set_jvm_options(admin_port):
 
   _set_java_temp_dir(admin_port)
 
+
 def _set_java_temp_dir(admin_port):
   x("mkdir " + JAVA_TEMP_PATH)
   x("chown glassfish:glassfishadm " + JAVA_TEMP_PATH)
   asadmin_exec("create-jvm-options '-Djava.io.tmpdir=" + JAVA_TEMP_PATH + "'", admin_port)
+
+
+def get_gf31_fw_config():
+    #TODO: Only on dev servers?
+    return [
+        InboundFirewallRule(service="glassfish", ports=["6048", "6080", "6081", "7048", "7080", "7081"])
+    ]

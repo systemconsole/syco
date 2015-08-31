@@ -43,10 +43,10 @@ import config
 import disk
 import general
 import install
-import iptables
 import net
 import netUtils
 import version
+from iptables import RawFirewallRule
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -54,7 +54,8 @@ import version
 SCRIPT_VERSION = 3
 
 def build_commands(commands):
-    commands.add("install-kvmhost", install_kvmhost, help="Install kvm host on the current server.")
+    commands.add("install-kvmhost", install_kvmhost, help="Install kvm host on the current server.",
+                 firewall_config=get_kvm_fw_config())
 
 def install_kvmhost(args):
     '''
@@ -114,9 +115,6 @@ def install_kvmhost(args):
         _abort_kvm_host_installation()
 
     _remove_kvm_virt_networking()
-
-    iptables.add_kvm_chain()
-    iptables.save()
 
     version_obj.mark_executed()
 
@@ -188,3 +186,9 @@ def _abort_kvm_host_installation():
 
     '''
     raise Exception("Abort kvm host installation.")
+
+def get_kvm_fw_config():
+    return [
+        RawFirewallRule(service="kvm", direction="forward",
+                        raw="-A kvm_forward -m physdev --physdev-is-bridged -j ACCEPT")
+    ]

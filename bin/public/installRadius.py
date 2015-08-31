@@ -30,20 +30,22 @@ from general import x, use_original_file, generate_password
 from scopen import scOpen
 import app
 import config
-import iptables
 import version
+from iptables import InboundFirewallRule
 
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 1
 
+
 def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-radius",   install_freeradius,   help="Install FreeRadius server on the current server.")
+    commands.add("install-radius",   install_freeradius,   help="Install FreeRadius server on the current server.",
+                 firewall_config=get_radius_server_firewall_rules())
     commands.add("uninstall-radius", uninstall_freeradius, help="Uninstall Freeradius server on the current server.")
 
 
@@ -60,10 +62,6 @@ def install_freeradius(args):
     app.get_ldap_admin_password()
 
     _install_packages()
-
-    # Configure iptables
-    iptables.add_freeradius_chain()
-    iptables.save()
 
     _configure_ldap()
     _enable_ldap()
@@ -209,3 +207,13 @@ def uninstall_freeradius(args):
     version_obj = version.Version("InstallFreeRadius", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
 
+
+def get_radius_server_firewall_rules():
+
+    rules = []
+    # Switches are allowed to talk to radius
+    for switch_name in config.get_switches():
+        ip = config.host(switch_name).get_back_ip()
+        rules.append(InboundFirewallRule(service="radius", ports=["1812", "1813"], protocol="udp", src=ip))
+
+    return rules

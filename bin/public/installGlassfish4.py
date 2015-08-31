@@ -31,11 +31,11 @@ import app
 import config
 import general
 import version
-import iptables
 import install
 from general import x
 from scopen import scOpen
 import socket
+from iptables import InboundFirewallRule
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -80,7 +80,8 @@ def build_commands(commands):
   Defines the commands that can be executed through the syco.py shell script.
 
   '''
-  commands.add("install-glassfish4", install_glassfish, help="Install on the current server.")
+  commands.add("install-glassfish4", install_glassfish, help="Install on the current server.",
+               firewall_config=get_gf4_fw_config())
   commands.add("uninstall-glassfish4", uninstall_glassfish, help="Uninstall  servers on the current server.")
 
 
@@ -385,3 +386,9 @@ def _set_domain_passwords():
   asadmin_exec("stop-domain ")
   asadmin_exec("start-domain ")
 
+
+def get_gf4_fw_config():
+    #TODO: Only on dev servers?
+    return [
+        InboundFirewallRule(service="glassfish", ports=["6048", "6080", "6081", "7048", "7080", "7081"])
+    ]

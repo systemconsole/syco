@@ -62,10 +62,10 @@ import app
 import config
 import general
 import installLogrotate
-import iptables
 import mysqlUtils
 import net
 import version
+from iptables import InboundFirewallRule
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -77,8 +77,10 @@ def build_commands(commands):
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-rsyslogd",          install_rsyslogd,   help="Install Rsyslog server.")
-    commands.add("uninstall-rsyslogd",        uninstall_rsyslogd, help="Uninstall rsyslog server and all certs on the server.")
+    commands.add("install-rsyslogd",          install_rsyslogd,   help="Install Rsyslog server.",
+                 firewall_config=get_rsyslogd_firewall_rules())
+    commands.add("uninstall-rsyslogd",        uninstall_rsyslogd,
+                 help="Uninstall rsyslog server and all certs on the server.")
     commands.add("install-rsyslogd-newcerts", rsyslog_newcerts,   help="Generats new cert for rsyslogd clients.")
 
 
@@ -111,10 +113,6 @@ def install_rsyslogd(args):
     sql_password = generate_password(20, string.letters + string.digits)
     _setup_database(sql_password)
     _setup_rsyslogd(sql_password)
-
-    # Add iptables chains
-    iptables.add_rsyslog_chain("server")
-    iptables.save()
 
     # Restarting service
     x("/etc/init.d/rsyslog restart")
@@ -302,3 +300,10 @@ def install_compress_logs():
     x("cp -f {0}var/rsyslog/compress-logs.sh {1}".format(app.SYCO_PATH, fn))
     x("chmod +x {0}".format(fn))
 
+
+def get_rsyslogd_firewall_rules():
+
+    return [
+        InboundFirewallRule(service="rsyslog", ports=["514"], src="local-nets"),
+        InboundFirewallRule(service="rsyslog", ports=["514"], src="local-nets", protocol="udp")
+    ]

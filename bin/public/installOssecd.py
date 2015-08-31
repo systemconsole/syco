@@ -50,11 +50,11 @@ import sys
 import time
 import traceback
 import config
-import iptables
 from config import get_servers, host
 import app
 from general import x, download_file, md5checksum, get_install_dir
 import version
+from iptables import InboundFirewallRule, OutboundFirewallRule
 
 
 # OSSEC DOWNLOAD URL
@@ -72,7 +72,11 @@ def build_commands(commands):
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-ossec-server",   install_ossec_server,    help="Install Ossec Server on the server.")
+    commands.add("install-ossec-server",   install_ossec_server,    help="Install Ossec Server on the server.",
+                 firewall_config=[InboundFirewallRule(service="ossec", ports=["1514"], protocol="udp",
+                                                     src="local-nets"),
+                                 OutboundFirewallRule(service="ossec", ports=["1514"], protocol="udp",
+                                                      dst="local-nets")])
     commands.add("uninstall-ossec-server", uninstall_ossec_server, help="Uninstall Ossec Server and all certs from the server.")
 
 

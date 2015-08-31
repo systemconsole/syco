@@ -28,10 +28,10 @@ import app
 import config
 import general
 import install
-import iptables
 import socket
 import time
 import version
+from iptables import InboundFirewallRule, OutboundFirewallRule
 
 
 # The version of this module, used to prevent the same script version to be
@@ -44,7 +44,12 @@ def build_commands(commands):
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-ossec-client",   install_ossec_client,   help="Install Ossec Client.")
+    commands.add("install-ossec-client",   install_ossec_client,   help="Install Ossec Client.",
+                 firewall_config=[InboundFirewallRule(service="ossec", ports=["1514"], protocol="udp",
+                                                     src=config.general.get_ossec_server_ip()),
+                                 OutboundFirewallRule(service="ossec", ports=["1514"], protocol="udp",
+                                                      dst=config.general.get_ossec_server_ip())]
+                 )
     commands.add("uninstall-ossec-client", uninstall_ossec_client, help="uninstall Ossec Client.")
 
 
@@ -71,10 +76,6 @@ def install_ossec_client(args):
 
     # Enabling syslog logging
     x('/var/ossec/bin/ossec-control enable client-syslog')
-
-    # Adding iptables rules
-    iptables.add_ossec_chain()
-    iptables.save()
 
     # Restaring OSSEC server
     x("service ossec restart")

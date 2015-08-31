@@ -32,15 +32,17 @@ import app
 import config
 from general import x
 from scopen import scOpen
-import iptables
 import version
+from iptables import InboundFirewallRule
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
 SCRIPT_VERSION = 2
 
+
 def build_commands(commands):
-    commands.add("install-openldap", install_openldap, help="Install openldap.")
+    commands.add("install-openldap", install_openldap, help="Install openldap.",
+                 firewall_config=[InboundFirewallRule(service="ldap", ports="636", dst="local-ips", src="local-nets")])
     commands.add("uninstall-openldap", uninstall_openldap, help="Uninstall openldap.")
 
 def install_openldap(args):
@@ -68,12 +70,6 @@ def install_openldap(args):
     create_certs()
     enable_ssl()
     require_highest_security_from_clients()
-
-    # Let clients connect to the server through the firewall. This is done after
-    # everything else is done, so we are sure that the server is secure before
-    # letting somebody in.
-    iptables.add_ldap_chain()
-    iptables.save()
 
     _install_web_page()
 
@@ -112,9 +108,6 @@ def uninstall_openldap(args):
     x("rm -rf /var/www/ldap")
     x("rm -f /etc/httpd/conf.d/010-ldap.conf")
     x("rm -rf /var/log/slapd")
-
-    iptables.del_ldap_chain()
-    iptables.save()
 
     version_obj = version.Version("InstallOpenLdap", SCRIPT_VERSION)
     version_obj.mark_uninstalled()

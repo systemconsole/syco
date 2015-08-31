@@ -33,6 +33,7 @@ import os
 import socket
 
 from config import get_servers, host
+from iptables import OutboundFirewallRule
 from general import x
 from scopen import scOpen
 from ssh import scp_from
@@ -41,7 +42,6 @@ import config
 import general
 import installLogrotate
 import installRsyslogd
-import iptables
 import net
 import version
 
@@ -55,8 +55,11 @@ def build_commands(commands):
     Defines the commands that can be executed through the syco.py shell script.
 
     '''
-    commands.add("install-rsyslogd-client", install_rsyslogd_client, help="Install rsyslog client on the server.")
-    commands.add("uninstall-rsyslogd-client", uninstall_rsyslogd_client, help="uninstall rsyslog client and all certs from the server.")
+    commands.add("install-rsyslogd-client", install_rsyslogd_client, help="Install rsyslog client on the server.",
+                 firewall_config=[OutboundFirewallRule(service="rsyslog", ports=["514"],
+                                                     dst=config.general.get_log_server_ip())])
+    commands.add("uninstall-rsyslogd-client", uninstall_rsyslogd_client,
+                 help="uninstall rsyslog client and all certs from the server.")
 
 
 def install_rsyslogd_client(args):
@@ -77,12 +80,8 @@ def install_rsyslogd_client(args):
     # Initialize all passwords used by the script
     app.init_mysql_passwords()
 
-    #Enabling iptables before server has start
-    iptables.add_rsyslog_chain("client")
-    iptables.save()
-
     # Wating for rsyslog Server to start
-    general.wait_for_server_to_start(config.general.get_log_server_hostname1(), "514")
+    general.wait_for_server_to_start(config.general.get_log_server_ip(), "514")
 
     app.print_verbose("CIS 5.2 Configure rsyslog")
 
@@ -123,8 +122,7 @@ def _replace_tags():
 
     '''
     sc = scOpen("/etc/rsyslog.conf")
-    sc.replace('${MASTER}', config.general.get_log_server_hostname1())
-    sc.replace('${SLAVE}',  config.general.get_log_server_hostname2())
+    sc.replace('${MASTER}', config.general.get_log_server_ip())
     sc.replace('${DOMAIN}', config.general.get_resolv_domain())
 
     fqdn = "{0}.{1}".format(net.get_hostname(), config.general.get_resolv_domain())

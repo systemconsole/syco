@@ -19,7 +19,6 @@ import os
 from general import x, urlretrive
 import ssh
 import config
-import iptables
 import socket
 import install
 import app
@@ -30,6 +29,7 @@ import fcntl
 import struct
 import sys
 import re
+from iptables import OutboundFirewallRule, InboundFirewallRule
 
 script_version = 1
 
@@ -63,7 +63,8 @@ def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
     '''
-    commands.add("install-haproxy", install_haproxy, help="Install HA Proxy on the server.")
+    commands.add("install-haproxy", install_haproxy, help="Install HA Proxy on the server.",
+                 firewall_config=get_haproxy_fw_config())
     commands.add("uninstall-haproxy", uninstall_haproxy, help="Uninstall HA Proxy from the server.")
 
 def _service(service,command):
@@ -95,7 +96,6 @@ def install_haproxy(args):
     os.chdir("/")
 
     x("yum install -y tcl haproxy")
-    _configure_iptables()
     _copy_certificate_files()
     _configure_haproxy()
 
@@ -116,13 +116,6 @@ def _copy_certificate_files():
     copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, HAPROXY_ENV)
     copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV)
     ssh.scp_from(copyfrom, copyremotefile, copylocalfile)
-
-def _configure_iptables():
-    iptables.iptables("-A syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-A syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-A syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.iptables("-A syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.save()
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -145,12 +138,16 @@ def uninstall_haproxy(args=""):
     x("yum -y remove haproxy")
     x("rm -rf {0}*".format(HAPROXY_CONF_DIR))
     x("rm -rf {0}/{1}.pem".format(CERT_COPY_TO_PATH, HAPROXY_ENV))
-    iptables.iptables("-D syco_input -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-D syco_output -p tcp -m multiport --dports 80,443 -j allowed_tcp")
-    iptables.iptables("-D syco_input -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.iptables("-D syco_output -p tcp -m multiport --dports 81,82,83,84 -j allowed_tcp")
-    iptables.save()
 
+
+def get_haproxy_fw_config():
+    #Accept traffic on 80, 443
+    #Allow viewing stats on port 81
+    #Allow connecting to upstream web server on port 80
+    return [
+        InboundFirewallRule(service="haproxy", ports=["80", "443", "81"]),
+        OutboundFirewallRule(service="haproxy", ports=["80"])
+    ]
 
 '''
 End of HA Proxy installation script.

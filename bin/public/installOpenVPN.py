@@ -32,9 +32,9 @@ import app
 import config
 import general
 import install
-import iptables
 import net
 import version
+from iptables import RawFirewallRule, InboundFirewallRule, ForwardFirewallRule
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -48,7 +48,8 @@ EASY_RSA_MD5 = 'e52a1f85fffeda82a0af332076ea81f6'
 SCRIPT_VERSION = 1
 
 def build_commands(commands):
-    commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.")
+    commands.add("install-openvpn-server", install_openvpn_server, help="Install openvpn-server on the current server.",
+                 firewall_config=get_openvpn_fw_config())
     commands.add("install-openvpn-client-certs", build_client_certs, help="Build client certs on the openvpn server.")
 
 def copy_easy_rsa():
@@ -307,3 +308,19 @@ def build_client_certs(args):
             # Set permission for the user who now owns the file.
             os.chmod("/home/" + user +"/openvpn_client_keys.zip", stat.S_IRUSR | stat.S_IRGRP)
             general.shell_exec("chown " + user + ":users /home/" + user +"/openvpn_client_keys.zip ")
+
+def get_openvpn_fw_config():
+    #Use service "syco" for special stuff since this service won't trigger specials chains to be created needlessly.
+    vpn_network = config.general.get_openvpn_network()
+    return [
+        #Raw NAT rules
+        RawFirewallRule(service="syco", raw="-t nat -N openvpn_postrouting"),
+        RawFirewallRule(service="syco", raw="-t nat -A syco_nat_postrouting -p ALL -j openvpn_postrouting"),
+        RawFirewallRule(service="syco",
+                        raw="-t nat -A openvpn_postrouting -s %s/24 -o eth0 -j MASQUERADE" % vpn_network),
+        RawFirewallRule(service="syco",
+                        raw="-t nat -A openvpn_postrouting -s %s/24 -o eth1 -j MASQUERADE" % vpn_network),
+        InboundFirewallRule(service="openvpn", ports=["1194"], protocol="udp"),
+        InboundFirewallRule(service="openvpn", ports=["1194"], protocol="tcp"),
+        ForwardFirewallRule(service="openvpn", src=vpn_network)
+    ]
