@@ -186,6 +186,11 @@ def configure_sssd(augeas):
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_smart_refresh_interval",
                         "3600")
 
+    #Set low timeout levels to ensure that cache is used when ldap is slow/down
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_search_timeout", "5")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_enumeration_search_timeout", "5")
+    augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_network_timeout", "5")
+
     #sssd section settings
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'sssd']/services", "nss,pam,sudo")
 
@@ -211,9 +216,9 @@ def configure_sudo(augeas):
     if not augeas.find_entry("/files/etc/nsswitch.conf/database[. = 'sudoers']"):
         x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
     else:
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "ldap")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "files")
-        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[3]", "sss")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "files")
+        augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "sss")
+        augeas.remove("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[3]")
 
     x("touch /etc/ldap.conf")
     x("chown root:root /etc/ldap.conf")
