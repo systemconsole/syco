@@ -30,7 +30,7 @@ __status__ = "Development"
 
 
 HP_HEALTH_FILENAME="hp-health-10.00-1688.34.rhel6.x86_64.rpm"
-HP_HEALTH_URL="http://downloads.linux.hp.com/SDR/repo/spp/rhel/6.6Server/x86_64/current/{0}".format(HP_HEALTH_FILENAME)
+HP_HEALTH_URL="https://downloads.linux.hp.com/SDR/repo/spp/rhel/6.6Server/x86_64/current/{0}".format(HP_HEALTH_FILENAME)
 HP_HEALTH_MD5="9e2ac21bf648c14b7ebb46121ece4a12"
 
 PLG_PATH="/usr/lib64/nagios/plugins/"
