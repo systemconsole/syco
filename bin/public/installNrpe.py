@@ -143,6 +143,9 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hpasm")
 
+    # New in centos 6.7
+    x("setsebool -P nagios_run_sudo 1")
+
 
 def _install_nrpe_plugins_dependencies():
     """Install libraries/binaries that the NRPE-plugins depend on."""
