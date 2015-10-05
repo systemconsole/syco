@@ -13,11 +13,12 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import os, sys
+import os, sys, os.path
 import app
 from app import SYCO_PATH, SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
 from general import x
 import version
+from augeas import Augeas
 
 # The version of this module, used to prevent the same script version to be 
 # executed more then once on the same host.
@@ -41,8 +42,14 @@ def install_syco(args):
 
     app.print_verbose("Create symlink /sbin/syco")
     set_syco_permissions()
-    os.symlink('%sbin/syco.py' % SYCO_PATH, '/sbin/syco')
+    if not os.path.exists('/sbin/syco'):
+        os.symlink('%sbin/syco.py' % SYCO_PATH, '/sbin/syco')
     x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
+
+    #Use augeas to set max kernels to 2 since more won't fit on /boot
+    from augeas import Augeas
+    augeas = Augeas(x)
+    augeas.set_enhanced("/files/etc/yum.conf/main/installonly_limit", "2")
 
     version_obj.mark_executed()
 
