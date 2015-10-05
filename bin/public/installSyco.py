@@ -40,6 +40,9 @@ def install_syco(args):
     version_obj = version.Version("InstallSYCO", SCRIPT_VERSION)
     version_obj.check_executed()
 
+    app.print_verbose("Install required packages for syco")
+    x("yum install pexpect python-crypto augeas -y")
+
     app.print_verbose("Create symlink /sbin/syco")
     set_syco_permissions()
     if not os.path.exists('/sbin/syco'):
