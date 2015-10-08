@@ -75,8 +75,6 @@ def install_openldap(args):
     iptables.add_ldap_chain()
     iptables.save()
 
-    _install_web_page()
-
     version_obj.mark_executed()
 
 def uninstall_openldap(args):
@@ -108,9 +106,7 @@ def uninstall_openldap(args):
     # Host information
     scOpen("/etc/hosts").remove('^' + config.general.get_ldap_server_ip() + ".*")
 
-    # Remove web files
-    x("rm -rf /var/www/ldap")
-    x("rm -f /etc/httpd/conf.d/010-ldap.conf")
+    #Remove logs
     x("rm -rf /var/log/slapd")
 
     iptables.del_ldap_chain()
@@ -470,7 +466,7 @@ def set_permissions_on_certs():
     x("chmod -f 755 /etc/openldap/cacerts")
     x("restorecon -R /etc/openldap/cacerts")
 
-    # httpd need permissions to read the files.
+    # root only access
     x("chmod -f 700 /etc/openldap/cacerts/*")
     add_read_permission("/etc/openldap/cacerts/ca.crt")
     add_read_permission("/etc/openldap/cacerts/client.pem")
@@ -546,31 +542,6 @@ olcSecurity: ssf=128
 olcSecurity: simple_bind=128
 olcSecurity: tls=128""")
 
-def _install_web_page():
-    # Install cgi-bin and html files
-    x("cp -R " + app.SYCO_PATH + "var/ldap/html /var/www/ldap")
-    x("chmod -R 555 /var/www/ldap")
-    x("chcon -R system_u:object_r:httpd_sys_content_t:s0 /var/www/ldap")
-    x("chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/ldap/cgi-bin")
-
-    scOpen("/var/www/ldap/cgi-bin/ldappassword.cgi").replace(
-        "${LDAP_DN}", config.general.get_ldap_dn()
-    )
-
-    scOpen("/var/www/ldap/cgi-bin/ldappassword.cgi").replace(
-        "${LDAP_HOSTNAME}", config.general.get_ldap_hostname()
-    )
-
-    # Config apache
-    x("cp " + app.SYCO_PATH + "var/ldap/010-ldap.conf /etc/httpd/conf.d/")
-    scOpen("/etc/httpd/conf.d/010-ldap.conf").replace(
-        "${LDAP_HOSTNAME}", config.general.get_ldap_hostname()
-    )
-
-    x("chcon system_u:object_r:httpd_config_t:s0 /etc/httpd/conf.d/010-ldap.conf")
-    x("chown root:root /etc/httpd/conf.d/010-ldap.conf")
-    x("chmod 644 /etc/httpd/conf.d/010-ldap.conf")
-    x("/etc/init.d/httpd restart")
 
 def get_hashed_password(password):
     '''
