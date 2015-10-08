@@ -246,6 +246,7 @@ def _setup_glassfish4():
   asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
   asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
   asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
+  asadmin_exec("set-log-attributes handlerServices=com.sun.enterprise.server.logging.GFFileHandler,com.sun.enterprise.server.logging.SyslogHandler")
   asadmin_exec("set-log-attributes --target server-config com.sun.enterprise.server.logging.GFFileHandler.formatter=ulf")
   asadmin_exec("set server.admin-service.das-config.autodeploy-enabled=false")
   asadmin_exec("set server.admin-service.das-config.dynamic-reload-enabled=false")
