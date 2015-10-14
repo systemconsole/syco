@@ -55,7 +55,6 @@ def setup_kernel():
 
     # Flush settings.
     x("/sbin/sysctl -w net.ipv4.route.flush=1")
-    x("/sbin/sysctl -w net.ipv6.route.flush=1")
 
     #Enable ip forward for Firewall and Bounce
     x("hostname |grep fw && sysctl -w net.ipv4.ip_forward=1")
@@ -69,9 +68,6 @@ def disable_ip6_support():
 
   network = scOpen("/etc/sysconfig/network")
   network.replace_add("^NETWORKING_IPV6=.*$", "NETWORKING_IPV6=no")
-
-  x("/sbin/sysctl -w net.ipv6.conf.default.disable_ipv6=1")
-  x("/sbin/sysctl -w net.ipv6.conf.all.disable_ipv6=1")
 
 
 def configure_resolv_conf():
