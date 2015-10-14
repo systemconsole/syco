@@ -120,7 +120,7 @@ def find_rouge_files():
 			stat_info = os.stat(os.path.join(dirname, subdirname))
 			uid = stat_info.st_uid
 			#gid = stat_info.st_gid
-			if int(uid) not in userlist:
+			if str(uid) not in userlist:
 				app.print_verbose("  Folder %s has the strange user %s" %
 					(os.path.join(dirname, subdirname), +int(uid))
 				)
@@ -129,7 +129,7 @@ def find_rouge_files():
 			stat_info = os.stat(os.path.join(dirname, filename))
 			uid = stat_info.st_uid
 			#gid = stat_info.st_gid
-			if int(uid) not in userlist:
+			if str(uid) not in userlist:
 				app.print_verbose("  File %s has the strange user %s" %
 					(os.path.join(dirname, filename), +int(uid))
 				)
