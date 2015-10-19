@@ -75,10 +75,10 @@ def hp_repo():
     x("""cat > /etc/yum.repos.d/hp.repo << EOF
 [HP-Proliant]
 name=Software Delivery Repository \$releasever - \$basearch
-baseurl=https://downloads.linux.hp.com/SDR/repo/spp/rhel/\$releasever/\$basearch/current/
+baseurl=http://downloads.linux.hpe.com/SDR/repo/spp/rhel/\$releasever/\$basearch/current/
 enabled=1
 gpgcheck=0
-gpgkey=https://downloads.linux.hp.com/SDR/repo/spp/GPG-KEY-SPP
+gpgkey=https://downloads.linux.hpe.com/SDR/repo/spp/GPG-KEY-SPP
 EOF""")
 
 
