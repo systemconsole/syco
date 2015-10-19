@@ -38,7 +38,7 @@ SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
-    commands.add("install-sssd-client", install_sssd, help="Install sssd (ldap client).")
+    commands.add("install-sssd-client", install_sssd, help="Install sssd.")
     commands.add("uninstall-sssd-client", uninstall_sssd, help="Uninstall sssd.")
 
 
@@ -100,7 +100,7 @@ def download_cert(filename):
     This is not needed to be done on the server.
 
     """
-    #Creating certs folder
+    # Creating certs folder
     x("mkdir -p /etc/openldap/cacerts")
 
     ip = config.general.get_ldap_server_ip()
@@ -126,10 +126,10 @@ def install_certs():
 
 
 def authconfig():
-    '''
+    """
     Configure all relevant /etc files for sssd, ldap etc.
 
-    '''
+    """
     cmd = (
         "authconfig" +
         " --enablesssd --enablesssdauth --enablecachecreds" +
@@ -179,19 +179,19 @@ def configure_sssd(augeas):
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_default_authtok",
                             app.get_ldap_sssd_password())
 
-    #Enable caching of sudo rules
+    # Enable caching of sudo rules
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/sudo_provider", "ldap")
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_full_refresh_interval",
                         "86400")
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_sudo_smart_refresh_interval",
                         "3600")
 
-    #Set low timeout levels to ensure that cache is used when ldap is slow/down
+    # Set low timeout levels to ensure that cache is used when ldap is slow/down
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_search_timeout", "5")
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_enumeration_search_timeout", "5")
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'domain/default']/ldap_network_timeout", "5")
 
-    #sssd section settings
+    # sssd section settings
     augeas.set_enhanced("/files/etc/sssd/sssd.conf/target[. = 'sssd']/services", "nss,pam,sudo")
 
     # Need to change the modified date before restarting, to tell sssd to reload
@@ -205,16 +205,16 @@ def configure_sssd(augeas):
     # Start sssd after reboot.
     x("chkconfig sssd on")
 
-###########################################################
-# Configure the client to use sudo
-###########################################################
-
 
 def configure_sudo(augeas):
+    """
+    Configure the client to use sudo
 
-    #The database sudoers node doesn't appear to be insertable with a one liner so we have to echo it in
+    """
+    # The database sudoers node doesn't appear to be insertable with a
+    # one liner so we have to echo it in
     if not augeas.find_entry("/files/etc/nsswitch.conf/database[. = 'sudoers']"):
-        x("echo \"sudoers: ldap files sss\" >> /etc/nsswitch.conf")
+        x("echo \"sudoers: files sss\" >> /etc/nsswitch.conf")
     else:
         augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[1]", "files")
         augeas.set_enhanced("/files/etc/nsswitch.conf/database[. = 'sudoers']/service[2]", "sss")
@@ -234,14 +234,14 @@ def configure_sudo(augeas):
     augeas.set_enhanced("/files/etc/ldap.conf/binddn", "cn=sssd,%s" % config.general.get_ldap_dn())
     augeas.set_enhanced("/files/etc/ldap.conf/bindpw", app.get_ldap_sssd_password())
 
-    # SUDO now uses it's own ldap config file.
+    # SUDO now uses it's own ldap config file. But some applications don't.
     x("cp /etc/ldap.conf /etc/sudo-ldap.conf")
     x("chmod 440 /etc/sudo-ldap.conf")
     x("chown root:root /etc/sudo-ldap.conf")
     x("restorecon /etc/sudo-ldap.conf")
 
-    # Enable debugmode
-    #scOpen("/etc/ldap.conf").add("sudoers_debug 5")
+    # Enable debug mode
+    # scOpen("/etc/ldap.conf").add("sudoers_debug 5")
 
 ###########################################################
 # Test to see that everything works fine.
