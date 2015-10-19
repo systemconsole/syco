@@ -137,7 +137,7 @@ def _install_nrpe_plugins():
     #_fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
     #_fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
     #_fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
-    _fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
+    #_fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_connections.pl")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
