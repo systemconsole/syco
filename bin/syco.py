@@ -28,7 +28,7 @@ from optparse import OptionParser
 #
 
 # Common classes/functions that are used by the project.
-sys.path.append(sys.path[0] + "/common/")
+sys.path.insert(0, sys.path[0] + "/common/")
 
 import app
 import version

@@ -34,8 +34,6 @@ grep 8.8.8.8  /etc/resolv.conf > /dev/null || \
     echo "Set 8.8.8.8 to dns in resolver"
     echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 )
-echo "Installing yum packages for syco"
-yum install pexpect python-crypto -y
 
 #
 # Install syco
