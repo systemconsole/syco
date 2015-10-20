@@ -1,22 +1,20 @@
 #!/usr/bin/env python
-'''
-Install of rsyslog server with mysql backend
+"""
+Install of rsyslog server
 
 Install rsyslog server and setup tls server on tcp port 514 and unencrypted
 loggning on udp 514.
 
 SOME ROUTINES
-* All logs from all servers/clients are stored on file and to mysql.
+* All logs from all servers/clients are stored on file.
 * Logs on file are compressed everyday with bzip for best compression. Those
   files are supposed to be stored forever.
-* Mysql with the web tool loganalyzer are used for locking on logs.
-* All files stored to mysql are deleted after 90 days.
-
+* All files stored are deleted after 90 days.
 
 NOTE: Client certs need to be regenerated once year.
 
 LOGGING TO
-Logs are saved to an mysql database Syslog. And to files structure in
+Logs are saved to a file structure in
 /var/log/remote/year/month/day/servername
 
 NEW CERTS
@@ -35,11 +33,10 @@ READING
 http://www.rsyslog.com/doc
 http://www.rsyslog.com/doc/rsyslog_conf.html
 http://www.rsyslog.com/doc/rsyslog_tls.html
-http://www.rsyslog.com/doc/rsyslog_mysql.html
 
 https://access.redhat.com/knowledge/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/ch-Viewing_and_Managing_Log_Files.html
 
-'''
+"""
 
 __author__ = "daniel@cybercow.se, matte@elino.se"
 __copyright__ = "Copyright 2012, The System Console project"
@@ -51,19 +48,15 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os
-import string
 
 from config import get_servers
-from general import generate_password, get_install_dir
+from general import get_install_dir
 from general import x
-from installMysql import install_mysql, mysql_exec
 from scopen import scOpen
 import app
 import config
-import general
 import installLogrotate
 import iptables
-import mysqlUtils
 import net
 import version
 
@@ -73,33 +66,26 @@ SCRIPT_VERSION = 2
 
 
 def build_commands(commands):
-    '''
+    """
     Defines the commands that can be executed through the syco.py shell script.
 
-    '''
+    """
     commands.add("install-rsyslogd",          install_rsyslogd,   help="Install Rsyslog server.")
     commands.add("uninstall-rsyslogd",        uninstall_rsyslogd, help="Uninstall rsyslog server and all certs on the server.")
     commands.add("install-rsyslogd-newcerts", rsyslog_newcerts,   help="Generats new cert for rsyslogd clients.")
 
 
 def install_rsyslogd(args):
-    '''
+    """
     Install rsyslogd on the server.
 
-    '''
+    """
     app.print_verbose("Install rsyslogd.")
     version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    # Initialize all passwords used by the script
-    app.init_mysql_passwords()
-
-    # Setup syco dependencies.
-    if not os.path.exists('/etc/init.d/mysqld'):
-        install_mysql(["","1","1G"])
-
     # Installing packages
-    x("yum install rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils -y")
+    x("yum install rsyslog rsyslog-gnutls gnutls-utils -y")
 
     # Autostart rsyslog at boot
     x("chkconfig rsyslog on")
@@ -108,18 +94,13 @@ def install_rsyslogd(args):
     if not os.path.exists('/etc/pki/rsyslog/ca.crt'):
         rsyslog_newcerts(args)
 
-    sql_password = generate_password(20, string.letters + string.digits)
-    _setup_database(sql_password)
-    _setup_rsyslogd(sql_password)
-
     # Add iptables chains
     iptables.add_rsyslog_chain("server")
     iptables.save()
 
     # Restarting service
-    x("/etc/init.d/rsyslog restart")
+    x("service rsyslog restart")
 
-    install_purge_db()
     install_compress_logs()
 
     # Configure logrotate
@@ -128,35 +109,15 @@ def install_rsyslogd(args):
     version_obj.mark_executed()
 
 
-def _setup_database(sql_password):
-    '''
-    Configure database for rsyslog
-
-    '''
-    mysqlUtils.drop_user('rsyslogd')
-    mysqlUtils.create_user('rsyslogd', sql_password, 'Syslog', 'INSERT')
-
-    mysql_exec("\. {0}".format(get_create_db_path()), True, escape=False)
-
-
-def get_create_db_path():
-    '''
-    Get the path to the sql file that creates the mysql database.
-
-    '''
-    return "{0}rsyslog/createDB.sql".format(app.SYCO_VAR_PATH)
-
-
-def _setup_rsyslogd(sql_password):
-    '''
+def _setup_rsyslogd():
+    """
     Setup rsyslogd config files.
 
-    '''
+    """
     x("cp -f /opt/syco/var/rsyslog/rsyslogd.conf /etc/rsyslog.conf")
     x("chmod 640 /etc/rsyslog.conf")
 
     sc = scOpen("/etc/rsyslog.conf")
-    sc.replace('${SQLPASSWORD}', sql_password)
     sc.replace('${SERVERNAME}', '{0}.{1}'.format(
         net.get_hostname(), config.general.get_resolv_domain())
     )
@@ -172,12 +133,12 @@ def _setup_rsyslogd(sql_password):
 
 
 def rsyslog_newcerts(args):
-    '''
+    """
     Generate new tls certs for rsyslog server and all clients defined in install.cfg.
 
     NOTE: This needs to be executed once a year.
 
-    '''
+    """
     x("mkdir -p /etc/pki/rsyslog")
 
     # Copy certs template
@@ -202,10 +163,10 @@ def rsyslog_newcerts(args):
 
 
 def _create_cert(hostname):
-    '''
+    """
     Create certificate for one rsyslog client.
 
-    '''
+    """
     fqdn = "{0}.{1}".format(hostname, config.general.get_resolv_domain())
     app.print_verbose("Create cert for host: {0}".format(fqdn))
 
@@ -236,10 +197,10 @@ def _create_cert(hostname):
 
 
 def _replace_tags(filename, fqdn):
-    '''
+    """
     Replace all tags in template files with apropriate values.
 
-    '''
+    """
     sc = scOpen(filename)
     sc.replace('${ORGANIZATION}', config.general.get_organization_name())
     sc.replace('${UNIT}', config.general.get_organizational_unit_name())
@@ -253,50 +214,32 @@ def _replace_tags(filename, fqdn):
 
 
 def _get_serial():
-    '''
+    """
     Return a unique (autoinc) serial number that are used in template files.
 
-    '''
+    """
     _get_serial.serial = _get_serial.serial + 1
     return str(_get_serial.serial)
 _get_serial.serial = 0
 
 
 def uninstall_rsyslogd(args):
-    '''
+    """
     Remove Rsyslogd server from the server
 
-    '''
+    """
     app.print_verbose("Uninstall Rsyslogd SERVER")
-    x("yum erase rsyslog rsyslog-gnutls rsyslog-mysql gnutls-utils")
+    x("yum erase rsyslog rsyslog-gnutls gnutls-utils")
     x("rm -rf /etc/pki/rsyslog")
     version_obj = version.Version("InstallRsyslogd", SCRIPT_VERSION)
     version_obj.mark_uninstalled()
 
 
-def install_purge_db():
-    '''
-    Install a script that purges mysql from old rows every hour.
-
-    '''
-    # Setup user for purge script.
-    sql_password = generate_password(20, string.letters + string.digits)
-    mysqlUtils.drop_user('purgelogdb')
-    mysqlUtils.create_user('purgelogdb', sql_password, 'Syslog', 'SELECT, DELETE')
-
-    # Script should be executed once every hour.
-    fn = "/etc/cron.hourly/purge-db.sh"
-    x("cp -f {0}var/rsyslog/purge-db.sh {1}".format(app.SYCO_PATH, fn))
-    x("chmod +x {0}".format(fn))
-    logSql = scOpen(fn)
-    logSql.replace("${MYSQL_PASSWORD}", sql_password)
-
-
 def install_compress_logs():
-    '''
+    """
     Install a script that compresses all 1 day old remote logs.
 
-    '''
+    """
     # Script should be executed once every day.
     fn = "/etc/cron.daily/compress-logs.sh"
     x("cp -f {0}var/rsyslog/compress-logs.sh {1}".format(app.SYCO_PATH, fn))
