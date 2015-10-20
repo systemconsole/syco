@@ -20,16 +20,18 @@ OUT=$?
 if [ $OUT -ne 0 ]; then
     txt="[ERROR] Network $NETWORK_NAME changes detected from NMAP Scan"
     echo $txt
+    #Uncomment this line to get email notifications of changes
+    #cat /var/lib/nmap/scans/$NETWORK_NAME-$DATE-nmap-diff | mail -s "nmap-scan change detected" sysop@syco.net
     echo
     logger -t syco -p user.crit $txt
-	cat /tmp/$NETWORK_NAME-$DATE-nmap-diff
-	echo
+    cat /var/lib/nmap/scans/$NETWORK_NAME-$DATE-nmap-diff
+    echo
 else
     $txt="[NOTICE] NMAP scan completed, no changes detected."
     logger -t syco $txt
 fi
 
 # Create new initial-nmap
-cp /var/lib/nmap/scans/$NETWORK_NAME-$DATE-scan.xml /var/lib/nmap/$NETWORK_NAME-initial-nmap.xml
+cat /var/lib/nmap/scans/$NETWORK_NAME-$DATE-scan.xml >/var/lib/nmap/$NETWORK_NAME-initial-nmap.xml
 
 exit $OUT
