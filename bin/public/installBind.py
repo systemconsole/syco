@@ -275,19 +275,19 @@ def _replace_tags(filename, active_dc):
 
 
 def _generate_serial():
-    '''
+    """
     Return a zone serial number, which is todays datetime.
 
     ie. 20121006133721
-    '''
+    """
     return strftime("%Y%m%d%H%M%S", gmtime())
 
 
 def _set_permissions():
-    '''
+    """
     Set permissions on all named config files.
 
-    '''
+    """
     x("chown named:named -R /var/named/chroot/")
     x("chmod 770 -R /var/named/chroot/")
     x("restorecon -R /var/named/chroot/")
@@ -310,7 +310,7 @@ def install_bind_client(args):
     # reboot)
     resolv = scOpen("/etc/resolv.conf")
     resolv.remove("nameserver.*")
-    for ip in config.general.get_nameserver_server_ips(prefer_back_net=True):
+    for ip in config.general.get_nameserver_server_ips():
         resolv.add("nameserver {0} ".format(ip))
 
     # Change config files for networkmanager.
