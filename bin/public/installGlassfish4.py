@@ -299,6 +299,12 @@ def _setup_glassfish4():
   asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-1.http.xpowered-by=false")
   asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false")
 
+  #Configure rsyslog
+  x("sed -i 's/#$ModLoad imudp/$ModLoad imudp/g' /etc/rsyslog.conf")
+  x("sed -i 's/#$UDPServerRun 514/$UDPServerRun 514/g' /etc/rsyslog.conf")
+  x("sed -i 's/#$ModLoad imtcp/$ModLoad imtcp/g' /etc/rsyslog.conf")
+  x("sed -i 's/#$InputTCPServerRun 514/$InputTCPServerRun 514/g' /etc/rsyslog.conf")
+  x("service rsyslog restart")
 
 def _install_mysql_connect():
   '''
