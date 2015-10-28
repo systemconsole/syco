@@ -72,7 +72,7 @@ install
 # See installCobbler.py when changing disk usage.
 #
 clearpart --all --drives=$boot_device --initlabel
-part /boot --fstype ext4 --size=100 --ondisk=$boot_device
+part /boot --fstype ext4 --size=200 --ondisk=$boot_device
 part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup $vol_group pv.2
 logvol swap           --fstype swap --name=swap        --vgname=$vol_group --size=$disk_swap_mb
