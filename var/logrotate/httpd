@@ -1,4 +1,4 @@
-/var/log/httpd/*.log
+/var/log/httpd/*log
 /var/log/modsec_audit.log
 {
     rotate 10
@@ -6,7 +6,7 @@
     missingok
     notifempty
     sharedscripts
-    nocompress
+    compress
     postrotate
         /sbin/service httpd reload > /dev/null 2>/dev/null || true
     endscript
