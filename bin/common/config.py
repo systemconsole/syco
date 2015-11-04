@@ -90,7 +90,6 @@ class Config(object):
         hosts = [name for name in self.get_devices() if self.host(name).is_switch()]
         return sorted(hosts)
 
-
     class SycoConfig(ConfigParser.RawConfigParser):
 
         def __init__(self, etc_path, usr_path = None):
