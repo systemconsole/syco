@@ -180,7 +180,7 @@ def enable_ip_forward(enable=1):
 
     # Flush settings.
     x("/sbin/sysctl -w net.ipv4.route.flush=1")
-    x("/sbin/sysctl -w net.ipv6.route.flush=1")
+
 
 
 def disable_ip_forward():

@@ -75,21 +75,3 @@ def install_auditd():
 	app.print_verbose("Sending all admin actions to Syslog")
 	syslog = scOpen("/etc/audisp/plugins.d/syslog.conf")
 	syslog.replace_add("^active[\s]=.*","active = yes")
-
-
-
-	#Adding audit log compress service
-	x('mkdir /opt/scripts/')
-	x('cp /opt/syco/var/audit/audit_log_compress_daly.sh /opt/scripts/audit_log_compress_daly.sh')
-	x('chmod 700 /opt/scripts/audit_log_compress_daly.sh')
-	crontab = scOpen("/etc/crontab")
-	crontab.remove("^00.*/audit_log_compress_daly.sh")
-	crontab.add("'00   2 \* \* \*    root 	/opt/scripts/audit_log_compress_daly.sh'")
-
-	x('Audit Log Compress installed')
-
-	#
-	# Restarting service
-	#
-
-	x("service auditd restart")
