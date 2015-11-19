@@ -34,6 +34,7 @@ def install_auditd():
 	app.print_verbose("Added our own audit.rules")
 	x("[ -f '/etc/audit/audit.rules' ] && rm /etc/audit/audit.rules")
 	x("cp %shardening/audit.rules /etc/audit/audit.rules" % app.SYCO_VAR_PATH)
+	x("cp %shardening/syslog.conf /etc/audisp/plugins.d/syslog.conf" % app.SYCO_VAR_PATH)
 	x("chmod 700 /var/log/audit/")
 	x("chmod 700 /etc/audit/audit.rules")
 
@@ -51,10 +52,10 @@ def install_auditd():
 	auditd.replace_add("^admin_space_left_action[\s]*\=.*", "admin_space_left_action = halt")
 
 	app.print_verbose("CIS 5.3.2.3 Keep All Auditing Information")
-	auditd.replace_add("^max_log_file_action[\s]*\=.*", "max_log_file_action = keep_logs")
+	auditd.replace_add("^max_log_file_action[\s]*\=.*", "max_log_file_action = rotate")
 
 	app.print_verbose("Extra auditd configs")
-	auditd.replace_add("^num_logs[\s]*\=.*",                "num_logs = 99")
+	auditd.replace_add("^num_logs[\s]*\=.*",                "num_logs = 10")
 	auditd.replace_add("^space_left[\s]*\=.*",              "space_left = 125")
 	auditd.replace_add("^admin_space_left[\s]*\=.*",        "admin_space_left = 75")
 
