@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-'''
+"""
 Install/configure logrotate.
 
-'''
+"""
 
 __author__ = "daniel@cybercow.se"
 __copyright__ = "Copyright 2012, The System Console project"
@@ -26,18 +26,18 @@ SCRIPT_VERSION = 1
 
 
 def build_commands(commands):
-    '''
+    """
     Defines the commands that can be executed through the syco.py shell script.
 
-    '''
+    """
     commands.add("install-logrotate", install_logrotate, help="Install/configure logrotate.")
 
 
 def install_logrotate(args):
-    '''
+    """
     Install/configure logrotate.
 
-    '''
+    """
     app.print_verbose("Install/configure logrotate.")
     version_obj = version.Version("InstallLogrotate", SCRIPT_VERSION)
     version_obj.check_executed()
@@ -45,38 +45,31 @@ def install_logrotate(args):
     sc = scOpen("/etc/logrotate.conf")
     sc.replace('#compress', 'compress')
 
-    x("mkdir /var/log/archive")
-    x("cp %svar/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
-
+    syslog_rotate()
     httpd_rotate()
     mysqld_rotate()
-    install_SELinux()
 
     version_obj.mark_executed()
 
+
+def syslog_rotate():
+    app.print_verbose("Adding syslog")
+    x("mkdir -p /var/log/archive")
+    x("cp %svar/logrotate/syslog /etc/logrotate.d/" % app.SYCO_PATH)
+
+
 def httpd_rotate():
-    if (not os.path.exists('/etc/init.d/httpd')):
-       return
+    if not os.path.exists('/etc/init.d/httpd'):
+        return
 
     app.print_verbose("Adding httpd logrotate")
-    x("mkdir /var/log/httpd/archive")
+    x("mkdir -p /var/log/httpd/archive")
     x("cp %svar/logrotate/httpd /etc/logrotate.d/" % app.SYCO_PATH)
 
+
 def mysqld_rotate():
-    if (not os.path.exists('/etc/init.d/mysqld')):
-       return
+    if not os.path.exists('/etc/init.d/mysqld'):
+        return
 
     app.print_verbose("Adding mysqld-slow logrotate")
     x("cp %svar/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
-
-def install_SELinux():
-    '''
-    Install SELinux policies for logrotate of audit logs.
-    See .te files for policy details.
-    '''
-
-    # Create a local dir for SELinux modules
-    x("mkdir -p /var/lib/syco_selinux_modules/server")
-    module_path = "{0}var/logrotate/SELinux_modules".format(app.SYCO_PATH)
-    x("cp {0}/*.pp /var/lib/syco_selinux_modules/server".format(module_path))
-    x("semodule -i /var/lib/syco_selinux_modules/server/logrotate*.pp")
