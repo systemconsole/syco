@@ -1,0 +1,25 @@
+module nrpe 1.1;
+
+require {
+	type tmp_t;
+	type fixed_disk_device_t;
+	type httpd_t;
+	type var_lib_t;
+	type nrpe_t;
+	class key write;
+	class blk_file getattr;
+	class dir { read getattr search };
+	class file { read getattr open };
+	class capability sys_ptrace;
+}
+
+#============= httpd_t ==============
+allow httpd_t nrpe_t:dir { getattr search };
+allow httpd_t nrpe_t:file { read open };
+
+#============= nrpe_t ==============
+allow nrpe_t fixed_disk_device_t:blk_file getattr;
+allow nrpe_t self:key write;
+allow nrpe_t tmp_t:dir read;
+allow nrpe_t var_lib_t:file { read getattr open };
+allow nrpe_t self:capability sys_ptrace;

@@ -5,6 +5,7 @@
 /var/log/secure
 /var/log/spooler
 /var/log/unused.log
+/var/log/daemon.log
 {
     rotate 10
     size 100M

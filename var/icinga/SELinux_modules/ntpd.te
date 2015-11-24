@@ -1,0 +1,13 @@
+
+module ntpd 1.0;
+
+require {
+	type ntpd_t;
+	type httpd_t;
+	class dir { getattr search };
+	class file { read open };
+}
+
+#============= httpd_t ==============
+allow httpd_t ntpd_t:dir { getattr search };
+allow httpd_t ntpd_t:file { read open };
