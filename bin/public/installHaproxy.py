@@ -35,6 +35,8 @@ script_version = 1
 
 CERT_SERVER = CERT_SERVER_PATH =  CERT_COPY_TO_PATH = SYCO_PLUGIN_PATH = None
 
+
+
 def print_killmessage():
     print "Please specify environment"
     print_environments()
@@ -63,7 +65,7 @@ def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
     '''
-    commands.add("install-haproxy", install_haproxy, help="Install HA Proxy on the server.")
+    commands.add("install-haproxy", install_haproxy, help="Install HA Proxy on the server.", password_list=[["haproxy-sps-ping", "haproxy"]])
     commands.add("uninstall-haproxy", uninstall_haproxy, help="Uninstall HA Proxy from the server.")
 
 def _service(service,command):
@@ -73,7 +75,7 @@ def _chkconfig(service,command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
 
 def install_haproxy(args):
-    global CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, SYCO_PLUGIN_PATH, ACCEPTED_HAPROXY_ENV
+    global CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, SYCO_PLUGIN_PATH, ACCEPTED_HAPROXY_ENV, HAPROXY_ENV
 
     CERT_SERVER = config.general.get_cert_server_ip()
     CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
@@ -81,10 +83,7 @@ def install_haproxy(args):
     SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
     ACCEPTED_HAPROXY_ENV = get_environments()
 
-    if len(sys.argv) != 3:
-        print_killmessage()
-    else:
-        HAPROXY_ENV = sys.argv[2]
+    HAPROXY_ENV = sys.argv[2]
 
     if HAPROXY_ENV.lower() not in ACCEPTED_HAPROXY_ENV:
         print_killmessage()
@@ -108,8 +107,27 @@ def _configure_haproxy():
 
     scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${ENV_IP}", get_ip_address('eth1'))
 
+    if HAPROXY_ENV == 'farepayment':
+        _configure_farepayment_haproxy()
+
     _chkconfig("haproxy","on")
     _service("haproxy","restart")
+
+def _configure_farepayment_haproxy():
+
+    FAREPAYMENT_HAPROXY_DC = socket.gethostname()
+    if FAREPAYMENT_HAPROXY_DC == 'farepayment-ha-tc':
+        scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${TCSTATE}",(''))
+        scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${AVSTATE}",('backup'))
+    else:
+        scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${TCSTATE}",('backup'))
+        scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${AVSTATE}",(''))
+    
+    #SPS_PING_CREDENTIALS = password.get_haproxy_sps_password()
+    SPS_PING_CREDENTIALS = app.get_custom_password("haproxy-sps-ping", "haproxy")
+    BASE64CREDENTIALS = x("echo -n haproxy:{0} | base64 | tr -d '\n'".format(SPS_PING_CREDENTIALS))
+    scopen.scOpen(HAPROXY_CONF_DIR + "haproxy.cfg").replace("${CREDENTIALS}",BASE64CREDENTIALS)
+
 
 def _copy_certificate_files():
     copyfrom = "root@{0}".format(CERT_SERVER)
@@ -132,10 +150,14 @@ def get_ip_address(ifname):
         struct.pack('256s', ifname[:15])
     )[20:24])
 
-def uninstall_haproxy(args=""):
+def uninstall_haproxy(args):
     '''
     Remove HA Proxy from the server.
     '''
+
+    global HAPROXY_ENV
+    HAPROXY_ENV = sys.argv[2]
+
     app.print_verbose("Uninstall HA Proxy")
     os.chdir("/")
 
