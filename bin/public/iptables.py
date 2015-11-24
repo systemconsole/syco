@@ -252,6 +252,8 @@ def add_service_chains():
     add_freeradius_chain()
     add_openvas_chain()
     add_ossec_chain()
+    add_haproxy_chain()
+    add_kibana_chain()
 
 
 def create_chains():
@@ -1039,10 +1041,41 @@ def add_ossec_chain():
             config.general.get_ossec_server_ip()
         )
 
+
+def del_haproxy_chain():
+    app.print_verbose("Delete iptables chain for haproxy")
+
+    iptables("-D syco_input -p tcp -j haproxy_inout", general.X_OUTPUT_CMD)
+    iptables("-D syco_output -p tcp -j haproxy_inout", general.X_OUTPUT_CMD)
+    iptables("-F haproxy_inout", general.X_OUTPUT_CMD)
+    iptables("-X haproxy_inout", general.X_OUTPUT_CMD)
+
+
+def add_haproxy_chain():
+    del_haproxy_chain()
+
+    if not os.path.exists('/etc/haproxy/haproxy.cfg'):
+        return
+
+    app.print_verbose("Add iptables chain for haproxy")
+
+    # Create chains.
+    iptables("-N haproxy_inout")
+    iptables("-A syco_input -p tcp -j haproxy_inout")
+    iptables("-A syco_output -p tcp -j haproxy_inout")
+
+    iptables(
+        "-A haproxy_inout -p tcp -m multiport --dports 80:84 -j allowed_tcp"
+    )
+    iptables(
+        "-A haproxy_inout -p tcp -m multiport --dports 443 -j allowed_tcp"
+    )
+
+
 def del_kibana_chain():
     app.print_verbose("Delete iptables chain for kibana")
     iptables("-D syco_input  -p tcp -j kibana_input", general.X_OUTPUT_CMD)
-    iptables("-D syco_output  -p tco -j kibana_outut", general.X_OUTPUT_CMD)
+    iptables("-D syco_output -p tcp -j kibana_outut", general.X_OUTPUT_CMD)
     iptables("-F kibana", general.X_OUTPUT_CMD)
     iptables("-X kibana", general.X_OUTPUT_CMD)
 
