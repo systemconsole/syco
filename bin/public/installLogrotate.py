@@ -50,7 +50,6 @@ def install_logrotate(args):
 
     httpd_rotate()
     mysqld_rotate()
-    auditd_rotate()
     install_SELinux()
 
     version_obj.mark_executed()
@@ -69,15 +68,6 @@ def mysqld_rotate():
 
     app.print_verbose("Adding mysqld-slow logrotate")
     x("cp %svar/logrotate/mysqld /etc/logrotate.d/" % app.SYCO_PATH)
-
-def auditd_rotate():
-    if (not os.path.exists('/etc/init.d/auditd')):
-       return
-
-    app.print_verbose("Adding audit logrotate")
-    x("mkdir /var/log/audit/archive")
-    x("cp %svar/logrotate/audit /etc/logrotate.d/" % app.SYCO_PATH)
-    x("restorecon -r /etc/logrotate.d/audit")
 
 def install_SELinux():
     '''
