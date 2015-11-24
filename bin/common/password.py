@@ -159,6 +159,10 @@ def get_redis_production_password():
   '''A user password for the redis service.'''
   return _get_password("redis", "production")
 
+def get_haproxy_sps_ping_password():
+  '''A user password for the haproxy ping.'''
+  return _get_password("haproxy-sps-ping", "haproxy")
+
 def init_mysql_passwords():
     get_mysql_root_password()
     get_mysql_monitor_password()
@@ -182,5 +186,5 @@ def init_all_passwords():
     get_user_password("glassfish")
     get_switch_icmp_password()
     get_redis_production_password()
-
+    get_haproxy_sps_ping_password()
     init_mysql_passwords()
