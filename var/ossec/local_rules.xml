@@ -176,11 +176,10 @@ Incresing alert level to 16 -->
 	<description>File added to the system in /etc/lvm/archive, happens during mysql backup. 151130</description>
 </rule>
 
-<rule id="100511" level="10" frequency="15" timeframe="15">
-	<if_matched_sid>31533</if_matched_sid>
-	<same_source_ip />
-	<match>partner.rentalcar.com</match>
-	<description>High amount of POST requests. Trigger if more than 15 in 15s. 151130</description>
+<rule id="31533" level="10" frequency="10" timeframe="10" overwrite="yes">
+        <same_source_ip />
+        <if_matched_regex>*partner.rentalcar.com*</if_matched_regex>
+        <description>High amount of POST requests. Trigger if more than 10 in 10s. 151130</description>
 </rule>
 
 </group>
