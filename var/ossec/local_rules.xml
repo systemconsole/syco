@@ -142,44 +142,44 @@ Incresing alert level to 16 -->
 <rule id="100500" level="0">
 	<if_sid>554</if_sid>
 	<match>/var/log</match>
-	<description>File added to the system in /var/log. 151130</description>
+	<description>File added to the system in /var/log. - Rule created 151130</description>
 </rule>
 
 <rule id="100501" level="0">
 	<if_sid>550</if_sid>
 	<match>/var/log</match>
-	<description>Ignoring rule 550 when Integrity checksum changed in /var/log. 151130</description>
+	<description>Ignoring rule 550 when Integrity checksum changed in /var/log. - Rule created 151130</description>
 </rule>
 
 <rule id="100507" level="0">
 	<if_sid>552</if_sid>
 	<if_matched_regex>*failed_syslog_events-*</if_matched_regex>
-	<description>Integrity checksum changed 151130</description>
+	<description>Integrity checksum changed - Rule created 151130</description>
 </rule>
 
 <rule id="100508" level="0">
 	<if_sid>551</if_sid>
 	<if_matched_regex>*failed_syslog_events-*</if_matched_regex>
-	<description>Integrity checksum changed 151130</description>
+	<description>Integrity checksum changed - Rule created 151130</description>
 </rule>
 
 <rule id="100509" level="0">
 	<if_sid>31533</if_sid>
 	<match>/elasticsearch</match>
 	<srcip>31.211.203.114</srcip>
-	<description>High amounts of posts when filtering in Kibana 151130</description>
+	<description>High amounts of posts when filtering in Kibana - Rule created 151130</description>
 </rule>
 
 <rule id="100510" level="0">
 	<if_sid>554</if_sid>
 	<match>/etc/lvm/archive</match>
-	<description>File added to the system in /etc/lvm/archive, happens during mysql backup. 151130</description>
+	<description>File added to the system in /etc/lvm/archive, happens during mysql backup. - Rule created 151130</description>
 </rule>
 
 <rule id="31533" level="10" frequency="10" timeframe="10" overwrite="yes">
         <same_source_ip />
         <if_matched_regex>*partner.rentalcar.com*</if_matched_regex>
-        <description>High amount of POST requests. Trigger if more than 10 in 10s. 151130</description>
+        <description>High amount of POST requests. Trigger if more than 10 in 10s. - Rule created 151130</description>
 </rule>
 
 </group>
@@ -257,7 +257,7 @@ Incresing alert level to 16 -->
 	<srcip>38.122.74.18</srcip>
 	<srcip>12.248.108.202</srcip>
 	<srcip>67.207.113.226</srcip>
-	<description>Multiple web attacks from WhiteHat 151130</description>
+	<description>Multiple web attacks from WhiteHat - Rule created 151130</description>
 </rule>
 
 <rule id="100503" level="0">
@@ -267,7 +267,7 @@ Incresing alert level to 16 -->
 	<srcip>38.122.74.18</srcip>
 	<srcip>12.248.108.202</srcip>
 	<srcip>67.207.113.226</srcip>
-	<description>Ignore if source is from WhiteHat 151130</description>
+	<description>Ignore if source is from WhiteHat - Rule created 151130</description>
 </rule>
 
 <rule id="100504" level="0">
@@ -277,7 +277,7 @@ Incresing alert level to 16 -->
 	<srcip>38.122.74.18</srcip>
 	<srcip>12.248.108.202</srcip>
 	<srcip>67.207.113.226</srcip>
-	<description>Multiple web server 400 error codes from WhiteHat 151130</description>
+	<description>Multiple web server 400 error codes from WhiteHat - Rule created 151130</description>
 </rule>
 
 <rule id="100505" level="0">
@@ -288,7 +288,7 @@ Incresing alert level to 16 -->
 	<srcip>38.122.74.18</srcip>
 	<srcip>12.248.108.202</srcip>
 	<srcip>67.207.113.226</srcip>
-	<description>High amount of posts from Florida state IPs or WhiteHat 151130</description>
+	<description>High amount of posts from Florida state IPs or WhiteHat - Rule created 151130</description>
 </rule>
 
 </group>
@@ -313,7 +313,7 @@ Incresing alert level to 16 -->
 	<if_sid>30119</if_sid>
 	<srcip>10.101.1.13</srcip>
 	<srcip>10.100.1.13</srcip>
-	<description>Multiple attempts blocked by Mod Security. Caused by OpenVAS 151130</description>
+	<description>Multiple attempts blocked by Mod Security. Caused by OpenVAS - Rule created 151130</description>
 </rule>
 
 </group>
