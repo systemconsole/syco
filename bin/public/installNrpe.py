@@ -101,11 +101,7 @@ def _install_nrpe_plugins():
     """Install NRPE-plugins (to be executed remoteley) and SELinux-rules."""
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
-    host_config = config.host(net.get_hostname())
-    if host_config.is_guest():
-        x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
-    elif host_config.is_firewall() or host_config.is_host():
-        x("cp -p {0}lib/nagios/plugins_nrpe/physical/* {1}".format(constant.SYCO_PATH, PLG_PATH))
+    x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
 
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
