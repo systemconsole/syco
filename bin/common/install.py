@@ -110,7 +110,7 @@ EOF""")
     x("""cat > /etc/yum.repos.d/hp.repo << EOF
 [HP-Proliant]
 name=Software Delivery Repository \$releasever - \$basearch
-baseurl=https://downloads.linux.hpe.com/SDR/downloads/ServicePackforProLiant/RedHat/$releasever/$basearch/current/
+baseurl=https://downloads.linux.hpe.com/SDR/downloads/ServicePackforProLiant/RedHat/\$releasever/\$basearch/current/
 enabled=1
 gpgcheck=1
 gpgkey=https://downloads.linux.hpe.com/SDR/downloads/ServicePackforProLiant/GPG-KEY-ServicePackforProLiant
