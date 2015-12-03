@@ -142,6 +142,7 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hpasm")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hparray")
 
     # New in centos 6.7
     x("setsebool -P nagios_run_sudo 1")
@@ -180,12 +181,14 @@ EOF
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
         install.hp_repo()
-        x("yum -y install hp-health")
+        x("yum -y install hp-health hpacucli")
 
-        # Let nrpe run hpasmcli
+        # Let nrpe run hpasmcli and hpacucli
     x("""cat >> /etc/sudoers.d/nrpe << EOF
 nagios ALL=NOPASSWD:/sbin/hpasmcli
-nagios ALL=NOPASSWD:{0}check_hpasm"
+nagios ALL=NOPASSWD:{0}check_hpasm
+nagios ALL=NOPASSWD:/sbin/hpacucli
+nagios ALL=NOPASSWD:{0}check_hparray"
 EOF
 """.format(PLG_PATH))
 
