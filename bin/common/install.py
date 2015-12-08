@@ -46,7 +46,7 @@ def rforge_repo():
 
     """
     package = "rpmforge-release-0.5.2-2.el6.rf.x86_64"
-    fn = "http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm"
+    fn = "http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm"
 
     if not is_rpm_installed(package):
         _yum_protect_base()
