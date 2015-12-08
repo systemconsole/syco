@@ -107,7 +107,7 @@ case "$1" in
                 exit 0
                 ;;
         -s)
-                check=`sudo -u root $HPACUCLI controller slot=$2 ld all show`
+                check=`$HPACUCLI controller slot=$2 ld all show`
                 check_raid
                 ;;
         *)
