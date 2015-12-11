@@ -33,6 +33,7 @@ import socket
 import time
 import version
 
+SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -90,7 +91,7 @@ def _setup_conf():
 
     '''
     x('rm -f /var/ossec/etc/ossec.conf')
-    x('cp -f /opt/syco/var/ossec/ossec_agent.conf /var/ossec/etc/ossec.conf')
+    x('cp -f '+SYCO_FO_PATH+'var/ossec/ossec_agent.conf /var/ossec/etc/ossec.conf')
     x('chown root:ossec /var/ossec/etc/ossec.conf')
     x('chmod 640 /var/ossec/etc/ossec.conf')
 
