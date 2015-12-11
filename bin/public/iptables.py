@@ -744,9 +744,11 @@ def add_nrpe_chain():
 
     monitor_listen_port = "5666"
     monitor_server_ip = config.general.get_monitor_server_ip()
+    if monitor_server_ip:
+        monitor_server_ip = '-s %s' % monitor_server_ip
 
     app.print_verbose("Chain for NRPE input from {0}".format(monitor_server_ip))
-    iptables("-A nrpe_input -p TCP -m multiport -s " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
+    iptables("-A nrpe_input -p TCP -m multiport " + monitor_server_ip + " --dports " + monitor_listen_port + " -m state --state NEW -j allowed_tcp")
 
 
 def del_openvpn_chain():

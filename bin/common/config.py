@@ -299,7 +299,6 @@ class Config(object):
         '''
 
         def get_monitor_server_ip(self):
-
             return self._get_service_ip("monitor")
 
         def get_monitor_server_hostname(self):

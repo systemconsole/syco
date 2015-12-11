@@ -39,6 +39,7 @@ def build_commands(commands):
 def install_nrpe(args):
     """Install a hardened NRPE server, plugins and commands."""
     app.print_verbose("Installing nrpe")
+
     version_obj = version.Version("installNrpe", SCRIPT_VERSION)
     version_obj.check_executed()
     _install_nrpe(args)
@@ -59,10 +60,13 @@ def _install_nrpe(args):
     install.epel_repo()
 
     # Confusing that nagios-plugins-all does not really include all plugins
+    # WARNING: nrpe in EPEL and nagios-nrpe in RPMForge are the same package. At
+    # the moment EPEL has the latest version but RPMForge obsolete the EPEL
+    # package. Because of that, exclude nagios-nrpe from RPMForge.
     x(
         "yum install -y nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap "
         "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable"
-        "perl-Date-Calc policycoreutils-python"
+        "perl-Date-Calc policycoreutils-python --exclude=nagios-nrpe"
     )
 
     # Move object structure and prepare conf-file
@@ -81,7 +85,7 @@ def _install_nrpe(args):
     nrpe_config.replace("$(MONITORIP)", monitor_server_front_ip)
 
     # Set permissions for read/execute under nagios-user
-    x("chown -R root:nagios /etc/nagios/")
+    x("chown -R root:nrpe /etc/nagios/")
 
     # Allow nrpe to listen on UDP port 5666
     iptables.add_nrpe_chain()
@@ -118,7 +122,7 @@ def _install_nrpe_plugins():
 
     # Change ownership of plugins to nrpe (from icinga/nagios)
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
-    x("chown -R nagios:nagios /usr/lib64/nagios/plugins/")
+    x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl.
     # Corresponding .te-files summarize rule content
@@ -142,6 +146,7 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hpasm")
+    _fix_selinux("nagios_unconfined_plugin_exec_t", "check_hparray")
 
     # New in centos 6.7
     x("setsebool -P nagios_run_sudo 1")
@@ -157,13 +162,13 @@ def _install_nrpe_plugins_dependencies():
     x("yum install -y perl-suidperl")
 
     x("""cat > /etc/sudoers.d/nrpe << EOF
-Defaults:nagios !requiretty
-nagios ALL=NOPASSWD:{0}check_clamav
-nagios ALL=NOPASSWD:{0}check_clamscan
-nagios ALL=NOPASSWD:{0}check_disk
-nagios ALL=NOPASSWD:{0}get_services
-nagios ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
-nagios ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
+Defaults:nrpe !requiretty
+nrpe ALL=NOPASSWD:{0}check_clamav
+nrpe ALL=NOPASSWD:{0}check_clamscan
+nrpe ALL=NOPASSWD:{0}check_disk
+nrpe ALL=NOPASSWD:{0}get_services
+nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
+nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
 EOF
 """.format(PLG_PATH))
 
@@ -180,12 +185,14 @@ EOF
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
         install.hp_repo()
-        x("yum -y install hp-health")
+        x("yum -y install hp-health hpacucli")
 
-        # Let nrpe run hpasmcli
+        # Let nrpe run hpasmcli and hpacucli
     x("""cat >> /etc/sudoers.d/nrpe << EOF
-nagios ALL=NOPASSWD:/sbin/hpasmcli
-nagios ALL=NOPASSWD:{0}check_hpasm"
+nrpe ALL=NOPASSWD:/sbin/hpasmcli
+nrpe ALL=NOPASSWD:{0}check_hpasm
+nrpe ALL=NOPASSWD:/sbin/hpacucli
+nrpe ALL=NOPASSWD:{0}check_hparray
 EOF
 """.format(PLG_PATH))
 
