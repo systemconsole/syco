@@ -71,6 +71,7 @@ def install_sssd(args):
 
     installOpenLdap.configure_client_cert_for_ldaptools()
     augeas = Augeas(x)
+    create_sss_folders()
     configure_sssd(augeas)
     configure_sudo(augeas)
 
@@ -146,6 +147,24 @@ def authconfig():
             config.general.get_ldap_dn()
         )
     )
+
+def create_sss_folders():
+    if os.path.exists("/var/lib/sss"):
+        print "Directory /var/lib/sss already exists"
+    else:
+        #Create folder for sss
+        x("mkdir /var/lib/sss")
+        x("mkdir /var/lib/sss/db")
+        x("mkdir /var/lib/sss/gpo_cache")
+        x("mkdir /var/lib/sss/mc")
+        x("mkdir -p /var/lib/sss/pipes/private")
+        x("mkdir /var/lib/sss/pubconf")
+        #Set permissions
+        x("chown -R root:root /var/lib/sss")
+        x("chmod -R 755 /var/lib/sss")
+        x("chmod 700 /var/lib/sss/db")
+        x("chmod 700 /var/lib/sss/pipes/private")
+        x("restorecon -R /var/lib/sss/")
 
 
 def configure_sssd(augeas):
