@@ -21,10 +21,8 @@
 
 # These values should be changed to reflect your mysql servers ip.
 MYSQL_IPS = []
-#MYSQL_IPS.append("${MYSQL_PRIMARY}")
+MYSQL_IPS.append("${MYSQL_PRIMARY}")
 #MYSQL_IPS.append("${MYSQL_SECONDARY}")
-MYSQL_IPS.append("10.101.2.105")
-MYSQL_IPS.append("10.101.1.105")
 
 # The linux user whish glassfish should be started with.
 OWNER="glassfish";
@@ -40,7 +38,6 @@ import pwd
 import datetime
 import time
 import subprocess
-import shlex
 from optparse import OptionParser
 
 # String codes affecting output to shell.
