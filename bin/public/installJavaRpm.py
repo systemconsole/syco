@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 '''
 Install/update Java.
-
 '''
 
 __author__ = "mattias.hemmingsson@fareoffice.com"
@@ -33,10 +32,8 @@ JDK_EXTENSION ="b13"
 def build_commands(commands):
     '''
     Defines the commands that can be executed through the syco.py shell script.
-
     '''
-    commands.add("install-java-rpm", install_java, help="Install/configure Java.")
-
+    commands.add("install-java-rpm", install_java, help="Install/configure Java. (syco install-mysql b13 8u31 (where b13 is jdk_extensionand 8u31 is jdk_version))")
 
 def install_java(args):
 	'''
@@ -44,6 +41,10 @@ def install_java(args):
 	
 	'''
 
+	if (len(args) != 3):
+		raise Exception("syco install-mysql b13 8u31 (where b13 is jdk_extensionand 8u31 is jdk_version http://www.oracle.com/technetwork/java/javase/downloads/index.html)")
+	JDK_VERSION = args[2]
+	JDK_EXTENSION = args[1]
 	x('yum install wget -y')
 	os.system('wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/'+JDK_VERSION+'-'+JDK_EXTENSION+'/jdk-'+JDK_VERSION+'-linux-x64.rpm')
 	x('yum localinstall jdk-'+JDK_VERSION+'-linux-x64.rpm -y')
