@@ -38,12 +38,6 @@ GLASSFISH_USER         = "glassfish"
 # Icinga plugins directory
 ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 
-# http://www.oracle.com/technetwork/java/javase/downloads/index.html
-JDK_INSTALL_FILE = "jdk-8u66-linux-x64.tar.gz"
-JDK_REPO_URL     = "http://packages.fareoffice.com/java/%s" % (JDK_INSTALL_FILE)
-JDK_INSTALL_PATH = "/usr/java/jdk1.8.0_66"
-JDK_VERSION = "jdk1.8.0_66"
-
 # Mysql Connector
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
 MYSQL_FILE_NAME="mysql-connector-java-5.1.36"
@@ -71,7 +65,7 @@ def install_glassfish(arg):
     if not _is_glassfish_user_installed():
         x("adduser {0}".format(GLASSFISH_USER))
 
-    _install_jdk()
+    _check_java_installed()
     _install_glassfish()
     _setup_glassfish4()
     _install_mysql_connect()
@@ -90,31 +84,10 @@ def _is_glassfish_user_installed():
     return False
 
 
-def _install_jdk():
+def _check_java_installed():
     """Installation of the java sdk."""
-    if not os.access(JDK_INSTALL_PATH, os.F_OK):
-        os.chdir(app.INSTALL_DIR)
-        if not os.access(JDK_INSTALL_FILE, os.F_OK):
-            general.download_file(JDK_REPO_URL)
-            x("chmod u+rx " + JDK_INSTALL_FILE)
-
-        if os.access(JDK_INSTALL_FILE, os.F_OK):
-            x("tar -zxvf %s" % JDK_INSTALL_FILE)
-            x("mkdir /usr/java")
-            x("mv %s /usr/java" % JDK_VERSION)
-            x("rm -f /usr/java/default")
-            x("rm -f /usr/java/latest")
-            x("ln -s /usr/java/%s /usr/java/default" % JDK_VERSION)
-            x("ln -s /usr/java/default /usr/java/latest")
-            x("chown root:glassfish -R /usr/java/%s" % JDK_VERSION)
-            x("chmod 774 -R /usr/java/%s" % JDK_VERSION)
-            x("chmod 701 /usr/java")
-            x("alternatives --install /usr/bin/javac javac /usr/java/latest/bin/javac 20000")
-            x("alternatives --install /usr/bin/jar jar /usr/java/latest/bin/jar 20000")
-            x("alternatives --install /usr/bin/java java /usr/java/latest/jre/bin/java 20000")
-            x("alternatives --install /usr/bin/javaws javaws /usr/java/latest/jre/bin/javaws 20000")
-        else:
-            raise Exception("Not able to download %s" % JDK_INSTALL_FILE)
+    if not os.access("/usr/bin/java", os.F_OK):
+        raise Exception("Java is not installed on this server.")
 
 
 def _install_glassfish():
