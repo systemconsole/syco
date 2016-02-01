@@ -51,7 +51,7 @@ def verify_docker(args):
     Verify docker installed correctly.
     '''
     
-    x('docker run hello-world')
+    x('docker run hello-world 1>&2')
 
 def uninstall_docker(args):
     '''
@@ -60,4 +60,6 @@ def uninstall_docker(args):
     
     x('service docker stop')
     x('yum -y remove docker-engine')
+    x('rm -f /etc/yum.repos.d/docker.repo') 
+    x('rm -rf /etc/systemd/system/docker.service.d')
     x('rm -rf /var/lib/docker')
