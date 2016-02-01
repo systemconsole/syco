@@ -40,8 +40,7 @@ def install_docker(args):
     x('cp /opt/syco/var/docker/docker.repo /etc/yum.repos.d/docker.repo')
     x('yum -y install docker-engine')
 
-    x('mkdir -p /etc/systemd/system/docker.service.d')
-    x('cp /opt/syco/var/docker/docker.conf /etc/systemd/system/docker.service.d/docker.conf')
+    x('cp /opt/syco/var/docker/docker /etc/sysconfig/docker')
 
     x('chkconfig docker on')
     x('service docker start')
@@ -61,5 +60,5 @@ def uninstall_docker(args):
     x('service docker stop')
     x('yum -y remove docker-engine')
     x('rm -f /etc/yum.repos.d/docker.repo') 
-    x('rm -rf /etc/systemd/system/docker.service.d')
+    x('rm -f /etc/sysconfig/docker')
     x('rm -rf /var/lib/docker')
