@@ -38,7 +38,7 @@ def install_docker(args):
     '''
     
     x('cp /opt/syco/var/docker/docker.repo /etc/yum.repos.d/docker.repo')
-    x('yum install docker-engine')
+    x('yum -y install docker-engine')
 
     x('mkdir -p /etc/systemd/system/docker.service.d')
     x('cp /opt/syco/var/docker/docker.conf /etc/systemd/system/docker.service.d/docker.conf')
