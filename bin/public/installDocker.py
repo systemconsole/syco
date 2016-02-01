@@ -43,8 +43,8 @@ def install_docker(args):
     x('mkdir -p /etc/systemd/system/docker.service.d')
     x('cp /opt/syco/var/docker/docker.conf /etc/systemd/system/docker.service.d/docker.conf')
 
-    x('systemctl enable docker')
-    x('systemctl start docker')
+    x('chkconfig docker on')
+    x('service docker start')
 
 def verify_docker(args):
     '''
@@ -58,7 +58,6 @@ def uninstall_docker(args):
     Uninstall docker
     '''
     
-    x('systemctl stop docker')
-    x('yum -y remove docker-engine.x86_64')
-    #x('rm -rf /var/lib/docker')
-  
+    x('service docker stop')
+    x('yum -y remove docker-engine')
+    x('rm -rf /var/lib/docker')
