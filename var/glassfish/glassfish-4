@@ -31,12 +31,14 @@ OWNER = "glassfish"
 GLASSFISH_PATH = "/usr/local/glassfish4"
 
 # Import used python modules.
-import datetime
-import pwd
-import subprocess
-import time
-from optparse import OptionParser
 from socket import *
+import sys
+import os
+import pwd
+import datetime
+import time
+import subprocess
+from optparse import OptionParser
 
 # String codes affecting output to shell.
 BOLD = "\033[1m"
@@ -61,9 +63,11 @@ def is_server_alive(server, port):
         s = socket(AF_INET, SOCK_STREAM)
         s.settimeout(5)
         result = s.connect_ex((server, int(port)))
+    except Exception:
+        pass
     finally:
-        s.shutdown(2)
-        s.close()
+        if s:
+            s.close()
     return result == 0
 
 
@@ -107,18 +111,18 @@ def x(cmd, user=None):
     return (stdout, stderr, p.pid)
 
 
-def write_to_log(domain_name, message, verbose=1):
+def write_to_log(message, verbose=1):
     """
-    Write MESSAGE to screen and the startup log for the gf domain DOMAIN_NAME.
+    Write MESSAGE to screen and the startup log for the gf domain.
 
     The logs are stored in
-    GLASSFISH_PATH/glassfish/domains/DOMAIN_NAME/logs/startup.log
+    GLASSFISH_PATH/glassfish/domains/domain1/logs/startup.log
 
     """
     print_verbose(message, verbose)
 
-    file_name = "%s/glassfish/domains/%s/logs/startup.log" % (
-        GLASSFISH_PATH, domain_name
+    file_name = "%s/glassfish/domains/domain1/logs/startup.log" % (
+        GLASSFISH_PATH
     )
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -133,18 +137,18 @@ def write_to_log(domain_name, message, verbose=1):
         print_verbose(result, 1)
 
 
-def asadmin_exec(domain_name, command):
+def asadmin_exec(command):
     """Execute COMMAND with glassfish asadmin."""
     asacmd = "%s/bin/asadmin %s" % (GLASSFISH_PATH, command)
 
     print_verbose(BOLD + "Command: " + RESET + asacmd, 2)
-    write_to_log(domain_name, "Command: " + asacmd, 99)
+    write_to_log("Command: " + asacmd, 99)
 
     (stdout, stderr, pid) = x(asacmd)
     if stdout:
-        write_to_log(domain_name, stdout, 2)
+        write_to_log(stdout, 2)
     if stderr:
-        write_to_log(domain_name, stderr, 1)
+        write_to_log(stderr, 1)
 
     return pid
 
@@ -163,19 +167,18 @@ def set_permission():
     x("restorecon -R " + GLASSFISH_PATH, 'root')
 
 
-def enable_ha_proxy(domain_name):
+def enable_ha_proxy():
     """When ha proxy can access this file it starts to send requests."""
     print_verbose("Enable ha proxy")
-    x("chown 200:200 /usr/local/glassfish4/glassfish/domains/%s/docroot/ha" %
-      domain_name)
+    x("touch /usr/local/glassfish4/glassfish/domains/domain1/docroot/ha")
+    x("chown 200:200 /usr/local/glassfish4/glassfish/domains/domain1/docroot/ha")
 
 
-def disable_ha_proxy(domain_name):
+def disable_ha_proxy():
     """When ha proxy can't access this file it stops to send new requests.
        But current sessions/requests continues."""
     print_verbose("Disable ha proxy")
-    x("chown root:root /usr/local/glassfish4/glassfish/domains/%s/docroot/ha" %
-      domain_name)
+    x("chown root:root /usr/local/glassfish4/glassfish/domains/domain1/docroot/ha")
     wait_for_server_to_stop_recive_request()
 
 
@@ -197,31 +200,31 @@ def is_reciving_requests():
     return (stdout != 0)
 
 
-def start(domain_name):
-    write_to_log(domain_name, "Starting Glassfish (%s)." % domain_name)
-    asadmin_exec(domain_name, "start-domain " + domain_name)
-    enable_ha_proxy(domain_name)
-    write_to_log(domain_name, "Started.", 2)
+def start():
+    write_to_log("Starting Glassfish.")
+    asadmin_exec("start-domain ")
+    enable_ha_proxy()
+    write_to_log("Started.", 2)
 
 
-def stop(domain_name):
-    disable_ha_proxy(domain_name)
-    write_to_log(domain_name, "Stopping Glassfish (%s)." % domain_name)
-    asadmin_exec(domain_name, "stop-domain " + domain_name)
-    write_to_log(domain_name, "Stopped.", 2)
+def stop():
+    disable_ha_proxy()
+    write_to_log("Stopping Glassfish.")
+    asadmin_exec("stop-domain ")
+    write_to_log("Stopped.", 2)
 
 
-def restart(domain_name):
-    write_to_log(domain_name, "Retart Glassfish (%s)." % domain_name)
-    asadmin_exec(domain_name, "restart-domain " + domain_name)
-    write_to_log(domain_name, "Restarted.", 2)
+def restart():
+    write_to_log("Retart Glassfish (%s).")
+    asadmin_exec("restart-domain ")
+    write_to_log("Restarted.", 2)
 
 
 def set_global_options_and_args():
     """Set cmd line arguments in global vars OPTIONS and ARGS."""
     global OPTIONS, ARGS
 
-    usage = "usage: %prog [-anvqh] {start|stop|restart}"
+    usage = "usage: %prog [-nvqh] {start|stop|restart}"
 
     parser = OptionParser(usage=usage)
     parser.add_option("-n", "--no-db-check", action="store_true",
@@ -256,7 +259,7 @@ def main():
     if command in commands:
         if command != 'stop':
             set_permission()
-        commands[command]('domain1')
+        commands[command]()
 
 
 if __name__ == "__main__":
