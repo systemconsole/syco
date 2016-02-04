@@ -4,4 +4,7 @@
 # These will be parsed by the sysv initscript and appended
 # to the arguments list passed to docker -d
 
-other_args="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375"
+other_args_net="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375"
+other_args_log="--log-driver=syslog --log-opt syslog-address=tcp://localhost:514"
+
+other_args="${other_args_net} ${other_args_log}"
