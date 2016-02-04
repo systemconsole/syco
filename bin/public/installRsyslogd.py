@@ -94,6 +94,8 @@ def install_rsyslogd(args):
     if not os.path.exists('/etc/pki/rsyslog/ca.crt'):
         rsyslog_newcerts(args)
 
+    _setup_rsyslogd()
+
     # Add iptables chains
     iptables.add_rsyslog_chain("server")
     iptables.save()
