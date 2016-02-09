@@ -90,6 +90,7 @@ coreutils
 cronie-anacron
 e2fsprogs
 git
+gnupg2
 grub
 lvm2
 man
@@ -100,6 +101,8 @@ nss-util
 openssh
 openssh-clients
 openssh-server
+pexpect
+python-crypto
 policycoreutils-python
 rpm
 wget
