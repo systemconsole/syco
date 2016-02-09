@@ -24,9 +24,7 @@ config.load(SYCO_ETC_PATH, SYCO_USR_PATH)
 
 import install
 
-# Required yum package.
-install.package("gnupg2")
-install.package("python-crypto")
+# Required yum packages. gnupg2, python-crypto, pexpect
 
 # Include all password functions in app namespace.
 from password import *

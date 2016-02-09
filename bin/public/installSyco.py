@@ -40,14 +40,16 @@ def install_syco(args):
     version_obj = version.Version("InstallSYCO", SCRIPT_VERSION)
     version_obj.check_executed()
 
+    #Override base repo to one that works
+    x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
+
     app.print_verbose("Install required packages for syco")
-    x("yum install pexpect python-crypto augeas -y")
+    x("yum install augeas -y")
 
     app.print_verbose("Create symlink /sbin/syco")
     set_syco_permissions()
     if not os.path.exists('/sbin/syco'):
         os.symlink('%sbin/syco.py' % SYCO_PATH, '/sbin/syco')
-    x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
 
     #Use augeas to set max kernels to 2 since more won't fit on /boot
     from augeas import Augeas

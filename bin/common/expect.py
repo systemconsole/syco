@@ -17,8 +17,6 @@ import subprocess, time
 
 import app, install
 
-install.package("pexpect")
-
 import pexpect
 import pxssh
 
