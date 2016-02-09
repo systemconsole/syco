@@ -44,7 +44,7 @@ def install_syco(args):
     x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
 
     app.print_verbose("Install required packages for syco")
-    x("yum install pexpect python-crypto augeas -y")
+    x("yum install augeas -y")
 
     app.print_verbose("Create symlink /sbin/syco")
     set_syco_permissions()
