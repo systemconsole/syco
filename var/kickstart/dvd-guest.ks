@@ -105,6 +105,7 @@ pexpect
 python-crypto
 policycoreutils-python
 rpm
+rsync
 wget
 yum
 yum-presto
