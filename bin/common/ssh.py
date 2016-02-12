@@ -209,7 +209,7 @@ class Ssh:
             if 0 <= index and index < timeout_event:
                 ssh.sendline(value[index])
             elif index == timeout_event:
-                app.print_error("Catched a timeout from ssh.expect, lets try again.")
+                app.print_error("Caught a timeout from ssh.expect, lets try again.")
             elif timeout_event < index and index <= terminate_event:
                 raise SSHTerminatedException()
 
