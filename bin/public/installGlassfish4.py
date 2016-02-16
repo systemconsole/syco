@@ -160,6 +160,7 @@ def _install_glassfish():
         # but our own script is a little bit better. It creates startup log
         # files and has a better "start user" functionality.
         x("cp " + app.SYCO_PATH + "var/glassfish/glassfish-4 /etc/init.d/glassfish-4")
+        x("chown root:root /etc/init.d/glassfish-4")
         x("chmod 0755 " + "/etc/init.d/glassfish-4")
         x("/sbin/chkconfig --add glassfish-4")
         x("/sbin/chkconfig --level 3 glassfish-4 on")
@@ -168,6 +169,7 @@ def _install_glassfish():
         scOpen("/etc/init.d/glassfish-4").replace("${MYSQL_SECONDARY}", config.general.get_mysql_secondary_master_ip())
 
         x("/etc/init.d/glassfish-4 start -n")
+        x("rm -f /etc/init.d/GlassFish_domain1")
 
     xml="/usr/local/glassfish4/glassfish/domains/domain1/config/domain.xml"
     if not os.access(xml, os.F_OK):
