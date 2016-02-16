@@ -58,8 +58,8 @@ import version
 
 
 # OSSEC DOWNLOAD URL
-OSSEC_DOWNLOAD = "http://www.ossec.net/files/ossec-hids-2.8.1.tar.gz"
-OSSEC_MD5 = 'c2ffd25180f760e366ab16eeb82ae382'
+OSSEC_DOWNLOAD = "http://packages.fareoffice.com/ossec/ossec-hids-2.8.3.tar.gz"
+OSSEC_MD5 = 'bcf783c2273805e2a4c2112011fafb83'
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.

@@ -156,7 +156,7 @@ def _install_mod_security():
     x("yum -y install pkgconfig libxml2 libxml2-devel curl lua")
 
     # Needed for compiling modsec
-    x("yum -y install httpd-devel apr apr-util pcre make gcc pcre-devel curl-devel lua-devel")
+    x("yum -y install httpd-devel apr apr-util pcre gcc pcre-devel curl-devel lua-devel")
 
     # Downloading and verify the pgp key for modsec.
     general.download_file(MODSEC_REPO_URL)
