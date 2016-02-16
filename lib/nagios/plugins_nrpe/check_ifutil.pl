@@ -117,9 +117,9 @@ if ( $percent ) {
 }
 
 $output .= " bandwidth utilization";
-$output .= sprintf( " | RX=%.3fMbps;%2.0f;%2.0f;0 TX=%.3fMbps;%2.0f;%2.0f;0",
-           $speed{rx}*$bitmod/1024/1024, ($percent)?$warning*$bandwidth/100:$warning, ($percent)?$critical*$bandwidth/100:$critical,
-           $speed{tx}*$bitmod/1024/1024, ($percent)?$warning*$bandwidth/100:$warning, ($percent)?$critical*$bandwidth/100:$critical );
+$output .= sprintf( " | RX_Kbps=%.3f;%2.0f;%2.0f;0 TX_Kbps=%.3f;%2.0f;%2.0f;0",
+           $speed{rx}*$bitmod/1024, ($percent)?$warning*$bandwidth/100:$warning, ($percent)?$critical*$bandwidth/100:$critical,
+           $speed{tx}*$bitmod/1024, ($percent)?$warning*$bandwidth/100:$warning, ($percent)?$critical*$bandwidth/100:$critical );
 
 print "$output\n";
 exit( $exit_status );
