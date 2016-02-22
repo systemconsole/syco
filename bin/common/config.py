@@ -660,6 +660,31 @@ class Config(object):
         def is_template(self):
             return self.get_type() == "template"
 
+        def get_syco_command_names(self):
+            """
+            Get name of all syco commands for this host excluding all arguments etc.
+            """
+
+            syco_command_names = []
+            commands = self.get_commands()
+            for command in commands:
+                #Assume second word is the command name
+                split_commands = command.split(" ")
+                if len(split_commands) < 1:
+                    app.print_verbose("Did not understand command: %s, skipping" % command)
+                    continue
+                elif split_commands[0].lower() == "syco":
+                    if len(split_commands) < 2:
+                        app.print_verbose("Did not understand syco command: %s, skipping" % command)
+                        continue
+                else:
+                    #This is not a syco command, ignoring it.
+                    continue
+
+                #else, this is a syco command and arg[1] should be the name of the command
+                syco_command_names.append(split_commands[1])
+
+            return syco_command_names
         def has_guests(self):
             if (self.has_section(self.hostname)):
                 for option, value in self.items(self.hostname):
