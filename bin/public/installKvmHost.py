@@ -47,6 +47,7 @@ import iptables
 import net
 import netUtils
 import version
+from augeas import Augeas
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -191,4 +192,8 @@ def _abort_kvm_host_installation():
     raise Exception("Abort kvm host installation.")
 
 def _libvirt_init_config():
-    x("sed -i 's/ON_SHUTDOWN=suspend/ON_SHUTDOWN=shutdown/g' /etc/init.d/libvirt-guests")
+
+    #Initialize augeas
+    augeas = Augeas(x)
+
+    augeas.set_enhanced("/files/etc/sysconfig/libvirt-guests/ON_SHUTDOWN shutdown")
