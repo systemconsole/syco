@@ -117,6 +117,7 @@ def install_kvmhost(args):
 
     iptables.add_kvm_chain()
     iptables.save()
+    _libvirt_init_config()
 
     version_obj.mark_executed()
 
@@ -188,3 +189,6 @@ def _abort_kvm_host_installation():
 
     '''
     raise Exception("Abort kvm host installation.")
+
+def _libvirt_init_config():
+    x("sed -i 's/ON_SHUTDOWN=suspend/ON_SHUTDOWN=shutdown/g' /etc/init.d/libvirt-guests")
