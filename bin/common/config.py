@@ -405,6 +405,11 @@ class Config(object):
         def get_proxy_port(self):
             return self.get_option("http.proxy.port", "")
 
+        def get_mysql_widget_prod_ip(self):
+            '''IP or hostname for primary mysql server.'''
+            return self.get_option("mysql.widget.prod.ip", "")
+
+
         def _get_service_ip(self, service_name, prefer_back_net=False):
             """
             Get the IP of a service by:
@@ -480,7 +485,7 @@ class Config(object):
             for interface in interfaces:
                 if interface.strip() != '':
                     ret.append(interface.strip())
-            return ret 
+            return ret
 
         def get_front_ip(self):
             """Get ip for a specific host, as it is defined in install.cfg"""
@@ -756,4 +761,3 @@ def _remove_duplicates_from_list(list):
 
 def get_devices():
     return config.get_devices()
-
