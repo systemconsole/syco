@@ -193,6 +193,7 @@ def _abort_kvm_host_installation():
 
 def _libvirt_init_config():
 
+    x("yum install augeas -y")
     #Initialize augeas
     augeas = Augeas(x)
 
