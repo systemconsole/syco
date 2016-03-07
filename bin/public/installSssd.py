@@ -32,6 +32,7 @@ from general import shell_run
 import iptables
 import version
 import installOpenLdap
+import os
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
