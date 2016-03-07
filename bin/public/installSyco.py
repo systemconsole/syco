@@ -43,6 +43,9 @@ def install_syco(args):
     #Override base repo to one that works
     x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
 
+    #Set Swappiness to 0 on all hosts to avoid excessive swapping
+    x('sysctl vm.swappiness=0')
+
     app.print_verbose("Install required packages for syco")
     x("yum install augeas -y")
 
