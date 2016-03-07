@@ -56,6 +56,7 @@ import app
 from general import x, download_file, md5checksum, get_install_dir
 import version
 
+SYCO_FO_PATH = app.SYCO_PATH + "usr/syco-private/"
 
 # OSSEC DOWNLOAD URL
 OSSEC_DOWNLOAD = "http://packages.fareoffice.com/ossec/ossec-hids-2.8.3.tar.gz"
@@ -89,12 +90,12 @@ def install_ossec_server(args):
     _generate_client_keys()
 
     # Setup server config and local rules from syco
-    x('\cp -f /opt/syco/var/ossec/ossec_server.conf /var/ossec/etc/ossec.conf')
+    x('\cp -f '+SYCO_FO_PATH+'var/ossec/ossec_server.conf /var/ossec/etc/ossec.conf')
     x('chown root:ossec /var/ossec/etc/ossec.conf')
     x('chmod 640 /var/ossec/etc/ossec.conf')
 
     # Configure rules
-    x('cp -f /opt/syco/var/ossec/local_rules.xml /var/ossec/rules/local_rules.xml')
+    x('cp -f '+SYCO_FO_PATH+'var/ossec/local_rules.xml /var/ossec/rules/local_rules.xml')
     #x("find /var/ossec/rules -type d -print0 | xargs -0 chmod 750")
     #x("find /var/ossec/rules -type f -print0 | xargs -0 chmod 640")
     x('chown root:ossec /var/ossec/rules/local_rules.xml')
@@ -128,7 +129,7 @@ def build_ossec(preloaded_conf):
     x("mv {0}ossec-hids-* {0}ossecbuild".format(install_dir))
 
     # Coping in ossec settings before build
-    x('\cp -f /opt/syco/var/ossec/osseconf/{0} {1}ossecbuild/etc/preloaded-vars.conf'.format(preloaded_conf, install_dir))
+    x('\cp -f '+SYCO_FO_PATH+'var/ossec/osseconf/{0} {1}ossecbuild/etc/preloaded-vars.conf'.format(preloaded_conf, install_dir))
 
     # Building OSSEC
     x('{0}ossecbuild/install.sh'.format(install_dir))
