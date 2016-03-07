@@ -405,6 +405,9 @@ class Config(object):
         def get_proxy_port(self):
             return self.get_option("http.proxy.port", "")
 
+        def get_mysql_widget_prod_ip(self):
+            return self.get_option("mysql.widget.prod.ip", "")
+
         def _get_service_ip(self, service_name, prefer_back_net=False):
             """
             Get the IP of a service by:
