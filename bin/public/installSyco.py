@@ -18,7 +18,6 @@ import app
 from app import SYCO_PATH, SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
 from general import x
 import version
-from augeas import Augeas
 
 # The version of this module, used to prevent the same script version to be 
 # executed more then once on the same host.
@@ -42,6 +41,9 @@ def install_syco(args):
 
     #Override base repo to one that works
     x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
+
+    #Set Swappiness to 0 on all hosts to avoid excessive swapping
+    x('sysctl vm.swappiness=0')
 
     app.print_verbose("Install required packages for syco")
     x("yum install augeas -y")

@@ -139,7 +139,6 @@ def _configure_haproxy():
 
     scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address('eth1'))
     _configure_haproxy_state()
-    _configure_sps_password()
 
     _chkconfig("haproxy", "on")
     _service("haproxy", "restart")
@@ -152,14 +151,7 @@ def _configure_haproxy_state():
     else:
         scopen.scOpen(HAPROXY_CONF).replace("${TCSTATE}", 'backup')
         scopen.scOpen(HAPROXY_CONF).replace("${AVSTATE}", '')
-
-
-def _configure_sps_password():
-    BASE64CREDENTIALS = x("echo -n haproxy:{0} | base64 | tr -d '\n'".format(
-        app.get_haproxy_sps_ping_password()
-    ))
-    scopen.scOpen(HAPROXY_CONF).replace("${CREDENTIALS}", BASE64CREDENTIALS)
-
+        
 
 def _chkconfig(service, command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
