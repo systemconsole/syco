@@ -12,12 +12,9 @@
 /etc/version.cfg
 /var/kickstart/generated
 /tmp/
-<<<<<<< HEAD
 /nbproject/private/
 ._*
 .idea/
-=======
 /docs-coverage/
 .coverage
 /.project
->>>>>>> bf494cf4f6b68a3ba313608b982e7da986f3b182
