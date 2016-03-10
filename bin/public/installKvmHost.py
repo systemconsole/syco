@@ -197,4 +197,4 @@ def _libvirt_init_config():
     #Initialize augeas
     augeas = Augeas(x)
 
-    augeas.set_enhanced("/files/etc/sysconfig/libvirt-guests/ON_SHUTDOWN shutdown")
+    augeas.set_enhanced("/files/etc/sysconfig/libvirt-guests/ON_SHUTDOWN","shutdown")
