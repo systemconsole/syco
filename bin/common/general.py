@@ -100,6 +100,23 @@ def get_install_dir():
   return app.INSTALL_DIR
 
 
+def install_packages(packages):
+  """
+  Install the supplied packages unless they are already installed
+  packages supplied as whitespace separated string.
+  """
+
+  cmd = "("
+  for package in packages.split(" "):
+    if len(cmd) <= 1:
+      cmd += ' && '
+    cmd += "rpm -q %s" % package
+
+  cmd += ") || yum install -y %s" % packages
+
+  x(cmd)
+
+
 def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None, sha1=None):
   '''
   Download a file using wget, and place in the installation tmp folder.
