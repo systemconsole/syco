@@ -108,7 +108,7 @@ def install_packages(packages):
 
   cmd = "("
   for package in packages.split(" "):
-    if len(cmd) <= 1:
+    if len(cmd) > 1:
       cmd += ' && '
     cmd += "rpm -q %s" % package
 
