@@ -32,7 +32,6 @@ import expect
 import pexpect
 import ssh
 
-
 def remove_file(path):
   '''
   Remove file(s) in path, can use wildcard.
@@ -214,10 +213,12 @@ def is_server_root_open(server):
 
   """
   ssh_con = ssh.Ssh(server, app.get_root_password())
-  if (ssh_con.is_alive()):
-    return True
+  try:
+    ssh_con.ssh_exec('ls', silent = True)
 
-  return False
+    return True
+  except Exception:
+    return False
 
 
 def wait_for_server_root_login(server):
@@ -227,7 +228,7 @@ def wait_for_server_root_login(server):
   """
   app.print_verbose("\nWait until " + str(server) + " on port 22 is accessible using the root account.",
                     new_line=False)
-  while(not is_server_root_open(server)):
+  while not is_server_root_open(server):
     app.print_verbose(".", new_line=False, enable_caption=False)
     time.sleep(5)
 
