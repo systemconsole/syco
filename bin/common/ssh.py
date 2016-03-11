@@ -148,7 +148,7 @@ class Ssh:
 
         '''
         try:
-            self._ssh_exec(command, events)
+            self._ssh_exec(command, events, silent)
         except pexpect.TIMEOUT, e:
             app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command + str(e))
             self.ssh_exec(command, events)
