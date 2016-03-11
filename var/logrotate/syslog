@@ -6,6 +6,7 @@
 /var/log/spooler
 /var/log/unused.log
 /var/log/daemon.log
+/var/ossec/logs/ossec.log
 {
     rotate 10
     size 100M
