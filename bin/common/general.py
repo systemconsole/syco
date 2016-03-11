@@ -30,6 +30,7 @@ from constant import *
 import app
 import expect
 import pexpect
+import ssh
 
 
 def remove_file(path):
@@ -189,6 +190,31 @@ def is_server_alive(server, port, proto='tcp'):
   if (result == 0):
     return True
   return False
+
+def is_server_root_open(server):
+  """
+  Check if root account is accessible.
+
+  """
+  ssh_con = ssh.Ssh(server, app.get_root_password())
+  if (ssh_con.is_alive()):
+    return True
+
+  return False
+
+
+def wait_for_server_root_login(server):
+  """
+  Wait until the root account on the sever is accessible
+
+  """
+  app.print_verbose("\nWait until " + str(server) + " on port 22 is accessible using the root account.",
+                    new_line=False)
+  while(not is_server_root_open(server)):
+    app.print_verbose(".", new_line=False, enable_caption=False)
+    time.sleep(5)
+
+  app.print_verbose(".")
 
 def wait_for_server_to_start(server, port):
   '''
@@ -493,7 +519,7 @@ def use_original_file(filename):
 
     '''
     if not filename.startswith('/'):
-        raise Exeption("Filename {0} must start with /.".format(filename))
+        raise Exception("Filename {0} must start with /.".format(filename))
     syco_bak_folder = '/tmp/syco_bak'
     bak_file = '{0}{1}'.format(syco_bak_folder, filename)
 
