@@ -221,6 +221,34 @@ def is_server_root_open(server):
         return False
 
 
+def retrieve_from_server(remote_server, remote_path, local_path, verify_local=None):
+    """
+    This function uses scp with syco root login to retrieve a directory or file from
+    a remote server to the local machine.
+
+    It will automatically wait for root login and verify the files locally after the copy
+    if a list of files is specified with the verify_local keyword argument
+    """
+    wait_for_server_root_login(remote_server)
+
+    while True:
+        _scp_from(remote_server, remote_path, local_path)
+
+
+        if not verify_local:
+            # Assume success
+            break
+
+        if not _do_files_exist(verify_local):
+            app.print_verbose(
+                    "Waiting for files to be successfully copied from %s%s" % (
+                        remote_server, remote_path
+                    )
+                )
+        else:
+            break
+
+
 def wait_for_server_root_login(server):
     """
     Wait until the root account on the sever is accessible
@@ -556,3 +584,18 @@ def require_linux_user(required_user):
         raise Exception("Invalid user, you are %s but need to be %s. " % (
             user, required_user
         ))
+
+def _scp_from(server, src, dst):
+    shell_run("scp -r " + server + ":" + src + " " + dst,
+                      events={
+                          'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
+                          server + "\'s password\:": app.get_root_password() + "\n"
+                      }
+    )
+
+def _do_files_exist(files):
+    for file in files:
+        if not os.path.exists(file):
+            return False
+
+    return True
