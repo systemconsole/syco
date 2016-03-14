@@ -31,7 +31,7 @@ class scOpen:
         self.output = output
 
     def esc(self, value):
-        return value.replace('\n', '\\\n').replace("/", "\/").replace("&", "&&")
+        return value.replace('\n', '\\\n').replace("/", "\/").replace("&", "\&")
 
     def add(self, value, output = None):
         '''
