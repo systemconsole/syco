@@ -8,6 +8,6 @@
 %HTTPS_PROXY%
 
 other_args_net="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375"
-other_args_log="--log-driver=syslog --log-opt syslog-address=tcp://localhost:514"
+other_args_log="--log-driver=syslog --log-opt syslog-address=udp://localhost:514"
 
 other_args="${other_args_net} ${other_args_log}"
