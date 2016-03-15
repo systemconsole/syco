@@ -16,6 +16,7 @@ __status__ = "Production"
 
 from general import x
 import app
+import config
 import version
 
 
@@ -40,6 +41,17 @@ def install_docker(args):
     x('yum -y install docker-engine')
 
     x('cp %s/docker/docker /etc/sysconfig/docker' % app.SYCO_VAR_PATH)
+
+    # http://stackoverflow.com/questions/23111631/cannot-download-docker-images-behind-a-proxy
+    docker_conf = scOpen(filename='/etc/sysconfig/docker')
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+    if proxy_host != "" and proxy_port != "":
+        docker_conf.replace('%HTTP_PROXY%', 'export HTTP_PROXY="http://%s:%s"' % (proxy_host, proxy_port))
+        docker_conf.replace('%HTTPS_PROXY%', 'export HTTPS_PROXY="https://%s:%s"' % (proxy_host, proxy_port))
+    else
+        docker_conf.replace('%HTTP_PROXY%', '')
+        docker_conf.replace('%HTTPS_PROXY%', '')
 
     x('chkconfig docker on')
     x('service docker start')
