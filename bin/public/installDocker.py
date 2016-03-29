@@ -46,10 +46,10 @@ def install_docker(args):
     docker_conf = scOpen(filename='/etc/sysconfig/docker')
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
-    if proxy_host != "" and proxy_port != "":
+    if proxy_host and proxy_port:
         docker_conf.replace('%HTTP_PROXY%', 'export HTTP_PROXY="http://%s:%s"' % (proxy_host, proxy_port))
         docker_conf.replace('%HTTPS_PROXY%', 'export HTTPS_PROXY="https://%s:%s"' % (proxy_host, proxy_port))
-    else
+    else:
         docker_conf.replace('%HTTP_PROXY%', '')
         docker_conf.replace('%HTTPS_PROXY%', '')
 
