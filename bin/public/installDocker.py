@@ -18,6 +18,7 @@ from general import x
 import app
 import config
 import version
+from scopen import scOpen
 
 
 # The version of this module, used to prevent the same script version to be
