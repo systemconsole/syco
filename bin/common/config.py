@@ -405,7 +405,6 @@ class Config(object):
         def get_proxy_port(self):
             return self.get_option("http.proxy.port", "")
 
-
         def _get_service_ip(self, service_name, prefer_back_net=False):
             """
             Get the IP of a service by:
