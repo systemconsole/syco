@@ -480,7 +480,7 @@ class Config(object):
             for interface in interfaces:
                 if interface.strip() != '':
                     ret.append(interface.strip())
-            return ret
+            return ret 
 
         def get_front_ip(self):
             """Get ip for a specific host, as it is defined in install.cfg"""
