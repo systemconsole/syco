@@ -781,4 +781,3 @@ def _remove_duplicates_from_list(list):
 
 def get_devices():
     return config.get_devices()
-

@@ -54,6 +54,10 @@ def install_docker(args):
         docker_conf.replace('%HTTP_PROXY%', '')
         docker_conf.replace('%HTTPS_PROXY%', '')
 
+    #FW rule needed to access container through ports
+    x('iptables -A syco_output -j DOCKER')
+    x('service iptables save')
+
     x('chkconfig docker on')
     x('service docker start')
     version_obj.mark_executed()
