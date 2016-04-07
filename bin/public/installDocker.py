@@ -19,7 +19,7 @@ import app
 import config
 import version
 from scopen import scOpen
-
+import os
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -38,6 +38,16 @@ def install_docker(args):
     version_obj = version.Version("Installdocker", SCRIPT_VERSION)
     version_obj.check_executed()
 
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+
+    #Prepare proxy-access for YUM if needed
+    if proxy_host and proxy_port:
+        proxy_http="http://%s:%s" % (proxy_host,proxy_port)
+        proxy_https="https://%s:%s" % (proxy_host,proxy_port)
+        os.environ['http_proxy']=proxy_http
+        os.environ['https_proxy']=proxy_https
+
     x('cp %s/docker/docker.repo /etc/yum.repos.d/docker.repo' % app.SYCO_VAR_PATH)
     x('yum -y install docker-engine')
 
@@ -45,8 +55,6 @@ def install_docker(args):
 
     # http://stackoverflow.com/questions/23111631/cannot-download-docker-images-behind-a-proxy
     docker_conf = scOpen(filename='/etc/sysconfig/docker')
-    proxy_host = config.general.get_proxy_host()
-    proxy_port = config.general.get_proxy_port()
     if proxy_host and proxy_port:
         docker_conf.replace('%HTTP_PROXY%', 'export HTTP_PROXY="http://%s:%s"' % (proxy_host, proxy_port))
         docker_conf.replace('%HTTPS_PROXY%', 'export HTTPS_PROXY="https://%s:%s"' % (proxy_host, proxy_port))
