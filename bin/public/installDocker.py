@@ -42,11 +42,9 @@ def install_docker(args):
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
 
-    #Prepare proxy access for YUM
-    proxy_user=raw_input('Enter SQUID username: ')
-    proxy_password=getpass.getpass('Password: ')
-    proxy_http="http://%s:%s@%s:%s" % (proxy_user,proxy_password,proxy_host,proxy_port)
-    proxy_https="https://%s:%s@%s:%s" % (proxy_user,proxy_password,proxy_host,proxy_port)
+    #Prepare proxy-access for YUM
+    proxy_http="http://%s:%s" % (proxy_host,proxy_port)
+    proxy_https="https://%s:%s" % (proxy_host,proxy_port)
     os.environ['http_proxy']=proxy_http
     os.environ['https_proxy']=proxy_https
 
