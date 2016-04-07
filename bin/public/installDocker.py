@@ -20,7 +20,6 @@ import config
 import version
 from scopen import scOpen
 import os
-import getpass
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
