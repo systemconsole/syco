@@ -105,15 +105,19 @@ def download_cert(filename):
     # Creating certs folder
     x("mkdir -p /etc/openldap/cacerts")
 
-    ip = config.general.get_ldap_server_ip()
-    fullpath = '/etc/openldap/cacerts/' + filename
-    shell_run("scp root@%s:%s %s" % (ip, fullpath, fullpath),
-        events={
-            'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
-            "root@" + ip + "\'s password\:": app.get_root_password() + "\n"
-        }
+    general.retrieve_from_server(
+        config.general.get_ldap_server_ip(),
+        '/etc/openldap/cacerts/client.pem',
+        '/etc/openldap/cacerts/',
+        verify_local = ['/etc/openldap/cacerts/']
     )
 
+    general.retrieve_from_server(
+        config.general.get_ldap_server_ip(),
+        '/etc/openldap/cacerts/ca.crt',
+        '/etc/openldap/cacerts/',
+        verify_local = ['/etc/openldap/cacerts/']
+    )
 
 def install_certs():
     """
