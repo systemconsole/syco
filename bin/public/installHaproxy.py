@@ -16,7 +16,7 @@ __version__ = "1.5"
 __status__ = "Production"
 
 import os
-from general import x, urlretrive
+from general import x, urlretrive, retrieve_from_server
 import ssh
 import config
 import iptables
@@ -126,10 +126,13 @@ def print_killmessage():
 
 
 def _copy_certificate_files():
+
+
     copyfrom = "root@{0}".format(CERT_SERVER)
     copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, haproxy_env())
     copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, haproxy_env())
-    ssh.scp_from(copyfrom, copyremotefile, copylocalfile)
+
+    retrieve_from_server(copyfrom, copyremotefile, copyremotefile, verify_local=copylocalfile)
 
 
 def _configure_haproxy():
