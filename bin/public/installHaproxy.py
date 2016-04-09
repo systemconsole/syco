@@ -132,7 +132,7 @@ def _copy_certificate_files():
     copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, haproxy_env())
     copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, haproxy_env())
 
-    retrieve_from_server(copyfrom, copyremotefile, copyremotefile, verify_local=copylocalfile)
+    retrieve_from_server(copyfrom, copyremotefile, copylocalfile, verify_local=copylocalfile)
 
 
 def _configure_haproxy():
