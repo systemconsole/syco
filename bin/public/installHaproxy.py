@@ -47,8 +47,7 @@ def build_commands(commands):
     """
     commands.add(
         "install-haproxy", install_haproxy,
-        help="Install HA Proxy on the server.",
-        password_list=[["haproxy-sps-ping", "haproxy"]]
+        help="Install HA Proxy on the server."
     )
     commands.add(
         "uninstall-haproxy", uninstall_haproxy,
@@ -60,6 +59,9 @@ def install_haproxy(args):
     app.print_verbose("Install HA Proxy version: %d" % script_version)
     version_obj = version.Version("InstallHaproxy", script_version)
     version_obj.check_executed()
+
+    # Prompt for syco pw early, certificate copy requires root pw
+    app.get_root_password()
 
     global CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, SYCO_PLUGIN_PATH
     CERT_SERVER = config.general.get_cert_server_ip()
