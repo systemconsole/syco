@@ -38,6 +38,8 @@ def install_docker(args):
     version_obj = version.Version("Installdocker", SCRIPT_VERSION)
     version_obj.check_executed()
 
+    general.install_packages("docker-engine")
+
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
 
@@ -62,12 +64,13 @@ def install_docker(args):
         docker_conf.replace('%HTTP_PROXY%', '')
         docker_conf.replace('%HTTPS_PROXY%', '')
 
-    #FW rule needed to access container through ports
-    x('iptables -A syco_output -j DOCKER')
-    x('service iptables save')
-
     x('chkconfig docker on')
     x('service docker start')
+
+    #FW rule needed to access container through ports
+    #Sleep for docker to start completely before setting rule
+    x('sleep 10 && iptables -A syco_output -j DOCKER')
+    x('service iptables save')
     version_obj.mark_executed()
 
 
