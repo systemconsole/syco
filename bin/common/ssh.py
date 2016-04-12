@@ -187,7 +187,7 @@ class Ssh:
 
         # Disable verbose output for SSH login process.
         # This outputs a lot of ugly useless text.
-        ssh = expect.sshspawn()
+        ssh = expect.sshspawn(timeout=120)
         ssh.disable_output()
         ssh.login(self.server, username=self.user, password=self.password)
         ssh.enable_output()

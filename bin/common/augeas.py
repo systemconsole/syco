@@ -7,7 +7,6 @@ DUPLICATE_POLICY_CHANGE_FIRST = 0
 DUPLICATE_POLICY_CHANGE_LAST = 1
 DUPLICATE_POLICY_REMOVE_DUPLICATES = 2
 
-
 class Augeas:
 
     execute_function = None
@@ -126,7 +125,6 @@ class Augeas:
 
         result = []
         for line in lines:
-            print line
             result.append(line.split("=", 1)[1].strip())
 
         return result
@@ -140,7 +138,6 @@ class Augeas:
         result = []
 
         for line in lines:
-            print line
             if line.strip() == "(no matches)":
                 #No matches found, return the empty list
                 return result

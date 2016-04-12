@@ -9,7 +9,7 @@ import sys, getopt, urllib2, datetime
 
 def usage():
     print "clean-old-indices.py [-h <elastic host>] <index> <days-to-keep>"
-    print "Example: python -h 1.1.1.1 clean-old-indices.py logstash-syslog 90"
+    print "Example: python clean-old-indices.py -h 1.1.1.1 logstash-syslog 90"
     print "Default host is: localhost"
 
 
