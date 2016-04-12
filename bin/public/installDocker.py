@@ -49,7 +49,7 @@ def install_docker(args):
         os.environ['https_proxy']=proxy_https
 
     x('cp %s/docker/docker.repo /etc/yum.repos.d/docker.repo' % app.SYCO_VAR_PATH)
-    x('yum -y install docker-engine')
+    general.install_packages("docker-engine")
 
     x('cp %s/docker/docker /etc/sysconfig/docker' % app.SYCO_VAR_PATH)
 
@@ -62,12 +62,13 @@ def install_docker(args):
         docker_conf.replace('%HTTP_PROXY%', '')
         docker_conf.replace('%HTTPS_PROXY%', '')
 
-    #FW rule needed to access container through ports
-    x('iptables -A syco_output -j DOCKER')
-    x('service iptables save')
-
     x('chkconfig docker on')
     x('service docker start')
+
+    #FW rule needed to access container through ports
+    #Sleep for docker to start completely before setting rule
+    x('sleep 10 && iptables -A syco_output -j DOCKER')
+    x('service iptables save')
     version_obj.mark_executed()
 
 
