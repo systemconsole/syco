@@ -16,6 +16,7 @@ __status__ = "Production"
 
 from general import x
 import app
+import general
 import config
 import version
 from scopen import scOpen
