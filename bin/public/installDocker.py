@@ -38,8 +38,6 @@ def install_docker(args):
     version_obj = version.Version("Installdocker", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    general.install_packages("docker-engine")
-
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
 
@@ -51,7 +49,7 @@ def install_docker(args):
         os.environ['https_proxy']=proxy_https
 
     x('cp %s/docker/docker.repo /etc/yum.repos.d/docker.repo' % app.SYCO_VAR_PATH)
-    x('yum -y install docker-engine')
+    general.install_packages("docker-engine")
 
     x('cp %s/docker/docker /etc/sysconfig/docker' % app.SYCO_VAR_PATH)
 
