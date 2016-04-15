@@ -1109,7 +1109,8 @@ def add_haproxy_chain():
         "-A haproxy_inout -p tcp -m multiport --dports 443 -j allowed_tcp"
     )
 
-    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports").split(",")
+    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports", default_value="").\
+        split(",")
     for port in custom_target_ports:
         iptables("-A haproxy_inout -p tcp -m multiport --dports %s -j allowed_tcp" % port)
 
