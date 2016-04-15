@@ -14,7 +14,7 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 import os, sys, os.path
-import app
+import app, config
 from app import SYCO_PATH, SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
 from general import x
 import version
@@ -39,8 +39,14 @@ def install_syco(args):
     version_obj = version.Version("InstallSYCO", SCRIPT_VERSION)
     version_obj.check_executed()
 
-    #Override base repo to one that works
+    # Override base repo to one that works
     x("cat %syum/CentOS-Base.repo > /etc/yum.repos.d/CentOS-Base.repo" % app.SYCO_VAR_PATH)
+
+    # Run all yum updates through proxy if available
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+    if proxy_host and proxy_port:
+        x('echo %s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
 
     #Set Swappiness to 0 on all hosts to avoid excessive swapping
     x('sysctl vm.swappiness=0')
@@ -53,10 +59,16 @@ def install_syco(args):
     if not os.path.exists('/sbin/syco'):
         os.symlink('%sbin/syco.py' % SYCO_PATH, '/sbin/syco')
 
-    #Use augeas to set max kernels to 2 since more won't fit on /boot
+    # Use augeas to set max kernels to 2 since more won't fit on /boot
     from augeas import Augeas
     augeas = Augeas(x)
     augeas.set_enhanced("/files/etc/yum.conf/main/installonly_limit", "2")
+
+
+    if proxy_host and proxy_port:
+        # Set proxy again with augeas to ensure there are no duplicates/inconsistencies
+        augeas.set_enhanced("/files/etc/yum.conf/main/proxy", "http://%s:%s" % (proxy_host,proxy_port))
+
 
     version_obj.mark_executed()
 
