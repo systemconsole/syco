@@ -16,6 +16,7 @@ __status__ = "Production"
 import general
 from general import x
 import app
+import general
 import config
 import version
 from scopen import scOpen
@@ -40,13 +41,6 @@ def install_docker(args):
 
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
-
-    #Prepare proxy-access for YUM if needed
-    if proxy_host and proxy_port:
-        proxy_http="http://%s:%s" % (proxy_host,proxy_port)
-        proxy_https="https://%s:%s" % (proxy_host,proxy_port)
-        os.environ['http_proxy']=proxy_http
-        os.environ['https_proxy']=proxy_https
 
     x('cp %s/docker/docker.repo /etc/yum.repos.d/docker.repo' % app.SYCO_VAR_PATH)
     general.install_packages("docker-engine")
