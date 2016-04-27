@@ -262,4 +262,6 @@ def send_test_mail(args, additional_emails_to_test=[]):
     for email in additional_emails_to_test:
         app.print_verbose("Send additional test mail to: %s" % email)
         x('echo "" | mail -s "Test email to {0}" {0}.'.format(email))
+        x('echo "" | mail -s "Test email from {0} to {1}" {1}'.format(get_hostname(),
+                                                               email))
 
