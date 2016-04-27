@@ -116,47 +116,46 @@ def install_packages(packages):
     x(cmd)
 
 
-def download_file(src, dst=None, user="", remote_user=None, remote_password=None, cookie=None, md5=None, sha1=None):
-    '''
+def download_file(src, dst=None, user="", remote_user=None,
+                  remote_password=None, cookie=None, md5=None, sha1=None):
+    """
     Download a file using wget, and place in the installation tmp folder.
 
-    download_file("http://www.example.com/file.gz", "file.gz")
-
-    '''
+    """
     app.print_verbose("Download: " + src)
-    if (not dst):
+    if not dst:
         dst = os.path.basename(src)
 
+    dst_file = app.INSTALL_DIR + dst
+
     create_install_dir()
-    if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-        cmd = "-O " + app.INSTALL_DIR + dst
-        if (remote_user):
+    if not os.access(dst_file, os.F_OK):
+        cmd = "-O " + dst_file
+        if remote_user:
             cmd += " --user \"" + remote_user
 
-            if (remote_password):
+            if remote_password:
                 cmd += ":" + remote_password
             cmd += "\""
 
-        # TODO: Support cookies using curl
-        #if (cookie):
-        # cmd += ' --no-cookies --header "Cookie: %s"' % cookie
         shell_exec("wget " + cmd + " " + src, user=user)
 
-        #shell_exec("curl -L " + cmd + " " + src, user=user)
         # Looks like the file is not flushed to disk immediatley,
         # making the script not able to read the file immediatley after it's
         # downloaded. A sleep fixes this.
         time.sleep(2)
 
-    if (not os.access(app.INSTALL_DIR + dst, os.F_OK)):
-        raise Exception("Couldn't download: " + dst)
+    if not os.access(dst_file, os.F_OK):
+        raise Exception("Couldn't download: " + dst_file)
 
-    if md5 != None and md5checksum(app.INSTALL_DIR + dst) != md5:
-        raise Exception("MD5 Checksum dont match for " + dst)
+    if os.path.getsize(dst_file) == 0:
+        raise Exception("File has size zero: " + dst_file)
 
-    if sha1 != None and sha1checksum(app.INSTALL_DIR + dst) != sha1:
-        raise Exception("SHA! Checksum dont match for " + dst)
+    if md5 and md5checksum(dst_file) != md5:
+        raise Exception("MD5 Checksum dont match for " + dst_file)
 
+    if sha1 and sha1checksum(dst_file) != sha1:
+        raise Exception("SHA! Checksum dont match for " + dst_file)
 
 
 def urlretrive(src_url, dst_filename):
