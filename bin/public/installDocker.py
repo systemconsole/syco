@@ -15,9 +15,12 @@ __status__ = "Production"
 
 
 from general import x
+import general
 import app
+import general
+import config
 import version
-
+from scopen import scOpen
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -36,13 +39,32 @@ def install_docker(args):
     version_obj = version.Version("Installdocker", SCRIPT_VERSION)
     version_obj.check_executed()
 
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+
     x('cp %s/docker/docker.repo /etc/yum.repos.d/docker.repo' % app.SYCO_VAR_PATH)
-    x('yum -y install docker-engine')
+    general.install_packages("docker-engine")
 
     x('cp %s/docker/docker /etc/sysconfig/docker' % app.SYCO_VAR_PATH)
 
+    # http://stackoverflow.com/questions/23111631/cannot-download-docker-images-behind-a-proxy
+    docker_conf = scOpen(filename='/etc/sysconfig/docker')
+    if proxy_host and proxy_port:
+        docker_conf.replace('%HTTP_PROXY%', 'export HTTP_PROXY="http://%s:%s"' % (proxy_host, proxy_port))
+        docker_conf.replace('%HTTPS_PROXY%', 'export HTTPS_PROXY="https://%s:%s"' % (proxy_host, proxy_port))
+    else:
+        docker_conf.replace('%HTTP_PROXY%', '')
+        docker_conf.replace('%HTTPS_PROXY%', '')
+
     x('chkconfig docker on')
     x('service docker start')
+    version_obj.mark_executed()
+
+
+    #FW rule needed to access container through ports
+    #Sleep for docker to start completely before setting rule
+    x('sleep 10 && iptables -A syco_output -j DOCKER')
+    x('service iptables save')
     version_obj.mark_executed()
 
 

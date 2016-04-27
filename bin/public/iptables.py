@@ -47,7 +47,16 @@ import version
 SCRIPT_VERSION = 3
 
 
+#Keep track of commands
+_commands_obj_reference = None
+
+
 def build_commands(commands):
+
+    #Store away commands for use below
+    global _commands_obj_reference
+    _commands_obj_reference = commands
+
     commands.add("iptables-clear", iptables_clear, help="Clear all iptables rules.")
     commands.add("iptables-setup", iptables_setup, help="Setup an iptables firewall, customized for installed "
                                                         "services.")
@@ -836,7 +845,7 @@ def del_rsyslog_chain():
 
 
 def add_rsyslog_chain(context=None):
-    '''
+    """
     Rsyslog IPtables rules
 
     Rsyslog Server
@@ -845,55 +854,52 @@ def add_rsyslog_chain(context=None):
     Rsyslog Client
     Rsyslog Server <- OUT <- tcp <- 514 <- Rsyslog Client
 
-    '''
+    """
     del_rsyslog_chain()
 
-    import installRsyslog
-    import installRsyslogd
+    app.print_verbose("Add iptables chain for rsyslog")
+    iptables("-N rsyslog_in")
+    iptables("-N rsyslog_out")
+    iptables("-A syco_input  -p all -j rsyslog_in")
+    iptables("-A syco_output -p all -j rsyslog_out")
 
-    server_version_obj = version.Version("InstallRsyslogd", installRsyslogd.SCRIPT_VERSION)
-    client_version_obj = version.Version("InstallRsyslogdClient", installRsyslog.SCRIPT_VERSION)
+    # Reference to syco.py commands
+    global _commands_obj_reference
 
-    if server_version_obj.is_executed() or client_version_obj.is_executed() or context in ["server","client"]:
-        app.print_verbose("Add iptables chain for rsyslog")
-        iptables("-N rsyslog_in")
-        iptables("-N rsyslog_out")
-        iptables("-A syco_input  -p all -j rsyslog_in")
-        iptables("-A syco_output -p all -j rsyslog_out")
+    all_rules = []
+    syco_command_names = config.host(net.get_hostname()).get_syco_command_names()
 
-        # On rsyslog server
-        if server_version_obj.is_executed() or context is "server":
-            back_subnet = config.general.get_back_subnet()
-            front_subnet = config.general.get_front_subnet()
-            iptables(
-                " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
-                back_subnet
-            )
-            iptables(
-                " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
-                front_subnet
-            )
-            iptables(
-                " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
-                back_subnet
-            )
-            iptables(
-                " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
-                front_subnet
-            )
+    # On rsyslog server
+    if "install-rsyslogd" in syco_command_names or context is "server":
+        back_subnet = config.general.get_back_subnet()
+        front_subnet = config.general.get_front_subnet()
+        iptables(
+            " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+            back_subnet
+        )
+        iptables(
+            " -A rsyslog_in -m state --state NEW -p tcp -s %s --dport 514 -j allowed_tcp" %
+            front_subnet
+        )
+        iptables(
+            " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+            back_subnet
+        )
+        iptables(
+            " -A rsyslog_in -m state --state NEW -p udp -s %s --dport 514 -j allowed_udp" %
+            front_subnet
+        )
 
-
-
-        # On rsyslog client
-        elif client_version_obj.is_executed() or context is "client" :
-            iptables(
-                "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
-                config.general.get_log_server_hostname1()
-            )
-            iptables(
-                "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
-                config.general.get_log_server_hostname2()
-            )
+    # On rsyslog client
+    elif "install-rsyslogd-client" in syco_command_names or context is "client" :
+        iptables(
+            "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+            config.general.get_log_server_hostname1()
+        )
+        iptables(
+            "-A rsyslog_out -m state --state NEW -p tcp -d %s --dport 514 -j allowed_tcp" %
+            config.general.get_log_server_hostname2()
+        )
 
 
 def del_freeradius_chain():
@@ -1070,6 +1076,10 @@ def add_haproxy_chain():
     iptables(
         "-A haproxy_inout -p tcp -m multiport --dports 443 -j allowed_tcp"
     )
+
+    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports").split(",")
+    for port in custom_target_ports:
+        iptables("-A haproxy_inout -p tcp -m multiport --dports %s -j allowed_tcp" % port)
 
 
 def del_kibana_chain():
