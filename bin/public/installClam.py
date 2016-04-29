@@ -135,7 +135,7 @@ def download_and_install(clam_version):
     # Remove packages needed for compilation.
     #
     x(
-        "yum remove zlib-devel bzip2-devel ncurses-devel " +
+        "yum remove -y zlib-devel bzip2-devel ncurses-devel " +
         "gcc cloog-ppl cpp glibc-devel glibc-headers kernel-headers " +
         "libgomp mpfr ppl gcc-c++ libstdc++-devel"
     )

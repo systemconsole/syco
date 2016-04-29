@@ -139,7 +139,7 @@ class Ssh:
         '''Is remote ssh server alive.'''
         return general.is_server_alive(self.server, self.port)
 
-    def ssh_exec(self, command, events = {}):
+    def ssh_exec(self, command, events = {}, silent=False):
         '''
         Execute the ssh command.
 
@@ -148,13 +148,14 @@ class Ssh:
 
         '''
         try:
-            self._ssh_exec(command, events)
+            self._ssh_exec(command, events, silent)
         except pexpect.TIMEOUT, e:
             app.print_error("Got a timeout from ssh_exec, retry to execute command: " + command + str(e))
             self.ssh_exec(command, events)
 
-    def _ssh_exec(self, command, events=None):
-        app.print_verbose("SSH Command on " + self.server + ": " + command)
+    def _ssh_exec(self, command, events=None, silent=False):
+        if not silent:
+            app.print_verbose("SSH Command on " + self.server + ": " + command)
 
         # Setting default events
         if events is None:
@@ -186,7 +187,7 @@ class Ssh:
 
         # Disable verbose output for SSH login process.
         # This outputs a lot of ugly useless text.
-        ssh = expect.sshspawn()
+        ssh = expect.sshspawn(timeout=120)
         ssh.disable_output()
         ssh.login(self.server, username=self.user, password=self.password)
         ssh.enable_output()

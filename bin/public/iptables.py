@@ -247,7 +247,7 @@ def add_service_chains():
 
     '''
     add_cobbler_chain()
-    add_glassfish_chain()
+    add_icinga_chain()
     add_httpd_chain()
     add_kvm_chain()
     add_ldap_chain()
@@ -495,10 +495,10 @@ def add_mysql_chain():
 
     # Required for replication.
     current_host_config = config.host(net.get_hostname())
-    repl_peer = current_host_config.get_option("repl_peer")
+    repl_peer = current_host_config.get_option("repl_peer", 'None')
 
     iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get_front_ip()   + " --dports 3306 -j allowed_tcp")
-    if repl_peer is not None:
+    if repl_peer and repl_peer.lower() != 'None':
         iptables("-A mysql_output -p TCP -m multiport -d " + repl_peer + " --dports 3306 -j allowed_tcp")
 
 
@@ -662,38 +662,6 @@ def add_cobbler_chain():
 
     # RSYNC
     iptables("-A cobbler_output -m state --state NEW -m tcp -p tcp --dport 873 -j allowed_tcp")
-
-
-def del_glassfish_chain():
-    app.print_verbose("Delete iptables chain for glassfish")
-    iptables("-D syco_input  -p ALL -j glassfish_input", general.X_OUTPUT_CMD)
-    iptables("-D syco_output -p ALL -j glassfish_output", general.X_OUTPUT_CMD)
-    iptables("-F glassfish_input", general.X_OUTPUT_CMD)
-    iptables("-X glassfish_input", general.X_OUTPUT_CMD)
-    iptables("-F glassfish_output", general.X_OUTPUT_CMD)
-    iptables("-X glassfish_output", general.X_OUTPUT_CMD)
-
-
-def add_glassfish_chain():
-    del_glassfish_chain()
-
-    if (not os.path.exists("/etc/init.d/" + installGlassfish31.GLASSFISH_VERSION)):
-        return
-
-    app.print_verbose("Add iptables chain for glassfish")
-
-    iptables("-N glassfish_input")
-    iptables("-N glassfish_output")
-    iptables("-A syco_input  -p ALL -j glassfish_input")
-    iptables("-A syco_output -p ALL -j glassfish_output")
-
-    # TODO only on dev servers??
-    app.print_verbose("Setup glassfish input rule.")
-    glassfish_ports = "6048,6080,6081,7048,7080,7081"
-    iptables("-A glassfish_input -p TCP -m multiport --dports " + glassfish_ports + " -j allowed_tcp")
-
-    iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_primary_master_ip()   + " --dports 3306 -j allowed_tcp")
-    iptables("-A glassfish_output -p TCP -m multiport -d " + config.general.get_mysql_secondary_master_ip() + " --dports 3306 -j allowed_tcp")
 
 
 def del_icinga_chain():
@@ -1108,6 +1076,10 @@ def add_haproxy_chain():
     iptables(
         "-A haproxy_inout -p tcp -m multiport --dports 443 -j allowed_tcp"
     )
+
+    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports").split(",")
+    for port in custom_target_ports:
+        iptables("-A haproxy_inout -p tcp -m multiport --dports %s -j allowed_tcp" % port)
 
 
 def del_kibana_chain():

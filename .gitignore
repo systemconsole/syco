@@ -18,3 +18,4 @@
 /docs-coverage/
 .coverage
 /.project
+installtemp
