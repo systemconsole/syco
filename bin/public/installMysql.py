@@ -157,8 +157,8 @@ def install_mysql(args):
 
     mysql_exec("flush privileges;", )
 
-    repl_peer = current_host_config.get_option("repl_peer")
-    if repl_peer:
+    repl_peer = current_host_config.get_option("repl_peer", 'None')
+    if repl_peer and repl_peer.lower != 'None':
         mysql_exec(
             "GRANT ALL PRIVILEGES ON *.* TO "
             "'root'@'%s' IDENTIFIED BY '%s'"

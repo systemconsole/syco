@@ -33,7 +33,7 @@ import re
 
 script_version = 2
 
-CERT_SERVER = CERT_SERVER_PATH = CERT_COPY_TO_PATH = SYCO_PLUGIN_PATH = None
+cert_server = cert_server_path = cert_copy_to_path = SYCO_PLUGIN_PATH = None
 
 
 HAPROXY_CONF_DIR = "/etc/haproxy/"
@@ -63,11 +63,7 @@ def install_haproxy(args):
     # Prompt for syco pw early, certificate copy requires root pw
     app.get_root_password()
 
-    global CERT_SERVER, CERT_SERVER_PATH, CERT_COPY_TO_PATH, SYCO_PLUGIN_PATH
-    CERT_SERVER = config.general.get_cert_server_ip()
-    CERT_SERVER_PATH = config.general.get_option('haproxy.remote_cert_path')
-    CERT_COPY_TO_PATH = config.general.get_option('haproxy.local_cert_path')
-    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
+    setup_global_vars()
 
     # Validate all command line parameters.
     if len(args) != 3:
@@ -83,6 +79,15 @@ def install_haproxy(args):
     _configure_haproxy(env, state)
 
     version_obj.mark_executed()
+
+
+def setup_global_vars():
+    """Initialize global variables from config files"""
+    global cert_server, cert_server_path, cert_copy_to_path, SYCO_PLUGIN_PATH
+    cert_server = config.general.get_cert_server_ip()
+    cert_server_path = config.general.get_option('haproxy.remote_cert_path')
+    cert_copy_to_path = config.general.get_option('haproxy.local_cert_path')
+    SYCO_PLUGIN_PATH = app.get_syco_plugin_paths("/var/haproxy/").next()
 
 
 def haproxy_env(args):
@@ -128,11 +133,9 @@ def print_killmessage():
 
 
 def _copy_certificate_files(env):
-
-
-    copyfrom = "root@{0}".format(CERT_SERVER)
-    copyremotefile = "{0}/{1}.pem".format(CERT_SERVER_PATH, env)
-    copylocalfile = "{0}/{1}.pem".format(CERT_COPY_TO_PATH, env)
+    copyfrom = "root@{0}".format(cert_server)
+    copyremotefile = "{0}/{1}.pem".format(cert_server_path, env)
+    copylocalfile = "{0}/{1}.pem".format(cert_copy_to_path, env)
 
     retrieve_from_server(copyfrom, copyremotefile, copylocalfile, verify_local=[copylocalfile])
 
@@ -144,7 +147,6 @@ def _configure_haproxy(env, state):
 
     scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address('eth1'))
     _configure_haproxy_state(state)
-
     _chkconfig("haproxy", "on")
     _service("haproxy", "restart")
 
@@ -156,7 +158,7 @@ def _configure_haproxy_state(state):
     else:
         scopen.scOpen(HAPROXY_CONF).replace("${TCSTATE}", 'backup')
         scopen.scOpen(HAPROXY_CONF).replace("${AVSTATE}", '')
-        
+
 
 def _chkconfig(service, command):
     x("/sbin/chkconfig {0} {1}".format(service, command))
@@ -183,6 +185,8 @@ def uninstall_haproxy(args):
     """
     app.print_verbose("Uninstall HA Proxy")
 
+    setup_global_vars()
+
     # Validate all command line parameters.
     if len(args) != 3:
         print_killmessage()
@@ -196,4 +200,4 @@ def uninstall_haproxy(args):
 
     x("yum -y remove haproxy")
     x("rm -rf {0}*".format(HAPROXY_CONF_DIR))
-    x("rm -rf {0}/{1}.pem".format(CERT_COPY_TO_PATH, env))
+    x("rm -rf {0}/{1}.pem".format(cert_copy_to_path, env))

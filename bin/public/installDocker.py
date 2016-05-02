@@ -13,14 +13,14 @@ __license__ = "???"
 __version__ = "1.0.0"
 __status__ = "Production"
 
-import general
+
 from general import x
+import general
 import app
 import general
 import config
 import version
 from scopen import scOpen
-import os
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
@@ -58,6 +58,8 @@ def install_docker(args):
 
     x('chkconfig docker on')
     x('service docker start')
+    version_obj.mark_executed()
+
 
     #FW rule needed to access container through ports
     #Sleep for docker to start completely before setting rule
