@@ -370,7 +370,7 @@ def setup_dns_resolver_rules():
     '''
     app.print_verbose("Setup DNS resolver INPUT/OUTPUT rule.")
     for resolver_ip in config.general.get_dns_resolvers():
-        if resolver_ip.lower() != "none":
+        if resolver_ip and resolver_ip.lower() != "none":
             iptables("-A syco_output -p udp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_udp")
             iptables("-A syco_output -p tcp --sport 1024:65535 -d " + resolver_ip + " --dport 53 -m state --state NEW -j allowed_tcp")
 
@@ -495,7 +495,9 @@ def add_mysql_chain():
     current_host_config = config.host(net.get_hostname())
     repl_peer = current_host_config.get_option("repl_peer", 'None')
 
-    iptables("-A mysql_output -p TCP -m multiport -d " + current_host_config.get_front_ip()   + " --dports 3306 -j allowed_tcp")
+    ip = current_host_config.get_front_ip()
+    if ip:
+        iptables("-A mysql_output -p TCP -m multiport -d %s --dports 3306 -j allowed_tcp" % ip)
     if repl_peer and repl_peer.lower() != 'None':
         iptables("-A mysql_output -p TCP -m multiport -d " + repl_peer + " --dports 3306 -j allowed_tcp")
 
@@ -529,9 +531,9 @@ def add_httpd_chain():
     # We assume this is an application server that requires connection to the
     # syco mysql server.
     mysql_servers = config.host(net.get_hostname()).get_option("mysql_servers", "").split(",")
-
     for mysql_server in mysql_servers:
-        iptables("-A httpd_output -p TCP -m multiport -d " + mysql_server + " --dports 3306 -j allowed_tcp")
+        if mysql_server:
+            iptables("-A httpd_output -p TCP -m multiport -d %s --dports 3306 -j allowed_tcp" % mysql_server)
 
 
 def del_nfs_chain():
@@ -1075,9 +1077,10 @@ def add_haproxy_chain():
         "-A haproxy_inout -p tcp -m multiport --dports 443 -j allowed_tcp"
     )
 
-    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports").split(",")
+    custom_target_ports = config.host(net.get_hostname()).get_option("haproxy.target-ports", "").split(",")
     for port in custom_target_ports:
-        iptables("-A haproxy_inout -p tcp -m multiport --dports %s -j allowed_tcp" % port)
+        if port:
+            iptables("-A haproxy_inout -p tcp -m multiport --dports %s -j allowed_tcp" % port)
 
 
 def del_kibana_chain():
