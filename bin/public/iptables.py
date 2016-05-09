@@ -33,10 +33,8 @@ from config import *
 from config import get_servers
 from general import x
 from net import get_hostname
-from scopen import scOpen
 import app
 import general
-import installGlassfish31
 import net
 import version
 
@@ -47,13 +45,13 @@ import version
 SCRIPT_VERSION = 3
 
 
-#Keep track of commands
+# Keep track of commands
 _commands_obj_reference = None
 
 
 def build_commands(commands):
 
-    #Store away commands for use below
+    # Store away commands for use below
     global _commands_obj_reference
     _commands_obj_reference = commands
 
