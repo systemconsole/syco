@@ -16,12 +16,10 @@ __version__ = "1.5"
 __status__ = "Production"
 
 import os
-from general import x, urlretrive, retrieve_from_server
-import ssh
+from general import x, retrieve_from_server
 import config
 import iptables
 import socket
-import install
 import app
 import password
 import version
@@ -30,6 +28,7 @@ import fcntl
 import struct
 import sys
 import re
+
 
 script_version = 2
 
@@ -109,10 +108,11 @@ def haproxy_state(args):
 def get_environments():
     """List all accepted environments from plugin folders"""
     environments = []
-    for file in os.listdir(SYCO_PLUGIN_PATH):
-        foo = re.search('(.*)\.haproxy\.cfg', file)
-        if foo:
-            environments.append(foo.group(1))
+    for path in app.get_syco_plugin_paths("/var/haproxy/"):
+        for f in os.listdir(path):
+            foo = re.search('(.*)\.haproxy\.cfg', f)
+            if foo:
+                environments.append(foo.group(1))
     return environments
 
 
@@ -136,17 +136,19 @@ def _copy_certificate_files(env):
     copyfrom = "root@{0}".format(cert_server)
     copyremotefile = "{0}/{1}.pem".format(cert_server_path, env)
     copylocalfile = "{0}/{1}.pem".format(cert_copy_to_path, env)
-
     retrieve_from_server(copyfrom, copyremotefile, copylocalfile, verify_local=[copylocalfile])
 
 
 def _configure_haproxy(env, state):
     x("cp {0}haproxy.cfg {0}org.haproxy.cfg".format(HAPROXY_CONF_DIR))
-    x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(SYCO_PLUGIN_PATH, env, HAPROXY_CONF_DIR))
-    x("cp {0}/error.html {1}error.html".format(SYCO_PLUGIN_PATH, HAPROXY_CONF_DIR))
+    for path in app.get_syco_plugin_paths("/var/haproxy/"):
+        app.print_verbose("Copy config files from %s" % path)
+        x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(path, env, HAPROXY_CONF_DIR))
+        x("cp {0}/error.html {1}error.html".format(path, HAPROXY_CONF_DIR))
 
     scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address('eth1'))
     _configure_haproxy_state(state)
+    _configure_credentials(env)
     _chkconfig("haproxy", "on")
     _service("haproxy", "restart")
 
@@ -158,6 +160,13 @@ def _configure_haproxy_state(state):
     else:
         scopen.scOpen(HAPROXY_CONF).replace("${TCSTATE}", 'backup')
         scopen.scOpen(HAPROXY_CONF).replace("${AVSTATE}", '')
+
+
+def _configure_credentials(env):
+    if '${CREDENTIALS}' in open(HAPROXY_CONF).read():
+        pswd = password.get_custom_password("haproxy", env)
+        base64pswd = x("echo -n haproxy:{0} | base64 | tr -d '\n'".format(pswd))
+        scopen.scOpen(HAPROXY_CONF).replace("${CREDENTIALS}", base64pswd)
 
 
 def _chkconfig(service, command):
