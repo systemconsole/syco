@@ -258,7 +258,6 @@ def add_service_chains():
     add_rsyslog_chain()
     add_freeradius_chain()
     add_openvas_chain()
-    add_ossec_chain()
     add_haproxy_chain()
     add_kibana_chain()
 
@@ -952,70 +951,6 @@ def add_openvas_chain():
     iptables("-A openvas_input -p TCP --dport 9392 -j allowed_tcp")
     iptables("-A openvas_output -p ALL -j ACCEPT")
 
-
-def del_ossec_chain():
-    app.print_verbose("Delete iptables chain for Ossec")
-
-    iptables("-D syco_input -p udp -j ossec_in", general.X_OUTPUT_CMD)
-    iptables("-F ossec_in", general.X_OUTPUT_CMD)
-    iptables("-X ossec_in", general.X_OUTPUT_CMD)
-
-    iptables("-D syco_output -p udp -j ossec_out", general.X_OUTPUT_CMD)
-    iptables("-F ossec_out", general.X_OUTPUT_CMD)
-    iptables("-X ossec_out", general.X_OUTPUT_CMD)
-
-
-def add_ossec_chain():
-    '''
-    OSSEC IPtables rules
-
-    OSSEC Server
-    Servers in network -> IN -> udp -> 1514 -> OSSEC Server
-    Servers in network <- OUT <- udp <- 1514 <- OSSEC Server
-
-    OSSEC Client
-    OSSEC Server -> IN -> udp -> 1514 -> OSSEC Client
-    OSSEC Server <- OUT <- udp <- 1514 <- OSSEC Client
-
-    '''
-    del_ossec_chain()
-
-    if not os.path.exists('/var/ossec'):
-        return
-
-    app.print_verbose("Add iptables chain for OSSEC")
-
-    # Create chains.
-    iptables("-N ossec_in")
-    iptables("-N ossec_out")
-    iptables("-A syco_input -p udp -j ossec_in")
-    iptables("-A syco_output -p udp -j ossec_out")
-
-    # Ossec Server
-    if (os.path.exists('/var/ossec/bin/ossec-remoted')):
-        for server in get_servers():
-            try:
-                iptables(
-                    "-A ossec_in -p udp -s %s --dport 1514 -j allowed_udp" %
-                    config.host(server).get_front_ip()
-                )
-                iptables(
-                    "-A ossec_out -p udp -d %s --dport 1514 -j allowed_udp" %
-                    config.host(server).get_front_ip()
-                )
-            except Exception, e:
-                pass
-
-    # Ossec client
-    else:
-        iptables(
-            "-A ossec_in -m state --state NEW -p udp -s %s --dport 1514 -j allowed_udp" %
-            config.general.get_ossec_server_ip()
-        )
-        iptables(
-            "-A ossec_out -m state --state NEW -p udp -d %s --dport 1514 -j allowed_udp" %
-            config.general.get_ossec_server_ip()
-        )
 
 def del_rabbitmq_chain():
   app.print_verbose("Delete iptables chain for RabbitMQ")
