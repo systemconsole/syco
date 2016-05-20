@@ -253,8 +253,8 @@ def retrieve_from_server(remote_server, remote_path, local_path, verify_local=No
 def run_remote_command(host, command):
     shell_run("ssh root@{0} \"{1}\"".format(host, command),
                   events={
-                      'Are you sure you want to continue connecting \(yes\/no\)\?': "YES\n",
-                      server + "\'s password\:": app.get_root_password() + "\n"
+                      'Are you su1re you want to continue connecting \(yes\/no\)\?': "YES\n",
+                      host + "\'s password\:": app.get_root_password() + "\n"
                   }
               )
 
