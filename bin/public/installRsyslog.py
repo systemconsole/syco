@@ -157,7 +157,7 @@ def _gen_and_copy_cert(args):
         # Retrieve the certs
         general.retrieve_from_server(srv, "/etc/pki/rsyslog/ca.crt", crt_dir)
         general.retrieve_from_server(srv, "/etc/pki/rsyslog/{0}*".format(net.get_hostname()), crt_dir,
-                                     verify_local=cert_files)
+                                     verify_local=cert_files, remove_remote_files=True)
 
         x("restorecon -r /etc/pki/rsyslog")
         x("chmod 600 /etc/pki/rsyslog/*")
