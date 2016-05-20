@@ -251,7 +251,7 @@ def retrieve_from_server(remote_server, remote_path, local_path, verify_local=No
         run_remote_command(remote_server, "rm -rf {0}".format(remote_path))
 
 def run_remote_command(host, command):
-    shell_run("ssh root@{0} \"{1}\"".format(host, command),
+    shell_run("ssh root@{0} {1}".format(host, command),
                   events={
                       'Are you su1re you want to continue connecting \(yes\/no\)\?': "YES\n",
                       host + "\'s password\:": app.get_root_password() + "\n"
