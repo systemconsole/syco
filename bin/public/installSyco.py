@@ -46,7 +46,7 @@ def install_syco(args):
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
     if proxy_host and proxy_port:
-        x('echo http_proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
+        x('echo proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
 
     # Set Swappiness to 0 on all hosts to avoid excessive swapping
     x('sysctl vm.swappiness=0')

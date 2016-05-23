@@ -220,7 +220,7 @@ def is_server_root_open(server):
         return False
 
 
-def retrieve_from_server(remote_server, remote_path, local_path, verify_local=None):
+def retrieve_from_server(remote_server, remote_path, local_path, verify_local=None, remove_remote_files=False):
     """
     This function uses scp with syco root login to retrieve a directory or file from
     a remote server to the local machine.
@@ -246,6 +246,17 @@ def retrieve_from_server(remote_server, remote_path, local_path, verify_local=No
                 )
         else:
             break
+
+    if remove_remote_files:
+        run_remote_command(remote_server, "rm -rf {0}".format(remote_path))
+
+def run_remote_command(host, command):
+    shell_run("ssh root@{0} {1}".format(host, command),
+                  events={
+                      'Are you su1re you want to continue connecting \(yes\/no\)\?': "YES\n",
+                      host + "\'s password\:": app.get_root_password() + "\n"
+                  }
+              )
 
 
 def wait_for_server_root_login(server):
