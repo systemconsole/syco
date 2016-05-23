@@ -48,9 +48,6 @@ def install_syco(args):
     if proxy_host and proxy_port:
         x('echo proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
 
-    # Set Swappiness to 0 on all hosts to avoid excessive swapping
-    x('sysctl vm.swappiness=0')
-
     app.print_verbose("Install required packages for syco")
     x("yum install augeas -y")
 
@@ -63,6 +60,9 @@ def install_syco(args):
     from augeas import Augeas
     augeas = Augeas(x)
     augeas.set_enhanced("/files/etc/yum.conf/main/installonly_limit", "2")
+
+    # Set Swappiness to 0 on all hosts to avoid excessive swapping
+    augeas.set_enhanced("/files/etc/sysctl.conf/vm.swappiness", "0")
 
     if proxy_host and proxy_port:
         # Set proxy again with augeas to ensure there are no duplicates/inconsistencies
