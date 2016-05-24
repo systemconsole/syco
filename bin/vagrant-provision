@@ -12,7 +12,7 @@ __copyright__="Copyright 2014, Amivono AB"
 echo "Bootstrap vagrant box"
 echo
 
-
+yum install wget -y
 #
 echo "Override the hostname to vagrant-centos6"
 sed "s/HOSTNAME.*/HOSTNAME=vagrant-centos6/g" /etc/sysconfig/network
