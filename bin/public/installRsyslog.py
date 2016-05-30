@@ -87,7 +87,7 @@ def install_rsyslogd_client(args):
     app.print_verbose("CIS 5.2 Configure rsyslog")
 
     app.print_verbose("CIS 5.2.1 Install the rsyslog package")
-    x("yum install rsyslog rsyslog-gnutls -y")
+    general.install_packages("rsyslog rsyslog-gnutls")
 
     app.print_verbose("CIS 5.2.2 Activate the rsyslog Service")
     if os.path.exists('/etc/xinetd.d/syslog'):
@@ -95,7 +95,7 @@ def install_rsyslogd_client(args):
     x("chkconfig rsyslog on")
 
     _configure_rsyslog_conf()
-    _copy_cert()
+    _gen_and_copy_cert(args)
 
     # Restaring rsyslog
     x("/etc/init.d/rsyslog restart")
@@ -131,20 +131,47 @@ def _replace_tags():
     sc.replace('${SERVERNAME}', fqdn)
 
 
-def _copy_cert():
-    '''
-    Coping certs for tls from rsyslog server
+def _gen_and_copy_cert(args):
+    """
+    Generate certs if they don't exist or if cert regen was requested with "force-new-certs"
 
-    '''
-    crt_dir ="/etc/pki/rsyslog"
+    """
+    crt_dir = "/etc/pki/rsyslog/"
     x("mkdir -p {0}".format(crt_dir))
-    srv = config.general.get_log_server_hostname1()
-    scp_from(srv, "/etc/pki/rsyslog/{0}*".format(net.get_hostname()), crt_dir)
-    scp_from(srv, "/etc/pki/rsyslog/ca.crt", crt_dir)
-    x("restorecon -r /etc/pki/rsyslog")
-    x("chmod 600 /etc/pki/rsyslog/*")
-    x("chown root:root /etc/pki/rsyslog/*")
 
+    fqdn = "{0}.{1}".format(net.get_hostname(), config.general.get_resolv_domain())
+    srv = config.general.get_log_server_hostname1()
+
+    cert_files = [
+        "{0}{1}.crt".format(crt_dir, fqdn),
+        "{0}{1}.key".format(crt_dir, fqdn),
+        "{0}/ca.crt".format(crt_dir)
+    ]
+
+    # Determine whether to generate and copy rsyslog certificates
+    if 'force-new-certs' in args or not _all_files_exist(cert_files):
+        # Generate the certs on the remote machine
+        general.wait_for_server_root_login(srv)
+        general.run_remote_command(srv, "/etc/pki/rsyslog/syco-gen-rsyslog-client-keys.sh {0}".format(fqdn))
+
+        # Retrieve the certs
+        general.retrieve_from_server(srv, "/etc/pki/rsyslog/ca.crt", crt_dir)
+        general.retrieve_from_server(srv, "/etc/pki/rsyslog/{0}*".format(net.get_hostname()), crt_dir,
+                                     verify_local=cert_files, remove_remote_files=True)
+
+        x("restorecon -r /etc/pki/rsyslog")
+        x("chmod 600 /etc/pki/rsyslog/*")
+        x("chown root:root /etc/pki/rsyslog/*")
+    else:
+        app.print_verbose("Found all certs and force-new-certs was not specified so not updating certificates")
+
+
+def _all_files_exist(files):
+    for file in files:
+        if not os.path.isfile(file):
+            return False
+
+    return  True
 
 def uninstall_rsyslogd_client(args):
     '''

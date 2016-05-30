@@ -19,10 +19,10 @@ state = "${STATE}"
 country = "${COUNTRY}"
 
 # The common name of the certificate owner.
-cn = "${CN}"
+cn = "GEN-CN"
 
 # The serial number of the certificate
-serial = "${SERIAL}"
+serial = "GEN-SERIAL"
 
 # In how many days, counting from today, this certificate will expire.
 expiration_days = 3650
@@ -30,7 +30,7 @@ expiration_days = 3650
 # X.509 v3 extensions
 
 # A dnsname in case of a WWW server.
-dns_name = "${DNS_NAME}"
+dns_name = "GEN-DNS-NAME"
 
 # An email in case of a person
 email = "${EMAIL}"

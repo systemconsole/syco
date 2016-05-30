@@ -19,10 +19,10 @@ Logs are saved to a file structure in
 
 NEW CERTS
 $ syco install-rsyslogd-newcerts
-Installation can generate certs for rsyslog client. Certs are stored in
+Installation can generate/regenerate certs and CA for rsyslogd server. Certs are stored in
 /etc/pki/rsyslog folder.
 
-Clients can then get their certs from that location.
+Clients generate their own certs on demand.
 
 CONFIG FILES
 rsyslog.d config files are located in syco/var/rsyslog/ folder. Template used
@@ -50,7 +50,7 @@ __status__ = "Production"
 import os
 
 from config import get_servers
-from general import get_install_dir
+from general import get_install_dir, install_packages
 from general import x
 from scopen import scOpen
 import app
@@ -72,7 +72,7 @@ def build_commands(commands):
     """
     commands.add("install-rsyslogd",          install_rsyslogd,   help="Install Rsyslog server.")
     commands.add("uninstall-rsyslogd",        uninstall_rsyslogd, help="Uninstall rsyslog server and all certs on the server.")
-    commands.add("install-rsyslogd-newcerts", rsyslog_newcerts,   help="Generats new cert for rsyslogd clients.")
+    commands.add("install-rsyslogd-newcerts", rsyslog_newcerts,   help="Generates new ca cert and key.")
 
 
 def install_rsyslogd(args):
@@ -85,7 +85,7 @@ def install_rsyslogd(args):
     version_obj.check_executed()
 
     # Installing packages
-    x("yum install rsyslog rsyslog-gnutls gnutls-utils -y")
+    install_packages("rsyslog rsyslog-gnutls gnutls-utils")
 
     # Autostart rsyslog at boot
     x("chkconfig rsyslog on")
@@ -136,7 +136,7 @@ def _setup_rsyslogd():
 
 def rsyslog_newcerts(args):
     """
-    Generate new tls certs for rsyslog server and all clients defined in install.cfg.
+    Generate new tls certs for rsyslog server
 
     NOTE: This needs to be executed once a year.
 
@@ -157,45 +157,15 @@ def rsyslog_newcerts(args):
       "--template {0}".format(template_ca)
     )
 
-    #
-    # Create rsyslog SERVER cert
-    #
-    for server in get_servers():
-        _create_cert(server)
+    # Copy server template and cert/key generator script
+    target_template = '/etc/pki/rsyslog/template.server'
+    x("cp -f /opt/syco/var/rsyslog/template.server {0}".format(target_template))
+    _replace_tags(target_template, fqdn)
 
-
-def _create_cert(hostname):
-    """
-    Create certificate for one rsyslog client.
-
-    """
-    fqdn = "{0}.{1}".format(hostname, config.general.get_resolv_domain())
-    app.print_verbose("Create cert for host: {0}".format(fqdn))
-
-    template_server = "{0}template.{1}".format(get_install_dir(), fqdn)
-    x("cp -f /opt/syco/var/rsyslog/template.server {0}".format(template_server))
-    _replace_tags(template_server, fqdn)
-
-    # Create key
-    x("certtool --generate-privkey " +
-      "--outfile /etc/pki/rsyslog/{0}.key".format(fqdn)
-    )
-
-    # Create cert
-    x("certtool --generate-request " +
-      "--load-privkey /etc/pki/rsyslog/{0}.key ".format(fqdn) +
-      "--outfile /etc/pki/rsyslog/{0}.csr ".format(fqdn) +
-      "--template {0}".format(template_server)
-    )
-
-    # Sign cert
-    x("certtool --generate-certificate " +
-      "--load-request /etc/pki/rsyslog/{0}.csr ".format(fqdn) +
-      "--outfile /etc/pki/rsyslog/{0}.crt ".format(fqdn) +
-      "--load-ca-certificate /etc/pki/rsyslog/ca.crt " +
-      "--load-ca-privkey /etc/pki/rsyslog/ca.key " +
-      "--template {0}".format(template_server)
-    )
+    # New generator script used by clients directly
+    generator_script = "syco-gen-rsyslog-client-keys.sh"
+    x("cp -f /opt/syco/var/rsyslog/{0} /etc/pki/rsyslog/".format(generator_script))
+    x("chmod 700 /etc/pki/rsyslog/{0}".format(generator_script))
 
 
 def _replace_tags(filename, fqdn):

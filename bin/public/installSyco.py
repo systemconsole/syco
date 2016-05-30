@@ -46,10 +46,7 @@ def install_syco(args):
     proxy_host = config.general.get_proxy_host()
     proxy_port = config.general.get_proxy_port()
     if proxy_host and proxy_port:
-        x('echo http_proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
-
-    #Set Swappiness to 0 on all hosts to avoid excessive swapping
-    x('sysctl vm.swappiness=0')
+        x('echo proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
 
     app.print_verbose("Install required packages for syco")
     x("yum install augeas -y")
@@ -63,6 +60,9 @@ def install_syco(args):
     from augeas import Augeas
     augeas = Augeas(x)
     augeas.set_enhanced("/files/etc/yum.conf/main/installonly_limit", "2")
+
+    # Set Swappiness to 0 on all hosts to avoid excessive swapping
+    augeas.set_enhanced("/files/etc/sysctl.conf/vm.swappiness", "0")
 
     if proxy_host and proxy_port:
         # Set proxy again with augeas to ensure there are no duplicates/inconsistencies
@@ -89,7 +89,6 @@ def passwords(args):
     print "get_ca_password:", app.get_ca_password()
     print "get_glassfish_admin_password:", app.get_glassfish_admin_password()
     print "get_glassfish_master_password:", app.get_glassfish_master_password()
-    print "get_haproxy_sps_ping_password:", app.get_haproxy_sps_ping_password()
     print "get_ldap_admin_password:", app.get_ldap_admin_password()
     print "get_ldap_sssd_password:", app.get_ldap_sssd_password()
     print "get_master_password:", app.get_master_password()
@@ -112,7 +111,7 @@ def change_env(args):
     passwordstore and install.cfg files are relinked.
 
     """
-    if (len(args) != 2):
+    if len(args) != 2:
         raise Exception("syco chagne-env [env]")
 
     env = args[1]
@@ -123,7 +122,7 @@ def change_env(args):
         SYCO_ETC_PATH, env, SYCO_ETC_PATH)
       )
 
-    if (os.access(app.SYCO_USR_PATH, os.F_OK)):
+    if os.access(app.SYCO_USR_PATH, os.F_OK):
         for plugin in os.listdir(app.SYCO_USR_PATH):
             plugin_path = os.path.abspath(app.SYCO_USR_PATH + plugin + "/etc/")
 
