@@ -131,6 +131,19 @@ class PasswordStore:
 
         return self.master_password
 
+
+    def get_all_passwords(self):
+        passwords = {}
+        config = self._build_config_parser()
+        for section in config.sections():
+            if section == "general":
+                continue
+            for option in config.options(section):
+                password = self.get_password(section, option)
+                passwords.setdefault(section, {}).setdefault(option, password)
+        return passwords
+
+
     def set_password(self, service, user_name, password):
         """
         Encrypt and store password in password file.
