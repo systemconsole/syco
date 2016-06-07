@@ -19,6 +19,7 @@ import app
 import version
 import os
 import iptables
+import install
 
 
 # The version of this module, used to prevent the same script version to be
@@ -59,8 +60,7 @@ def uninstall_espower(args):
 
 def install_rabbit():
     """Install and setup the rabbit mq server."""
-    if not os.path.isfile("yum install rabbitmq-server -y/etc/yum.repos.d/epel.repo"):
-        x('yum localinstall http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm -y')
+    install.epel_repo()
     x('yum install erlang -y')
     x('rpm --import http://www.rabbitmq.com/rabbitmq-signing-key-public.asc')
     x('yum install rabbitmq-server -y')
@@ -70,7 +70,6 @@ def install_logstash(version):
     """
     Download and install logstash
     """
-    #x("curl -O  https://download.elasticsearch.org/logstash/logstash/logstash-{0}.tar.gz".format(version))
     download_file("https://download.elasticsearch.org/logstash/logstash/logstash-{0}.tar.gz".format(version))
     x('mv /opt/syco/installtemp/logstash-{0}.tar.gz /opt/logstash.tar.gz'.format(version))
     x('tar -zxvf /opt/logstash.tar.gz -C /opt/')
@@ -81,10 +80,10 @@ def install_logstash(version):
 
 def config_logstash():
     """
-    There are now default config for logstash
+    There are no default config for logstash
     Copy config from
     1. First from syco-private
-    2. syco vardefault config
+    2. syco var/default config
     """
     x('cp -r {0}/logstash /etc/'.format(CONF_SOURCE))
 
@@ -106,11 +105,12 @@ def config_rabbitmq():
     There are no default config for rabbitmq
     Copy config from
     1. First from syco-private
-    2. syco var defult config
+    2. syco var/default config
     """
+    x('cp -r {0}/rabbitmq /etc/'.format(CONF_SOURCE))
+
     # Remove old certs
     x('rm -rf /etc/rabbitmq/ssl')
-
     x('mkdir -p /etc/rabbitmq/ssl/private')
 
     x('openssl req -x509 -config {0}/rabbitmq/ssl/openssl.cnf -newkey rsa:4096 -days 3650 -out /etc/rabbitmq/ssl/cacert.pem -outform PEM -subj /CN=RabbitMQ/ -nodes'.format(CONF_SOURCE))
@@ -124,8 +124,6 @@ def config_rabbitmq():
 
     x('openssl ca -config {0}/rabbitmq/ssl/openssl.cnf -in /etc/rabbitmq/ssl/req.pem -out /etc/rabbitmq/ssl/cert.pem -notext -batch -extensions server_ca_extensions'.format(CONF_SOURCE))
     x('openssl pkcs12 -export -out /etc/rabbitmq/ssl/keycert.p12 -in /etc/rabbitmq/ssl/cert.pem -inkey /etc/rabbitmq/ssl/key.pem -passout pass:MySecretPassword')
-
-    x('cp -r {0}/rabbitmq /etc/'.format(CONF_SOURCE))
 
     x('/etc/init.d/rabbitmq-server restart')
     x('setsebool -P nis_enabled 1')
