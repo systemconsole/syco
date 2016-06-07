@@ -17,7 +17,8 @@ __status__ = "Production"
 
 import os
 from general import x
-import iptables
+from iptables import iptables, save
+from augeas import Augeas
 import socket
 import app
 import version
@@ -26,6 +27,7 @@ import fcntl
 import struct
 import sys
 import re
+import general
 
 script_version = 1
 
@@ -52,8 +54,8 @@ def print_environments():
 
 def get_environments():
     environments = []
-    for file in os.listdir(SYCO_PLUGIN_PATH):
-        foo = re.search('(.*)\.keepalived\.conf', file)
+    for f in os.listdir(SYCO_PLUGIN_PATH):
+        foo = re.search('(.*)\.keepalived\.conf', f)
         if foo:
             environments.append(foo.group(1))
     return environments
@@ -65,6 +67,13 @@ def build_commands(commands):
     """
     commands.add("install-keepalived", install_keepalived, help="Install Keepalived on the server.")
     commands.add("uninstall-keepalived", uninstall_keepalived, help="Uninstall Keepalived from the server.")
+
+
+def iptables_setup():
+    """Called from iptables.py"""
+    del_iptables_chain()
+    if os.path.exists('/etc/keepalived/keepalived.conf'):
+        add_iptables_chain()
 
 
 def _service(service,command):
@@ -95,8 +104,11 @@ def install_keepalived(args):
     os.chdir("/")
 
     x("yum install -y keepalived")
-    _configure_iptables()
     _configure_keepalived()
+
+    # Adding iptables rules
+    iptables_setup()
+    save()
 
     version_obj.mark_executed()
 
@@ -107,7 +119,8 @@ def _configure_keepalived():
     * It will replace the variables in the config file with the hostname.
     * It is not environmental dependent and can be installed on any server.
     """
-    x("echo 'net.ipv4.ip_nonlocal_bind = 1' >> /etc/sysctl.conf")
+    augeas = Augeas(x)
+    augeas.set_enhanced("/files/etc/sysctl.conf/net.ipv4.ip_nonlocal_bind", "1")
     x("sysctl -p")
     x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KA_CONF_DIR))
     x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, ka_env, KA_CONF_DIR))
@@ -117,19 +130,41 @@ def _configure_keepalived():
     _service("keepalived","restart")
 
 
-def _configure_iptables():
+def del_iptables_chain():
+    app.print_verbose("Delete iptables chain for keepalived")
+
+    iptables("-D syco_output -p ALL -j keepalived_output", general.X_OUTPUT_CMD)
+    iptables("-F keepalived_output", general.X_OUTPUT_CMD)
+    iptables("-X keepalived_output", general.X_OUTPUT_CMD)
+
+    iptables("-D syco_output -p ALL -j keepalived_output", general.X_OUTPUT_CMD)
+    iptables("-F keepalived_input", general.X_OUTPUT_CMD)
+    iptables("-X keepalived_input", general.X_OUTPUT_CMD)
+
+    iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT", general.X_OUTPUT_CMD)
+    iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT", general.X_OUTPUT_CMD)
+    iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
+    iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
+
+
+def add_iptables_chain():
     """
     * Keepalived uses multicast and VRRP protocol to talk to the nodes and need to
         be opened. So first we remove the multicast blocks and then open them up.
     * VRRP is known as Protocol 112 in iptables.
     """
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP")
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP")
-    iptables.iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-A syco_output -p 112 -o eth1 -j ACCEPT")
-    iptables.save()
+    app.print_verbose("Add iptables chain for keepalived")
+    iptables("-N keepalived_output")
+    iptables("-A syco_output -p ALL -j keepalived_output")
+    iptables("-N keepalived_input")
+    iptables("-A syco_input -p ALL -j keepalived_input")
+    iptables("-A keepalived_input -p 112 -i eth1 -j ACCEPT")
+    iptables("-A keepalived_output -p 112 -o eth1 -j ACCEPT")
+
+    iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
+    iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
+    iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
+    iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
 
 
 def get_ip_address(ifname):
@@ -153,14 +188,5 @@ def uninstall_keepalived(args=""):
 
     x("yum -y remove keepalived")
     x("rm -rf {0}*".format(KA_CONF_DIR))
-    iptables.iptables("-D multicast_packets -d 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-D multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-    iptables.iptables("-A multicast_packets -s 224.0.0.0/4 -j DROP")
-    iptables.iptables("-A multicast_packets -d 224.0.0.0/4 -j DROP")
-    iptables.iptables("-D syco_input -p 112 -i eth1 -j ACCEPT")
-    iptables.iptables("-D syco_output -p 112 -o eth1 -j ACCEPT")
+    del_iptables_chain()
     iptables.save()
-
-"""
-End of Keepalived installation script.
-"""

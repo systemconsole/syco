@@ -84,24 +84,11 @@ def set_syco_permissions():
 def passwords(args):
     app.print_verbose("Set all passwords used by syco")
     app.init_all_passwords()
-    print "get_root_password:", app.get_root_password()
-    print "get_root_password_hash:", app.get_root_password_hash()
-    print "get_ca_password:", app.get_ca_password()
-    print "get_glassfish_admin_password:", app.get_glassfish_admin_password()
-    print "get_glassfish_master_password:", app.get_glassfish_master_password()
-    print "get_ldap_admin_password:", app.get_ldap_admin_password()
-    print "get_ldap_sssd_password:", app.get_ldap_sssd_password()
-    print "get_master_password:", app.get_master_password()
-    print "get_mysql_backup_password:", app.get_mysql_backup_password()
-    print "get_mysql_integration_password:", app.get_mysql_integration_password()
-    print "get_mysql_monitor_password:", app.get_mysql_monitor_password()
-    print "get_mysql_production_password:", app.get_mysql_production_password()
-    print "get_mysql_root_password:", app.get_mysql_root_password()
-    print "get_mysql_stable_password:", app.get_mysql_stable_password()
-    print "get_mysql_uat_password:", app.get_mysql_uat_password()
-    print "get_redis_production_password:", app.get_redis_production_password()
-    print "get_svn_password:", app.get_svn_password()
-    print "get_switch_icmp_password:", app.get_switch_icmp_password()
+    for section, section_d in app.get_all_passwords().iteritems():
+        print "[%s]" % section
+        for option, password in section_d.iteritems():
+            print "%s = %s" % (option, password)
+        print
 
 
 def change_env(args):

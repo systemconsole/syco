@@ -40,6 +40,12 @@ def _get_password_store():
 
 _get_password_store.password_store = None
 
+
+def get_all_passwords():
+    """List all passwords in passwordstore file."""
+    return _get_password_store().get_all_passwords()
+
+
 def _get_password(service, user_name):
     '''
     Get a password from the password store.g
@@ -86,10 +92,6 @@ def get_user_password(username):
 def get_ca_password():
     '''The password used when creating CA certificates'''
     return get_root_password()
-
-def get_svn_password():
-    '''The svn password for user syscon_svn'''
-    return _get_password("svn", "syscon")
 
 def get_ldap_admin_password():
     '''The ldap admin password.'''
@@ -169,18 +171,18 @@ def init_mysql_passwords():
     get_mysql_uat_password()
     get_mysql_production_password()
 
-def init_all_passwords():
-    '''
-    Ask the user for all passwords used by syco, and add to passwordstore.
 
-    '''
-    get_root_password()
-    get_svn_password()
+def init_all_passwords():
+    """Ask the user for all passwords used by syco, and add to passwordstore."""
+    get_ca_password()
+    get_glassfish_admin_password()
+    get_glassfish_master_password()
     get_ldap_admin_password()
     get_ldap_sssd_password()
-    get_glassfish_master_password()
-    get_glassfish_admin_password()
-    get_user_password("glassfish")
-    get_switch_icmp_password()
+    get_master_password()
     get_redis_production_password()
+    get_root_password()
+    get_root_password_hash()
+    get_switch_icmp_password()
+    get_user_password("glassfish")
     init_mysql_passwords()
