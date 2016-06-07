@@ -93,10 +93,6 @@ def get_ca_password():
     '''The password used when creating CA certificates'''
     return get_root_password()
 
-def get_svn_password():
-    '''The svn password for user syscon_svn'''
-    return _get_password("svn", "syscon")
-
 def get_ldap_admin_password():
     '''The ldap admin password.'''
     return _get_password("ldap", "admin")
@@ -187,7 +183,6 @@ def init_all_passwords():
     get_redis_production_password()
     get_root_password()
     get_root_password_hash()
-    get_svn_password()
     get_switch_icmp_password()
     get_user_password("glassfish")
     init_mysql_passwords()
