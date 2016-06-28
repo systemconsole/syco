@@ -184,11 +184,9 @@ def generate_password(length=8, chars=string.letters + string.digits + punctuati
     '''Generate a random password'''
     return ''.join([choice(chars) for i in range(length)])
 
-def is_server_alive(server, port, proto='tcp'):
-    '''
-    Check if port on a server is responding, this assumes the server is alive.
 
-    '''
+def is_server_alive(server, port, proto='tcp'):
+    """Is port on a server responding, this assumes the server is alive."""
     try:
         if proto=='udp':
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -202,19 +200,16 @@ def is_server_alive(server, port, proto='tcp'):
     finally:
         s.close()
 
-    if (result == 0):
+    if result == 0:
         return True
     return False
 
-def is_server_root_open(server):
-    """
-    Check if root account is accessible.
 
-    """
+def is_server_root_open(server):
+    """Check if root account is accessible."""
     ssh_con = ssh.Ssh(server, app.get_root_password())
     try:
-        ssh_con.ssh_exec('ls', silent = True)
-
+        ssh_con.ssh_exec('whoami', silent = True)
         return True
     except Exception:
         return False
@@ -233,7 +228,6 @@ def retrieve_from_server(remote_server, remote_path, local_path, verify_local=No
     while True:
         _scp_from(remote_server, remote_path, local_path)
 
-
         if not verify_local:
             # Assume success
             break
@@ -250,6 +244,7 @@ def retrieve_from_server(remote_server, remote_path, local_path, verify_local=No
     if remove_remote_files:
         run_remote_command(remote_server, "rm -rf {0}".format(remote_path))
 
+
 def run_remote_command(host, command):
     shell_run("ssh root@{0} {1}".format(host, command),
                   events={
@@ -260,28 +255,29 @@ def run_remote_command(host, command):
 
 
 def wait_for_server_root_login(server):
-    """
-    Wait until the root account on the sever is accessible
+    """Wait until the root account on the sever is accessible"""
+    if server is None:
+        raise Exception("Servers wasn't given.")
 
-    """
-    app.print_verbose("\nWait until " + str(server) + " on port 22 is accessible using the root account.",
-                      new_line=False)
+    app.print_verbose(
+        "\nWait until " + str(server) +
+        " on port 22 is accessible using the root account.",
+        new_line=False
+    )
     while not is_server_root_open(server):
         app.print_verbose(".", new_line=False, enable_caption=False)
         time.sleep(5)
+        app.print_verbose(".")
 
-    app.print_verbose(".")
 
 def wait_for_server_to_start(server, port):
-    '''
-    Wait until a network port is opened.
-
-    '''
+    """Wait until a network port is opened."""
     app.print_verbose("\nWait until " + str(server) + " on port " + str(port) + " starts.", new_line=False)
     while(not is_server_alive(server, port)):
         app.print_verbose(".", new_line=False, enable_caption=False)
         time.sleep(5)
     app.print_verbose(".")
+
 
 def wait_for_procesess_to_finish(name):
     while(True):
