@@ -282,7 +282,9 @@ def _set_domain_passwords():
             "(?i)Enter the new master password again.*": app.get_glassfish_master_password() + "\n"
         }
     )
-
+#The following custom cert creation didnt work, causing internal server error when login to glassfish. javax.net.ssl.SSLHandshakeException:
+# sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
+# unable to find valid certification path to requested target
     # Create new cert for https
 #    os.chdir("/usr/local/glassfish4/glassfish/domains/domain1/config/")
 #    x("keytool -delete -alias s1as -keystore keystore.jks -storepass '" + app.get_glassfish_master_password() + "'", user="glassfish")
