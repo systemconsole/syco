@@ -77,7 +77,7 @@ def install_httpd(args):
   _install_httpd()
   _install_mod_security()
   _update_modsec_rules()
-  _selinux_allow_proxy()
+  _enable_se_linux()
 
   iptables.add_httpd_chain()
   iptables.save()
@@ -203,5 +203,5 @@ def _update_modsec_rules():
   # Install customized rules.
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
 
-def _selinux_allow_proxy():
+def _enable_se_linux():
   x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
