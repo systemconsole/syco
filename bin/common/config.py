@@ -102,16 +102,12 @@ class Config(object):
         Load all cfg files in syco etc."""
 
         def load_config_files(self, etc_path):
-            config_files = os.listdir(etc_path)
 
-            config_dir = []
+            config_files = [f for f in os.listdir(etc_path) if f.endswith('.cfg')]
 
             for file_name in config_files:
-                if (os.access(file_name, os.F_OK)):
-                    config_dir.append(file_name)
-
-            if (len(config_dir) == 0):
-                raise ConfigException("No cfg files found.")
+                if not os.access(file_name, os.F_OK):
+                    raise ConfigException("Config file not accessible: %s." % file_name)
 
             for config_file in config_files:
                 self.read(config_file)
