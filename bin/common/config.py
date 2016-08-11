@@ -96,39 +96,25 @@ class Config(object):
         def __init__(self, etc_path, usr_path = None):
             ConfigParser.RawConfigParser.__init__(self)
 
-            self.load_general_config_file(etc_path)
-            self.load_config_file(etc_path)
+            self.load_config_files(etc_path)
 
-        '''
-        Load general.cfg if it exists.
-        '''
+        """
+        Load all cfg files in syco etc."""
 
-        def load_general_config_file(self, etc_path):
-            file_name = etc_path + "general.cfg"
+        def load_config_files(self, etc_path):
+            config_files = os.listdir(etc_path)
 
             config_dir = []
-            if os.access(file_name, os.F_OK):
-                config_dir.append(file_name)
 
-            if len(config_dir) == 1:
-                self.read(config_dir[0])
-            elif len(config_dir) > 1:
-                raise ConfigException(str(len(config_dir)) + " general.cfg found, only one or zero is allowed.",
-                                      config_dir)
-
-        def load_config_file(self, etc_path):
-            file_name = etc_path + "install.cfg"
-
-            config_dir = []
-            if (os.access(file_name, os.F_OK)):
-                config_dir.append(file_name)
+            for file_name in config_files:
+                if (os.access(file_name, os.F_OK)):
+                    config_dir.append(file_name)
 
             if (len(config_dir) == 0):
-                raise ConfigException("No install.cfg found.")
-            elif (len(config_dir) > 1):
-                raise ConfigException(str(len(config_dir)) + " install.cfg found, only one is allowed.", config_dir)
-            else:
-                self.read(config_dir[0])
+                raise ConfigException("No cfg files found.")
+
+            for config_file in config_files:
+                self.read(config_file)
 
         def get_option(self, section, option, default_value = None):
             '''
