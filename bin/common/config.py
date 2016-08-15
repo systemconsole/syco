@@ -99,18 +99,20 @@ class Config(object):
             self.load_config_files(etc_path)
 
         """
-        Load all cfg files in syco etc."""
+        Load all cfg files in syco etc.
+        """
 
         def load_config_files(self, etc_path):
 
-            config_files = [f for f in os.listdir(etc_path) if f.endswith('.cfg')]
+            config_files = [f for f in os.listdir(etc_path) if
+                            f.endswith('.cfg') and f not in ['coverage.cfg', 'version.cfg']]
 
             for file_name in config_files:
-                if not os.access(file_name, os.F_OK):
+                if not os.access('{0}{1}'.format(etc_path, file_name), os.F_OK):
                     raise ConfigException("Config file not accessible: %s." % file_name)
 
             for config_file in config_files:
-                self.read(config_file)
+                self.read('{0}{1}'.format(etc_path, file_name))
 
         def get_option(self, section, option, default_value = None):
             '''
