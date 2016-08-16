@@ -282,23 +282,25 @@ def _set_domain_passwords():
             "(?i)Enter the new master password again.*": app.get_glassfish_master_password() + "\n"
         }
     )
-
+#The following custom cert creation didnt work, causing internal server error when login to glassfish. javax.net.ssl.SSLHandshakeException:
+# sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
+# unable to find valid certification path to requested target
     # Create new cert for https
-    os.chdir("/usr/local/glassfish4/glassfish/domains/domain1/config/")
-    x("keytool -delete -alias s1as -keystore keystore.jks -storepass '" + app.get_glassfish_master_password() + "'", user="glassfish")
-    x(
-        'keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "' +
-        'CN=' + config.general.get_organization_name() +
-        ',O=' + config.general.get_organization_name() +
-        ',L=' + config.general.get_locality() +
-        ',S=' + config.general.get_state() +
-        ',C=' + config.general.get_country_name() +
-        '" -validity 3650' +
-        " -keypass '" + app.get_glassfish_master_password() + "'" +
-        ' -keystore keystore.jks' +
-        " -storepass '" + app.get_glassfish_master_password() + "'",
-        user="glassfish"
-    )
+#    os.chdir("/usr/local/glassfish4/glassfish/domains/domain1/config/")
+#    x("keytool -delete -alias s1as -keystore keystore.jks -storepass '" + app.get_glassfish_master_password() + "'", user="glassfish")
+#    x(
+#        'keytool -keysize 2048 -genkey -alias s1as -keyalg RSA -dname "' +
+#        'CN=' + config.general.get_organization_name() +
+#        ',O=' + config.general.get_organization_name() +
+#        ',L=' + config.general.get_locality() +
+#        ',S=' + config.general.get_state() +
+#        ',C=' + config.general.get_country_name() +
+#        '" -validity 3650' +
+#        " -keypass '" + app.get_glassfish_master_password() + "'" +
+#        ' -keystore keystore.jks' +
+#        " -storepass '" + app.get_glassfish_master_password() + "'",
+#        user="glassfish"
+#    )
 
     #
     x("keytool -delete -alias gtecybertrust5ca -keystore cacerts.jks -storepass '" + app.get_glassfish_master_password() +"'")

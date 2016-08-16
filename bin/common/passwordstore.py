@@ -109,7 +109,9 @@ class PasswordStore:
         if self.master_password is None:
             crypted_file_password = self._get_from_file("general", "keystore_pass")
 
-            if len(crypted_file_password) == 0:
+            if os.environ.get('SYCOMASTERPASS'):
+                master_password = os.environ.get('SYCOMASTERPASS')
+            elif len(crypted_file_password) == 0:
                 # If no password where stored in the config file, ask the user for
                 # a new master password.
                 master_password = self.get_password_from_user("Enter the SYCO master password: ")
@@ -130,6 +132,19 @@ class PasswordStore:
             self.master_password = master_password
 
         return self.master_password
+
+
+    def get_all_passwords(self):
+        passwords = {}
+        config = self._build_config_parser()
+        for section in config.sections():
+            if section == "general":
+                continue
+            for option in config.options(section):
+                password = self.get_password(section, option)
+                passwords.setdefault(section, {}).setdefault(option, password)
+        return passwords
+
 
     def set_password(self, service, user_name, password):
         """
