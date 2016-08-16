@@ -105,7 +105,7 @@ class Config(object):
         def load_config_files(self, etc_path):
 
             config_files = [f for f in os.listdir(etc_path) if
-                            f.endswith('.cfg') and f not in ['coverage.cfg', 'version.cfg']]
+                            f.endswith('.cfg') and (f.startswith('install') or f.startswith('general'))]
 
             for file_name in config_files:
                 if not os.access('{0}{1}'.format(etc_path, file_name), os.F_OK):
