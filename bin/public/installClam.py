@@ -182,7 +182,8 @@ def setup_clam_and_freshclam():
     x("cp %s/augeas/lenses/clamav.aug /usr/share/augeas/lenses/dist/" % app.SYCO_VAR_PATH)
 
     #Help augeas find freshclam.conf
-    if not os.path.exists("/etc/freshclam.conf"):
+    if x("readlink /etc/freshclam.conf").find("/usr/local/etc/freshclam.conf") == -1:
+        x("rm -f /etc/freshclam.conf")
         x("ln -s /usr/local/etc/freshclam.conf /etc/")
 
     #Initialize augeas
