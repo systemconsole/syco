@@ -106,6 +106,8 @@ def _install_nrpe_plugins():
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
     x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
+    for plugin_path in app.get_syco_plugin_paths("/var/icinga/plugins/"):
+        x("cp -p {0}* {1}".format(plugin_path, PLG_PATH))
 
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
