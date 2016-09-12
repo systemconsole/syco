@@ -197,6 +197,7 @@ def _setup_monitoring():
     x("cp -f {0} {1}".format(plugin, installed_plugin))
     x("chown nrpe:nrpe {0}".format(installed_plugin))
     x("chmod 551 {0}".format(installed_plugin))
+    x("restorecon {0}".format(installed_plugin))
     x("service nrpe restart")
 
 
