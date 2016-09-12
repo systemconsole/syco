@@ -192,7 +192,7 @@ def get_ip_address(ifname):
     )
 
 def _setup_monitoring():
-    plugin = app.get_syco_plugin_paths("/var/nagios/plugins/check_haproxy_stats.pl")
+    plugin = app.SYCO_PATH + "lib/nagios/plugins_nrpe/check_haproxy_stats.pl"
     installed_plugin = "/usr/lib64/nagios/plugins/check_haproxy_stats.pl"
     x("cp -f {0} {1}".format(plugin, installed_plugin))
     x("chown nrpe:nrpe {0}".format(installed_plugin))
