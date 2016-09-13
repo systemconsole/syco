@@ -154,6 +154,7 @@ def _configure_haproxy(env, state):
     _configure_credentials(env)
     _chkconfig("haproxy", "on")
     _service("haproxy", "restart")
+    _setup_monitoring()
 
 
 def _configure_haproxy_state(state):
@@ -189,6 +190,15 @@ def get_ip_address(ifname):
             struct.pack('256s', ifname[:15])
         )[20:24]
     )
+
+def _setup_monitoring():
+    plugin = app.SYCO_PATH + "lib/nagios/plugins_nrpe/check_haproxy_stats.pl"
+    installed_plugin = "/usr/lib64/nagios/plugins/check_haproxy_stats.pl"
+    x("cp -f {0} {1}".format(plugin, installed_plugin))
+    x("chown nrpe:nrpe {0}".format(installed_plugin))
+    x("chmod 551 {0}".format(installed_plugin))
+    x("restorecon {0}".format(installed_plugin))
+    x("service nrpe restart")
 
 
 def uninstall_haproxy(args):
