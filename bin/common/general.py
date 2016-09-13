@@ -267,7 +267,7 @@ def wait_for_server_root_login(server):
     while not is_server_root_open(server):
         app.print_verbose(".", new_line=False, enable_caption=False)
         time.sleep(5)
-        app.print_verbose(".")
+    app.print_verbose(".")
 
 
 def wait_for_server_to_start(server, port):
