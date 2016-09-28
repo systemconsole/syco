@@ -68,6 +68,7 @@ def install_openldap(args):
     create_certs()
     enable_ssl()
     require_highest_security_from_clients()
+    install_password_expire_script()
 
     # Let clients connect to the server through the firewall. This is done after
     # everything else is done, so we are sure that the server is secure before
@@ -541,6 +542,17 @@ replace: olcSecurity
 olcSecurity: ssf=128
 olcSecurity: simple_bind=128
 olcSecurity: tls=128""")
+
+
+def install_password_expire_script():
+    """Install email_expire_warning.py into /etc/cron.daily"""
+    for d in os.listdir(app.SYCO_USR_PATH):
+        if d == "mod-template":
+            pass
+        else:
+            f = app.SYCO_USR_PATH + d + "/var/ldap/bin/email_expire_warning.py"
+            if os.path.exists(f):
+                x('cp %s /etc/cron.daily' % f)
 
 
 def get_hashed_password(password):
