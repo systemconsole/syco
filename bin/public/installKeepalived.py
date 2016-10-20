@@ -8,7 +8,7 @@ This script is dependent on the following config files for this script to work.
 
 __author__ = "David Skeppstedt"
 __copyright__ = "Copyright 2014, Fareoffice CRS AB"
-__maintainer__ = "David Skeppstedt"
+__maintainer__ = "Kristofer Borgstrom"
 __email__ = "davske@fareoffice.com"
 __credits__ = ["Daniel Lindh, Mattias Hemmingsson, Kristoffer Borgstrom"]
 __license__ = "???"
@@ -28,6 +28,7 @@ import struct
 import sys
 import re
 import general
+import config
 
 script_version = 1
 
@@ -158,8 +159,12 @@ def add_iptables_chain():
     iptables("-A syco_output -p ALL -j keepalived_output")
     iptables("-N keepalived_input")
     iptables("-A syco_input -p ALL -j keepalived_input")
-    iptables("-A keepalived_input -p 112 -i eth1 -j ACCEPT")
-    iptables("-A keepalived_output -p 112 -o eth1 -j ACCEPT")
+    if config.general.is_back_enabled():
+        iptables("-A keepalived_input -p 112 -i eth1 -j ACCEPT")
+        iptables("-A keepalived_output -p 112 -o eth1 -j ACCEPT")
+    else:
+        iptables("-A keepalived_input -p 112 -i eth0 -j ACCEPT")
+        iptables("-A keepalived_output -p 112 -o eth0 -j ACCEPT")
 
     iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
     iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
