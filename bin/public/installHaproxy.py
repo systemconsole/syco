@@ -146,9 +146,14 @@ def _configure_haproxy(env, state):
         x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(path, env, HAPROXY_CONF_DIR))
         x("cp {0}/error.html {1}error.html".format(path, HAPROXY_CONF_DIR))
 
-    scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address('eth1'))
+
+    if config.general.is_back_enabled():
+        ifname = 'eth1'
+    else:
+        ifname = 'eth0'
+    scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address(ifname))
     if '${ENV_IP_ALIAS' in open(HAPROXY_CONF).read():
-        scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP_ALIAS}", get_ip_address('eth1:1'))
+        scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP_ALIAS}", get_ip_address('{0}:1'.format(ifname)))
 
     _configure_haproxy_state(state)
     _configure_credentials(env)
