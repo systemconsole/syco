@@ -113,7 +113,7 @@ def _install_nrpe_plugins():
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
     nrpe_config.replace("$(LDAPPASSWORD)", app.get_ldap_sssd_password())
     nrpe_config.replace("$(LDAPURL)", config.general.get_ldap_hostname())
-    nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password().replace("&","\&").replace("/","\/"))
+    nrpe_config.replace("$(SQLPASS)", app.get_mysql_monitor_password())
 
     # Set name of main disk
     host_config = config.host(net.get_hostname())
