@@ -101,8 +101,8 @@ def get_front_nic_name():
 
     for nic in netifaces.interfaces():
         ip = get_first_ip_from_nic(nic)
-        if _address_in_network(ip, nic):
-            return front_net
+        if _address_in_network(ip, front_net):
+            return nic
 
 
 def get_install_dir():
@@ -625,8 +625,8 @@ def _do_files_exist(files):
 
 def _address_in_network(ip, net):
 
-   ipaddr = struct.unpack('L', socket.inet_aton(ip))[0]
+   ipaddr = struct.unpack('<L', inet_aton(ip))[0]
    netaddr, bits = net.split('/')
-   netmask = struct.unpack('L',socket.inet_aton(netaddr))[0] & ((2L<<int(bits)-1) - 1)
+   netmask = struct.unpack('<L', inet_aton(netaddr))[0] & ((2L<<int(bits)-1) - 1)
 
    return ipaddr & netmask == netmask
