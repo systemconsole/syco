@@ -29,6 +29,7 @@ import sys
 import re
 import general
 import config
+import install
 
 script_version = 1
 
@@ -104,7 +105,8 @@ def install_keepalived(args):
     version_obj.check_executed()
     os.chdir("/")
 
-    install_packages("keepalived")
+    install.epel_repo()
+    install_packages("keepalived python-netifaces")
     _configure_keepalived()
 
     # Adding iptables rules

@@ -103,7 +103,6 @@ openssh-clients
 openssh-server
 pexpect
 python-crypto
-python-netifaces
 policycoreutils-python
 rpm
 rsync

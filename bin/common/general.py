@@ -25,7 +25,6 @@ import string
 import subprocess
 import time
 import urllib
-import netifaces
 import struct
 import config
 
@@ -92,10 +91,15 @@ def create_install_dir():
 
 
 def get_first_ip_from_nic(nic):
+
+    import netifaces
+
     return netifaces.ifaddresses(nic)[netifaces.AF_INET][0]['addr']
 
 
 def get_front_nic_name():
+
+    import netifaces
 
     front_net = config.general.get_front_subnet()
 
