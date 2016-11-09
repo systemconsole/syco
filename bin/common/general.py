@@ -92,7 +92,7 @@ def create_install_dir():
 
 
 def get_first_ip_from_nic(nic):
-    return netifaces.ifaddresses(nic)[0]['addr']
+    return netifaces.ifaddresses(nic)[netifaces.AF_INET]['addr']
 
 
 def get_front_nic_name():
@@ -100,7 +100,7 @@ def get_front_nic_name():
     front_net = config.general.get_front_subnet()
 
     for nic in netifaces.interfaces():
-        ip = netifaces.ifaddresses(nic)[0]['addr']
+        ip = get_first_ip_from_nic(nic)
         if _address_in_network(ip, nic):
             return front_net
 
