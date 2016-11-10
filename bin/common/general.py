@@ -25,6 +25,9 @@ import string
 import subprocess
 import time
 import urllib
+import struct
+import config
+import install
 
 from constant import *
 import app
@@ -86,6 +89,27 @@ def create_install_dir():
         os.chdir(app.INSTALL_DIR)
     else:
         raise Exception("Can't create install dir.")
+
+
+def get_first_ip_from_nic(nic):
+
+    _install_netifaces()
+    import netifaces
+
+    return netifaces.ifaddresses(nic)[netifaces.AF_INET][0]['addr']
+
+
+def get_front_nic_name():
+
+    _install_netifaces()
+    import netifaces
+
+    front_net = config.general.get_front_subnet()
+
+    for nic in netifaces.interfaces():
+        ip = get_first_ip_from_nic(nic)
+        if _address_in_network(ip, front_net):
+            return nic
 
 
 def get_install_dir():
@@ -605,3 +629,16 @@ def _do_files_exist(files):
             return False
 
     return True
+
+def _address_in_network(ip, net):
+
+   ipaddr = struct.unpack('<L', inet_aton(ip))[0]
+   netaddr, bits = net.split('/')
+   netmask = struct.unpack('<L', inet_aton(netaddr))[0] & ((2L<<int(bits)-1) - 1)
+
+   return ipaddr & netmask == netmask
+
+def _install_netifaces():
+
+    install.epel_repo()
+    install_packages("python-netifaces")

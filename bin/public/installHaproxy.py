@@ -16,7 +16,7 @@ __version__ = "1.5"
 __status__ = "Production"
 
 import os
-from general import x, retrieve_from_server
+from general import x, retrieve_from_server, get_front_nic_name, get_first_ip_from_nic, install_packages
 import config
 import iptables
 import socket
@@ -28,6 +28,7 @@ import fcntl
 import struct
 import sys
 import re
+import install
 
 
 script_version = 2
@@ -71,7 +72,7 @@ def install_haproxy(args):
     env = haproxy_env(args)
     state = haproxy_state(args)
 
-    x("yum install -y tcl haproxy")
+    install_packages("tcl haproxy")
     iptables.add_haproxy_chain()
     iptables.save()
     _copy_certificate_files(env)
@@ -146,14 +147,10 @@ def _configure_haproxy(env, state):
         x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(path, env, HAPROXY_CONF_DIR))
         x("cp {0}/error.html {1}error.html".format(path, HAPROXY_CONF_DIR))
 
-
-    if config.general.is_back_enabled():
-        ifname = 'eth1'
-    else:
-        ifname = 'eth0'
-    scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_ip_address(ifname))
+    ifname = get_front_nic_name()
+    scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_first_ip_from_nic(ifname))
     if '${ENV_IP_ALIAS' in open(HAPROXY_CONF).read():
-        scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP_ALIAS}", get_ip_address('{0}:1'.format(ifname)))
+        scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP_ALIAS}", get_first_ip_from_nic('{0}:1'.format(ifname)))
 
     _configure_haproxy_state(state)
     _configure_credentials(env)
@@ -185,16 +182,6 @@ def _chkconfig(service, command):
 def _service(service, command):
     x("/sbin/service {0} {1}".format(service, command))
 
-
-def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(
-        fcntl.ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack('256s', ifname[:15])
-        )[20:24]
-    )
 
 def _setup_monitoring():
     plugin = app.SYCO_PATH + "lib/nagios/plugins_nrpe/check_haproxy_stats.pl"

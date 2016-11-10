@@ -16,7 +16,7 @@ __status__ = "Production"
 import os, sys, os.path
 import app, config
 from app import SYCO_PATH, SYCO_ETC_PATH, SYCO_USR_PATH, SYCO_VAR_PATH
-from general import x
+from general import x, install_packages
 import version
 
 # The version of this module, used to prevent the same script version to be 
@@ -49,7 +49,7 @@ def install_syco(args):
         x('echo proxy=%s >> /etc/yum.conf' % "http://%s:%s" % (proxy_host,proxy_port))
 
     app.print_verbose("Install required packages for syco")
-    x("yum install augeas -y")
+    install_packages("augeas")
 
     app.print_verbose("Create symlink /sbin/syco")
     set_syco_permissions()
