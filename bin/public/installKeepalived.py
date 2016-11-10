@@ -16,7 +16,7 @@ __version__ = "1.5"
 __status__ = "Production"
 
 import os
-from general import x
+from general import x, install_packages, get_front_nic_name
 from iptables import iptables, save
 from augeas import Augeas
 import socket
@@ -29,6 +29,7 @@ import sys
 import re
 import general
 import config
+import install
 
 script_version = 1
 
@@ -104,7 +105,8 @@ def install_keepalived(args):
     version_obj.check_executed()
     os.chdir("/")
 
-    x("yum install -y keepalived")
+    install.epel_repo()
+    install_packages("keepalived python-netifaces")
     _configure_keepalived()
 
     # Adding iptables rules
@@ -159,26 +161,16 @@ def add_iptables_chain():
     iptables("-A syco_output -p ALL -j keepalived_output")
     iptables("-N keepalived_input")
     iptables("-A syco_input -p ALL -j keepalived_input")
-    if config.general.is_back_enabled():
-        iptables("-A keepalived_input -p 112 -i eth1 -j ACCEPT")
-        iptables("-A keepalived_output -p 112 -o eth1 -j ACCEPT")
-    else:
-        iptables("-A keepalived_input -p 112 -i eth0 -j ACCEPT")
-        iptables("-A keepalived_output -p 112 -o eth0 -j ACCEPT")
+
+    front_nic = get_front_nic_name()
+
+    iptables("-A keepalived_input -p 112 -i {0} -j ACCEPT".format(front_nic))
+    iptables("-A keepalived_output -p 112 -o {0} -j ACCEPT".format(front_nic))
 
     iptables("-D multicast_packets -s 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
     iptables("-D multicast_packets -d 224.0.0.0/4 -j DROP", general.X_OUTPUT_CMD)
     iptables("-A multicast_packets -d 224.0.0.0/8 -j ACCEPT")
     iptables("-A multicast_packets -s 224.0.0.0/8 -j ACCEPT")
-
-
-def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
-    )[20:24])
 
 
 def uninstall_keepalived(args=""):
