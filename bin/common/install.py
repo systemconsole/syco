@@ -34,7 +34,7 @@ def epel_repo():
     # Check if epel is already installed and enabled
     augeas = Augeas(x)
     epel_enabled = augeas.find_values('/files/etc/yum.repos.d/epel.repo/epel/enabled')
-    if epel_enabled[0] != '1':
+    if len(epel_enabled) != 1 or epel_enabled[0] != '1':
         x("yum install -y epel-release")
         augeas.set_enhanced('/files/etc/yum.repos.d/epel.repo/epel/enabled', '1')
 
