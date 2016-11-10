@@ -18,6 +18,7 @@ import subprocess
 
 import version
 from constant import BOLD, RESET
+from augeas import Augeas
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -28,14 +29,14 @@ SCRIPT_VERSION = 3
 def epel_repo():
     """
     Setup EPEL repository.
-
-    http://ridingthecloud.com/installing-epel-repository-centos-rhel/
-    http://www.question-defense.com/2010/04/22/install-the-epel-repository-on-centos-linux-5-x-epel-repo
-
     """
-    package = "epel-release-6-8.noarch"
-    fn = "http://mirrors.se.eu.kernel.org/fedora-epel/6/x86_64/epel-release-6-8.noarch.rpm"
-    rpm(package, fn)
+
+    # Check if epel is already installed and enabled
+    augeas = Augeas(x)
+    epel_enabled = augeas.find_values('/files/etc/yum.repos.d/epel.repo/epel/enabled')
+    if epel_enabled != '1':
+        x("yum install -y epel-release")
+        augeas.set_enhanced('/files/etc/yum.repos.d/epel.repo/epel/enabled', '1')
 
 
 def rforge_repo():

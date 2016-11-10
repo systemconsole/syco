@@ -72,8 +72,7 @@ def install_haproxy(args):
     env = haproxy_env(args)
     state = haproxy_state(args)
 
-    install.epel_repo()
-    install_packages("tcl haproxy python-netifaces")
+    install_packages("tcl haproxy")
     iptables.add_haproxy_chain()
     iptables.save()
     _copy_certificate_files(env)
