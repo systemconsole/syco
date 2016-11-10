@@ -27,6 +27,7 @@ import time
 import urllib
 import struct
 import config
+import install
 
 from constant import *
 import app
