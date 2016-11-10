@@ -105,8 +105,7 @@ def install_keepalived(args):
     version_obj.check_executed()
     os.chdir("/")
 
-    install.epel_repo()
-    install_packages("keepalived python-netifaces")
+    install_packages("keepalived")
     _configure_keepalived()
 
     # Adding iptables rules
