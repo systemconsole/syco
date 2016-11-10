@@ -203,8 +203,9 @@ def setup_crontab():
     x("mkdir /opt/scripts")
     x("cp %s/clam/viruscan.sh /opt/scripts/" % app.SYCO_VAR_PATH)
     scOpen("/opt/scripts/viruscan.sh").replace(
-        "${ADMIN_EMAIL}", config.general.get_admin_email()
-    )
+        "${ADMIN_EMAIL}", config.general.get_admin_email())
+    x("echo '0 3 * * *	root /opt/scripts/viruscan.sh' > /etc/cron.d/viruscan")
+
 
     x("/bin/chmod 0755 /opt/scripts/viruscan.sh")
 
