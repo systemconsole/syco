@@ -92,14 +92,16 @@ def create_install_dir():
 
 def get_first_ip_from_nic(nic):
 
-    _import_netifaces()
+    _install_netifaces()
+    import netifaces
 
     return netifaces.ifaddresses(nic)[netifaces.AF_INET][0]['addr']
 
 
 def get_front_nic_name():
 
-    _import_netifaces()
+    _install_netifaces()
+    import netifaces
 
     front_net = config.general.get_front_subnet()
 
@@ -635,8 +637,7 @@ def _address_in_network(ip, net):
 
    return ipaddr & netmask == netmask
 
-def _import_netifaces():
+def _install_netifaces():
 
     install.epel_repo()
     install_packages("python-netifaces")
-    import netifaces
