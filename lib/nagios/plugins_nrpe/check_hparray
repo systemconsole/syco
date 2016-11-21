@@ -2,19 +2,19 @@
 ######################################################################
 # Description:
 #
-# A Nagios plugin that checks HP Proliant RAID via the HPACUCLI tool.
+# A Nagios plugin that checks HP Proliant RAID via the HPSSACLI tool.
 #
-# HPACUCLI needs administrator rights.
-# add this line to /etc/sudoers
+# HPSSACLI needs administrator rights.
+# add this line to /etc/sudoers.d/nrpe
 #
-# nrpe      ALL=NOPASSWD: /usr/sbin/hpacucli
+# nrpe      ALL=NOPASSWD: /usr/sbin/hpssacli
 ######################################################################
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION=`echo '$Revision: 1.0 $' | sed -e 's/[^0-9.]//g'`
-HPACUCLI=/usr/sbin/hpacucli
+HPSSACLI=/usr/sbin/hpssacli
 
 
 STATE_OK=0
@@ -36,7 +36,7 @@ print_help() {
         echo ""
         print_usage
         echo ""
-        echo "This plugin checks hardware status for HP Proliant servers using HPACUCLI utility."
+        echo "This plugin checks hardware status for HP Proliant servers using HPSSACLI utility."
         echo ""
         support
         exit 0
@@ -107,7 +107,7 @@ case "$1" in
                 exit 0
                 ;;
         -s)
-                check=`$HPACUCLI controller slot=$2 ld all show`
+                check=`$HPSSACLI controller slot=$2 ld all show`
                 check_raid
                 ;;
         *)

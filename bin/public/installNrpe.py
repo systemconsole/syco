@@ -188,13 +188,13 @@ EOF
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
         install.hp_repo()
-        x("yum -y install hp-health hpacucli")
+        x("yum -y install hp-health hpssacli")
 
-        # Let nrpe run hpasmcli and hpacucli
+        # Let nrpe run hpasmcli and hpssacli
     x("""cat >> /etc/sudoers.d/nrpe << EOF
 nrpe ALL=NOPASSWD:/sbin/hpasmcli
 nrpe ALL=NOPASSWD:{0}check_hpasm
-nrpe ALL=NOPASSWD:/sbin/hpacucli
+nrpe ALL=NOPASSWD:/usr/sbin/hpssacli
 nrpe ALL=NOPASSWD:{0}check_hparray
 EOF
 """.format(PLG_PATH))
