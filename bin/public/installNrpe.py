@@ -6,7 +6,7 @@ Install nrpe client
 
 import os
 
-from general import x
+from general import x, install_packages
 import app
 import config
 import constant
@@ -63,11 +63,9 @@ def _install_nrpe(args):
     # WARNING: nrpe in EPEL and nagios-nrpe in RPMForge are the same package. At
     # the moment EPEL has the latest version but RPMForge obsolete the EPEL
     # package. Because of that, exclude nagios-nrpe from RPMForge.
-    x(
-        "yum install -y nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap "
-        "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable"
-        "perl-Date-Calc policycoreutils-python --exclude=nagios-nrpe"
-    )
+    app.print_verbose("Install required packages for NRPE")
+    install_packages("nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS "
+                     "perl-Proc-ProcessTable perl-Date-Calc policycoreutils-python")
 
     # Move object structure and prepare conf-file
     x("rm -rf /etc/nagios/nrpe.d")
@@ -158,11 +156,12 @@ def _install_nrpe_plugins():
 def _install_nrpe_plugins_dependencies():
     """Install libraries/binaries that the NRPE-plugins depend on."""
     # Dependency for check_rsyslog
-    x("yum install -y MySQL-python")
+    app.print_verbose("Install required dependency for check_rsyslog")
+    install_packages("MySQL-python")
 
     # Dependency for check_clamav
-    x("yum install -y nagios-plugins-perl perl-Net-DNS-Resolver-Programmable")
-    x("yum install -y perl-suidperl")
+    app.print_verbose("Install required dependencies for check_clamav")
+    install_packages("perl-Net-DNS-Resolver-Programmable perl-suidperl")
 
     x("""cat > /etc/sudoers.d/nrpe << EOF
 Defaults:nrpe !requiretty
@@ -175,20 +174,20 @@ nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
 EOF
 """.format(PLG_PATH))
 
-    # Dependency for check_clamscan
-    x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
-
     # Dependency for check_ldap
-    x("yum install -y php-ldap php-cli")
+    app.print_verbose("Install required dependencies for check_ldap")
+    install_packages("php-ldap php-cli")
 
     # Dependency for check_iostat
-    x("yum install -y sysstat")
+    app.print_verbose("Install required dependency for check_iostat")
+    install_packages("sysstat")
 
     # Dependency for hosts/firewall hardware checks
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
         install.hp_repo()
-        x("yum -y install hp-health hpssacli")
+        app.print_verbose("Install required dependencies for Hardware checks")
+        install_packages("hp-health hpssacli")
 
         # Let nrpe run hpasmcli and hpssacli
     x("""cat >> /etc/sudoers.d/nrpe << EOF
@@ -200,7 +199,8 @@ EOF
 """.format(PLG_PATH))
 
     # Dependency for check_ulimit
-    x("yum install -y lsof")
+    app.print_verbose("Install required dependency for check_ulimit")
+    install_packages("lsof")
 
     # Set ulimit values to take affect after reboot
     x("printf '\n*\tsoft\tnofile\t8196\n*\thard\tnofile\t16392\n' >> /etc/security/limits.conf")
