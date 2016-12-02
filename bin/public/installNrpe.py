@@ -100,12 +100,12 @@ def _fix_selinux(type, filename):
 
 
 def _install_nrpe_plugins():
-    """Install NRPE-plugins (to be executed remoteley) and SELinux-rules."""
+    """Install NRPE-plugins (to be executed remotely) and SELinux-rules."""
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
-    x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
+    x("cp -p -r {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
     for plugin_path in app.get_syco_plugin_paths("/var/icinga/plugins/"):
-        x("cp -p {0}* {1}".format(plugin_path, PLG_PATH))
+        x("cp -p -r {0}* {1}".format(plugin_path, PLG_PATH))
 
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
@@ -124,6 +124,9 @@ def _install_nrpe_plugins():
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
+    # Restore default selinux context for plugins, this should solve most selinux issues
+    x("restorecon -r {0}".format(PLG_PATH))
+
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl.
     # Corresponding .te-files summarize rule content
     x("mkdir -p /var/lib/syco_selinux_modules")
@@ -137,11 +140,6 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_services_plugin_exec_t",   "check_ldap.php")
     _fix_selinux("nagios_services_plugin_exec_t",   "check_iptables.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_clam*")
-    # TODO??
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_connections.pl")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
