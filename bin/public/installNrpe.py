@@ -162,15 +162,19 @@ def _install_nrpe_plugins_dependencies():
     install_packages("perl-Net-DNS-Resolver-Programmable perl-suidperl")
 
     x("""cat > /etc/sudoers.d/nrpe << EOF
-Defaults:nrpe !requiretty
-nrpe ALL=NOPASSWD:{0}check_clamav
-nrpe ALL=NOPASSWD:{0}check_clamscan
-nrpe ALL=NOPASSWD:{0}check_disk
-nrpe ALL=NOPASSWD:{0}get_services
-nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
-nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
-EOF
-""".format(PLG_PATH))
+        Defaults:nrpe !requiretty
+        nrpe ALL=NOPASSWD:{0}check_clamav
+        nrpe ALL=NOPASSWD:{0}check_clamscan
+        nrpe ALL=NOPASSWD:{0}check_disk
+        nrpe ALL=NOPASSWD:{0}get_services
+        nrpe ALL=NOPASSWD:{0}check_file_age
+        nrpe ALL=NOPASSWD:{0}check_ossec-clients.sh
+        nrpe ALL=NOPASSWD:{0}check_haproxy_stats.pl
+        nrpe ALL=NOPASSWD:/usr/sbin/rabbitmqctl
+        nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
+        nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
+        EOF
+        """.format(PLG_PATH))
 
     # Dependency for check_ldap
     app.print_verbose("Install required dependencies for check_ldap")
@@ -188,13 +192,13 @@ EOF
         install_packages("hp-health hpssacli")
 
         # Let nrpe run hpasmcli and hpssacli
-    x("""cat >> /etc/sudoers.d/nrpe << EOF
-nrpe ALL=NOPASSWD:/sbin/hpasmcli
-nrpe ALL=NOPASSWD:{0}check_hpasm
-nrpe ALL=NOPASSWD:/usr/sbin/hpssacli
-nrpe ALL=NOPASSWD:{0}check_hparray
-EOF
-""".format(PLG_PATH))
+        x("""cat >> /etc/sudoers.d/nrpe << EOF
+            nrpe ALL=NOPASSWD:/sbin/hpasmcli
+            nrpe ALL=NOPASSWD:{0}check_hpasm
+            nrpe ALL=NOPASSWD:/usr/sbin/hpssacli
+            nrpe ALL=NOPASSWD:{0}check_hparray
+            EOF
+            """.format(PLG_PATH))
 
     # Dependency for check_ulimit
     app.print_verbose("Install required dependency for check_ulimit")
