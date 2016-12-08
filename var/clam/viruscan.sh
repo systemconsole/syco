@@ -9,6 +9,8 @@
 # __version__ = "1.0.0"
 # __status__ = "Production"
 
+# Random sleep to start within 12 hours
+sleep $[ ( $RANDOM % 43200 )  + 1 ]s
 
 # Email subject
 SUBJECT="VIRUS DETECTED ON `hostname`!!!"
@@ -39,7 +41,7 @@ check_scan () {
     fi
 }
 /usr/local/bin/freshclam
-/usr/local/bin/clamscan -ir --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/media --exclude=/mnt / --quiet --infected --log=${LOG}
+/usr/local/bin/clamscan -ir --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/media --exclude=/mnt --exclude-dir=/etc/snort/rules / --quiet --infected --log=${LOG}
 
 check_scan
 cat ${LOG} | logger

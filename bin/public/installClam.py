@@ -200,13 +200,14 @@ def setup_crontab():
     # Setup crontab
     #
     app.print_verbose("Setup crontab")
-    x("cp %s/clam/viruscan.sh /etc/cron.daily/" % app.SYCO_VAR_PATH)
-    scOpen("/etc/cron.daily/viruscan.sh").replace(
-        "${ADMIN_EMAIL}", config.general.get_admin_email()
-    )
+    x("mkdir /opt/scripts")
+    x("cp %s/clam/viruscan.sh /opt/scripts/" % app.SYCO_VAR_PATH)
+    scOpen("/opt/scripts/viruscan.sh").replace(
+        "${ADMIN_EMAIL}", config.general.get_admin_email())
+    x("echo '0 3 * * *	root /opt/scripts/viruscan.sh' > /etc/cron.d/viruscan")
 
-    # https://redmine.fareoffice.com/issues/61041
-    x("/bin/chmod 0755 /etc/cron.daily/viruscan.sh")
+
+    x("/bin/chmod 0755 /opt/scripts/viruscan.sh")
 
 
 def setup_autostart_and_start():
