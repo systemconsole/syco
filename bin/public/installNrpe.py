@@ -6,7 +6,7 @@ Install nrpe client
 
 import os
 
-from general import x
+from general import x, install_packages
 import app
 import config
 import constant
@@ -63,11 +63,9 @@ def _install_nrpe(args):
     # WARNING: nrpe in EPEL and nagios-nrpe in RPMForge are the same package. At
     # the moment EPEL has the latest version but RPMForge obsolete the EPEL
     # package. Because of that, exclude nagios-nrpe from RPMForge.
-    x(
-        "yum install -y nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap "
-        "nagios-plugins-perl perl-Net-DNS perl-Proc-ProcessTable"
-        "perl-Date-Calc policycoreutils-python --exclude=nagios-nrpe"
-    )
+    app.print_verbose("Install required packages for NRPE")
+    install_packages("nagios-plugins-all nrpe nagios-plugins-nrpe php-ldap nagios-plugins-perl perl-Net-DNS "
+                     "perl-Proc-ProcessTable perl-Date-Calc policycoreutils-python")
 
     # Move object structure and prepare conf-file
     x("rm -rf /etc/nagios/nrpe.d")
@@ -102,12 +100,12 @@ def _fix_selinux(type, filename):
 
 
 def _install_nrpe_plugins():
-    """Install NRPE-plugins (to be executed remoteley) and SELinux-rules."""
+    """Install NRPE-plugins (to be executed remotely) and SELinux-rules."""
     # Install packages and their dependencies.
     _install_nrpe_plugins_dependencies()
-    x("cp -p {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
+    x("cp -p -r {0}lib/nagios/plugins_nrpe/* {1}".format(constant.SYCO_PATH, PLG_PATH))
     for plugin_path in app.get_syco_plugin_paths("/var/icinga/plugins/"):
-        x("cp -p {0}* {1}".format(plugin_path, PLG_PATH))
+        x("cp -p -r {0}* {1}".format(plugin_path, PLG_PATH))
 
     # Set the sssd password
     nrpe_config = scopen.scOpen("/etc/nagios/nrpe.d/common.cfg")
@@ -126,6 +124,9 @@ def _install_nrpe_plugins():
     x("chmod -R 550 /usr/lib64/nagios/plugins/")
     x("chown -R nrpe:nrpe /usr/lib64/nagios/plugins/")
 
+    # Restore default selinux context for plugins, this should solve most selinux issues
+    x("restorecon -r {0}".format(PLG_PATH))
+
     # Set SELinux roles to allow NRPE execution of binaries such as python/perl.
     # Corresponding .te-files summarize rule content
     x("mkdir -p /var/lib/syco_selinux_modules")
@@ -139,11 +140,6 @@ def _install_nrpe_plugins():
     _fix_selinux("nagios_services_plugin_exec_t",   "check_ldap.php")
     _fix_selinux("nagios_services_plugin_exec_t",   "check_iptables.py")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_clam*")
-    # TODO??
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "pmp-check-mysql*")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "farpayment_stats.py")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "rentalfront_stats.py")
-    #_fix_selinux("nagios_unconfined_plugin_exec_t", "checkMySQLProcesslist.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_connections.pl")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_procs.sh")
     _fix_selinux("nagios_unconfined_plugin_exec_t", "check_ulimit.py")
@@ -158,11 +154,12 @@ def _install_nrpe_plugins():
 def _install_nrpe_plugins_dependencies():
     """Install libraries/binaries that the NRPE-plugins depend on."""
     # Dependency for check_rsyslog
-    x("yum install -y MySQL-python")
+    app.print_verbose("Install required dependency for check_rsyslog")
+    install_packages("MySQL-python")
 
     # Dependency for check_clamav
-    x("yum install -y nagios-plugins-perl perl-Net-DNS-Resolver-Programmable")
-    x("yum install -y perl-suidperl")
+    app.print_verbose("Install required dependencies for check_clamav")
+    install_packages("perl-Net-DNS-Resolver-Programmable perl-suidperl")
 
     x("""cat > /etc/sudoers.d/nrpe << EOF
 Defaults:nrpe !requiretty
@@ -170,37 +167,42 @@ nrpe ALL=NOPASSWD:{0}check_clamav
 nrpe ALL=NOPASSWD:{0}check_clamscan
 nrpe ALL=NOPASSWD:{0}check_disk
 nrpe ALL=NOPASSWD:{0}get_services
+nrpe ALL=NOPASSWD:{0}check_file_age
+nrpe ALL=NOPASSWD:{0}check_ossec-clients.sh
+nrpe ALL=NOPASSWD:{0}check_haproxy_stats.pl
+nrpe ALL=NOPASSWD:/usr/sbin/rabbitmqctl
 nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-deleted-files
 nrpe ALL=NOPASSWD:{0}mysql/pmp-check-mysql-file-privs
 EOF
 """.format(PLG_PATH))
 
-    # Dependency for check_clamscan
-    x("yum install -y perl-Proc-ProcessTable perl-Date-Calc")
-
     # Dependency for check_ldap
-    x("yum install -y php-ldap php-cli")
+    app.print_verbose("Install required dependencies for check_ldap")
+    install_packages("php-ldap php-cli")
 
     # Dependency for check_iostat
-    x("yum install -y sysstat")
+    app.print_verbose("Install required dependency for check_iostat")
+    install_packages("sysstat")
 
     # Dependency for hosts/firewall hardware checks
     host_config_object = config.host(net.get_hostname())
     if host_config_object.is_host() or host_config_object.is_firewall():
         install.hp_repo()
-        x("yum -y install hp-health hpacucli")
+        app.print_verbose("Install required dependencies for Hardware checks")
+        install_packages("hp-health hpssacli")
 
-        # Let nrpe run hpasmcli and hpacucli
-    x("""cat >> /etc/sudoers.d/nrpe << EOF
+        # Let nrpe run hpasmcli and hpssacli
+        x("""cat >> /etc/sudoers.d/nrpe << EOF
 nrpe ALL=NOPASSWD:/sbin/hpasmcli
 nrpe ALL=NOPASSWD:{0}check_hpasm
-nrpe ALL=NOPASSWD:/sbin/hpacucli
+nrpe ALL=NOPASSWD:/usr/sbin/hpssacli
 nrpe ALL=NOPASSWD:{0}check_hparray
 EOF
 """.format(PLG_PATH))
 
     # Dependency for check_ulimit
-    x("yum install -y lsof")
+    app.print_verbose("Install required dependency for check_ulimit")
+    install_packages("lsof")
 
     # Set ulimit values to take affect after reboot
     x("printf '\n*\tsoft\tnofile\t8196\n*\thard\tnofile\t16392\n' >> /etc/security/limits.conf")

@@ -129,12 +129,14 @@ def install_mysql(args):
             app.get_mysql_monitor_password()
         )
     )
+    # Required by nrpe plugins
+    mysql_exec("GRANT SHOW DATABASES ON *.* TO 'monitor'@'127.0.0.1' ")
 
     # Used by backup scripts to flush master and check slave status etc. when
     # doing an lvm backup.
     mysql_exec(
         "GRANT RELOAD,SUPER,REPLICATION CLIENT ON *.* " +
-        "TO 'backup'@'127.0.0.1' IDENTIFIED BY '%s'" % (
+        "TO 'backup'@'localhost' IDENTIFIED BY '%s'" % (
             app.get_mysql_backup_password()
         )
     )
