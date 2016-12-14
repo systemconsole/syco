@@ -54,7 +54,7 @@ MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
 MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".sha256"
 
 MODSEC_RULES_FILE = "master"
-MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/{0}.zip".format(MODSEC_RULES_FILE)
+MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/v3.0/{0}.zip".format(MODSEC_RULES_FILE)
 
 
 def build_commands(commands):
