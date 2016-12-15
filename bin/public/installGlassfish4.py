@@ -364,19 +364,16 @@ def _install_icinga_ulimit_check():
     # Add lines to sudoers, common.cfg if they dont already exist. Can only be
     # runned once.
     nrpe_string_1 = "nrpe ALL=NOPASSWD: {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)
-    nrpe_string_2 = "nrpe ALL=(glassfish) NOPASSWD: /bin/cat"
-    nrpe_string_3 = "command[check_ulimit_glassfish]={0}check_ulimit.py glassfish 60 80".format(ICINGA_PLUGINS_DIR)
+    nrpe_string_2 = "command[check_ulimit_glassfish]=sudo {0}check_ulimit.py glassfish 60 80".format(ICINGA_PLUGINS_DIR)
 
     sudoers_nrpe = open(nrpe_sudo_path, "r+")
     if sudoers_nrpe.read().find(nrpe_string_1) == -1:
         x("echo \"{0}\" >> {1}".format(nrpe_string_1, nrpe_sudo_path))
-    if sudoers_nrpe.read().find(nrpe_string_2) == -1:
-        x("echo \"{0}\" >> {1}".format(nrpe_string_2, nrpe_sudo_path))
     sudoers_nrpe.close()
 
     common_cfg = open(common_cfg_path, "r+")
-    if common_cfg.read().find(nrpe_string_3) == -1:
-        x("echo \"{0}\" >> {1}".format(nrpe_string_3, common_cfg_path))
+    if common_cfg.read().find(nrpe_string_2) == -1:
+        x("echo \"{0}\" >> {1}".format(nrpe_string_2, common_cfg_path))
     common_cfg.close()
 
     # Finally restart the nrpe service to load the new check.
