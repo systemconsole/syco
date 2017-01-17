@@ -91,6 +91,7 @@ def install_ntp(ntp_server_ip = False):
     general.set_config_property("/etc/ntp.conf", "server 0.*ntp.org", "server " + ntp_server_ip + " burst")
     general.set_config_property("/etc/ntp.conf", ".*server 1.*ntp.org", "#server 1.se.pool.ntp.org")
     general.set_config_property("/etc/ntp.conf", ".*server 2.*ntp.org", "#server 2.se.pool.ntp.org")
+    general.set_config_property("/etc/ntp.conf", ".*server 3.*ntp.org", "#server 3.se.pool.ntp.org")
 
     # Allow access to/from the ntp-server. You may use either a hostname or IP address
     # on the server line. You must use an IP address on the restrict line. Or do I??
