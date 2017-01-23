@@ -188,6 +188,7 @@ def _install_mod_security():
 
   # Install mode-sec config files.
   x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
+  x("cp -pdx /etc/httpd/modsecurity.d/crs-setup.conf.example /etc/httpd/modsecurity.d/crs-setup.conf")
 
 def _update_modsec_rules():
   general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz")
