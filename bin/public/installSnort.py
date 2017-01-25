@@ -34,21 +34,21 @@ import general
 import version
 
 
-SNORT_FILENAME="snort-2.9.7.3.tar.gz"
-SNORT_URL="https://snort.org/downloads/snort/snort-2.9.7.3.tar.gz"
-SNORT_MD5="839e648607fd32726b2f7965134bf0a4"
+SNORT_FILENAME="snort-2.9.9.0.tar.gz"
+SNORT_URL="https://www.snort.org/downloads/snort/snort-2.9.9.0.tar.gz"
+SNORT_MD5="fd3012bf36710481d66b40ad046b231d"
 
-DAQ_FILENAME="daq-2.0.5.tar.gz"
-DAQ_URL="https://snort.org/downloads/snort/daq-2.0.5.tar.gz"
-DAQ_MD5="75c00d23f9536bc8da419375f38222cb"
+DAQ_FILENAME="daq-2.0.6.tar.gz"
+DAQ_URL="https://www.snort.org/downloads/snort/daq-2.0.6.tar.gz"
+DAQ_MD5="2cd6da422a72c129c685fc4bb848c24c"
 
 LIBNET_FILENAME="libnet-1.12.tgz"
-LIBNET_URL="https://libdnet.googlecode.com/files/libdnet-1.12.tgz"
+LIBNET_URL="http://packages.fareoffice.com/snort/libdnet-1.12.tgz"
 LIBNET_MD5="9253ef6de1b5e28e9c9a62b882e44cc9"
 
-RULE_FILENAME="snortrules-snapshot-2973.tar.gz"
-RULE_URL="http://packages.fareoffice.com/snort/snortrules-snapshot-2973.tar.gz"
-RULE_MD5="16fdd3b29ecdcaba4444e19d05ddb9a4"
+RULE_FILENAME="snortrules-snapshot-2990.tar.gz"
+RULE_URL="http://packages.fareoffice.com/snort/snortrules-snapshot-2990.tar.gz"
+RULE_MD5="d4e98a780eed4a44ebc675f87cef42d7"
 
 # The version of this module, used to prevent the same script version to be
 # executed more then once on the same host.
