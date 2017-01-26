@@ -35,11 +35,11 @@ import version
 
 
 SNORT_FILENAME="snort-2.9.9.0.tar.gz"
-SNORT_URL="https://www.snort.org/downloads/snort/snort-2.9.9.0.tar.gz"
+SNORT_URL="http://packages.fareoffice.com/snort/snort-2.9.9.0.tar.gz"
 SNORT_MD5="fd3012bf36710481d66b40ad046b231d"
 
 DAQ_FILENAME="daq-2.0.6.tar.gz"
-DAQ_URL="https://www.snort.org/downloads/snort/daq-2.0.6.tar.gz"
+DAQ_URL="http://packages.fareoffice.com/snort/daq-2.0.6.tar.gz"
 DAQ_MD5="2cd6da422a72c129c685fc4bb848c24c"
 
 LIBNET_FILENAME="libnet-1.12.tgz"
