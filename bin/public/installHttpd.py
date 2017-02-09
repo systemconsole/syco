@@ -64,6 +64,7 @@ def build_commands(commands):
   '''
   commands.add("install-httpd", install_httpd, help="Install apache webbserver on the current server.")
   commands.add("uninstall-httpd", uninstall_httpd, help="remove apache webbserver on the current server.")
+  commands.add("install-modsecurity", install_modsecurity, help="Install only modsecurity")
 
 def install_httpd(args):
   '''
@@ -105,6 +106,15 @@ def uninstall_httpd(args):
 
   version_obj = version.Version("Installhttpd", SCRIPT_VERSION)
   version_obj.mark_uninstalled()
+
+def install_modsecurity(args):
+    # Install/ReInstall ModSecurity only
+    x("service httpd stop")
+    x("rm -f /usr/lib64/httpd/modules/mod_security2.so")
+    x("rm -f /etc/httpd/conf.d/003-modsecurity.conf")
+    _install_mod_security()
+    _update_modsec_rules()
+    x("service httpd start")
 
 def set_file_permissions():
   '''
