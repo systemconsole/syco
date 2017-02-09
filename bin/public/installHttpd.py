@@ -64,7 +64,7 @@ def build_commands(commands):
   '''
   commands.add("install-httpd", install_httpd, help="Install apache webbserver on the current server.")
   commands.add("uninstall-httpd", uninstall_httpd, help="remove apache webbserver on the current server.")
-  commands.add("install-modsecurity", install_modsecurity, help="Install only modsecurity")
+  commands.add("install-modsecurity", install_modsecurity, help="Install/ReInstall ModSecurity only")
 
 def install_httpd(args):
   '''
@@ -210,7 +210,6 @@ def _update_modsec_rules():
 
   # Install customized rules.
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
-  x("cp -pdx /etc/httpd/modsecurity.d/crs-setup.conf.example /etc/httpd/modsecurity.d/crs-setup.conf")
 
 def _enable_se_linux():
   x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
