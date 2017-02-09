@@ -196,9 +196,8 @@ def _install_mod_security():
       " lua-devel libidn-devel"
     )
 
-  # Install mode-sec config files.
-  x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
-  x("cp -pdx /etc/httpd/modsecurity.d/crs-setup.conf.example /etc/httpd/modsecurity.d/crs-setup.conf")
+    # Install mode-sec config files.
+    x("cp " + app.SYCO_PATH + "var/httpd/conf.d/003-modsecurity.conf /etc/httpd/conf.d/")
 
 def _update_modsec_rules():
   general.download_file(MODSEC_RULES_URL, MODSEC_RULES_FILE + ".tar.gz")
@@ -211,6 +210,7 @@ def _update_modsec_rules():
 
   # Install customized rules.
   x("cp " + app.SYCO_PATH + "var/httpd/modsecurity.d/* /etc/httpd/modsecurity.d")
+  x("cp -pdx /etc/httpd/modsecurity.d/crs-setup.conf.example /etc/httpd/modsecurity.d/crs-setup.conf")
 
 def _enable_se_linux():
   x("/usr/sbin/setsebool -P httpd_can_network_connect=1")
