@@ -117,13 +117,11 @@ def download_and_install(clam_version):
     x("mkdir -p %s" % compile_dir)
     x("mv %s/clamav-*/* %s" % (app.INSTALL_DIR, compile_dir))
 
-    # Install nice and ionice
-    general.install_packages("coreutils")
 
     #
-    # Install packages required for compiling
+    # Install packages required for compiling and coreutils to get nice and ionice
     #
-    x("yum -y install gcc gcc-c++ zlib-devel bzip2-devel ncurses-devel file openssl-devel")
+    general.install_packages("gcc gcc-c++ zlib-devel bzip2-devel ncurses-devel file openssl-devel coreutils")
 
     #
     # Build and install clamav and freshclam
