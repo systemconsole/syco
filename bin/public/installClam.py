@@ -21,6 +21,7 @@ __status__ = "Production"
 CLAM_AV_URL = "http://packages.fareoffice.com/clamav/clamav-{0}.tar.gz"
 
 import app
+import general
 from general import x, urlretrive
 import config
 from scopen import scOpen
@@ -51,7 +52,6 @@ def install_clam(args):
 
     prepare_installation()
     download_and_install(clam_version)
-    install_nice_ionice()
     setup_clam_and_freshclam()
     setup_crontab()
     setup_autostart_and_start()
@@ -117,6 +117,9 @@ def download_and_install(clam_version):
     x("mkdir -p %s" % compile_dir)
     x("mv %s/clamav-*/* %s" % (app.INSTALL_DIR, compile_dir))
 
+    # Install nice and ionice
+    general.install_packages("coreutils")
+
     #
     # Install packages required for compiling
     #
@@ -140,10 +143,6 @@ def download_and_install(clam_version):
         "gcc cloog-ppl cpp glibc-devel glibc-headers kernel-headers " +
         "mpfr ppl gcc-c++ libstdc++-devel"
     )
-
-def install_nice_ionice():
-    # Install coreutils to get nice and ionice
-    x("yum install -y coreutils")
 
 def setup_clam_and_freshclam():
     #
