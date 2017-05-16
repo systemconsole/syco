@@ -41,7 +41,7 @@ check_scan () {
     fi
 }
 /usr/local/bin/freshclam
-/usr/local/bin/clamscan -ir --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/media --exclude=/mnt --exclude-dir=/etc/snort/rules / --quiet --infected --log=${LOG}
+ionice -c3 nice -n 19 /usr/local/bin/clamscan -ir --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/media --exclude=/mnt --exclude-dir=/var/lib/elasticsearch/prod/ --exclude-dir=/etc/snort/rules / --quiet --infected --log=${LOG}
 
 check_scan
 cat ${LOG} | logger

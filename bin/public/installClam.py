@@ -51,6 +51,7 @@ def install_clam(args):
 
     prepare_installation()
     download_and_install(clam_version)
+    install_nice_ionice()
     setup_clam_and_freshclam()
     setup_crontab()
     setup_autostart_and_start()
@@ -140,6 +141,9 @@ def download_and_install(clam_version):
         "mpfr ppl gcc-c++ libstdc++-devel"
     )
 
+def install_nice_ionice():
+    # Install coreutils to get nice and ionice
+    x("yum install -y coreutils")
 
 def setup_clam_and_freshclam():
     #
