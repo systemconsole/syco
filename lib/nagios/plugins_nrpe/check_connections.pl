@@ -4,11 +4,8 @@
 ## or the number of network connections of a given command. Those two options
 ## can be combined.
 ##
-## Note: This script uses lsof with sudo.
-## Make sure your /etc/sudoers is properly configured.
-## For example put the following line into /etc/sudoers
-##      nagios      ALL=NOPASSWD: /usr/sbin/lsof
-## Please refer to the manpages for further options.
+## Note: This script needs to be run with root privileges
+## to ensure lsof shows all connections.
 ##
 ## Copyright 2007 Benjamin Hackl
 ## Released under the LGPL,
@@ -25,7 +22,7 @@ use vars qw($PROGNAME);
 
 my $count = 0;
 my $exit_mode;
-my $lsof_bin = "sudo /usr/sbin/lsof";
+my $lsof_bin = "/usr/sbin/lsof";
 my $lsof_option = '';
 
 sub print_help ();
