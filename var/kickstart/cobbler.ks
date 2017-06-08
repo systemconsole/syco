@@ -76,7 +76,7 @@ part /boot --fstype ext4 --size=200 --ondisk=$boot_device
 part pv.2 --size=$total_disk_mb --grow --ondisk=$boot_device
 volgroup $vol_group pv.2
 logvol swap           --fstype swap --name=swap        --vgname=$vol_group --size=$disk_swap_mb
-logvol /              --fstype ext4 --name=root        --vgname=$vol_group --size=4096
+logvol /              --fstype ext4 --name=root        --vgname=$vol_group --size=5120
 logvol /var           --fstype ext4 --name=var         --vgname=$vol_group --size=$disk_var_mb
 logvol /home          --fstype ext4 --name=home        --vgname=$vol_group --size=1024 --fsoptions=noexec,nodev,nosuid
 logvol /var/tmp       --fstype ext4 --name=vartmp      --vgname=$vol_group --size=1024 --fsoptions=noexec,nodev,nosuid
