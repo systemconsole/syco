@@ -18,7 +18,7 @@ __status__ = "Production"
 
 
 # Path to clam installation.
-CLAM_AV_URL = "http://packages.fareoffice.com/clamav/clamav-{0}.tar.gz"
+CLAM_AV_URL = "https://packages.fareoffice.com/clamav/clamav-{0}.tar.gz"
 
 import app
 import general
