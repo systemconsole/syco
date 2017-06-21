@@ -39,7 +39,7 @@ SCRIPT_VERSION = 2
 # NOTE: Remember to change path in "var/glassfish/glassfish-4"
 GLASSFISH_VERSION      = "glassfish-4.1"
 GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
-GLASSFISH_REPO_URL     = "http://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
+GLASSFISH_REPO_URL     = "https://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
 
 # Icinga plugins directory
 ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
@@ -48,13 +48,13 @@ ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 # http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
 # http://www.mysql.com/downloads/connector/j/
 MYSQL_FILE_NAME="mysql-connector-java-5.1.38"
-MYSQL_CONNECTOR_REPO_URL="http://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
+MYSQL_CONNECTOR_REPO_URL="https://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
 
 
 # Google Guice
 # Is configured in _install_google_guice.
 GUICE_NAME="guice-3.0"
-GUICE_URL="http://packages.fareoffice.com/guice/"+GUICE_NAME+".zip"
+GUICE_URL="https://packages.fareoffice.com/guice/"+GUICE_NAME+".zip"
 
 
 def build_commands(commands):
