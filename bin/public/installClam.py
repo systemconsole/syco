@@ -173,7 +173,7 @@ def setup_clam_and_freshclam():
     freshclam.replace("^[#]\?LogSyslog.*",      "LogSyslog yes")
     freshclam.replace("^[#]\?DatabaseOwner.*",  "DatabaseOwner clamav")
     freshclam.replace("^[#]\?PidFile.*",        "PidFile /var/run/clamav/freshclam.pid")
-    freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror db.se.clamav.net")
+    freshclam.replace("^[#]\?DatabaseMirror.*", "DatabaseMirror db.northeu.clamav.net")
     freshclam.replace("^[#]\?UpdateLogFile.*",  "UpdateLogFile /var/log/clamav/freshclam.log")
     freshclam.replace("^[#]\?DatabaseDirectory.*", "DatabaseDirectory /var/lib/clamav")
 
