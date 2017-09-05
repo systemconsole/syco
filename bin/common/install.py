@@ -104,9 +104,10 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
 EOF""")
     x("update-ca-trust extract")
 
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub")
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub")
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub")
+    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub")
+    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub")
+    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub")
+    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpePublicKey2048_key1.pub")
 
     x("""cat > /etc/yum.repos.d/hp.repo << EOF
 [HP-Proliant]
