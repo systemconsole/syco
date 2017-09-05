@@ -15,10 +15,11 @@ __status__ = "Production"
 
 import os
 import subprocess
-
+import config
 import version
 from constant import BOLD, RESET
 from augeas import Augeas
+
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
@@ -68,6 +69,10 @@ def rforge_repo():
 
 
 def hp_repo():
+
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+
     """Install HP yum repo for hp-health and fix symantec intermediate certificate error"""
     x("update-ca-trust enable")
     x("""cat > /etc/pki/ca-trust/source/anchors/SymantecServerCA-G4.pem << EOF
@@ -104,9 +109,10 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
 EOF""")
     x("update-ca-trust extract")
 
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub")
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub")
-    x("rpm --import https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub")
+    x("rpm --import --httpproxy %s --httpport %s https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub" % (proxy_host, proxy_port))
+    x("rpm --import --httpproxy %s --httpport %s https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub" % (proxy_host, proxy_port))
+    x("rpm --import --httpproxy %s --httpport %s https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub" % (proxy_host, proxy_port))
+    x("rpm --import --httpproxy %s --httpport %s https://downloads.linux.hpe.com/SDR/hpePublicKey2048_key1.pub" % (proxy_host, proxy_port))
 
     x("""cat > /etc/yum.repos.d/hp.repo << EOF
 [HP-Proliant]
