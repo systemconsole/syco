@@ -3,6 +3,7 @@
 Functions that will help installing yum and rpm packages.
 
 """
+import config
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -68,6 +69,10 @@ def rforge_repo():
 
 
 def hp_repo():
+
+    proxy_host = config.general.get_proxy_host()
+    proxy_port = config.general.get_proxy_port()
+
     """Install HP yum repo for hp-health and fix symantec intermediate certificate error"""
     x("update-ca-trust enable")
     x("""cat > /etc/pki/ca-trust/source/anchors/SymantecServerCA-G4.pem << EOF
@@ -104,10 +109,10 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
 EOF""")
     x("update-ca-trust extract")
 
-    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub")
-    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub")
-    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub")
-    x("rpm --import --httpproxy 10.101.10.17 --httpport 3128 https://downloads.linux.hpe.com/SDR/hpePublicKey2048_key1.pub")
+    x("rpm --import --httpproxy " + proxy_host + " --httpport " + proxy_port + " https://downloads.linux.hpe.com/SDR/hpPublicKey1024.pub")
+    x("rpm --import --httpproxy " + proxy_host + " --httpport " + proxy_port + " https://downloads.linux.hpe.com/SDR/hpPublicKey2048.pub")
+    x("rpm --import --httpproxy " + proxy_host + " --httpport " + proxy_port + " https://downloads.linux.hpe.com/SDR/hpPublicKey2048_key1.pub")
+    x("rpm --import --httpproxy " + proxy_host + " --httpport " + proxy_port + " https://downloads.linux.hpe.com/SDR/hpePublicKey2048_key1.pub")
 
     x("""cat > /etc/yum.repos.d/hp.repo << EOF
 [HP-Proliant]
