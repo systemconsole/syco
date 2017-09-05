@@ -3,7 +3,6 @@
 Functions that will help installing yum and rpm packages.
 
 """
-import config
 
 __author__ = "daniel.lindh@cybercow.se"
 __copyright__ = "Copyright 2011, The System Console project"
@@ -16,10 +15,11 @@ __status__ = "Production"
 
 import os
 import subprocess
-
+import config
 import version
 from constant import BOLD, RESET
 from augeas import Augeas
+
 
 # The version of this module, used to prevent
 # the same script version to be executed more then
