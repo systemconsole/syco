@@ -350,8 +350,8 @@ def setup_ssh_rules():
 
     '''
     app.print_verbose("Setup ssh INPUT/OUTPUT rule.")
-    iptables("-A syco_input -p tcp  -m multiport --dports 22,34,8022 -j allowed_tcp")
-    iptables("-A syco_output -p tcp -m multiport --dports 22,34,8022 -j allowed_tcp")
+    iptables("-A syco_input -p tcp  -m multiport --dports 22 -j allowed_tcp")
+    iptables("-A syco_output -p tcp -m multiport --dports 22 -j allowed_tcp")
 
 # TODO:
 #  ################################################################
