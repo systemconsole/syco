@@ -75,7 +75,7 @@ def install_syco(args):
 def set_syco_permissions():
     """Set permissions on all syco files"""
     x("chown -R root:root /opt/syco")
-    x("chmod 0750 /opt/syco")
+    x("chmod 0755 /opt/syco")
     x("chmod 0750 /opt/syco/var")
     x("chmod 0750 /opt/syco/var/mysql")
     x("chmod 0750 /opt/syco/var/mysql/mysql-lvm-backup.py")
