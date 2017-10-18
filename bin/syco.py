@@ -21,7 +21,10 @@ __status__ = "Production"
 
 import sys
 import os
+import os.path
 from optparse import OptionParser
+import subprocess
+
 
 #
 # Adding file directories for inclusions.
@@ -32,8 +35,9 @@ sys.path.insert(0, sys.path[0] + "/common/")
 
 import app
 import version
-import general
-general.require_linux_user("root")
+from general import x, require_linux_user, X_OUTPUT_NONE
+
+require_linux_user("root")
 
 # Files published to public repos.
 sys.path.append(app.SYCO_PUBLIC_PATH)
@@ -205,6 +209,20 @@ class Commands:
         return modules
 
 
+def has_shell_command(command):
+    p = subprocess.Popen('type %s >/dev/null 2>&1' % command, shell=True)
+    p.communicate()
+    return True if p.returncode == 0 else False
+
+
+def get_last_git_commit(cwd):
+    if has_shell_command('git'):
+        commit = x("git log -1 --format=%cd --date=iso|cut -c1-20", output=X_OUTPUT_NONE, cwd=cwd)
+        return commit.rstrip()
+    else:
+        return 'NA'
+
+
 def main():
     """
     Used to control the command line options, and the execution of the script.
@@ -218,8 +236,16 @@ def main():
     usage = "usage: %prog [options] command\n\n"
     usage += "Commands:\n"
     usage += cmd_list.get_help()
-
-    app.parser = OptionParser(usage=usage, version="System Console " + app.version, add_help_option=True)
+    info = "System Console {0}, syco(git {1})".format(
+        app.version,
+        get_last_git_commit('/opt/syco')
+    )
+    for plugin_path in app.get_syco_plugin_paths():
+        info += ", {0}(git {1})".format(
+            os.path.basename(plugin_path),
+            get_last_git_commit(plugin_path)
+        )
+    app.parser = OptionParser(usage=usage, version=info , add_help_option=True)
     app.parser.add_option("-v", "--verbose", action="store_const", const=2, dest="verbose", default=1,
                           help="Show more output.")
     app.parser.add_option("-q", "--quiet",   action="store_const", const=0, dest="verbose", help="Show no output.")

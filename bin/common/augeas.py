@@ -28,7 +28,7 @@ class Augeas:
 
         entries = self.find_entries(path)
         if len(entries) == 0:
-            print "Could not find node: %s, cancelling rm action" % path
+            print("Could not find node: %s, cancelling rm action" % path)
             return None
 
         return self._execute("augtool rm \"%s\"" % path)
