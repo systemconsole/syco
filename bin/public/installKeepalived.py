@@ -128,6 +128,14 @@ def _configure_keepalived():
     x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, ka_env, KA_CONF_DIR))
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_UP}", socket.gethostname().upper())
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", socket.gethostname().lower())
+    # Set rabbit router id and virtual ip
+    if 'rabbit' in socket.gethostname():
+        if '-tc' in socket.gethostname():
+            DC_ID_IP = "35"
+        else:
+            DC_ID_IP = "36"
+        scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${DC_ID}", DC_ID_IP)
+
     _chkconfig("keepalived","on")
     _service("keepalived","restart")
 
