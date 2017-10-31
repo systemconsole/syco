@@ -121,13 +121,24 @@ def _configure_keepalived():
     * It will replace the variables in the config file with the hostname.
     * It is not environmental dependent and can be installed on any server.
     """
+    hostname = socket.gethostname()
     augeas = Augeas(x)
     augeas.set_enhanced("/files/etc/sysctl.conf/net.ipv4.ip_nonlocal_bind", "1")
     x("sysctl -p")
     x("mv {0}keepalived.conf {0}org.keepalived.conf".format(KA_CONF_DIR))
     x("cp {0}/{1}.keepalived.conf {2}keepalived.conf".format(SYCO_PLUGIN_PATH, ka_env, KA_CONF_DIR))
-    scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_UP}", socket.gethostname().upper())
-    scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", socket.gethostname().lower())
+    scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_UP}", hostname.upper())
+    scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", hostname.lower())
+    # Set rabbit router id and virtual ip
+    if 'rabbit' in hostname:
+        if '-tc' in hostname:
+            DC_ID_IP = "35"
+        elif '-av' in hostname:
+            DC_ID_IP = "36"
+        elif '-of' in hostname:
+            DC_ID_IP = "37"
+        scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${DC_ID}", DC_ID_IP)
+
     _chkconfig("keepalived","on")
     _service("keepalived","restart")
 
