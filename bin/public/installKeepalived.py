@@ -130,7 +130,6 @@ def _configure_keepalived():
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_UP}", hostname.upper())
     scopen.scOpen(KA_CONF_DIR + "keepalived.conf").replace("${KA_SERVER_NAME_DN}", hostname.lower())
     # Set rabbit router id and virtual ip
-    hostname = socket.gethostname()
     if 'rabbit' in hostname:
         if '-tc' in hostname:
             DC_ID_IP = "35"
