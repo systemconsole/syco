@@ -303,8 +303,6 @@ def _set_domain_passwords():
 #    )
 
     #
-    x("keytool -delete -alias gtecybertrust5ca -keystore cacerts.jks -storepass '" + app.get_glassfish_master_password() +"'")
-
     asadmin_exec("start-domain ")
 
     # Change admin password
