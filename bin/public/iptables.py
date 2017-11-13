@@ -28,7 +28,7 @@ __status__ = "Production"
 import os
 import sys
 
-
+from os.path import exists
 from config import *
 from config import get_servers
 from general import x
@@ -479,7 +479,7 @@ def del_mysql_chain():
 def add_mysql_chain():
     del_mysql_chain()
 
-    if (not os.path.exists('/etc/init.d/mysqld')):
+    if not (exists('/etc/init.d/mysqld') or exists('/etc/init.d/mysql')):
         return
 
     app.print_verbose("Add iptables chain for mysql")
