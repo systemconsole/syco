@@ -47,7 +47,7 @@ import iptables
 # once on the same host.
 SCRIPT_VERSION = 1
 
-MODSEC_INSTALL_FILE = "modsecurity-2.9.0"
+MODSEC_INSTALL_FILE = "modsecurity-2.9.2"
 MODSEC_REPO_URL = "https://packages.fareoffice.com/modsecurity/" + MODSEC_INSTALL_FILE + ".tar.gz"
 
 MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
