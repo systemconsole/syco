@@ -44,11 +44,12 @@ GLASSFISH_REPO_URL     = "https://packages.fareoffice.com/glassfish/" + GLASSFIS
 # Icinga plugins directory
 ICINGA_PLUGINS_DIR = "/usr/lib64/nagios/plugins/"
 
-# Mysql Connector
-# http://ftp.sunet.se/pub/unix/databases/relational/mysql/Downloads/Connector-J/
-# http://www.mysql.com/downloads/connector/j/
-MYSQL_FILE_NAME="mysql-connector-java-5.1.38"
-MYSQL_CONNECTOR_REPO_URL="https://packages.fareoffice.com/mysql-connect/"+MYSQL_FILE_NAME+".tar.gz"
+
+# MariaDB Connector
+#  https://mariadb.com/kb/en/library/about-mariadb-connector-j/
+#  https://redmine.fareoffice.com/projects/rentalfront/wiki/Setup_glassfish_mariaDB_connectivity
+MARIADB_FILE_NAME="mariadb-java-client-2.2.0.jar"
+MARIADB_CONNECTOR_REPO_URL="https://packages.fareoffice.com/mariadb-connect/%s" % MARIADB_FILE_NAME
 
 
 # Google Guice
@@ -63,6 +64,7 @@ def build_commands(commands):
 
     """
     commands.add("install-glassfish4", install_glassfish, help="Install on the current server.")
+    commands.add("uninstall-glassfish4", uninstall_glassfish, help="Uninstall on the current server.")
 
 
 def iptables_setup():
@@ -96,7 +98,7 @@ def install_glassfish(arg):
         _check_java_installed()
         _install_glassfish()
         _setup_glassfish4()
-        _install_mysql_connect()
+        _install_mariadb_connect()
         _install_guice()
         _install_icinga_ulimit_check()
         _set_domain_passwords()
@@ -247,13 +249,13 @@ def _setup_glassfish4():
     asadmin_exec("set server-config.network-config.protocols.protocol.http-listener-2.http.xpowered-by=false")
 
 
-def _install_mysql_connect():
-    """Install the mysql connect"""
+def _install_mariadb_connect():
+    """Install the mariadb connect"""
     os.chdir(app.INSTALL_DIR)
-    general.download_file(MYSQL_CONNECTOR_REPO_URL)
-    x("tar -zxvf "+MYSQL_FILE_NAME+".tar.gz")
-    x("\cp -f "+MYSQL_FILE_NAME+"/"+MYSQL_FILE_NAME+"-bin.jar /usr/local/glassfish4/glassfish/domains/domain1/lib/ext/")
+    general.download_file(MARIADB_CONNECTOR_REPO_URL)
+    x("\cp -f %s /usr/local/glassfish4/glassfish/domains/domain1/lib/ext/" % MARIADB_FILE_NAME)
     x("chown glassfish:glassfish -R /usr/local/glassfish4/glassfish/domains/domain1/lib/ext/*")
+    x("chmod 444 /usr/local/glassfish4/glassfish/domains/domain1/lib/ext/*")
 
 
 def _install_guice():
@@ -303,8 +305,6 @@ def _set_domain_passwords():
 #    )
 
     #
-    x("keytool -delete -alias gtecybertrust5ca -keystore cacerts.jks -storepass '" + app.get_glassfish_master_password() +"'")
-
     asadmin_exec("start-domain ")
 
     # Change admin password
@@ -390,3 +390,23 @@ def asadmin_exec(command, admin_port=None, events=None):
         return general.shell_run(cmd, user="glassfish", events=events)
     else:
         return x(cmd, user="glassfish")
+
+
+def uninstall_glassfish(args):
+    """
+    Uninstall glassfish
+
+    """
+    x("/etc/init.d/httpd stop")
+    x("/etc/init.d/glassfish4 stop")
+    x("/etc/init.d/glassfish-4-fp stop")
+    x("rm -fr /usr/local/glassfish4")
+    x("rm -f /etc/init.d/glassfish*")
+    x("rm -fr /root/.gfclient")
+    x("rm -fr /home/glassfish")
+    x("userdel glassfish")
+    app.print_verbose("Maybe run this manually")
+    app.print_verbose('ps aux | grep [g]las| tr -s " " |cut -d" " -f2|xargs kill -9')
+
+    version_obj = version.Version("install-glassfish-4", SCRIPT_VERSION)
+    version_obj.mark_uninstalled()
