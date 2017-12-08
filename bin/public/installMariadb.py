@@ -65,7 +65,7 @@ def install_mariadb(args):
 
     # Install yum packages.
     x(
-        "curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | " 
+        "curl -x 10.101.10.17:3128 -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | " 
         "bash"
     )
     x("yum -y install MariaDB-server")
@@ -165,11 +165,11 @@ def uninstall_mariadb(args):
     """
     if os.access("/etc/init.d/mysql", os.F_OK):
         x("/etc/init.d/mysql stop")
-    x("yum -y remove MariaDB-server")
+    x("yum -y remove MariaDB-server MariaDB-common")
     x("rm -f /root/.mysql_history")
     x("rm -fr /var/lib/mysql")
     x("rm -f /var/log/mysqld-slow.log")
-    x("rm -f /etc/my.cnf.d")
+    x("rm -rf /etc/my.cnf.d")
     x("rm -f /etc/my.cnf")
     x("rm -f /etc/yum.repos.d/mariadb.repo ")
 
@@ -197,17 +197,17 @@ def install_mariadb_replication(args):
 
     repl_password = general.generate_password(20)
     front_ip = current_host_config.get_front_ip()
-    for ip in [current_host_config.get_front_ip(), repl_peer]:
+    for ip in ["127.0.0.1", repl_peer]:
         mysql_exec("stop slave;", True, ip)
         mysql_exec("delete from mysql.user where User = 'repl'", True, ip)
         mysql_exec("flush privileges;", True, ip)
         mysql_exec(
-            "GRANT REPLICATION SLAVE ON *.* TO "
-            "'repl'@'%s' IDENTIFIED BY '%s'," % (repl_peer, repl_password),
+            "GRANT REPLICATION SLAVE ON *.* TO " +
+            "'repl'@'%s' IDENTIFIED BY '%s'," % (repl_peer, repl_password) +
             "'repl'@'%s' IDENTIFIED BY '%s'" % (front_ip, repl_password),
             True, ip)
 
-        if ip == front_ip:
+        if ip == "127.0.0.1":
             mysql_exec(
                 "CHANGE MASTER TO MASTER_HOST='%s', " % repl_peer +
                 "MASTER_USER='repl', MASTER_PASSWORD='%s'" % repl_password,
@@ -266,3 +266,4 @@ def install_mariadb_client():
 
     """
     x("yum -y install MariaDB-client")
+
