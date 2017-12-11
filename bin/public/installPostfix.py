@@ -186,7 +186,7 @@ def install_mail_client(args):
     version_obj.check_executed()
 
     # Install required packages
-    install.package("postfix")
+    x("yum install -y postfix")
 
     # Set config file parameters
     #
