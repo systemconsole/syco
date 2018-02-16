@@ -28,4 +28,4 @@ if temp >= sys.argv[1]:
         sys.exit(1)
 else:
     print("TEMP OK: Temperature is {0}c | 'Temp'={0}".format(temp.strip()))
-     sys.exit(0)
+    sys.exit(0)
