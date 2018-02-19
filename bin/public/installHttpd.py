@@ -53,7 +53,7 @@ MODSEC_REPO_URL = "https://packages.fareoffice.com/modsecurity/" + MODSEC_INSTAL
 MODSEC_MD5_FILE = MODSEC_INSTALL_FILE + ".tar.gz.sha256"
 MODSEC_MD5_REPO_URL = MODSEC_REPO_URL + ".sha256"
 
-MODSEC_RULES_FILE = "v3.0.0"
+MODSEC_RULES_FILE = "v3.0.2"
 MODSEC_RULES_URL = "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/{0}.tar.gz".format(MODSEC_RULES_FILE)
 
 
@@ -92,7 +92,7 @@ def uninstall_httpd(args):
   Uninstal apache httpd.
 
   '''
-  if (os.path.exists('/etc/init.d/httpd')):
+  if os.path.exists('/etc/init.d/httpd'):
     # Apache httpd
     x("yum -y erase httpd apr apr-util postgresql-libs mod_ssl distcache")
 
@@ -100,6 +100,7 @@ def uninstall_httpd(args):
     x("rm -rf /etc/httpd/")
     x("rm -rf /var/www/html")
     x("rm -r /usr/lib64/httpd/modules/mod_security2.so")
+    x("rm -r /usr/lib64/httpd/modules/mod_security3.so")
 
   iptables.del_httpd_chain()
   iptables.save()
@@ -111,6 +112,7 @@ def install_modsecurity(args):
     # Install/ReInstall ModSecurity only
     x("service httpd stop")
     x("rm -f /usr/lib64/httpd/modules/mod_security2.so")
+    x("rm -f /usr/lib64/httpd/modules/mod_security3.so")
     x("rm -f /etc/httpd/conf.d/003-modsecurity.conf")
     _install_mod_security()
     _update_modsec_rules()
@@ -137,7 +139,7 @@ def set_file_permissions():
 
 def _install_httpd():
   # Install yum packages for apache httpd
-  if (not os.path.exists('/etc/httpd/conf/httpd.conf')):
+  if not os.path.exists('/etc/httpd/conf/httpd.conf'):
     x("yum -y install httpd mod_ssl file")
     x("/sbin/chkconfig httpd on")
 
@@ -161,12 +163,12 @@ def _install_httpd():
   x("cp -r " + app.SYCO_PATH + "var/httpd/html/* /var/www/html/")
 
 def _install_mod_security():
-  if (not os.access("/usr/lib64/httpd/modules/mod_security2.so", os.F_OK)):
+  if not os.access("/usr/lib64/httpd/modules/mod_security2.so", os.F_OK):
     # Needed for running modsec.
     x("yum -y install pkgconfig libxml2 libxml2-devel curl lua")
 
     # Needed for compiling modsec
-    x("yum -y install httpd-devel apr apr-util pcre gcc pcre-devel curl-devel lua-devel")
+    x("yum -y install httpd-devel apr apr-util pcre gcc gcc-c++ pcre-devel curl-devel")
 
     # Downloading and verify the pgp key for modsec.
     general.download_file(MODSEC_REPO_URL)
@@ -174,7 +176,7 @@ def _install_mod_security():
 
     os.chdir(app.INSTALL_DIR)
     signature = x("sha256sum -c " + MODSEC_MD5_FILE)
-    if (MODSEC_INSTALL_FILE + '.tar.gz: OK' not in signature):
+    if MODSEC_INSTALL_FILE + '.tar.gz: OK' not in signature:
       raise Exception("Invalid signature.")
 
     # Compile and install modsec
@@ -188,9 +190,9 @@ def _install_mod_security():
     x("chcon system_u:object_r:httpd_modules_t:s0 /usr/lib64/httpd/modules/mod_security2.so")
 
     # Remove needed packages for installation of modsec.
-    # TODO: See if their is any other dependencies to thease packages.
+    # TODO: See if their is any other dependencies to these packages.
     x(
-      "yum -y erase httpd-devel apr-devel apr-util-devel cpp gcc" +
+      "yum -y erase httpd-devel apr-devel apr-util-devel cpp gcc gcc-c++ pcre-devel curl-devel" +
       " cyrus-sasl-devel db4-devel expat-devel glibc-devel glibc-headers" +
       " kernel-headers openldap-devel pcre-devel curl-devel" +
       " lua-devel libidn-devel"
