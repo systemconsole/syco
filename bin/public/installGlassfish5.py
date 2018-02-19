@@ -60,6 +60,7 @@ def build_commands(commands):
 
     """
     commands.add("install-glassfish5", install_glassfish, help="Install on the current server.")
+    commands.add("uninstall-glassfish5", uninstall_glassfish, help="Install on the current server.")
 
 
 def iptables_setup():
@@ -247,7 +248,7 @@ def _install_guice():
     general.download_file(GUICE_URL)
     x("unzip -o %s.zip" % GUICE_NAME)
     x("cp %s/%s.jar /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % (GUICE_NAME, GUICE_NAME))
-    x("cp %s/guice-assistedinject* /usr/local/glassfish55555ssfish/domains/domain1/lib/ext/" % GUICE_NAME)
+    x("cp %s/guice-assistedinject* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
     x("cp %s/aopalliance* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
     x("cp %s/javax.inject* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
     x("chown glassfish:glassfish -R /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
@@ -267,9 +268,6 @@ def _set_domain_passwords():
             "(?i)Enter the new master password again.*": app.get_glassfish_master_password() + "\n"
         }
     )
-
-    #
-    x("keytool -delete -alias gtecybertrust5ca -keystore cacerts.jks -storepass '" + app.get_glassfish_master_password() +"'")
 
     asadmin_exec("start-domain ")
 
@@ -362,7 +360,7 @@ def uninstall_glassfish(args):
 
     """
     x("/etc/init.d/httpd stop")
-    x("/etc/init.d/glassfish5 stop")
+    x("/etc/init.d/glassfish-5 stop")
     x("rm -fr /usr/local/glassfish5")
     x("rm -f /etc/init.d/glassfish*")
     x("rm -fr /root/.gfclient")
