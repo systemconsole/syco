@@ -158,6 +158,9 @@ def _configure_haproxy(env, state):
     _service("haproxy", "restart")
     _setup_monitoring()
 
+    # chroot jail should not be accessible by anyone.
+    x("chmod 000 /var/lib/haproxy")
+
 
 def _configure_haproxy_state(state):
     if state == 'active':
