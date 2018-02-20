@@ -31,7 +31,7 @@ from general import x
 SCRIPT_VERSION = 1
 
 
-# NOTE: Remember to change path in "var/glassfish/glassfish-5"
+# NOTE: Remember to change path in "var/glassfish/glassfish5"
 GLASSFISH_VERSION      = "glassfish-5.0"
 GLASSFISH_INSTALL_FILE = GLASSFISH_VERSION + ".zip"
 GLASSFISH_REPO_URL     = "https://packages.fareoffice.com/glassfish/" + GLASSFISH_INSTALL_FILE
@@ -86,10 +86,10 @@ def install_glassfish(arg):
             # Add a new group for glassfish administration.
             # This can be used for all users that should be able to
             # adminitrate glassfish.
-            x("groupadd glassfish -g 200")
+            x("groupadd glassfish5 -g 205")
 
             # Give glassfish it's own user.
-            x("adduser -m -r --shell /bin/bash -u200 -g200 glassfish")
+            x("adduser -m -r --shell /bin/bash -u205 -g205 glassfish5")
 
         _check_java_installed()
         _install_glassfish()
@@ -100,8 +100,8 @@ def install_glassfish(arg):
         _set_domain_passwords()
 
         # Restart to get all options take affect.
-        x("/etc/init.d/glassfish-5 stop -n")
-        x("/etc/init.d/glassfish-5 start -n")
+        x("/etc/init.d/glassfish5 stop -n")
+        x("/etc/init.d/glassfish5 start -n")
 
         version_obj.mark_executed()
     except Exception, error_text:
@@ -127,7 +127,7 @@ def initialize_passwords():
 def _is_glassfish_user_installed():
     """Check if glassfish user is installed."""
     for line in open("/etc/passwd"):
-        if "glassfish" in line:
+        if "glassfish5" in line:
             return True
     return False
 
@@ -148,7 +148,7 @@ def _install_glassfish():
         if os.access(GLASSFISH_INSTALL_FILE, os.F_OK):
             # Set execute permissions and run the installation.
             x("unzip %s -d /usr/local/" % GLASSFISH_INSTALL_FILE)
-            x("chown glassfish:glassfish -R /usr/local/glassfish5")
+            x("chown glassfish5:glassfish5 -R /usr/local/glassfish5")
         else:
             raise Exception("Not able to download %s" % GLASSFISH_INSTALL_FILE)
 
@@ -156,24 +156,24 @@ def _install_glassfish():
         # It's possible to do this from glassfish with "asadmin create-service",
         # but our own script is a little bit better. It creates startup log
         # files and has a better "start user" functionality.
-        x("cp %svar/glassfish/glassfish-5 /etc/init.d/glassfish-5" % app.SYCO_PATH)
-        x("chown root:root /etc/init.d/glassfish-5")
-        x("chmod 0755 /etc/init.d/glassfish-5")
-        x("/sbin/chkconfig --add glassfish-5")
-        x("/sbin/chkconfig --level 3 glassfish-5 on")
+        x("cp %svar/glassfish/glassfish5 /etc/init.d/glassfish5" % app.SYCO_PATH)
+        x("chown root:root /etc/init.d/glassfish5")
+        x("chmod 0755 /etc/init.d/glassfish5")
+        x("/sbin/chkconfig --add glassfish5")
+        x("/sbin/chkconfig --level 3 glassfish5 on")
 
-        scOpen("/etc/init.d/glassfish-5").replace("${MYSQL_PRIMARY}", config.general.get_mysql_primary_master_ip())
-        scOpen("/etc/init.d/glassfish-5").replace("${MYSQL_SECONDARY}", config.general.get_mysql_secondary_master_ip())
+        scOpen("/etc/init.d/glassfish5").replace("${MYSQL_PRIMARY}", config.general.get_mysql_primary_master_ip())
+        scOpen("/etc/init.d/glassfish5").replace("${MYSQL_SECONDARY}", config.general.get_mysql_secondary_master_ip())
 
-        x("/etc/init.d/glassfish-5 start -n")
+        x("/etc/init.d/glassfish5 start -n")
         x("rm -f /etc/init.d/GlassFish_domain1")
 
     xml="/usr/local/glassfish5/glassfish/domains/domain1/config/domain.xml"
     if not os.access(xml, os.F_OK):
         raise Exception("Failed to install glassfish ")
 
-    if not os.access("/etc/init.d/glassfish-5", os.F_OK):
-        raise Exception("Failed to install /etc/init.d/glassfish-5")
+    if not os.access("/etc/init.d/glassfish5", os.F_OK):
+        raise Exception("Failed to install /etc/init.d/glassfish5")
 
 
 def _setup_glassfish():
@@ -187,7 +187,6 @@ def _setup_glassfish():
     asadmin_exec("create-jvm-options -Dhttp.maxConnections=512")
     asadmin_exec("create-jvm-options '-XX\:+AggressiveOpts'")
     asadmin_exec("set server.ejb-container.property.disable-nonportable-jndi-names=true")
-    asadmin_exec("set configs.config.server-config.ejb-container.ejb-timer-service.property.reschedule-failed-timer=true")
     asadmin_exec("set-log-attributes com.sun.enterprise.server.logging.SyslogHandler.useSystemLogging=true")
     asadmin_exec("set-log-attributes handlerServices=com.sun.enterprise.server.logging.GFFileHandler,com.sun.enterprise.server.logging.SyslogHandler")
     asadmin_exec("set-log-attributes --target server-config com.sun.enterprise.server.logging.GFFileHandler.formatter=ulf")
@@ -211,12 +210,6 @@ def _setup_glassfish():
     asadmin_exec("set server.monitoring-service.module-monitoring-levels.transaction-service=LOW")
     asadmin_exec("set server.monitoring-service.module-monitoring-levels.web-container=LOW")
 
-    # Allow glassfish to make more than 32 outgoing connections.
-    asadmin_exec("set server.ejb-container.property.thread-core-pool-size=64")
-    asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
-    asadmin_exec("set server.ejb-container.property.thread-keep-alive-seconds=60")
-    asadmin_exec("set server.ejb-container.property.thread-max-pool-size=1024")
-
     # Increase thread pool sizes
     asadmin_exec("set server-config.network-config.transports.transport.tcp.acceptor-threads=1")
 
@@ -238,7 +231,7 @@ def _install_mariadb_connect():
     os.chdir(app.INSTALL_DIR)
     general.download_file(MARIADB_CONNECTOR_REPO_URL)
     x("\cp -f %s /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % MARIADB_FILE_NAME)
-    x("chown glassfish:glassfish -R /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
+    x("chown glassfish5:glassfish5 -R /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
     x("chmod 444 /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
 
 
@@ -251,7 +244,7 @@ def _install_guice():
     x("cp %s/guice-assistedinject* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
     x("cp %s/aopalliance* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
     x("cp %s/javax.inject* /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/" % GUICE_NAME)
-    x("chown glassfish:glassfish -R /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
+    x("chown glassfish5:glassfish5 -R /usr/local/glassfish5/glassfish/domains/domain1/lib/ext/*")
 
 
 def _set_domain_passwords():
@@ -326,7 +319,7 @@ def _install_icinga_ulimit_check():
     # Add lines to sudoers, common.cfg if they dont already exist. Can only be
     # runned once.
     nrpe_string_1 = "nrpe ALL=NOPASSWD: {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)
-    nrpe_string_2 = "command[check_ulimit_glassfish]=sudo {0}check_ulimit.py glassfish 60 80".format(ICINGA_PLUGINS_DIR)
+    nrpe_string_2 = "command[check_ulimit_glassfish]=sudo {0}check_ulimit.py glassfish5 60 80".format(ICINGA_PLUGINS_DIR)
 
     sudoers_nrpe = open(nrpe_sudo_path, "r+")
     if sudoers_nrpe.read().find(nrpe_string_1) == -1:
@@ -349,9 +342,9 @@ def asadmin_exec(command, admin_port=None, events=None):
         cmd = "/usr/local/glassfish5/bin/asadmin --echo " + command
 
     if events:
-        return general.shell_run(cmd, user="glassfish", events=events)
+        return general.shell_run(cmd, user="glassfish5", events=events)
     else:
-        return x(cmd, user="glassfish")
+        return x(cmd, user="glassfish5")
 
 
 def uninstall_glassfish(args):
@@ -360,12 +353,12 @@ def uninstall_glassfish(args):
 
     """
     x("/etc/init.d/httpd stop")
-    x("/etc/init.d/glassfish-5 stop")
+    x("/etc/init.d/glassfish5 stop")
     x("rm -fr /usr/local/glassfish5")
     x("rm -f /etc/init.d/glassfish*")
     x("rm -fr /root/.gfclient")
-    x("rm -fr /home/glassfish")
-    x("userdel glassfish")
+    x("rm -fr /home/glassfish5")
+    x("userdel glassfish5")
     app.print_verbose("Maybe run this manually")
     app.print_verbose('ps aux | grep [g]las| tr -s " " |cut -d" " -f2|xargs kill -9')
 

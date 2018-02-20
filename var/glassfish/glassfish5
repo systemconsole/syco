@@ -25,7 +25,7 @@ MYSQL_IPS.append("${MYSQL_PRIMARY}")
 # MYSQL_IPS.append("${MYSQL_SECONDARY}")
 
 # The linux user whish glassfish should be started with.
-OWNER = "glassfish"
+OWNER = "glassfish5"
 
 # The path to where you have your glassfish server installed.
 GLASSFISH_PATH = "/usr/local/glassfish5"
@@ -162,23 +162,23 @@ def set_permission():
 
     """
     print_verbose("Set permissions.")
-    x("chmod -R 770 " + GLASSFISH_PATH, 'root')
-    x("chown -R 200:200 " + GLASSFISH_PATH, 'root')
-    x("restorecon -R " + GLASSFISH_PATH, 'root')
+    x("chmod -R 770 %s" % GLASSFISH_PATH, 'root' )
+    x("chown -R %s:%s %s" % (OWNER, OWNER, GLASSFISH_PATH), 'root' )
+    x("restorecon -R %s" % GLASSFISH_PATH, 'root')
 
 
 def enable_ha_proxy():
     """When ha proxy can access this file it starts to send requests."""
     print_verbose("Enable ha proxy")
-    x("touch /usr/local/glassfish5/glassfish/domains/domain1/docroot/ha")
-    x("chown 200:200 /usr/local/glassfish5/glassfish/domains/domain1/docroot/ha")
+    x("touch %s/glassfish/domains/domain1/docroot/ha" % GLASSFISH_PATH)
+    x("chown %s:%s %s/glassfish/domains/domain1/docroot/ha" % (OWNER, OWNER, GLASSFISH_PATH))
 
 
 def disable_ha_proxy():
     """When ha proxy can't access this file it stops to send new requests.
        But current sessions/requests continues."""
     print_verbose("Disable ha proxy")
-    x("chown root:root /usr/local/glassfish5/glassfish/domains/domain1/docroot/ha")
+    x("chown root:root %s/glassfish/domains/domain1/docroot/ha" % (GLASSFISH_PATH))
     wait_for_server_to_stop_recive_request()
 
 
@@ -215,9 +215,11 @@ def stop():
 
 
 def restart():
+    disable_ha_proxy()
     write_to_log("Retart Glassfish (%s).")
     asadmin_exec("restart-domain ")
     write_to_log("Restarted.", 2)
+    enable_ha_proxy()
 
 
 def set_global_options_and_args():
