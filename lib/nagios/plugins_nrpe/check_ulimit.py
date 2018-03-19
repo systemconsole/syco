@@ -25,18 +25,6 @@ The manual commands will be sycofied togheter with the install.cfg server instal
 
 '''
 
-#!/usr/bin/env python
-'''
-A simple check to check the ulimit setting for a specific user and send an alarm to Icinga
-if the open files is getting close to the allowed limit on the system
-
-Will be seen as a module for Icinga with ok, warn and critical settings.
-
-Author: David Skeppstedt
-Version: 0.000.0.0.1 Beta
-
-'''
-
 import os
 import subprocess
 import sys
@@ -48,8 +36,8 @@ username = sys.argv[1]
 warn = int(sys.argv[2])
 crit = int(sys.argv[3])
 
-limit =  int(subprocess.Popen("sudo -u glassfish cat /proc/self/limits | grep 'open files' | awk '{ print $4 }'", shell=True, stdout=subprocess.PIPE).stdout.read().strip())
-current = int(subprocess.Popen("sudo lsof | grep ' glassfish ' | awk '{print $NF}' | sort | wc -l", shell=True, stdout=subprocess.PIPE).stdout.read().strip())
+limit =  int(subprocess.Popen("sudo -u %s cat /proc/self/limits | grep 'open files' | awk '{ print $4 }'" % username, shell=True, stdout=subprocess.PIPE).stdout.read().strip())
+current = int(subprocess.Popen("sudo lsof | grep ' %s ' | awk '{print $NF}' | sort | wc -l" % username, shell=True, stdout=subprocess.PIPE).stdout.read().strip())
 
 percent =  int(round(((float(current) / float(limit)) * 100),0))
 
