@@ -145,7 +145,8 @@ def _configure_haproxy(env, state):
     for path in app.get_syco_plugin_paths("/var/haproxy/"):
         app.print_verbose("Copy config files from %s" % path)
         x("cp {0}/{1}.haproxy.cfg {2}haproxy.cfg".format(path, env, HAPROXY_CONF_DIR))
-        x("cp {0}/error.html {1}error.html".format(path, HAPROXY_CONF_DIR))
+        x("cp {0}/error.html {1}".format(path, HAPROXY_CONF_DIR))
+        x("cp -R {0}/errors.xml {1}".format(path, HAPROXY_CONF_DIR))
 
     ifname = get_front_nic_name()
     scopen.scOpen(HAPROXY_CONF).replace("${ENV_IP}", get_first_ip_from_nic(ifname))
