@@ -300,39 +300,15 @@ def _install_icinga_ulimit_check():
     If icinga is configured to check this server with check_ulimit_glassfish it
     will now get current status.
 
+    The script is configured in nrpe/nagios with ansible.
+
     """
-    nrpe_sudo_path = "/etc/sudoers.d/nrpe"
-    common_cfg_path = "/etc/nagios/nrpe.d/common.cfg"
     icinga_script = "check_ulimit.py"
-
-    # Does the checkscript already exist? Otherwise copy it in place.
-    if not os.path.isfile("{0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)):
-        x("cp {0}lib/nagios/plugins_nrpe/{2} {1}{2}".format(app.SYCO_PATH, ICINGA_PLUGINS_DIR, icinga_script))
-
-    # Set permissions and SELinux rules to the checkscript. Can be runned
-    # multiple times without problem.
+    x("cp {0}lib/nagios/plugins_nrpe/{2} {1}{2}".format(app.SYCO_PATH, ICINGA_PLUGINS_DIR, icinga_script))
     x("chmod 755 {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
     x("chown nrpe:nrpe {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
     x("chcon -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
     x("semanage fcontext -a -t nagios_unconfined_plugin_exec_t {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script))
-
-    # Add lines to sudoers, common.cfg if they dont already exist. Can only be
-    # runned once.
-    nrpe_string_1 = "nrpe ALL=NOPASSWD: {0}{1}".format(ICINGA_PLUGINS_DIR, icinga_script)
-    nrpe_string_2 = "command[check_ulimit_glassfish]=sudo {0}check_ulimit.py glassfish5 60 80".format(ICINGA_PLUGINS_DIR)
-
-    sudoers_nrpe = open(nrpe_sudo_path, "r+")
-    if sudoers_nrpe.read().find(nrpe_string_1) == -1:
-        x("echo \"{0}\" >> {1}".format(nrpe_string_1, nrpe_sudo_path))
-    sudoers_nrpe.close()
-
-    common_cfg = open(common_cfg_path, "r+")
-    if common_cfg.read().find(nrpe_string_2) == -1:
-        x("echo \"{0}\" >> {1}".format(nrpe_string_2, common_cfg_path))
-    common_cfg.close()
-
-    # Finally restart the nrpe service to load the new check.
-    x("service nrpe restart")
 
 
 def asadmin_exec(command, admin_port=None, events=None):
