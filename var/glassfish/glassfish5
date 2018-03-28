@@ -173,8 +173,8 @@ def enable_ha_proxy():
     x("rm -rf %s/glassfish/domains/domain1/docroot/ha" % GLASSFISH_PATH)
     x("mkdir %s/glassfish/domains/domain1/docroot/ha" % GLASSFISH_PATH)
     x("echo 'Ready for connections' > %s/glassfish/domains/domain1/docroot/ha/index.html" % GLASSFISH_PATH)
-    x("chown -R %s:%s %s/glassfish/domains/domain1/docroot/ha" % (owner, owner, GLASSFISH_PATH))
-    x("chmod -R 770 %s/glassfish/domains/domain1/docroot/ha" % (owner, owner, GLASSFISH_PATH))
+    x("chown -R %s:%s %s/glassfish/domains/domain1/docroot/ha" % (OWNER, OWNER, GLASSFISH_PATH))
+    x("chmod -R 770 %s/glassfish/domains/domain1/docroot/ha" % (GLASSFISH_PATH))
 
 
 def disable_ha_proxy():
