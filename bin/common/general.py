@@ -156,11 +156,10 @@ def download_file(src, dst=None, user="", remote_user=None,
     if not os.access(dst_file, os.F_OK):
         cmd = "-O " + dst_file
         if remote_user:
-            cmd += " --user \"" + remote_user
+            cmd += " --user \"" + remote_user + "\" "
 
             if remote_password:
-                cmd += ":" + remote_password
-            cmd += "\""
+                cmd += " --password \"" + remote_password+ "\" "
 
         shell_exec("wget " + cmd + " " + src, user=user)
 
