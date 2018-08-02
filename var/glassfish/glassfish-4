@@ -201,6 +201,7 @@ def is_reciving_requests():
 
 
 def start():
+    cleanup_generated_data()
     write_to_log("Starting Glassfish.")
     asadmin_exec("start-domain ")
     enable_ha_proxy()
@@ -215,7 +216,8 @@ def stop():
 
 
 def restart():
-    write_to_log("Retart Glassfish (%s).")
+    cleanup_generated_data()
+    write_to_log("Restart Glassfish (%s).")
     asadmin_exec("restart-domain ")
     write_to_log("Restarted.", 2)
 
@@ -244,6 +246,9 @@ def set_global_options_and_args():
     if len(ARGS) != 1:
         parser.error("incorrect number of arguments")
 
+def cleanup_generated_data():
+    print_verbose("Cleaning up generated data.")
+    x("rm -rf /usr/local/glassfish4/glassfish/domains/domain1/generated/*")
 
 def main():
     set_global_options_and_args()
