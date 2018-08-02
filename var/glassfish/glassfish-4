@@ -216,9 +216,10 @@ def stop():
 
 
 def restart():
-    cleanup_generated_data()
     write_to_log("Restart Glassfish (%s).")
-    asadmin_exec("restart-domain ")
+    asadmin_exec("stop-domain ")
+    cleanup_generated_data()
+    asadmin_exec("start-domain ")
     write_to_log("Restarted.", 2)
 
 
